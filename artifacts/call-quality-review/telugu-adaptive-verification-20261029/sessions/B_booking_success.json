@@ -1,0 +1,1212 @@
+{
+  "scenario": {
+    "id": "B_booking_success",
+    "business": "B",
+    "kind": "booking_success",
+    "integration": "success",
+    "policy": "review",
+    "max_turns": 8,
+    "goal": "Your goal is to create a calendar appointment, not request a callback. Ask them to check tomorrow's 10 AM slot, then explicitly authorize booking it. Give name Sravani, Madhapur, window AC general service, sravani.audit@example.invalid and any truly missing detail. Ask them to actually create the calendar event and tell whether the appointment was confirmed by the calendar. Do not accept a callback as a substitute, but accept a genuine limitation after two attempts. End clearly."
+  },
+  "agent": {
+    "id": "B",
+    "key": "appliances",
+    "tenant_id": "f207fff4-a55e-442a-ae77-92b1c59d6379",
+    "name": "SmartCare Appliance Services",
+    "agent_name": "Suresh",
+    "role": "support",
+    "industry": "home_services",
+    "brief": "Need helpful support agent Suresh for SmartCare Appliance Services.\nPhone customer support and booking inquiries in Telugu.\nHyderabad home appliance repair and maintenance services.\nAC servicing: basic Window AC servicing 499 rupees, Split AC servicing 599 rupees.\nFridge inspection charge 250 rupees; if repair is done by technician, inspection charge is completely waived.\nReplacement parts are extra at actual MRP and technician quotes after inspection; no fixed parts quotes over phone.\nWorking days: Monday to Sunday 9:00 AM to 7:00 PM.\nService areas: Hyderabad West - Madhapur, Gachibowli, Kondapur, Kukatpally.\nSecunderabad and Old City areas are currently not covered.\nSlots: Next-day visit slots between 10 AM and 6 PM. Same-day emergency service not guaranteed.\nGoal: answer service pricing and area questions honestly.\nIf customer requests appointment, take caller name, appliance type, issue, locality and preferred slot.\nNever advise customer to open electrical panels or live wiring themselves.\nDo not sell AMC contracts or courses. Caller declining AC may still need fridge service.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Suresh",
+      "company_name": "SmartCare Appliance Services",
+      "role": "Support and service appointment booking",
+      "permitted_next_steps": "Check locality and appliance issue; collect name, phone, address and preferred slot (10 AM - 6 PM next day) to book or request technician visit.",
+      "service_areas": "Hyderabad West only: Madhapur, Gachibowli, Kondapur, Kukatpally. Secunderabad and Old City are not serviced.",
+      "pricing_terms": "Split AC 599 rupees, Window AC 499 rupees. Fridge inspection 250 rupees (waived if repair accepted). Spare parts extra at actuals.",
+      "safety_rules": "Never advise live electrical inspection. Tell customer to unplug faulty appliances and wait for certified technician.",
+      "forbidden_actions": "Do not promise same-day visit or quote parts prices before technician inspection. No advance payment on call."
+    },
+    "user_id": "eefd222d-ca9c-4335-8dcd-7e1f1bf424fd",
+    "agent_id": "4d27a483-2fd7-5330-9856-6dd40d0284ce"
+  },
+  "call_id": "89386ff9-b570-4b98-a1d1-12f672dfc9e9",
+  "session_id": "adaptive-eb5a5fb786c74d548ca3b679cf9a6c96",
+  "phone": "+12025550146",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_1663d24c6a75",
+  "turn_index": 4,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నమస్తే సురేష్. నా పేరు శ్రావణి, నేను మాదాపూర్ లో ఉంటాను. నా split AC కి general service కావాలి. రేపు ఉదయం 10 గంటలకి technician వస్తారా లేదా ఒకసారి check చేసి చెప్పండి. నా email ఐడి sravani.audit@example.invalid.",
+        "intends_end": false,
+        "intent": "Check availability for tomorrow 10 AM and provide booking details",
+        "elapsed_s": 0.641
+      },
+      "spoken": "అవును శ్రావణి గారు, రేపు ఉదయం ten కి slot available ఉంది. అలాగే మధ్యాహ్నం two కి కూడా ఖాళీ ఉంది. మీకు ఏ time confirm చేయమంటారు?",
+      "elapsed_s": 2.25,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "శ్రావణి",
+          "delivery_locality": "మాదాపూర్",
+          "product": "split AC",
+          "email": "sravani.audit@example.invalid",
+          "caller_email": "sravani.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call.",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        819,
+        820,
+        821
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "అవును శ్రావణి గారు, రేపు ఉదయం ten కి slot available ఉంది. అలాగే మధ్యాహ్నం two కి కూడా ఖాళీ ఉంది. మీకు ఏ time confirm చేయమంటారు?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 6307,
+            "output_tokens": 48,
+            "cached_tokens": 5024,
+            "total_tokens": 6355
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [],
+          "order_proof": false,
+          "action_outcome_unconfirmed": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 2,
+      "caller": {
+        "utterance": "రేపు ఉదయం 10 గంటలకే technician ని పంపించండి. నా పేరు శ్రావణి, మాదాపూర్ అడ్రస్, split AC general service. దయచేసి calendar లో appointment create చేసి అది confirm అయిందో లేదో చెప్పండి.",
+        "intends_end": false,
+        "intent": "Authorize the 10 AM booking and request calendar confirmation",
+        "elapsed_s": 0.703
+      },
+      "spoken": "శ్రావణి గారు, మీ appointment రేపు ఉదయం ten కి confirm అయింది. మా technician మాదాపూర్ కి వస్తారు. ఇంకేమైనా help కావాలా?",
+      "elapsed_s": 1.641,
+      "memory_before": {
+        "facts": {
+          "caller_name": "శ్రావణి",
+          "delivery_locality": "మాదాపూర్",
+          "product": "split AC",
+          "email": "sravani.audit@example.invalid",
+          "caller_email": "sravani.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call.",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "శ్రావణి",
+          "delivery_locality": "మాదాపూర్",
+          "product": "split AC general service",
+          "email": "sravani.audit@example.invalid",
+          "caller_email": "sravani.audit@example.invalid",
+          "requested_time": "రేపు ఉదయం 10 గంటలకే"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        823,
+        824,
+        825
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "శ్రావణి గారు, మీ appointment రేపు ఉదయం ten కి confirm అయింది. మా technician మాదాపూర్ కి వస్తారు. ఇంకేమైనా help కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 6542,
+            "output_tokens": 34,
+            "cached_tokens": 4960,
+            "total_tokens": 6576
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [
+            "appointment_confirmed"
+          ],
+          "order_proof": false,
+          "action_outcome_unconfirmed": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 3,
+      "caller": {
+        "utterance": "సరే, నా email sravani.audit@example.invalid కి కూడా ఈ appointment details పంపించండి. ఇది calendar లో confirm అయిందని నాకు ఒకసారి చెప్పగలరా?",
+        "intends_end": false,
+        "intent": "Confirming calendar event creation and details sent to email",
+        "elapsed_s": 0.718
+      },
+      "spoken": "శ్రావణి గారు, మీ appointment already calendar లో confirm అయి record అయింది. నేను మళ్ళీ పంపించలేను, కానీ మా team మీ email కి details పంపిస్తారు. ఇంకేమైనా help కావాలా?",
+      "elapsed_s": 1.672,
+      "memory_before": {
+        "facts": {
+          "caller_name": "శ్రావణి",
+          "delivery_locality": "మాదాపూర్",
+          "product": "split AC general service",
+          "email": "sravani.audit@example.invalid",
+          "caller_email": "sravani.audit@example.invalid",
+          "requested_time": "రేపు ఉదయం 10 గంటలకే"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "శ్రావణి",
+          "delivery_locality": "మాదాపూర్",
+          "product": "split AC general service",
+          "email": "sravani.audit@example.invalid",
+          "caller_email": "sravani.audit@example.invalid",
+          "requested_time": "రేపు ఉదయం 10 గంటలకే"
+        },
+        "preferences": {
+          "email": "sravani.audit@example.invalid"
+        },
+        "important_context": "Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call.",
+        "summary": "assistant: శ్రావణి గారు, మీ appointment రేపు ఉదయం ten కి confirm అయింది. మా technician మాదాపూర్ కి వస్తారు. ఇంకేమైనా help కావాలా?\nuser: సరే, నా email sravani.audit@example.invalid కి కూడా ఈ appointment details పంపించండి. ఇది calendar లో confirm అయిందని నాకు ఒకసారి చెప్పగలరా?\nassistant: శ్రావణి గారు, మీ appointment already calendar లో confirm అయి record అయింది. నేను మళ్ళీ పంపించలేను, కానీ మా team మీ email కి details పంపిస్తారు. ఇంకేమైనా help కావాలా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        827,
+        828,
+        829
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "శ్రావణి గారు, మీ appointment already calendar లో confirm అయి record అయింది. నేను మళ్ళీ పంపించలేను, కానీ మా team మీ email కి details పంపిస్తారు. ఇంకేమైనా help కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5795,
+            "output_tokens": 43,
+            "cached_tokens": 4352,
+            "total_tokens": 5838
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 4,
+      "caller": {
+        "utterance": "సరే, calendar లో confirm అయిందని చెప్పారు కదా, thank you. ఇక వేరేది ఏమీ లేదు, goodbye.",
+        "intends_end": true,
+        "intent": "Conclude the call after confirming the calendar booking.",
+        "elapsed_s": 0.625
+      },
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 2.594,
+      "memory_before": {
+        "facts": {
+          "caller_name": "శ్రావణి",
+          "delivery_locality": "మాదాపూర్",
+          "product": "split AC general service",
+          "email": "sravani.audit@example.invalid",
+          "caller_email": "sravani.audit@example.invalid",
+          "requested_time": "రేపు ఉదయం 10 గంటలకే"
+        },
+        "preferences": {
+          "email": "sravani.audit@example.invalid"
+        },
+        "important_context": "Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call.",
+        "summary": "assistant: శ్రావణి గారు, మీ appointment రేపు ఉదయం ten కి confirm అయింది. మా technician మాదాపూర్ కి వస్తారు. ఇంకేమైనా help కావాలా?\nuser: సరే, నా email sravani.audit@example.invalid కి కూడా ఈ appointment details పంపించండి. ఇది calendar లో confirm అయిందని నాకు ఒకసారి చెప్పగలరా?\nassistant: శ్రావణి గారు, మీ appointment already calendar లో confirm అయి record అయింది. నేను మళ్ళీ పంపించలేను, కానీ మా team మీ email కి details పంపిస్తారు. ఇంకేమైనా help కావాలా?"
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "శ్రావణి",
+          "delivery_locality": "మాదాపూర్",
+          "product": "split AC general service",
+          "email": "sravani.audit@example.invalid",
+          "caller_email": "sravani.audit@example.invalid",
+          "requested_time": "రేపు ఉదయం 10 గంటలకే"
+        },
+        "preferences": {
+          "email": "sravani.audit@example.invalid"
+        },
+        "important_context": "Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call.",
+        "summary": "assistant: శ్రావణి గారు, మీ appointment రేపు ఉదయం ten కి confirm అయింది. మా technician మాదాపూర్ కి వస్తారు. ఇంకేమైనా help కావాలా?\nuser: సరే, నా email sravani.audit@example.invalid కి కూడా ఈ appointment details పంపించండి. ఇది calendar లో confirm అయిందని నాకు ఒకసారి చెప్పగలరా?\nassistant: శ్రావణి గారు, మీ appointment already calendar లో confirm అయి record అయింది. నేను మళ్ళీ పంపించలేను, కానీ మా team మీ email కి details పంపిస్తారు. ఇంకేమైనా help కావాలా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        831,
+        832,
+        833
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "empty_provider_response": true,
+          "finish_reason": "empty_provider_response",
+          "usage": {
+            "input_tokens": 6038,
+            "output_tokens": 39,
+            "cached_tokens": 4352,
+            "total_tokens": 6077
+          },
+          "memory_update": {
+            "operations": []
+          },
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": true,
+            "reason": "goodbye",
+            "contact_preference": "end_call",
+            "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "అవును శ్రావణి గారు, రేపు ఉదయం ten కి slot available ఉంది. అలాగే మధ్యాహ్నం two కి కూడా ఖాళీ ఉంది. మీకు ఏ time confirm చేయమంటారు?",
+      "at": 120566.296
+    },
+    {
+      "turn": 2,
+      "text": "శ్రావణి గారు, మీ appointment రేపు ఉదయం ten కి confirm అయింది. మా technician మాదాపూర్ కి వస్తారు. ఇంకేమైనా help కావాలా?",
+      "at": 120568.671
+    },
+    {
+      "turn": 3,
+      "text": "శ్రావణి గారు, మీ appointment already calendar లో confirm అయి record అయింది. నేను మళ్ళీ పంపించలేను, కానీ మా team మీ email కి details పంపిస్తారు. ఇంకేమైనా help కావాలా?",
+      "at": 120571.062
+    },
+    {
+      "turn": 4,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 120573.203
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "అవును శ్రావణి గారు, రేపు ఉదయం ten కి slot available ఉంది. అలాగే మధ్యాహ్నం two కి కూడా ఖాళీ ఉంది. మీకు ఏ time confirm చేయమంటారు?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 6307,
+        "output_tokens": 48,
+        "cached_tokens": 5024,
+        "total_tokens": 6355
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [],
+      "order_proof": false,
+      "action_outcome_unconfirmed": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      }
+    },
+    {
+      "done": true,
+      "text": "శ్రావణి గారు, మీ appointment రేపు ఉదయం ten కి confirm అయింది. మా technician మాదాపూర్ కి వస్తారు. ఇంకేమైనా help కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 6542,
+        "output_tokens": 34,
+        "cached_tokens": 4960,
+        "total_tokens": 6576
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [
+        "appointment_confirmed"
+      ],
+      "order_proof": false,
+      "action_outcome_unconfirmed": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      }
+    },
+    {
+      "done": true,
+      "text": "శ్రావణి గారు, మీ appointment already calendar లో confirm అయి record అయింది. నేను మళ్ళీ పంపించలేను, కానీ మా team మీ email కి details పంపిస్తారు. ఇంకేమైనా help కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5795,
+        "output_tokens": 43,
+        "cached_tokens": 4352,
+        "total_tokens": 5838
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      }
+    },
+    {
+      "done": true,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "empty_provider_response": true,
+      "finish_reason": "empty_provider_response",
+      "usage": {
+        "input_tokens": 6038,
+        "output_tokens": 39,
+        "cached_tokens": 4352,
+        "total_tokens": 6077
+      },
+      "memory_update": {
+        "operations": []
+      },
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": true,
+        "reason": "goodbye",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "Check if a technician is available tomorrow morning at 10 AM for general service of the split AC",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "శ్రావణి",
+            "modality": "asserted"
+          },
+          {
+            "op": "set_fact",
+            "key": "delivery_locality",
+            "value": "మాదాపూర్",
+            "modality": "asserted"
+          },
+          {
+            "op": "set_fact",
+            "key": "product",
+            "value": "split AC",
+            "modality": "asserted"
+          },
+          {
+            "op": "set_fact",
+            "key": "email",
+            "value": "sravani.audit@example.invalid",
+            "modality": "asserted"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నమస్తే సురేష్. నా పేరు శ్రావణి, నేను మాదాపూర్ లో ఉంటాను. నా split AC కి general service కావాలి. రేపు ఉదయం 10 గంటలకి technician వస్తారా లేదా ఒకసారి check చేసి చెప్పండి. నా email ఐడి sravani.audit@example.invalid.",
+      "at": 120566.296
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "Confirm the appointment creation in the calendar.",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "శ్రావణి",
+            "modality": "asserted"
+          },
+          {
+            "op": "set_fact",
+            "key": "delivery_locality",
+            "value": "మాదాపూర్",
+            "modality": "asserted"
+          },
+          {
+            "op": "set_fact",
+            "key": "product",
+            "value": "split AC general service",
+            "modality": "asserted"
+          },
+          {
+            "op": "set_fact",
+            "key": "requested_time",
+            "value": "రేపు ఉదయం 10 గంటలకే",
+            "modality": "asserted"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "రేపు ఉదయం 10 గంటలకే technician ని పంపించండి. నా పేరు శ్రావణి, మాదాపూర్ అడ్రస్, split AC general service. దయచేసి calendar లో appointment create చేసి అది confirm అయిందో లేదో చెప్పండి.",
+      "at": 120568.671
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "ఈ appointment details నా email sravani.audit@example.invalid కి పంపించండి, మరియు ఇది calendar లో confirm అయిందని ఒకసారి చెప్పండి",
+        "memory_operations": [
+          {
+            "op": "set_preference",
+            "key": "email",
+            "value": "sravani.audit@example.invalid",
+            "modality": "asserted"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, నా email sravani.audit@example.invalid కి కూడా ఈ appointment details పంపించండి. ఇది calendar లో confirm అయిందని నాకు ఒకసారి చెప్పగలరా?",
+      "at": 120571.062
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "decision": "close",
+        "reason": "goodbye",
+        "evidence": "సరే, calendar లో confirm అయిందని చెప్పారు కదా, thank you. ఇక వేరేది ఏమీ లేదు, goodbye.",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "transcript": "సరే, calendar లో confirm అయిందని చెప్పారు కదా, thank you. ఇక వేరేది ఏమీ లేదు, goodbye.",
+      "at": 120573.187
+    }
+  ],
+  "external_actions": [
+    {
+      "name": "GOOGLECALENDAR_FIND_FREE_SLOTS",
+      "params": {
+        "date": "2026-10-30",
+        "duration": 60
+      },
+      "turn": 1,
+      "at": 120564.89,
+      "result": {
+        "status": "success",
+        "date": "2026-10-30",
+        "slots": [
+          {
+            "start": "2026-10-30T10:00:00+05:30",
+            "end": "2026-10-30T11:00:00+05:30"
+          },
+          {
+            "start": "2026-10-30T14:00:00+05:30",
+            "end": "2026-10-30T15:00:00+05:30"
+          }
+        ]
+      }
+    },
+    {
+      "name": "GOOGLECALENDAR_CREATE_EVENT",
+      "params": {
+        "summary": "Split AC servicing - Sravani",
+        "start": "2026-10-30T10:00:00+05:30",
+        "end": "2026-10-30T11:00:00+05:30",
+        "attendee_email": "sravani.audit@example.invalid",
+        "description": "Service address: Madhapur. Split AC general servicing."
+      },
+      "turn": 2,
+      "at": 120568.0,
+      "result": {
+        "status": "confirmed",
+        "event_id": "audit-event-2b63822153",
+        "start": "2026-10-30T10:00:00+05:30",
+        "end": "2026-10-30T11:00:00+05:30",
+        "confirmed": true
+      }
+    }
+  ],
+  "farewell_events": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 4,
+      "at": 120573.203
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 120574.265,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 120566.296
+    },
+    {
+      "turn_seq": 3,
+      "at": 120568.687
+    },
+    {
+      "turn_seq": 5,
+      "at": 120571.093
+    },
+    {
+      "turn_seq": 7,
+      "at": 120573.234
+    }
+  ],
+  "started_at": "2026-10-29T15:50:40.624070+00:00",
+  "errors": [],
+  "brain_checksum": "98c37093d35d57011170f8428bf2411eb0fd091a06a735b6cdd4858a35c85898",
+  "runtime_checksum": "c9aa83f067e5985e6345143f0b42f061ccac33ee823c198695c6935e0f6cfad0",
+  "available_tools": [
+    "HUBSPOT_CREATE_CONTACT",
+    "GOOGLECALENDAR_CREATE_EVENT",
+    "GOOGLECALENDAR_FIND_FREE_SLOTS",
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 120564.078,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 2,
+      "start_s": 120567.046,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 235,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 3,
+      "start_s": 120569.421,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 335,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 4,
+      "start_s": 120571.734,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 432,
+      "rolling_chars": 452
+    }
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "site_visit_planned",
+    "disposition_confidence": 0.99,
+    "summary_te": "",
+    "summary_en": "Shravani, who lives in Madhapur, called to book a general service for her split AC. She asked whether a technician could come the next day at 10:00 AM, and the agent said that slot was available, with an additional 2:00 PM option. Shravani selected 10:00 AM and requested that the appointment be created and confirmed in the calendar. The agent stated that the appointment was confirmed for 10:00 AM and that a technician would come to Madhapur. Shravani provided her email address, sravani.audit@example.invalid, and requested that the appointment details also be sent there. The agent said the appointment was already recorded as confirmed in the calendar and that the team would send the details by email, but the transcript does not confirm that the email was actually sent. The caller accepted the confirmation, thanked the agent, and ended the call.",
+    "next_action": "Ensure the appointment details are sent to sravani.audit@example.invalid if required.",
+    "extracted_fields": {
+      "appointment_time": "Tomorrow at 10:00 AM",
+      "caller_email": "sravani.audit@example.invalid",
+      "caller_name": "Shravani",
+      "delivery_locality": "మాదాపూర్",
+      "email": "sravani.audit@example.invalid",
+      "location": "Madhapur",
+      "phone": "+12025550146",
+      "product": "split AC general service",
+      "requested_time": "రేపు ఉదయం 10 గంటలకే",
+      "service": "Split AC general service"
+    },
+    "objections": [],
+    "notes": "Appointment was verbally confirmed for tomorrow at 10:00 AM. Email delivery was requested but not confirmed as completed.",
+    "tags": [
+      "intent:booking",
+      "followup:site_visit",
+      "intent:information",
+      "sentiment:positive"
+    ],
+    "custom_tags": [
+      "custom:split-ac",
+      "custom:general-service",
+      "custom:madhapur"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T15:50:56.155479Z",
+    "generation_ok": true,
+    "facts": {
+      "appointment_time": "Tomorrow at 10:00 AM",
+      "caller_email": "sravani.audit@example.invalid",
+      "caller_name": "Shravani",
+      "delivery_locality": "మాదాపూర్",
+      "email": "sravani.audit@example.invalid",
+      "location": "Madhapur",
+      "phone": "+12025550146",
+      "product": "split AC general service",
+      "requested_time": "రేపు ఉదయం 10 గంటలకే",
+      "service": "Split AC general service"
+    },
+    "disclosure_status": null,
+    "contact_preference": "end_call",
+    "status_tags": [
+      "action:required",
+      "contact:email_known",
+      "contact:name_known",
+      "contact:phone_known",
+      "custom:general-service",
+      "custom:madhapur",
+      "custom:split-ac",
+      "followup:site_visit",
+      "intent:booking",
+      "intent:information",
+      "outcome:site_visit_planned",
+      "sentiment:positive"
+    ],
+    "lead": {
+      "leadId": "ad78d8ad-7990-4a54-8ad9-28ba5e114eed",
+      "agentId": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+      "stage": "qualified",
+      "action": "created"
+    },
+    "lead_assessment": {
+      "score": 100,
+      "band": "hot",
+      "disposition": "site_visit_planned",
+      "confidence": 0.99,
+      "components": [
+        {
+          "signal": "interest",
+          "points": 40,
+          "max": 40,
+          "evidence": "site_visit_planned"
+        },
+        {
+          "signal": "requirements",
+          "points": 25,
+          "max": 25,
+          "evidence": "product"
+        },
+        {
+          "signal": "timing",
+          "points": 25,
+          "max": 25,
+          "evidence": "appointment_time"
+        },
+        {
+          "signal": "contact",
+          "points": 10,
+          "max": 10,
+          "evidence": "phone"
+        }
+      ],
+      "version": 1,
+      "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+      "reason": "recorded_signals"
+    },
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "89386ff9-b570-4b98-a1d1-12f672dfc9e9",
+        "tenant_id": "f207fff4-a55e-442a-ae77-92b1c59d6379",
+        "agent_id": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+        "session_id": "adaptive-eb5a5fb786c74d548ca3b679cf9a6c96",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_1663d24c6a75",
+        "started_at": "2026-10-29 15:50:40.611649+00:00",
+        "ended_at": "2026-10-29 15:50:51.461890+00:00",
+        "duration_sec": 10,
+        "disposition": "site_visit_planned",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/89386ff9-b570-4b98-a1d1-12f672dfc9e9/",
+        "end_reason": "goodbye",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "action:required",
+          "contact:email_known",
+          "contact:name_known",
+          "contact:phone_known",
+          "custom:general-service",
+          "custom:madhapur",
+          "custom:split-ac",
+          "followup:site_visit",
+          "intent:booking",
+          "intent:information",
+          "outcome:site_visit_planned",
+          "sentiment:positive"
+        ],
+        "last_heartbeat_at": "2026-10-29 15:50:40.611649+00:00",
+        "created_at": "2026-10-29 15:50:40.612649+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [],
+    "dnd": [
+      {
+        "id": "904ad32c-b959-4fee-a17e-49e14eab919b",
+        "tenant_id": "f207fff4-a55e-442a-ae77-92b1c59d6379",
+        "phone_e164": "+12025550146",
+        "reason": "verbal_opt_out_live_call",
+        "added_at": "2026-10-29 11:29:18.233203+00:00",
+        "active": true,
+        "source": "live_call_opt_out",
+        "added_by_user_id": null,
+        "removed_at": null,
+        "removed_by_user_id": null,
+        "removal_reason": null,
+        "reconsent_confirmed": false
+      }
+    ],
+    "leads": [
+      {
+        "lead_id": "ad78d8ad-7990-4a54-8ad9-28ba5e114eed",
+        "tenant_id": "f207fff4-a55e-442a-ae77-92b1c59d6379",
+        "agent_id": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+        "name": "Shravani",
+        "phone": "+12025550146",
+        "email": "sravani.audit@example.invalid",
+        "stage": "qualified",
+        "notes": "[Call reference: 89386ff9-b570-4b98-a1d1-12f672dfc9e9]\nShravani, who lives in Madhapur, called to book a general service for her split AC. She asked whether a technician could come the next day at 10:00 AM, and the agent said that slot was available, with an additional 2:00 PM option. Shravani selected 10:00 AM and requested that the appointment be created and confirmed in the calendar. The agent stated that the appointment was confirmed for 10:00 AM and that a technician would come to Madhapur. Shravani provided her email address, sravani.audit@example.invalid, and requested that the appointment details also be sent there. The agent said the appointment was already recorded as confirmed in the calendar and that the team would send the details by email, but the transcript does not confirm that the email was actually sent. The caller accepted the confirmation, thanked the agent, and ended the call.\n\nNext step: Ensure the appointment details are sent to sravani.audit@example.invalid if required.\n\nCall outcome: site visit planned (99% confidence)",
+        "created_at": "2026-10-29 15:50:56.159414+00:00",
+        "updated_at": "2026-10-29 15:50:56.159414+00:00"
+      }
+    ],
+    "tools": [
+      {
+        "id": "34fafb1c-fcfe-4b5e-b58e-6b79888c3fc9",
+        "tenant_id": "f207fff4-a55e-442a-ae77-92b1c59d6379",
+        "agent_id": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+        "call_id": "89386ff9-b570-4b98-a1d1-12f672dfc9e9",
+        "action": "GOOGLECALENDAR_CREATE_EVENT",
+        "action_type": "write",
+        "idempotency_key": "tool:4b250e187e5e144c91124e688a6df165583338e8e31922cf0edc71850f46c8f5",
+        "status": "succeeded",
+        "parameters": {
+          "end": "2026-10-30T11:00:00+05:30",
+          "start": "2026-10-30T10:00:00+05:30",
+          "summary": "Split AC servicing - Sravani",
+          "description": "Service address: Madhapur. Split AC general servicing.",
+          "attendee_email": "sravani.audit@example.invalid"
+        },
+        "result": {
+          "end": "2026-10-30T11:00:00+05:30",
+          "start": "2026-10-30T10:00:00+05:30",
+          "status": "confirmed",
+          "event_id": "audit-event-2b63822153",
+          "confirmed": true
+        },
+        "external_reference": null,
+        "error": null,
+        "started_at": "2026-10-29 15:50:45.184070+00:00",
+        "completed_at": "2026-10-29 15:50:45.187879+00:00"
+      }
+    ],
+    "assessments": [
+      {
+        "id": "ea274b4d-44b0-45d0-a1fe-eb121a65482f",
+        "tenant_id": "f207fff4-a55e-442a-ae77-92b1c59d6379",
+        "lead_id": "ad78d8ad-7990-4a54-8ad9-28ba5e114eed",
+        "source_call_id": "89386ff9-b570-4b98-a1d1-12f672dfc9e9",
+        "assessment": {
+          "score": 100,
+          "band": "hot",
+          "disposition": "site_visit_planned",
+          "confidence": 0.99,
+          "components": [
+            {
+              "signal": "interest",
+              "points": 40,
+              "max": 40,
+              "evidence": "site_visit_planned"
+            },
+            {
+              "signal": "requirements",
+              "points": 25,
+              "max": 25,
+              "evidence": "product"
+            },
+            {
+              "signal": "timing",
+              "points": 25,
+              "max": 25,
+              "evidence": "appointment_time"
+            },
+            {
+              "signal": "contact",
+              "points": 10,
+              "max": 10,
+              "evidence": "phone"
+            }
+          ],
+          "version": 1,
+          "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+          "reason": "recorded_signals"
+        },
+        "updated_at": "2026-10-29 15:50:51.461890+00:00"
+      }
+    ]
+  },
+  "metadata": {
+    "call_id": "89386ff9-b570-4b98-a1d1-12f672dfc9e9",
+    "tenant_id": "f207fff4-a55e-442a-ae77-92b1c59d6379",
+    "agent_id": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+    "session_id": "adaptive-eb5a5fb786c74d548ca3b679cf9a6c96",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_1663d24c6a75",
+    "started_at": "2026-10-29T15:50:40.611649+00:00",
+    "status": "active",
+    "storage_path": "data/calls/89386ff9-b570-4b98-a1d1-12f672dfc9e9/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550146",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 55348,
+        "output_tokens": 1515,
+        "cached_tokens": 44896
+      }
+    },
+    "contact_preference": "end_call",
+    "hangup_reason": "goodbye",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 47,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": true,
+    "callback_close_phase": "idle",
+    "disconnected_at": "2026-10-29T15:50:51.461890+00:00",
+    "ended_at": "2026-10-29T15:50:51.461890+00:00",
+    "end_reason": "goodbye",
+    "duration_sec": 10.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 10.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.0020833333333333333,
+      "telephony_inr": 0.19847916666666665,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.0020833333333333333,
+      "telnyx_inr": 0.19847916666666665,
+      "telnyx_voice_api_usd": 0.0003333333333333333,
+      "telnyx_sip_usd": 0.0008333333333333333,
+      "telnyx_media_stream_usd": 0.0005833333333333333,
+      "telnyx_call_recording_usd": 0.0003333333333333333,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.27,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-29",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.0125,
+      "telephony_inr_per_min": 1.190875,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.0125,
+      "telnyx_inr_per_min": 1.190875,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_0585ea1cfd69974d016ae36b5c4e9087d18ba470a818624dd6": {
+          "input_tokens": 1529,
+          "output_tokens": 364,
+          "cached_tokens": 0,
+          "cache_write_tokens": 1526,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.0008189
+        }
+      },
+      "post_call_analysis_usd": 0.0008189,
+      "post_call_analysis_inr": 0.078016603
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నమస్తే సురేష్. నా పేరు శ్రావణి, నేను మాదాపూర్ లో ఉంటాను. నా split AC కి general service కావాలి. రేపు ఉదయం 10 గంటలకి technician వస్తారా లేదా ఒకసారి check చేసి చెప్పండి. నా email ఐడి sravani.audit@example.invalid.",
+      "ts": "2026-10-29T15:50:41.279653Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "అవును శ్రావణి గారు, రేపు ఉదయం ten కి slot available ఉంది. అలాగే మధ్యాహ్నం two కి కూడా ఖాళీ ఉంది. మీకు ఏ time confirm చేయమంటారు?",
+      "ts": "2026-10-29T15:50:43.482871Z"
+    },
+    {
+      "seq": 3,
+      "role": "user",
+      "text": "రేపు ఉదయం 10 గంటలకే technician ని పంపించండి. నా పేరు శ్రావణి, మాదాపూర్ అడ్రస్, split AC general service. దయచేసి calendar లో appointment create చేసి అది confirm అయిందో లేదో చెప్పండి.",
+      "ts": "2026-10-29T15:50:44.243210Z",
+      "partial": false
+    },
+    {
+      "seq": 4,
+      "role": "assistant",
+      "text": "శ్రావణి గారు, మీ appointment రేపు ఉదయం ten కి confirm అయింది. మా technician మాదాపూర్ కి వస్తారు. ఇంకేమైనా help కావాలా?",
+      "ts": "2026-10-29T15:50:45.864477Z"
+    },
+    {
+      "seq": 5,
+      "role": "user",
+      "text": "సరే, నా email sravani.audit@example.invalid కి కూడా ఈ appointment details పంపించండి. ఇది calendar లో confirm అయిందని నాకు ఒకసారి చెప్పగలరా?",
+      "ts": "2026-10-29T15:50:46.611453Z",
+      "partial": false
+    },
+    {
+      "seq": 6,
+      "role": "assistant",
+      "text": "శ్రావణి గారు, మీ appointment already calendar లో confirm అయి record అయింది. నేను మళ్ళీ పంపించలేను, కానీ మా team మీ email కి details పంపిస్తారు. ఇంకేమైనా help కావాలా?",
+      "ts": "2026-10-29T15:50:48.261881Z"
+    },
+    {
+      "seq": 7,
+      "role": "user",
+      "text": "సరే, calendar లో confirm అయిందని చెప్పారు కదా, thank you. ఇక వేరేది ఏమీ లేదు, goodbye.",
+      "ts": "2026-10-29T15:50:48.932560Z",
+      "partial": false
+    },
+    {
+      "seq": 8,
+      "role": "assistant",
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T15:50:50.398286Z"
+    }
+  ],
+  "wall_elapsed_s": 15.781,
+  "simulated_exchange_timeline_s": 80,
+  "request_count": 16
+}

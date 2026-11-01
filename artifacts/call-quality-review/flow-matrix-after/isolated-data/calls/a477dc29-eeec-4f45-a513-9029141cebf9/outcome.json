@@ -1,0 +1,77 @@
+{
+  "disposition": "new_lead",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call with hesitation and unclear speech. The agent asked for clarification, and after the caller repeated their greeting, the agent introduced herself as Anjali from Sunrise Dental Clinic in Hyderabad and asked how she could assist. The caller did not state a specific request or provide any details during the brief exchange. Because the interaction was very short and inconclusive, no further action was agreed upon, and the call ended after the agent's opening greeting.",
+  "next_action": "",
+  "extracted_fields": {
+    "phone": "+919876500513"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T11:01:09.824241Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500513"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:new_lead",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "e8c4db15-e27f-429b-9a88-0d890d8097c1",
+    "agentId": "9632fd4d-4e4f-4e57-86d9-9c9191d9c6a6",
+    "stage": "new",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 10,
+    "band": "cold",
+    "disposition": "new_lead",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

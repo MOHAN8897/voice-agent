@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "caller_name": "Ravi Kumar",
+    "delivery_address": "12 MG Road, Vijayawada"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: My name is Ravi Kumar. Deliver to 12 MG Road, Vijayawada.\nassistant: Ravi Kumar, I have noted your delivery address as 12 MG Road, Vijayawada. You mentioned 200 matte visiting cards. Would you like to go ahead and place the order?\nuser: Yes, please confirm the order.\nassistant: Your order for 200 matte visiting cards has been confirmed. Delivery to 12 MG Road, Vijayawada will take 3 working days after artwork approval, and payment is cash on delivery.\nuser: Thanks, that's all."
+}

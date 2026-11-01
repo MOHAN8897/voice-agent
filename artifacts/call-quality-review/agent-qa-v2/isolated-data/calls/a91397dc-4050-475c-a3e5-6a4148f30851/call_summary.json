@@ -1,0 +1,51 @@
+{
+  "call_id": "a91397dc-4050-475c-a3e5-6a4148f30851",
+  "language_callback": null,
+  "disposition": "new_lead",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_language": "en-IN",
+  "summary_en": "The agent called the customer to offer NatureVeda Ashwagandha Capsules priced at 699 rupees for 60 capsules. The customer asked about safety while on blood pressure medication, and the agent advised consulting a healthcare professional because complete safety information was unavailable. The customer also inquired whether the product could cure stress or guarantee results, to which the agent responded that such claims were not supported and that no guarantees were offered. The customer said they would discuss the product with their doctor before deciding. The call ended with the customer thanking the agent and saying goodbye.",
+  "next_action": "{}",
+  "extracted_fields": {
+    "phone": "+919700000022",
+    "price": "699 rupees for 60 capsules",
+    "product": "NatureVeda Ashwagandha Capsules"
+  },
+  "facts": {
+    "phone": "+919700000022",
+    "price": "699 rupees for 60 capsules",
+    "product": "NatureVeda Ashwagandha Capsules"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:ashwagandha-capsules",
+    "custom:blood-pressure",
+    "followup:send_info",
+    "intent:information",
+    "outcome:new_lead",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:ashwagandha-capsules",
+    "custom:blood-pressure"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Safety concerns regarding daily blood pressure medication usage"
+  ],
+  "unanswered_questions": [
+    "Is it completely safe to use the Ashwagandha capsules while taking daily blood pressure medicine?",
+    "Will this completely cure my stress, and are the results guaranteed?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T14:07:19.804600Z",
+  "generation_ok": true
+}

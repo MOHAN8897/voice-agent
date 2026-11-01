@@ -1,0 +1,1 @@
+{"turn_seq": 1, "ts": "2026-10-29T20:38:32.982331Z", "source": "model", "operations": [{"op": "set_preference", "key": "callback_time", "value": "നാളെ വൈകുന്നേരം 6 മണിക്ക്"}], "applied": true, "validation_errors": []}

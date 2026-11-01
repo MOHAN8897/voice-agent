@@ -1,0 +1,114 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "The caller initially asked for 100 normal visiting cards with a budget of up to 500 rupees, then changed the request to 200 matte visiting cards with a budget of up to 900 rupees. The agent explained that the estimated price would be 700 rupees, within budget, and collected the caller's name, Ramesh, and delivery location, Vijayawada. The caller asked about payment and required cash on delivery because advance payment was not possible; the agent confirmed COD was applicable for orders below 1,000 rupees. The agent explained that the artwork design must be submitted and approved before the order can be confirmed. The caller said the design was not ready and would be sent later, then reconfirmed the product, quantity, budget, delivery location, and COD preference and asked whether anything else was needed. The agent said the design was the remaining requirement but clarified that no team handoff or follow-up could be promised. The order was not confirmed during the call.",
+  "next_action": "Caller needs to provide the artwork design for approval before the order can be processed; no follow-up or team handoff was confirmed.",
+  "extracted_fields": {
+    "budget": "900 rupees",
+    "caller_name": "రమేష్",
+    "delivery_locality": "విజయవాడ",
+    "delivery_location": "Vijayawada",
+    "estimated_price": "700 rupees",
+    "name": "Ramesh",
+    "order_requirement": "Artwork design approval before processing",
+    "payment_method": "Cash on delivery",
+    "phone": "+12025550143",
+    "product": "Matte visiting cards",
+    "quantity": "200"
+  },
+  "objections": [
+    "Caller cannot make an advance payment and requires cash on delivery.",
+    "Artwork design is not ready yet."
+  ],
+  "notes": "Caller expressed clear purchase intent, but the order remains pending artwork submission and approval. The agent stated that no team handoff or follow-up could be guaranteed.",
+  "tags": [
+    "intent:purchase",
+    "intent:pricing",
+    "signal:ready_to_buy",
+    "followup:send_info",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards",
+    "custom:vijayawada-delivery",
+    "custom:artwork-pending"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:50:08.282736Z",
+  "generation_ok": true,
+  "facts": {
+    "budget": "900 rupees",
+    "caller_name": "రమేష్",
+    "delivery_locality": "విజయవాడ",
+    "delivery_location": "Vijayawada",
+    "estimated_price": "700 rupees",
+    "name": "Ramesh",
+    "order_requirement": "Artwork design approval before processing",
+    "payment_method": "Cash on delivery",
+    "phone": "+12025550143",
+    "product": "Matte visiting cards",
+    "quantity": "200"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:artwork-pending",
+    "custom:matte-visiting-cards",
+    "custom:vijayawada-delivery",
+    "followup:send_info",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "signal:objection",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "8a1415d9-8049-4618-922f-4d5910765a17",
+    "agentId": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.97,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

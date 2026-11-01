@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "ரெண்டு split AC-யும் ஒரு window AC-யும் service பண்ணினா total எவ்வளவு?", "ts": "2026-10-29T19:31:25.513494Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Split AC servicing-க்கு ₹599, window AC-க்கு ₹499 வரும். அப்போ ரெண்டு split AC அப்புறம் ஒரு window AC-க்கு total-ஆ ₹1,697 ஆகும். வேற ஏதாச்சும் details வேணுமா?", "ts": "2026-10-29T19:31:26.396165Z", "brain_latency_ms": 885}

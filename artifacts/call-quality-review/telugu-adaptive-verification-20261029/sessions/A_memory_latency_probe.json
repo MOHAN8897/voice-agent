@@ -1,0 +1,1789 @@
+{
+  "scenario": {
+    "id": "A_memory_latency_probe",
+    "business": "A",
+    "kind": "memory_latency",
+    "integration": "none",
+    "policy": "review",
+    "max_turns": 10,
+    "goal": "Ask about 200 matte visiting cards, give name Ramana and Vijayawada locality once. Continue meaningful information questions about artwork, delivery, flex banners, office hours and payment; do not order or request callbacks. Around turns 4 and 8 ask what name, product and quantity they remember, without re-stating those values. Correct any error, thank them mid-conversation with a new question, then clearly end on turn ten."
+  },
+  "agent": {
+    "id": "A",
+    "key": "printing",
+    "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "name": "Sri Krishna Digital Prints",
+    "agent_name": "Kavitha",
+    "role": "sales",
+    "industry": "printing",
+    "brief": "Agent name Kavitha. Company name Sri Krishna Digital Prints.\nOutbound and inbound customer inquiries in Telugu.\nWe print visiting cards: normal paper visiting cards cost 200 rupees for 100 cards,\nmatte finish cards cost 350 rupees for 100 cards. Minimum order quantity 100 cards.\nWedding invitation cards are customized: pricing depends on design, paper sample and quantity, no fixed price over the phone.\nFlex banners: normal flex 15 rupees per square foot, star flex 20 rupees per square foot.\nDelivery in Vijayawada takes 3 working days after design artwork approval; urgent 24-hour delivery is extra 150 rupees.\nPayment: Cash on delivery accepted for orders up to 1000 rupees; 50% advance payment required for orders above 1000 rupees.\nNo online payment or credit card processing on phone call.\nOffice hours Monday to Saturday 9:30 AM to 8:00 PM, Sunday closed.\nGoal: answer customer questions on cards, banners and pricing; understand their requirement.\nIf interested, take preferred name, quantity and delivery locality for a quote or order request.\nDo not force details before answering questions.\nCustomer refusing visiting cards may still want flex banners or wedding cards.\nNever claim an order is paid or dispatched without artwork approval and design confirmation.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Kavitha",
+      "company_name": "Sri Krishna Digital Prints",
+      "role": "Sales and customer enquiries",
+      "permitted_next_steps": "Collect customer name, item type, quantity and delivery locality in Vijayawada to submit an internal quote/order request. Explain that artwork approval is required before printing.",
+      "payment_rules": "Cash on delivery for orders up to 1000 rupees; 50% advance for orders above 1000 rupees. No online payment collection on call.",
+      "delivery_details": "Local delivery in Vijayawada takes 3 working days after artwork approval. Urgent 24-hour delivery is extra 150 rupees.",
+      "wedding_cards": "Customized quotation only based on design and paper sample. No fixed price on phone.",
+      "visiting_cards": "Standard 200 rupees for 100 cards; Matte finish 350 rupees for 100 cards. Minimum order 100 cards.",
+      "forbidden_actions": "Never confirm external courier shipment or take card payment on phone. Never guarantee delivery without artwork approval."
+    },
+    "user_id": "de625f35-524c-4767-a252-106cb34cdfae",
+    "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e"
+  },
+  "call_id": "39ff3efe-6a8c-46db-9a2b-af4f24c347c3",
+  "session_id": "adaptive-bec2d6ee01354981a85efcfcd43f9176",
+  "phone": "+12025550139",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_8649a3d49b8f",
+  "turn_index": 8,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నమస్తే Kavitha. నాకు సుమారు 200 matte visiting cards కావాలి. నా పేరు Ramana, నేను Vijayawada లో ఉన్నాను. వీటికి సంబంధించిన artwork details నేను తర్వాత ఇస్తాను, ప్రస్తుతానికి delivery ఎప్పుడు చేయగలుగుతారు?",
+        "intends_end": false,
+        "intent": "Inquire about delivery timeline for 200 matte visiting cards and provide initial details",
+        "elapsed_s": 0.625
+      },
+      "spoken": "సరే Ramana గారు, artwork approve అయిన తర్వాత Vijayawada లో delivery కి 3 working days పడుతుంది. Urgent గా కావాలంటే 24 గంటల్లో delivery చేయించుకోవచ్చు, దానికి extra one hundred fifty rupees అవుతుంది. మీరు ఈ order తో ముందుకు వెళ్దామనుకుంటున్నారా?",
+      "elapsed_s": 1.438,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "Ramana",
+          "product": "visiting cards",
+          "quantity": "200",
+          "delivery_locality": "Vijayawada"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call.",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        695,
+        696,
+        697
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సరే Ramana గారు, artwork approve అయిన తర్వాత Vijayawada లో delivery కి 3 working days పడుతుంది. Urgent గా కావాలంటే 24 గంటల్లో delivery చేయించుకోవచ్చు, దానికి extra one hundred fifty rupees అవుతుంది. మీరు ఈ order తో ముందుకు వెళ్దామనుకుంటున్నారా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5586,
+            "output_tokens": 60,
+            "cached_tokens": 4512,
+            "total_tokens": 5646
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 2,
+      "caller": {
+        "utterance": "సరే, ప్రస్తుతానికి order ముందుకు వేయొద్దు. ఈ 200 matte cards కి artwork ఎలా పంపాలో కొంచెం చెప్తారా? అలాగే, మీ office hours ఏంటి?",
+        "intends_end": false,
+        "intent": "Inquire about artwork submission process and office hours",
+        "elapsed_s": 0.625
+      },
+      "spoken": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మా office hours Monday నుంచి Saturday వరకు ఉదయం nine thirty నుంచి రాత్రి eight వరకు ఉంటాయి, ఆదివారం closed. మీరు ఎప్పుడు పంపిస్తారో చెప్తారా?",
+      "elapsed_s": 1.593,
+      "memory_before": {
+        "facts": {
+          "caller_name": "Ramana",
+          "product": "visiting cards",
+          "quantity": "200",
+          "delivery_locality": "Vijayawada"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call.",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "Ramana",
+          "product": "visiting cards",
+          "quantity": "200",
+          "delivery_locality": "Vijayawada"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call.",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        699,
+        700,
+        701
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మా office hours Monday నుంచి Saturday వరకు ఉదయం nine thirty నుంచి రాత్రి eight వరకు ఉంటాయి, ఆదివారం closed. మీరు ఎప్పుడు పంపిస్తారో చెప్తారా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5784,
+            "output_tokens": 59,
+            "cached_tokens": 4448,
+            "total_tokens": 5843
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 3,
+      "caller": {
+        "utterance": "సరే, నేను ఈ details అన్నీ తర్వాత పంపిస్తాను. అలాగే, flex banners కూడా ఇస్తారా, వాటి ధర ఎలా ఉంటుంది?",
+        "intends_end": false,
+        "intent": "Inquire about flex banners and pricing",
+        "elapsed_s": 0.593
+      },
+      "spoken": "అవును, మా దగ్గర flex banners కూడా ఉన్నాయి. Normal flex banners కి per square foot fifteen rupees అవుతుంది, అదే star flex అయితే twenty rupees అవుతుంది. మీకు banners కూడా కావాలా?",
+      "elapsed_s": 1.594,
+      "memory_before": {
+        "facts": {
+          "caller_name": "Ramana",
+          "product": "visiting cards",
+          "quantity": "200",
+          "delivery_locality": "Vijayawada"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call.",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "Ramana",
+          "product": "visiting cards",
+          "quantity": "200",
+          "delivery_locality": "Vijayawada"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call.",
+        "summary": "assistant: ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మా office hours Monday నుంచి Saturday వరకు ఉదయం nine thirty నుంచి రాత్రి eight వరకు ఉంటాయి, ఆదివారం closed. మీరు ఎప్పుడు పంపిస్తారో చెప్తారా?\nuser: సరే, నేను ఈ details అన్నీ తర్వాత పంపిస్తాను. అలాగే, flex banners కూడా ఇస్తారా, వాటి ధర ఎలా ఉంటుంది?\nassistant: అవును, మా దగ్గర flex banners కూడా ఉన్నాయి. Normal flex banners కి per square foot fifteen rupees అవుతుంది, అదే star flex అయితే twenty rupees అవుతుంది. మీకు banners కూడా కావాలా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        703,
+        704,
+        705
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "అవును, మా దగ్గర flex banners కూడా ఉన్నాయి. Normal flex banners కి per square foot fifteen rupees అవుతుంది, అదే star flex అయితే twenty rupees అవుతుంది. మీకు banners కూడా కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5892,
+            "output_tokens": 40,
+            "cached_tokens": 4448,
+            "total_tokens": 5932
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 4,
+      "caller": {
+        "utterance": "సరే, ప్రస్తుతానికి banners వద్దు. ఒక విషయం, నేను Ramana అని చెప్పాను కదా, నా పేరు రమేష్. మీరు ఏ పేరు, ఏ product, ఎన్ని quantity అని గుర్తుంచుకున్నారో ఒకసారి చెప్తారా? అలాగే payment ఎలా చేయాలి?",
+        "intends_end": false,
+        "intent": "Verify remembered details and ask about payment method",
+        "elapsed_s": 0.672
+      },
+      "spoken": "సరే రమేష్ గారు, మీరు మొదట Ramana అని చెప్పారు, కానీ ఇప్పుడు రమేష్ అని చెప్పారు. మీకు two hundred matte visiting cards కావాలి, delivery Vijayawada లో ఉంటుంది. Payment విషయానికి వస్తే, one thousand rupees లోపు orders కి cash on delivery ఉంటుంది, అంతకంటే ఎక్కువ ఉంటే 50% advance payment చేయాలి.",
+      "elapsed_s": 1.719,
+      "memory_before": {
+        "facts": {
+          "caller_name": "Ramana",
+          "product": "visiting cards",
+          "quantity": "200",
+          "delivery_locality": "Vijayawada"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call.",
+        "summary": "assistant: ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మా office hours Monday నుంచి Saturday వరకు ఉదయం nine thirty నుంచి రాత్రి eight వరకు ఉంటాయి, ఆదివారం closed. మీరు ఎప్పుడు పంపిస్తారో చెప్తారా?\nuser: సరే, నేను ఈ details అన్నీ తర్వాత పంపిస్తాను. అలాగే, flex banners కూడా ఇస్తారా, వాటి ధర ఎలా ఉంటుంది?\nassistant: అవును, మా దగ్గర flex banners కూడా ఉన్నాయి. Normal flex banners కి per square foot fifteen rupees అవుతుంది, అదే star flex అయితే twenty rupees అవుతుంది. మీకు banners కూడా కావాలా?"
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "visiting cards",
+          "quantity": "200",
+          "delivery_locality": "Vijayawada"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+        "summary": "assistant: ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మా office hours Monday నుంచి Saturday వరకు ఉదయం nine thirty నుంచి రాత్రి eight వరకు ఉంటాయి, ఆదివారం closed. మీరు ఎప్పుడు పంపిస్తారో చెప్తారా?\nuser: సరే, నేను ఈ details అన్నీ తర్వాత పంపిస్తాను. అలాగే, flex banners కూడా ఇస్తారా, వాటి ధర ఎలా ఉంటుంది?\nassistant: అవును, మా దగ్గర flex banners కూడా ఉన్నాయి. Normal flex banners కి per square foot fifteen rupees అవుతుంది, అదే star flex అయితే twenty rupees అవుతుంది. మీకు banners కూడా కావాలా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        707,
+        708,
+        709
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సరే రమేష్ గారు, మీరు మొదట Ramana అని చెప్పారు, కానీ ఇప్పుడు రమేష్ అని చెప్పారు. మీకు two hundred matte visiting cards కావాలి, delivery Vijayawada లో ఉంటుంది. Payment విషయానికి వస్తే, one thousand rupees లోపు orders కి cash on delivery ఉంటుంది, అంతకంటే ఎక్కువ ఉంటే 50% advance payment చేయాలి.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 6127,
+            "output_tokens": 86,
+            "cached_tokens": 4448,
+            "total_tokens": 6213
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 5,
+      "caller": {
+        "utterance": "అర్థమైంది, ధన్యవాదాలు. ఒక విషయం, 200 matte cards కి 50% advance payment అంటే కొంచెం ఇబ్బంది అవుతుంది, cash on delivery ఉంటేనే బాగుంటుంది. అలాగే, artwork approval ఎప్పుడు చేయాలో చెప్పగలరా?",
+        "intends_end": false,
+        "intent": "Ask about artwork approval timing and express cash-on-delivery preference",
+        "elapsed_s": 0.688
+      },
+      "spoken": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు.",
+      "elapsed_s": 1.812,
+      "memory_before": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "visiting cards",
+          "quantity": "200",
+          "delivery_locality": "Vijayawada"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+        "summary": "assistant: ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మా office hours Monday నుంచి Saturday వరకు ఉదయం nine thirty నుంచి రాత్రి eight వరకు ఉంటాయి, ఆదివారం closed. మీరు ఎప్పుడు పంపిస్తారో చెప్తారా?\nuser: సరే, నేను ఈ details అన్నీ తర్వాత పంపిస్తాను. అలాగే, flex banners కూడా ఇస్తారా, వాటి ధర ఎలా ఉంటుంది?\nassistant: అవును, మా దగ్గర flex banners కూడా ఉన్నాయి. Normal flex banners కి per square foot fifteen rupees అవుతుంది, అదే star flex అయితే twenty rupees అవుతుంది. మీకు banners కూడా కావాలా?"
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "visiting cards",
+          "quantity": "200",
+          "delivery_locality": "Vijayawada"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery"
+        },
+        "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+        "summary": "assistant: ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మా office hours Monday నుంచి Saturday వరకు ఉదయం nine thirty నుంచి రాత్రి eight వరకు ఉంటాయి, ఆదివారం closed. మీరు ఎప్పుడు పంపిస్తారో చెప్తారా?\nuser: సరే, నేను ఈ details అన్నీ తర్వాత పంపిస్తాను. అలాగే, flex banners కూడా ఇస్తారా, వాటి ధర ఎలా ఉంటుంది?\nassistant: అవును, మా దగ్గర flex banners కూడా ఉన్నాయి. Normal flex banners కి per square foot fifteen rupees అవుతుంది, అదే star flex అయితే twenty rupees అవుతుంది. మీకు banners కూడా కావాలా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        711,
+        712,
+        713
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 6279,
+            "output_tokens": 50,
+            "cached_tokens": 4448,
+            "total_tokens": 6329
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 6,
+      "caller": {
+        "utterance": "సరే, నేను తర్వాత artwork approval పంపిస్తాను. ఈ order గురించి నా enquiry note చేసుకుంటారా, ఇకపై నేను call చేయను.",
+        "intends_end": true,
+        "intent": "Conclude the call after noting enquiry and declining follow-up",
+        "elapsed_s": 0.594
+      },
+      "spoken": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మీరు తర్వాత artwork approval పంపిస్తానని చెప్పారు కదా, అది మాకు note చేసుకున్నాము. ఇంకేమైనా help కావాలా?",
+      "elapsed_s": 1.734,
+      "memory_before": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "visiting cards",
+          "quantity": "200",
+          "delivery_locality": "Vijayawada"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery"
+        },
+        "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+        "summary": "assistant: ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మా office hours Monday నుంచి Saturday వరకు ఉదయం nine thirty నుంచి రాత్రి eight వరకు ఉంటాయి, ఆదివారం closed. మీరు ఎప్పుడు పంపిస్తారో చెప్తారా?\nuser: సరే, నేను ఈ details అన్నీ తర్వాత పంపిస్తాను. అలాగే, flex banners కూడా ఇస్తారా, వాటి ధర ఎలా ఉంటుంది?\nassistant: అవును, మా దగ్గర flex banners కూడా ఉన్నాయి. Normal flex banners కి per square foot fifteen rupees అవుతుంది, అదే star flex అయితే twenty rupees అవుతుంది. మీకు banners కూడా కావాలా?"
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "visiting cards",
+          "quantity": "200",
+          "delivery_locality": "Vijayawada"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery"
+        },
+        "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+        "summary": "assistant: ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మా office hours Monday నుంచి Saturday వరకు ఉదయం nine thirty నుంచి రాత్రి eight వరకు ఉంటాయి, ఆదివారం closed. మీరు ఎప్పుడు పంపిస్తారో చెప్తారా?\nuser: సరే, నేను ఈ details అన్నీ తర్వాత పంపిస్తాను. అలాగే, flex banners కూడా ఇస్తారా, వాటి ధర ఎలా ఉంటుంది?\nassistant: అవును, మా దగ్గర flex banners కూడా ఉన్నాయి. Normal flex banners కి per square foot fifteen rupees అవుతుంది, అదే star flex అయితే twenty rupees అవుతుంది. మీకు banners కూడా కావాలా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        715,
+        716,
+        717
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మీరు తర్వాత artwork approval పంపిస్తానని చెప్పారు కదా, అది మాకు note చేసుకున్నాము. ఇంకేమైనా help కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 6767,
+            "output_tokens": 39,
+            "cached_tokens": 4640,
+            "total_tokens": 6806
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [
+            "enquiry_saved"
+          ],
+          "order_proof": false,
+          "action_outcome_unconfirmed": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 7,
+      "caller": {
+        "utterance": "సరే, ఇంకేమీ అవసరం లేదు. ఇకపై నేను call చేయను. ధన్యవాదాలు.",
+        "intends_end": true,
+        "intent": "Explicitly ending the call after confirming no further help is needed",
+        "elapsed_s": 0.578
+      },
+      "spoken": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇకపై calls రాకుండా note చేసుకున్నాము. మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 1.703,
+      "memory_before": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "visiting cards",
+          "quantity": "200",
+          "delivery_locality": "Vijayawada"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery"
+        },
+        "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+        "summary": "assistant: ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మా office hours Monday నుంచి Saturday వరకు ఉదయం nine thirty నుంచి రాత్రి eight వరకు ఉంటాయి, ఆదివారం closed. మీరు ఎప్పుడు పంపిస్తారో చెప్తారా?\nuser: సరే, నేను ఈ details అన్నీ తర్వాత పంపిస్తాను. అలాగే, flex banners కూడా ఇస్తారా, వాటి ధర ఎలా ఉంటుంది?\nassistant: అవును, మా దగ్గర flex banners కూడా ఉన్నాయి. Normal flex banners కి per square foot fifteen rupees అవుతుంది, అదే star flex అయితే twenty rupees అవుతుంది. మీకు banners కూడా కావాలా?"
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "visiting cards",
+          "quantity": "200",
+          "delivery_locality": "Vijayawada"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery"
+        },
+        "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+        "summary": "assistant: ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మా office hours Monday నుంచి Saturday వరకు ఉదయం nine thirty నుంచి రాత్రి eight వరకు ఉంటాయి, ఆదివారం closed. మీరు ఎప్పుడు పంపిస్తారో చెప్తారా?\nuser: సరే, నేను ఈ details అన్నీ తర్వాత పంపిస్తాను. అలాగే, flex banners కూడా ఇస్తారా, వాటి ధర ఎలా ఉంటుంది?\nassistant: అవును, మా దగ్గర flex banners కూడా ఉన్నాయి. Normal flex banners కి per square foot fifteen rupees అవుతుంది, అదే star flex అయితే twenty rupees అవుతుంది. మీకు banners కూడా కావాలా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        719,
+        720,
+        721
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇకపై calls రాకుండా note చేసుకున్నాము. మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 6907,
+            "output_tokens": 32,
+            "cached_tokens": 4672,
+            "total_tokens": 6939
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [
+            "enquiry_saved"
+          ],
+          "order_proof": false,
+          "action_outcome_unconfirmed": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 8,
+      "caller": {
+        "utterance": "సరే, నమస్కారం.",
+        "intends_end": true,
+        "intent": "Explicitly ending the call",
+        "elapsed_s": 0.531
+      },
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 2.516,
+      "memory_before": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "visiting cards",
+          "quantity": "200",
+          "delivery_locality": "Vijayawada"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery"
+        },
+        "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+        "summary": "assistant: ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మా office hours Monday నుంచి Saturday వరకు ఉదయం nine thirty నుంచి రాత్రి eight వరకు ఉంటాయి, ఆదివారం closed. మీరు ఎప్పుడు పంపిస్తారో చెప్తారా?\nuser: సరే, నేను ఈ details అన్నీ తర్వాత పంపిస్తాను. అలాగే, flex banners కూడా ఇస్తారా, వాటి ధర ఎలా ఉంటుంది?\nassistant: అవును, మా దగ్గర flex banners కూడా ఉన్నాయి. Normal flex banners కి per square foot fifteen rupees అవుతుంది, అదే star flex అయితే twenty rupees అవుతుంది. మీకు banners కూడా కావాలా?"
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "visiting cards",
+          "quantity": "200",
+          "delivery_locality": "Vijayawada"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery"
+        },
+        "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+        "summary": "assistant: ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మీరు తర్వాత artwork approval పంపిస్తానని చెప్పారు కదా, అది మాకు note చేసుకున్నాము. ఇంకేమైనా help కావాలా?\nuser: సరే, ఇంకేమీ అవసరం లేదు. ఇకపై నేను call చేయను. ధన్యవాదాలు.\nassistant: ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇకపై calls రాకుండా note చేసుకున్నాము. మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\nuser: సరే, నమస్కారం.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        723,
+        724,
+        725
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 6573,
+            "output_tokens": 17,
+            "cached_tokens": 4448,
+            "total_tokens": 6590
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": true,
+            "reason": "goodbye",
+            "contact_preference": "end_call",
+            "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "సరే Ramana గారు, artwork approve అయిన తర్వాత Vijayawada లో delivery కి 3 working days పడుతుంది. Urgent గా కావాలంటే 24 గంటల్లో delivery చేయించుకోవచ్చు, దానికి extra one hundred fifty rupees అవుతుంది. మీరు ఈ order తో ముందుకు వెళ్దామనుకుంటున్నారా?",
+      "at": 120448.218
+    },
+    {
+      "turn": 2,
+      "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మా office hours Monday నుంచి Saturday వరకు ఉదయం nine thirty నుంచి రాత్రి eight వరకు ఉంటాయి, ఆదివారం closed. మీరు ఎప్పుడు పంపిస్తారో చెప్తారా?",
+      "at": 120450.421
+    },
+    {
+      "turn": 3,
+      "text": "అవును, మా దగ్గర flex banners కూడా ఉన్నాయి. Normal flex banners కి per square foot fifteen rupees అవుతుంది, అదే star flex అయితే twenty rupees అవుతుంది. మీకు banners కూడా కావాలా?",
+      "at": 120452.64
+    },
+    {
+      "turn": 4,
+      "text": "సరే రమేష్ గారు, మీరు మొదట Ramana అని చెప్పారు, కానీ ఇప్పుడు రమేష్ అని చెప్పారు. మీకు two hundred matte visiting cards కావాలి, delivery Vijayawada లో ఉంటుంది. Payment విషయానికి వస్తే, one thousand rupees లోపు orders కి cash on delivery ఉంటుంది, అంతకంటే ఎక్కువ ఉంటే 50% advance payment చేయాలి.",
+      "at": 120455.046
+    },
+    {
+      "turn": 5,
+      "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు.",
+      "at": 120457.562
+    },
+    {
+      "turn": 6,
+      "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మీరు తర్వాత artwork approval పంపిస్తానని చెప్పారు కదా, అది మాకు note చేసుకున్నాము. ఇంకేమైనా help కావాలా?",
+      "at": 120459.89
+    },
+    {
+      "turn": 7,
+      "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇకపై calls రాకుండా note చేసుకున్నాము. మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 120462.203
+    },
+    {
+      "turn": 8,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 120464.14
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "సరే Ramana గారు, artwork approve అయిన తర్వాత Vijayawada లో delivery కి 3 working days పడుతుంది. Urgent గా కావాలంటే 24 గంటల్లో delivery చేయించుకోవచ్చు, దానికి extra one hundred fifty rupees అవుతుంది. మీరు ఈ order తో ముందుకు వెళ్దామనుకుంటున్నారా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5586,
+        "output_tokens": 60,
+        "cached_tokens": 4512,
+        "total_tokens": 5646
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      }
+    },
+    {
+      "done": true,
+      "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మా office hours Monday నుంచి Saturday వరకు ఉదయం nine thirty నుంచి రాత్రి eight వరకు ఉంటాయి, ఆదివారం closed. మీరు ఎప్పుడు పంపిస్తారో చెప్తారా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5784,
+        "output_tokens": 59,
+        "cached_tokens": 4448,
+        "total_tokens": 5843
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "అవును, మా దగ్గర flex banners కూడా ఉన్నాయి. Normal flex banners కి per square foot fifteen rupees అవుతుంది, అదే star flex అయితే twenty rupees అవుతుంది. మీకు banners కూడా కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5892,
+        "output_tokens": 40,
+        "cached_tokens": 4448,
+        "total_tokens": 5932
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      }
+    },
+    {
+      "done": true,
+      "text": "సరే రమేష్ గారు, మీరు మొదట Ramana అని చెప్పారు, కానీ ఇప్పుడు రమేష్ అని చెప్పారు. మీకు two hundred matte visiting cards కావాలి, delivery Vijayawada లో ఉంటుంది. Payment విషయానికి వస్తే, one thousand rupees లోపు orders కి cash on delivery ఉంటుంది, అంతకంటే ఎక్కువ ఉంటే 50% advance payment చేయాలి.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 6127,
+        "output_tokens": 86,
+        "cached_tokens": 4448,
+        "total_tokens": 6213
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      }
+    },
+    {
+      "done": true,
+      "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 6279,
+        "output_tokens": 50,
+        "cached_tokens": 4448,
+        "total_tokens": 6329
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మీరు తర్వాత artwork approval పంపిస్తానని చెప్పారు కదా, అది మాకు note చేసుకున్నాము. ఇంకేమైనా help కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 6767,
+        "output_tokens": 39,
+        "cached_tokens": 4640,
+        "total_tokens": 6806
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [
+        "enquiry_saved"
+      ],
+      "order_proof": false,
+      "action_outcome_unconfirmed": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇకపై calls రాకుండా note చేసుకున్నాము. మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 6907,
+        "output_tokens": 32,
+        "cached_tokens": 4672,
+        "total_tokens": 6939
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [
+        "enquiry_saved"
+      ],
+      "order_proof": false,
+      "action_outcome_unconfirmed": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 6573,
+        "output_tokens": 17,
+        "cached_tokens": 4448,
+        "total_tokens": 6590
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": true,
+        "reason": "goodbye",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "When can you deliver the visiting cards?",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "Ramana",
+            "modality": "asserted"
+          },
+          {
+            "op": "set_fact",
+            "key": "product",
+            "value": "visiting cards",
+            "modality": "asserted"
+          },
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "200",
+            "modality": "asserted"
+          },
+          {
+            "op": "set_fact",
+            "key": "delivery_locality",
+            "value": "Vijayawada",
+            "modality": "asserted"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నమస్తే Kavitha. నాకు సుమారు 200 matte visiting cards కావాలి. నా పేరు Ramana, నేను Vijayawada లో ఉన్నాను. వీటికి సంబంధించిన artwork details నేను తర్వాత ఇస్తాను, ప్రస్తుతానికి delivery ఎప్పుడు చేయగలుగుతారు?",
+      "at": 120448.218
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "How to send artwork for 200 matte cards and what are your office hours?",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, ప్రస్తుతానికి order ముందుకు వేయొద్దు. ఈ 200 matte cards కి artwork ఎలా పంపాలో కొంచెం చెప్తారా? అలాగే, మీ office hours ఏంటి?",
+      "at": 120450.421
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "flex banners ధర ఎంత ఉంటుంది?",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, నేను ఈ details అన్నీ తర్వాత పంపిస్తాను. అలాగే, flex banners కూడా ఇస్తారా, వాటి ధర ఎలా ఉంటుంది?",
+      "at": 120452.64
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "Confirm the recorded name, product, and quantity, and explain the payment method.",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "రమేష్",
+            "modality": "asserted"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, ప్రస్తుతానికి banners వద్దు. ఒక విషయం, నేను Ramana అని చెప్పాను కదా, నా పేరు రమేష్. మీరు ఏ పేరు, ఏ product, ఎన్ని quantity అని గుర్తుంచుకున్నారో ఒకసారి చెప్తారా? అలాగే payment ఎలా చేయాలి?",
+      "at": 120455.046
+    },
+    {
+      "turn": 5,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "cash on delivery availability for 200 visiting cards and artwork approval timing",
+        "memory_operations": [
+          {
+            "op": "set_preference",
+            "key": "payment_method",
+            "value": "cash on delivery",
+            "modality": "asserted"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "అర్థమైంది, ధన్యవాదాలు. ఒక విషయం, 200 matte cards కి 50% advance payment అంటే కొంచెం ఇబ్బంది అవుతుంది, cash on delivery ఉంటేనే బాగుంటుంది. అలాగే, artwork approval ఎప్పుడు చేయాలో చెప్పగలరా?",
+      "at": 120457.546
+    },
+    {
+      "turn": 6,
+      "proposal": null,
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, నేను తర్వాత artwork approval పంపిస్తాను. ఈ order గురించి నా enquiry note చేసుకుంటారా, ఇకపై నేను call చేయను.",
+      "at": 120459.89
+    },
+    {
+      "turn": 7,
+      "proposal": null,
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, ఇంకేమీ అవసరం లేదు. ఇకపై నేను call చేయను. ధన్యవాదాలు.",
+      "at": 120462.203
+    },
+    {
+      "turn": 8,
+      "proposal": {
+        "decision": "close",
+        "reason": "goodbye",
+        "evidence": "సరే, నమస్కారం.",
+        "contact_intent": "do_not_call",
+        "contact_evidence": "ఇకపై calls రాకుండా note చేసుకున్నాము",
+        "callback_time": "",
+        "remaining_request": "",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "transcript": "సరే, నమస్కారం.",
+      "at": 120464.125
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 8,
+      "at": 120464.14
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 8,
+      "at": 120465.203,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 120448.234
+    },
+    {
+      "turn_seq": 3,
+      "at": 120450.453
+    },
+    {
+      "turn_seq": 5,
+      "at": 120452.671
+    },
+    {
+      "turn_seq": 7,
+      "at": 120455.062
+    },
+    {
+      "turn_seq": 9,
+      "at": 120457.578
+    },
+    {
+      "turn_seq": 11,
+      "at": 120459.921
+    },
+    {
+      "turn_seq": 13,
+      "at": 120462.234
+    },
+    {
+      "turn_seq": 15,
+      "at": 120464.156
+    }
+  ],
+  "started_at": "2026-10-29T15:48:43.355487+00:00",
+  "errors": [],
+  "brain_checksum": "e13acafd95972aee7bb5fb38e469acc564a37d73b8c900459c3eb77a6c514fa1",
+  "runtime_checksum": "a17be14db31846c43a2d1387b18289d4d71c3d8e1ee7b54160095d4b275af6dc",
+  "available_tools": [
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 120446.812,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 2,
+      "start_s": 120448.89,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 173,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 3,
+      "start_s": 120451.093,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 173,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 4,
+      "start_s": 120453.359,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 173,
+      "rolling_chars": 554
+    },
+    {
+      "turn": 5,
+      "start_s": 120455.781,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 218,
+      "rolling_chars": 554
+    },
+    {
+      "turn": 6,
+      "start_s": 120458.203,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 265,
+      "rolling_chars": 554
+    },
+    {
+      "turn": 7,
+      "start_s": 120460.531,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 265,
+      "rolling_chars": 554
+    },
+    {
+      "turn": 8,
+      "start_s": 120462.765,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 265,
+      "rolling_chars": 554
+    }
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "interested",
+    "disposition_confidence": 0.95,
+    "summary_te": "",
+    "summary_en": "Ramana initially enquired about approximately 200 matte visiting cards for delivery in Vijayawada and asked about delivery timing. The agent stated that delivery would take 3 working days after artwork approval, or 24 hours with an additional ₹150 urgent-delivery charge. The caller decided not to place the order yet and asked how to submit artwork and about office hours; the agent provided office hours as Monday–Saturday, 9:30 AM–8:00 PM, closed Sunday, but stated that it could not send the enquiry to the team or guarantee follow-up. The caller also asked about flex banners, received prices of ₹15 per square foot for normal flex and ₹20 for star flex, then declined banners for now. The caller corrected his name to Ramesh, confirmed the product and quantity, and asked about payment. The agent said orders under ₹1,000 allow cash on delivery, while higher orders require 50% advance payment. The caller objected to the advance-payment requirement and preferred cash on delivery, and asked about artwork approval timing. He said he would send artwork approval later and requested that the enquiry be noted, while also stating that he would not call again and asked not to receive further calls. No order was placed, no artwork was submitted, and no team follow-up was confirmed. The call ended politely.",
+    "next_action": null,
+    "extracted_fields": {
+      "caller_name": "రమేష్",
+      "delivery_locality": "Vijayawada",
+      "delivery_location": "Vijayawada",
+      "flex_banner_price": "Normal flex ₹15/sq ft; star flex ₹20/sq ft",
+      "initial_name": "Ramana",
+      "name": "Ramesh",
+      "office_hours": "Monday-Saturday, 9:30 AM-8:00 PM; Sunday closed",
+      "payment_policy_stated": "Orders under ₹1,000: cash on delivery; higher orders: 50% advance",
+      "payment_preference": "Cash on delivery",
+      "phone": "+12025550139",
+      "product": "Matte visiting cards",
+      "quantity": "200",
+      "standard_delivery_time": "3 working days after artwork approval",
+      "urgent_delivery_charge": "₹150",
+      "urgent_delivery_time": "24 hours"
+    },
+    "objections": [
+      "The caller found the 50% advance payment requirement inconvenient and preferred cash on delivery.",
+      "The caller did not want to place the order yet and declined flex banners for now."
+    ],
+    "notes": "The caller said he would send artwork approval later but explicitly requested no further calls. The agent could not confirm that the enquiry would be sent to the team or that follow-up would occur.",
+    "tags": [
+      "intent:purchase",
+      "intent:information",
+      "signal:price_sensitive",
+      "signal:objection",
+      "signal:do_not_call",
+      "sentiment:neutral"
+    ],
+    "custom_tags": [
+      "custom:matte-visiting-cards",
+      "custom:artwork-approval",
+      "custom:vijayawada"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T15:49:10.609265Z",
+    "generation_ok": true,
+    "facts": {
+      "caller_name": "రమేష్",
+      "delivery_locality": "Vijayawada",
+      "delivery_location": "Vijayawada",
+      "flex_banner_price": "Normal flex ₹15/sq ft; star flex ₹20/sq ft",
+      "initial_name": "Ramana",
+      "name": "Ramesh",
+      "office_hours": "Monday-Saturday, 9:30 AM-8:00 PM; Sunday closed",
+      "payment_policy_stated": "Orders under ₹1,000: cash on delivery; higher orders: 50% advance",
+      "payment_preference": "Cash on delivery",
+      "phone": "+12025550139",
+      "product": "Matte visiting cards",
+      "quantity": "200",
+      "standard_delivery_time": "3 working days after artwork approval",
+      "urgent_delivery_charge": "₹150",
+      "urgent_delivery_time": "24 hours"
+    },
+    "disclosure_status": null,
+    "contact_preference": "end_call",
+    "status_tags": [
+      "contact:name_known",
+      "contact:phone_known",
+      "custom:artwork-approval",
+      "custom:matte-visiting-cards",
+      "custom:vijayawada",
+      "intent:information",
+      "intent:purchase",
+      "outcome:interested",
+      "sentiment:neutral",
+      "signal:objection",
+      "signal:price_sensitive"
+    ],
+    "lead": {
+      "leadId": "62843ad3-010f-4af5-bbc3-10adcffd4ecd",
+      "agentId": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+      "stage": "contacted",
+      "action": "unchanged"
+    },
+    "lead_assessment": {
+      "score": 75,
+      "band": "hot",
+      "disposition": "interested",
+      "confidence": 0.95,
+      "components": [
+        {
+          "signal": "interest",
+          "points": 40,
+          "max": 40,
+          "evidence": "interested"
+        },
+        {
+          "signal": "requirements",
+          "points": 25,
+          "max": 25,
+          "evidence": "product"
+        },
+        {
+          "signal": "timing",
+          "points": 0,
+          "max": 25,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "contact",
+          "points": 10,
+          "max": 10,
+          "evidence": "phone"
+        }
+      ],
+      "version": 1,
+      "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+      "reason": "recorded_signals"
+    },
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "39ff3efe-6a8c-46db-9a2b-af4f24c347c3",
+        "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+        "session_id": "adaptive-bec2d6ee01354981a85efcfcd43f9176",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_8649a3d49b8f",
+        "started_at": "2026-10-29 15:48:43.342021+00:00",
+        "ended_at": "2026-10-29 15:49:02.410429+00:00",
+        "duration_sec": 19,
+        "disposition": "interested",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/39ff3efe-6a8c-46db-9a2b-af4f24c347c3/",
+        "end_reason": "goodbye",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "contact:name_known",
+          "contact:phone_known",
+          "custom:artwork-approval",
+          "custom:matte-visiting-cards",
+          "custom:vijayawada",
+          "intent:information",
+          "intent:purchase",
+          "outcome:interested",
+          "sentiment:neutral",
+          "signal:objection",
+          "signal:price_sensitive"
+        ],
+        "last_heartbeat_at": "2026-10-29 15:48:43.342021+00:00",
+        "created_at": "2026-10-29 15:48:43.343020+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [
+      {
+        "id": "c5d9fc74-3a46-49a1-8442-dcd6487eb987",
+        "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+        "origin_key": "callback:45924cb3-aef3-4e0b-861a-aa7101f93b93",
+        "source_id": "71e892ed-93ba-49a5-bb62-32055b859ad0",
+        "kind": "callback",
+        "phone": "+12025550139",
+        "status": "cancelled",
+        "reason": "automation_disabled",
+        "payload": {
+          "requestText": "సరే, artwork approval process వివరాలు మీకు తెలియకపోతే పర్వాలేదు. నేను నా design files తర్వాత పంపిస్తాను. ఈ call ని ఇక్కడితో ముగిస్తున్నాను, ధన్యవాదాలు.",
+          "requestedWhen": "",
+          "recentTurns": [
+            {
+              "role": "assistant",
+              "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. Delivery అయితే artwork approval తర్వాత Vijayawada లో 3 working days పడుతుంది. Flex banners normal అయితే per square foot fifteen rupees, star flex అయితే twenty rupees అవుతుంది. మీకు ఎన్ని square feet banners కావాలో చెప్తారా?",
+              "at": "2026-10-29T11:22:14.688939Z"
+            },
+            {
+              "role": "user",
+              "text": "సరే, banners కోసం ప్రస్తుతానికి ఆలోచిస్తాను. మరి payment ఎలా చేయాలి? online లో చేయొచ్చా లేక cash ఇయ్యాలా?",
+              "at": "2026-10-29T11:22:15.362855Z"
+            },
+            {
+              "role": "assistant",
+              "text": "Orderupees one thousand rupees కంటే తక్కువ ఉంటే cash on delivery తీసుకోవచ్చు. one thousand rupees పైన అయితే 50% advance payment తప్పనిసరి. Phone లో online payment లేదా credit card processing ఉండదు. మరి మీకు ఏది సౌకర్యంగా ఉంటుంది?",
+              "at": "2026-10-29T11:22:16.924852Z"
+            },
+            {
+              "role": "user",
+              "text": "సరే, cash on delivery అయితే నాకు okay. మీరు ఈ call లో ఏ పేరు, ఏ product, ఎంత quantity అనుకుంటున్నారో ఒకసారి చెప్తారా? అలాగే మీ office hours ఏంటో కూడా తెలుసుకోవాలి.",
+              "at": "2026-10-29T11:22:17.621423Z"
+            },
+            {
+              "role": "assistant",
+              "text": "సరే, మీ పేరు Ramana అని, మీకు two hundred matte visiting cards కావాలని note చేసుకున్నాను. మా office hours Monday నుంచి Saturday వరకు ఉదయం nine thirty AMనుంచి రాత్రి eight AMవరకు ఉంటాయి, Sunday closed. మీరు banners గురించి కూడా ఆలోచిస్తున్నారు కదా, వాటి గురించి వివరాలు కావాలా?",
+              "at": "2026-10-29T11:22:19.446753Z"
+            },
+            {
+              "role": "user",
+              "text": "సరే, office hours తెలిసినందుకు thanks. నాకు banners details ఇప్పుడు అవసరం లేదు. మరి ఈ visiting cards artwork approval process ఎలా ఉంటుంది, దానికి ఎంత time పడుతుంది?",
+              "at": "2026-10-29T11:22:20.079532Z"
+            },
+            {
+              "role": "assistant",
+              "text": "ఆ విషయం నాకు తెలియదు. Artwork approval తర్వాత Vijayawada లో delivery కి 3 working days పడుతుంది. మీకు ఇంకా ఏ details కావాలా?",
+              "at": "2026-10-29T11:22:21.449924Z"
+            },
+            {
+              "role": "user",
+              "text": "సరే, artwork approval process వివరాలు మీకు తెలియకపోతే పర్వాలేదు. నేను నా design files తర్వాత పంపిస్తాను. ఈ call ని ఇక్కడితో ముగిస్తున్నాను, ధన్యవాదాలు.",
+              "at": "2026-10-29T11:22:22.298413Z"
+            }
+          ],
+          "callbackId": "45924cb3-aef3-4e0b-861a-aa7101f93b93",
+          "timezone": "Asia/Kolkata",
+          "llm": {
+            "provider": "openai",
+            "model": "gpt-5.6-luna",
+            "options": {},
+            "purpose": "configured_post_call_analysis"
+          },
+          "requestedAt": "2026-10-29T11:22:22.607401+00:00"
+        },
+        "due_at": null,
+        "expires_at": "2026-11-05 11:22:22.607401+00:00",
+        "attempts": 0,
+        "lease_token": null,
+        "lease_until": null,
+        "control_id": null,
+        "authorized_by": "de625f35-524c-4767-a252-106cb34cdfae",
+        "billing_tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "created_at": "2026-10-29 11:22:22.616990+00:00",
+        "updated_at": "2026-10-29 15:43:15.848922+00:00"
+      }
+    ],
+    "dnd": [],
+    "leads": [
+      {
+        "lead_id": "7a51fee5-76db-5f27-8115-a22b8bf18a92",
+        "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+        "name": "రమేష్",
+        "phone": "+12025550139",
+        "email": null,
+        "stage": "contacted",
+        "notes": "Caller enquiry — call 39ff3efe-6a8c-46db-9a2b-af4f24c347c3\n{\"customer_name\": \"రమేష్\", \"product\": \"visiting cards\", \"quantity\": \"200\", \"delivery_address\": \"Vijayawada\", \"payment_method\": \"cash on delivery\", \"request\": \"Customer wants 200 matte visiting cards for Vijayawada, prefers cash on delivery. Will send artwork approval later. Does not want to proceed now and will not call back.\"}\n\nEnquiry update:\n{\"customer_name\": \"రమేష్\", \"product\": \"visiting cards\", \"quantity\": \"200\", \"delivery_address\": \"Vijayawada\", \"payment_method\": \"cash on delivery\", \"request\": \"Customer interested in 200 matte visiting cards, delivery in Vijayawada, prefers cash on delivery. Will send artwork approval later. Does not want further calls.\"}",
+        "created_at": "2026-10-29 15:48:56.454718+00:00",
+        "updated_at": "2026-10-29 15:48:58.782866+00:00"
+      },
+      {
+        "lead_id": "62843ad3-010f-4af5-bbc3-10adcffd4ecd",
+        "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+        "name": "Ramana",
+        "phone": "+12025550139",
+        "email": null,
+        "stage": "contacted",
+        "notes": "[Call reference: 71e892ed-93ba-49a5-bb62-32055b859ad0]\nRamana from Vijayawada called to inquire about approximately 200 matte visiting cards and asked how to submit the artwork. The agent quoted ₹350 per 100 cards, totaling ₹700 for 200 cards, and stated that delivery in Vijayawada takes 3 working days after artwork approval. Ramana also asked about flex banners; the agent quoted ₹15 per square foot for normal flex and ₹20 for star flex, but Ramana decided to consider banners later. For payment, the agent explained that orders below ₹1,000 can use cash on delivery, while orders above ₹1,000 require a 50% advance; phone-based online or credit-card processing is unavailable. Ramana confirmed that cash on delivery was acceptable, and the agent recorded his name and the visiting-card quantity. The agent stated office hours as Monday through Saturday, 9:30 AM to 8:00 PM, with Sunday closed. Ramana again requested details about the artwork approval process, but the agent could not provide them. Ramana said he would send the design files later and ended the call. No concrete order placement or follow-up appointment was confirmed.\n\nNext step: Provide the artwork submission and approval process when available; await Ramana's design files or further contact.\n\nObjections: Artwork submission and approval process was not explained., Online payment or credit-card processing is unavailable by phone.\n\nCall outcome: interested (97% confidence)\n\n---\n[Call reference: 39ff3efe-6a8c-46db-9a2b-af4f24c347c3]\nRamana initially enquired about approximately 200 matte visiting cards for delivery in Vijayawada and asked about delivery timing. The agent stated that delivery would take 3 working days after artwork approval, or 24 hours with an additional ₹150 urgent-delivery charge. The caller decided not to place the order yet and asked how to submit artwork and about office hours; the agent provided office hours as Monday–Saturday, 9:30 AM–8:00 PM, closed Sunday, but stated that it could not send the enquiry to the team or guarantee follow-up. The caller also asked about flex banners, received prices of ₹15 per square foot for normal flex and ₹20 for star flex, then declined banners for now. The caller corrected his name to Ramesh, confirmed the product and quantity, and asked about payment. The agent said orders under ₹1,000 allow cash on delivery, while higher orders require 50% advance payment. The caller objected to the advance-payment requirement and preferred cash on delivery, and asked about artwork approval timing. He said he would send artwork approval later and requested that the enquiry be noted, while also stating that he would not call again and asked not to receive further call\n\nObjections: The caller found the 50% advance payment requirement inconvenient and preferred , The caller did not want to place the order yet and declined flex banners for now\n\nCall outcome: interested (95% confidence)",
+        "created_at": "2026-10-29 11:22:31.492682+00:00",
+        "updated_at": "2026-10-29 15:49:10.627225+00:00"
+      }
+    ],
+    "tools": [],
+    "assessments": [
+      {
+        "id": "d0be4238-e803-48ca-866d-ac56c013985d",
+        "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "lead_id": "62843ad3-010f-4af5-bbc3-10adcffd4ecd",
+        "source_call_id": "39ff3efe-6a8c-46db-9a2b-af4f24c347c3",
+        "assessment": {
+          "score": 75,
+          "band": "hot",
+          "disposition": "interested",
+          "confidence": 0.95,
+          "components": [
+            {
+              "signal": "interest",
+              "points": 40,
+              "max": 40,
+              "evidence": "interested"
+            },
+            {
+              "signal": "requirements",
+              "points": 25,
+              "max": 25,
+              "evidence": "product"
+            },
+            {
+              "signal": "timing",
+              "points": 0,
+              "max": 25,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "contact",
+              "points": 10,
+              "max": 10,
+              "evidence": "phone"
+            }
+          ],
+          "version": 1,
+          "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+          "reason": "recorded_signals"
+        },
+        "updated_at": "2026-10-29 15:49:02.410429+00:00"
+      }
+    ]
+  },
+  "metadata": {
+    "call_id": "39ff3efe-6a8c-46db-9a2b-af4f24c347c3",
+    "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "session_id": "adaptive-bec2d6ee01354981a85efcfcd43f9176",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_8649a3d49b8f",
+    "started_at": "2026-10-29T15:48:43.342021+00:00",
+    "status": "active",
+    "storage_path": "data/calls/39ff3efe-6a8c-46db-9a2b-af4f24c347c3/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550139",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 110665,
+        "output_tokens": 3076,
+        "cached_tokens": 86048
+      }
+    },
+    "contact_preference": "end_call",
+    "hangup_reason": "goodbye",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 62,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": true,
+    "callback_close_phase": "idle",
+    "disconnected_at": "2026-10-29T15:49:02.410429+00:00",
+    "ended_at": "2026-10-29T15:49:02.410429+00:00",
+    "end_reason": "goodbye",
+    "duration_sec": 19.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 19.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.003958333333333333,
+      "telephony_inr": 0.3771104166666666,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.003958333333333333,
+      "telnyx_inr": 0.3771104166666666,
+      "telnyx_voice_api_usd": 0.0006333333333333333,
+      "telnyx_sip_usd": 0.0015833333333333333,
+      "telnyx_media_stream_usd": 0.0011083333333333333,
+      "telnyx_call_recording_usd": 0.0006333333333333333,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.27,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-29",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.012499999999999999,
+      "telephony_inr_per_min": 1.190875,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.012499999999999999,
+      "telnyx_inr_per_min": 1.190875,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_0dcadb59e1e6cdc5016ae36aef53d887d1a93f25cd58c838c4": {
+          "input_tokens": 1989,
+          "output_tokens": 620,
+          "cached_tokens": 0,
+          "cache_write_tokens": 1986,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.0012411
+        }
+      },
+      "post_call_analysis_usd": 0.0012411,
+      "post_call_analysis_inr": 0.11823959699999999
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నమస్తే Kavitha. నాకు సుమారు 200 matte visiting cards కావాలి. నా పేరు Ramana, నేను Vijayawada లో ఉన్నాను. వీటికి సంబంధించిన artwork details నేను తర్వాత ఇస్తాను, ప్రస్తుతానికి delivery ఎప్పుడు చేయగలుగుతారు?",
+      "ts": "2026-10-29T15:48:44.019966Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "సరే Ramana గారు, artwork approve అయిన తర్వాత Vijayawada లో delivery కి 3 working days పడుతుంది. Urgent గా కావాలంటే 24 గంటల్లో delivery చేయించుకోవచ్చు, దానికి extra one hundred fifty rupees అవుతుంది. మీరు ఈ order తో ముందుకు వెళ్దామనుకుంటున్నారా?",
+      "ts": "2026-10-29T15:48:45.411272Z"
+    },
+    {
+      "seq": 3,
+      "role": "user",
+      "text": "సరే, ప్రస్తుతానికి order ముందుకు వేయొద్దు. ఈ 200 matte cards కి artwork ఎలా పంపాలో కొంచెం చెప్తారా? అలాగే, మీ office hours ఏంటి?",
+      "ts": "2026-10-29T15:48:46.077096Z",
+      "partial": false
+    },
+    {
+      "seq": 4,
+      "role": "assistant",
+      "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మా office hours Monday నుంచి Saturday వరకు ఉదయం nine thirty నుంచి రాత్రి eight వరకు ఉంటాయి, ఆదివారం closed. మీరు ఎప్పుడు పంపిస్తారో చెప్తారా?",
+      "ts": "2026-10-29T15:48:47.616987Z"
+    },
+    {
+      "seq": 5,
+      "role": "user",
+      "text": "సరే, నేను ఈ details అన్నీ తర్వాత పంపిస్తాను. అలాగే, flex banners కూడా ఇస్తారా, వాటి ధర ఎలా ఉంటుంది?",
+      "ts": "2026-10-29T15:48:48.290533Z",
+      "partial": false
+    },
+    {
+      "seq": 6,
+      "role": "assistant",
+      "text": "అవును, మా దగ్గర flex banners కూడా ఉన్నాయి. Normal flex banners కి per square foot fifteen rupees అవుతుంది, అదే star flex అయితే twenty rupees అవుతుంది. మీకు banners కూడా కావాలా?",
+      "ts": "2026-10-29T15:48:49.834931Z"
+    },
+    {
+      "seq": 7,
+      "role": "user",
+      "text": "సరే, ప్రస్తుతానికి banners వద్దు. ఒక విషయం, నేను Ramana అని చెప్పాను కదా, నా పేరు రమేష్. మీరు ఏ పేరు, ఏ product, ఎన్ని quantity అని గుర్తుంచుకున్నారో ఒకసారి చెప్తారా? అలాగే payment ఎలా చేయాలి?",
+      "ts": "2026-10-29T15:48:50.552134Z",
+      "partial": false
+    },
+    {
+      "seq": 8,
+      "role": "assistant",
+      "text": "సరే రమేష్ గారు, మీరు మొదట Ramana అని చెప్పారు, కానీ ఇప్పుడు రమేష్ అని చెప్పారు. మీకు two hundred matte visiting cards కావాలి, delivery Vijayawada లో ఉంటుంది. Payment విషయానికి వస్తే, one thousand rupees లోపు orders కి cash on delivery ఉంటుంది, అంతకంటే ఎక్కువ ఉంటే 50% advance payment చేయాలి.",
+      "ts": "2026-10-29T15:48:52.234490Z"
+    },
+    {
+      "seq": 9,
+      "role": "user",
+      "text": "అర్థమైంది, ధన్యవాదాలు. ఒక విషయం, 200 matte cards కి 50% advance payment అంటే కొంచెం ఇబ్బంది అవుతుంది, cash on delivery ఉంటేనే బాగుంటుంది. అలాగే, artwork approval ఎప్పుడు చేయాలో చెప్పగలరా?",
+      "ts": "2026-10-29T15:48:52.975178Z",
+      "partial": false
+    },
+    {
+      "seq": 10,
+      "role": "assistant",
+      "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు.",
+      "ts": "2026-10-29T15:48:54.747265Z"
+    },
+    {
+      "seq": 11,
+      "role": "user",
+      "text": "సరే, నేను తర్వాత artwork approval పంపిస్తాను. ఈ order గురించి నా enquiry note చేసుకుంటారా, ఇకపై నేను call చేయను.",
+      "ts": "2026-10-29T15:48:55.403105Z",
+      "partial": false
+    },
+    {
+      "seq": 12,
+      "role": "assistant",
+      "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మీరు తర్వాత artwork approval పంపిస్తానని చెప్పారు కదా, అది మాకు note చేసుకున్నాము. ఇంకేమైనా help కావాలా?",
+      "ts": "2026-10-29T15:48:57.090433Z"
+    },
+    {
+      "seq": 13,
+      "role": "user",
+      "text": "సరే, ఇంకేమీ అవసరం లేదు. ఇకపై నేను call చేయను. ధన్యవాదాలు.",
+      "ts": "2026-10-29T15:48:57.722314Z",
+      "partial": false
+    },
+    {
+      "seq": 14,
+      "role": "assistant",
+      "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇకపై calls రాకుండా note చేసుకున్నాము. మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T15:48:59.400549Z"
+    },
+    {
+      "seq": 15,
+      "role": "user",
+      "text": "సరే, నమస్కారం.",
+      "ts": "2026-10-29T15:48:59.964000Z",
+      "partial": false
+    },
+    {
+      "seq": 16,
+      "role": "assistant",
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T15:49:01.325044Z"
+    }
+  ],
+  "wall_elapsed_s": 27.516,
+  "simulated_exchange_timeline_s": 160,
+  "request_count": 32
+}

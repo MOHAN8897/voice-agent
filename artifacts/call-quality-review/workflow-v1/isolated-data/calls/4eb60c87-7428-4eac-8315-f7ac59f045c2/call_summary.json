@@ -1,0 +1,34 @@
+{
+  "call_id": "4eb60c87-7428-4eac-8315-f7ac59f045c2",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 1.0,
+  "summary_te": "",
+  "summary_en": "The caller stated they had no interest in the offering and thanked the agent before ending the call. The agent acknowledged the caller's time and concluded the conversation.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500024"
+  },
+  "facts": {
+    "phone": "+919876500024"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:not_interested",
+    "signal:objection"
+  ],
+  "tags": [
+    "sentiment:neutral",
+    "intent:information",
+    "sentiment:negative"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [
+    "caller expressed no interest"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:19:10.962058Z",
+  "generation_ok": true
+}

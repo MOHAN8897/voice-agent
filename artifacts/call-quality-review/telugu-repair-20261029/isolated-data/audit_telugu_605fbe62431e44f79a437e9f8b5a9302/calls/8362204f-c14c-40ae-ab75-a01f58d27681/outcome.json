@@ -1,0 +1,99 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller initially asked about 100 normal visiting cards with a ₹500 budget, then changed the request to 200 matte-finish visiting cards with a ₹900 budget. The agent explained that 200 matte cards would cost ₹700, fit within the budget, and could be delivered in Vijayawada within 3 working days after design approval. The caller asked for confirmation of the details and then asked about online payment. The agent stated that phone-based online or credit-card processing was unavailable, and that orders below ₹1,000 could use cash on delivery, while orders above ₹1,000 required a 50% advance. The caller repeated the 200-card, ₹900-budget, ₹700-total understanding, acknowledged the payment information, and ended the call with thanks. No order placement or payment was confirmed.",
+  "next_action": null,
+  "extracted_fields": {
+    "budget": "900 rupees",
+    "delivery_location": "Vijayawada",
+    "delivery_timeline": "3 working days after design approval",
+    "payment_method_for_orders_under_1000": "Cash on delivery",
+    "phone": "+12025550125",
+    "product": "Matte-finish visiting cards",
+    "quantity": "200",
+    "quoted_total": "700 rupees"
+  },
+  "objections": [],
+  "notes": "The caller did not finalize an order or make a payment during the call.",
+  "tags": [
+    "intent:purchase",
+    "intent:pricing",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:matte-finish",
+    "custom:vijayawada"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:51:19.787404Z",
+  "generation_ok": true,
+  "facts": {
+    "budget": "900 rupees",
+    "delivery_location": "Vijayawada",
+    "delivery_timeline": "3 working days after design approval",
+    "payment_method_for_orders_under_1000": "Cash on delivery",
+    "phone": "+12025550125",
+    "product": "Matte-finish visiting cards",
+    "quantity": "200",
+    "quoted_total": "700 rupees"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:matte-finish",
+    "custom:vijayawada",
+    "custom:visiting-cards",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive"
+  ],
+  "lead": {
+    "leadId": "639a62d0-2e2b-4a3c-9578-0395a4711391",
+    "agentId": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.98,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

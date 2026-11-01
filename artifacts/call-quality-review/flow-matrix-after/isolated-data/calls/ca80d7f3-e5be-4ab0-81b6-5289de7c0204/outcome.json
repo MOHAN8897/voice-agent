@@ -1,0 +1,95 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller inquired about the cost and potential subsidies for a 3 kW rooftop system. The agent provided pricing details, explaining that the total cost is ₹1,95,000, which includes a ₹78,000 government subsidy, resulting in a net payment of ₹1,17,000. The agent also shared an EMI option of ₹2,999 per month for 48 months. The caller expressed that the pricing seemed reasonable. The agent then requested the caller's name, area, and preferred day to schedule a free site survey. The caller agreed to provide the information. However, the caller did not actually provide any of these details during the call, and the call ended with the agent waiting for the caller to share their details.",
+  "next_action": "callback_required",
+  "extracted_fields": {
+    "budget": "1,17,000 rupees (after subsidy)",
+    "phone": "+919876500519",
+    "slot": "not provided"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "intent:quote",
+    "sentiment:positive",
+    "followup:callback",
+    "followup:site_visit",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:rooftop-system",
+    "custom:site-survey"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T11:02:31.166366Z",
+  "generation_ok": true,
+  "facts": {
+    "budget": "1,17,000 rupees (after subsidy)",
+    "phone": "+919876500519",
+    "slot": "not provided"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:rooftop-system",
+    "custom:site-survey",
+    "followup:callback",
+    "followup:site_visit",
+    "intent:information",
+    "intent:quote",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "e42bce81-a262-49b3-b82f-d643206f8c95",
+    "agentId": "9d70cb6b-8a8a-43da-bcbf-a53fd0fc71f9",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 100,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "budget"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "slot"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

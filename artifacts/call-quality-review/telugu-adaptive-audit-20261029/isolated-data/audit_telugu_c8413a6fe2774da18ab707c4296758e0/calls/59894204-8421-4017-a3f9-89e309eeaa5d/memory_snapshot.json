@@ -1,0 +1,19 @@
+{
+  "facts": {
+    "product": "split AC",
+    "requested_service": "general service",
+    "delivery_locality": "మాదాపూర్",
+    "caller_name": "సురేష్ గారు",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "warranty_inquiry": "warranty coverage ఉంటుందా లేదా",
+    "service_conditions": "conditions లేదా terms",
+    "payment_timing": "technician వచ్చాక"
+  },
+  "preferences": {
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "preferred_time": "రేపు ఉదయం 10 గంటలకి",
+    "service_confirmation": "confirm కాలేదని గుర్తుంచుకోండి"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "assistant: తప్పకుండా, చెప్పండి.\nuser: సరే సురేష్ గారు, ప్రస్తుతానికి ఈ request save చేయండి. కానీ ఇది ఇంకా confirm కాలేదని గుర్తుంచుకోండి. నేను ఇంకా finalize చేయలేదు కాబట్టి, రేపు ఉదయం 10 గంటలకి visit నిజంగా జరుగుతుందో లేదో తర్వాతే తెలుసుకుంటాను. Thank you.\nassistant: తప్పకుండా, చెప్పండి.\nuser: సరే సురేష్ గారు, ప్రస్తుతానికి ఇంతే. నేను ఇంకా confirm చేసుకోలేదు కాబట్టి రేపు ఉదయం 10 గంటలకి visit నిజంగా జరుగుతుందో లేదో తర్వాతే తెలుసుకుంటాను. Thank you.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+}

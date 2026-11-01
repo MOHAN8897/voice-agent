@@ -1,0 +1,12 @@
+{
+  "facts": {
+    "quantity": "2",
+    "caller_name": "लक्ष्मी रेड्डी",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "9876543210"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "assistant: Mobile number भी note कर लिया है।\nuser: Mobile number note हो गया, तो बस मुझे ये बता दीजिए कि payment कैसे करना होगा?\nassistant: इसकी जानकारी मेरे पास अभी उपलब्ध नहीं है। Team आपको payment के तरीके के बारे में बता देगी।\nuser: अच्छा, payment की details team बाद में बता देगी तो कोई बात नहीं। Order के लिए और कुछ जानकारी चाहिए क्या आपको?\nassistant: नहीं, अभी और कुछ नहीं चाहिए। अगर आगे कोई order करना हो तो बता दीजिए।\nuser: ठीक है, मैं order confirm करती हूँ।\nassistant: आपका order पहले ही confirm हो चुका है। Team जल्दी ही delivery के लिए आपसे संपर्क करेगी।"
+}

@@ -1,0 +1,33 @@
+{
+  "call_id": "8672aaff-e1a4-4c93-b5ec-a5a3cc05c049",
+  "language_callback": null,
+  "disposition": "new_lead",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call but remained hesitant and did not clearly state their intent. The agent greeted the caller and asked what information they required from FreshCart. The caller did not provide any details or ask specific questions, and the interaction ended shortly after with no further discussion.",
+  "next_action": "callback_required",
+  "extracted_fields": {
+    "phone": "+919876500531"
+  },
+  "facts": {
+    "phone": "+919876500531"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "followup:callback",
+    "intent:information",
+    "outcome:new_lead",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:05:18.694662Z",
+  "generation_ok": true
+}

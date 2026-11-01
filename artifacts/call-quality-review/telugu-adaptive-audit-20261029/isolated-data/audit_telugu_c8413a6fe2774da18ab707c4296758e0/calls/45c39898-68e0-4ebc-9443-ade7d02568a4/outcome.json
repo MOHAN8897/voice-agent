@@ -1,0 +1,117 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.89,
+  "summary_te": "",
+  "summary_en": "The caller initially asked for 100 normal paper visiting cards with a budget of up to ₹500. They then corrected the request to 200 matte-finish visiting cards with a budget of up to ₹900 and asked the agent to confirm the details. The agent quoted approximately ₹700 for 200 cards, confirmed that this fit the budget, and requested the caller’s name. The caller provided the name Ramesh and email ramesh.audit@example.invalid, and explained that they could not authorize payment. The agent stated that orders below ₹1,000 support cash on delivery, while online payment and credit card payment are not accepted by phone, and that artwork/design approval is required before processing. The caller asked to use cash on delivery, received confirmation that the ₹900 order qualified, and stated that they were placing the order. The call ended with the agent thanking the caller; however, the transcript does not confirm that artwork was approved or that the order was actually processed.\n\nServer check: no confirmed order was recorded for this call, so it was not marked as converted.",
+  "next_action": "Obtain artwork/design approval and confirm the order before processing; retain cash-on-delivery as the payment method.",
+  "extracted_fields": {
+    "budget": "Up to ₹900",
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "రమేష్",
+    "email": "ramesh.audit@example.invalid",
+    "latest_caller_correction": "Actually, నాకు 200 matte visiting cards కావాలి, నా budget 900 rupees వరకు ఉంటుంది. మీరు విన్నవి ఒకసారి మళ్ళీ చెప్తారా?",
+    "name": "Ramesh",
+    "order_status": "Caller stated they were placing the order; processing not confirmed",
+    "payment_method": "Cash on delivery",
+    "pending_requirement": "Artwork/design approval",
+    "phone": "+12025550143",
+    "product": "Matte-finish visiting cards",
+    "quantity": "200",
+    "quoted_price": "Approximately ₹700"
+  },
+  "objections": [
+    "Caller could not authorize payment and requested a payment option without advance payment."
+  ],
+  "notes": "The caller positively agreed to cash on delivery and stated they were placing the order, but no completed processing or design approval was confirmed in the transcript.",
+  "tags": [
+    "intent:purchase",
+    "signal:ready_to_buy",
+    "action:required",
+    "signal:price_sensitive",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:matte-finish",
+    "custom:cash-on-delivery"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:28:39.755335Z",
+  "generation_ok": true,
+  "facts": {
+    "budget": "Up to ₹900",
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "రమేష్",
+    "email": "ramesh.audit@example.invalid",
+    "latest_caller_correction": "Actually, నాకు 200 matte visiting cards కావాలి, నా budget 900 rupees వరకు ఉంటుంది. మీరు విన్నవి ఒకసారి మళ్ళీ చెప్తారా?",
+    "name": "Ramesh",
+    "order_status": "Caller stated they were placing the order; processing not confirmed",
+    "payment_method": "Cash on delivery",
+    "pending_requirement": "Artwork/design approval",
+    "phone": "+12025550143",
+    "product": "Matte-finish visiting cards",
+    "quantity": "200",
+    "quoted_price": "Approximately ₹700"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:matte-finish",
+    "custom:visiting-cards",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:objection",
+    "signal:price_sensitive",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "8a1415d9-8049-4618-922f-4d5910765a17",
+    "agentId": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.89,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

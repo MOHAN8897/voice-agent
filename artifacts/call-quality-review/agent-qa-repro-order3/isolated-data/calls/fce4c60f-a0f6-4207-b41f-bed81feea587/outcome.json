@@ -1,0 +1,103 @@
+{
+  "disposition": "converted",
+  "disposition_confidence": 0.95,
+  "summary_te": "एजेंट ने ग्राहक को फोन किया। ग्राहक ने फेस क्रीम और हेयर ऑयल खरीदने में रुचि दिखाई और कुल कीमत पूछी। एजेंट ने कीमत ₹1497 बताई और ऑर्डर कन्फर्म करने के लिए नाम और पता मांगा। ग्राहक ने अपना नाम लक्ष्मी रेड्डी और पता कुकटपल्ली, हैदराबाद दिया, और ऑर्डर कन्फर्म करने को कहा। एजेंट ने ऑर्डर कन्फर्म कर दिया और बताया कि डिलीवरी टीम जल्द ही संपर्क करेगी, जिसके बाद कॉल समाप्त हो गया।",
+  "summary_en": "The agent called the customer to offer products, and the customer expressed an intent to purchase two bottles of hair oil and one face cream. The agent shared the total price of ₹1497 and requested the customer's name and delivery address to proceed. The customer provided the details as Lakshmi Reddy at Flat 302, Sai Residency, Kukatpally, Hyderabad 500072. After confirming the order details, the agent confirmed the order and informed the customer that the delivery team would contact them soon. The call ended with the customer thanking the agent.",
+  "next_action": "Delivery team to contact the customer regarding the shipment.",
+  "extracted_fields": {
+    "caller_name": "लक्ष्मी रेड्डी",
+    "delivery_address": "फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072",
+    "phone": "+919700000001",
+    "quantity": "1",
+    "quantity_face_cream": "1",
+    "quantity_hair_oil": "2 bottles",
+    "total_price": "₹1497"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:purchase",
+    "sentiment:positive",
+    "followup:send_info",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:order-placed"
+  ],
+  "unanswered_questions": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T14:57:40.453933Z",
+  "generation_ok": true,
+  "summary_language": "hi-IN",
+  "facts": {
+    "caller_name": "लक्ष्मी रेड्डी",
+    "delivery_address": "फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072",
+    "phone": "+919700000001",
+    "quantity": "1",
+    "quantity_face_cream": "1",
+    "quantity_hair_oil": "2 bottles",
+    "total_price": "₹1497"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:order-placed",
+    "followup:send_info",
+    "intent:purchase",
+    "outcome:converted",
+    "sentiment:positive"
+  ],
+  "lead": {
+    "leadId": "8d90da39-ff72-4811-a783-900dd5294612",
+    "agentId": "3e614939-d21e-5874-909c-bda138e75b9f",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "converted",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "converted"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "quantity"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

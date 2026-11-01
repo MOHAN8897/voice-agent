@@ -1,0 +1,10 @@
+{"turn_seq": 1, "ts": "2026-10-31T16:07:18.229334Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-31T16:07:43.965453Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-31T16:08:04.942401Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nemail: mohansaiteja.99@gmail.com"}
+{"turn_seq": 7, "ts": "2026-10-31T16:08:21.973987Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nemail: mohansaiteja.99@gmail.com"}
+{"turn_seq": 9, "ts": "2026-10-31T16:08:45.764387Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nemail: mohansaiteja.99@gmail.com"}
+{"turn_seq": 11, "ts": "2026-10-31T16:09:11.480928Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nemail: mohansaiteja.99@gmail.com | product: face cream | delivery_locality: Kukatpally"}
+{"turn_seq": 13, "ts": "2026-10-31T16:09:29.184000Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nemail: mohansaiteja.99@gmail.com | product: face cream | delivery_locality: Kukatpally | requested_time: कल सुबह 11 बजे"}
+{"turn_seq": 15, "ts": "2026-10-31T16:09:43.810354Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nemail: mohansaiteja.99@gmail.com | product: face cream | delivery_locality: Kukatpally | requested_time: कल सुबह 11 बजे"}
+{"turn_seq": 17, "ts": "2026-10-31T16:09:56.551808Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nemail: mohansaiteja.99@gmail.com | product: face cream | delivery_locality: Kukatpally | requested_time: कल सुबह 11 बजे"}
+{"turn_seq": 19, "ts": "2026-10-31T16:10:12.891869Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nemail: mohansaiteja.99@gmail.com | product: face cream | delivery_locality: Kukatpally | requested_time: कल सुबह 11 बजे"}

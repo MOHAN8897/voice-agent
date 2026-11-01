@@ -1,0 +1,34 @@
+{
+  "call_id": "31c88827-c20d-4c63-9308-198fed0c89bf",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 1.0,
+  "summary_te": "",
+  "summary_en": "The caller immediately stated they had no interest and thanked the agent before ending the conversation. The agent acknowledged the caller's time and concluded the call.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500032"
+  },
+  "facts": {
+    "phone": "+919876500032"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "sentiment:neutral",
+    "intent:information"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [
+    "Caller explicitly stated they are not interested"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:20:16.911730Z",
+  "generation_ok": true
+}

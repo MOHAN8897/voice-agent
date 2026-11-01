@@ -1,0 +1,65 @@
+{
+  "call_id": "75a34aa7-fb95-4f95-8bd6-18085cb42074",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "Shravani, located in Madhapur, requested general servicing for her split AC and asked for a technician visit tomorrow at 10:00 AM. The agent said next-day service was available in a broad 10:00 AM–6:00 PM window and asked whether to record the appointment; Shravani agreed. The agent quoted ₹599 for split AC servicing and explained that the ₹250 inspection fee mentioned applies only to refrigerators and is waived if the technician performs a repair. Shravani then asked about the cost of replacement parts and requested a confirmation message or email confirming a 10:00 AM visit. The agent did not answer the parts-cost question, did not confirm a specific 10:00 AM appointment, and did not confirm that a message or email would be sent. The call ended with the agent thanking her and saying goodbye.",
+  "next_action": "Confirm whether the appointment is specifically scheduled for tomorrow at 10:00 AM, send the requested confirmation message or email if supported, and provide the applicable replacement-parts pricing information.",
+  "extracted_fields": {
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "inspection_fee": "₹250 applies to refrigerators only; waived if repair is performed",
+    "locality": "Madhapur",
+    "phone": "+12025550105",
+    "product": "Split AC",
+    "quoted_service_price": "₹599",
+    "requested_visit_time": "Tomorrow at 10:00 AM",
+    "service": "General servicing"
+  },
+  "facts": {
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "inspection_fee": "₹250 applies to refrigerators only; waived if repair is performed",
+    "locality": "Madhapur",
+    "phone": "+12025550105",
+    "product": "Split AC",
+    "quoted_service_price": "₹599",
+    "requested_visit_time": "Tomorrow at 10:00 AM",
+    "service": "General servicing"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:split-ac",
+    "followup:callback",
+    "followup:send_info",
+    "followup:site_visit",
+    "intent:booking",
+    "intent:pricing",
+    "outcome:callback_required",
+    "signal:objection",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:booking",
+    "intent:pricing",
+    "followup:callback",
+    "followup:send_info",
+    "signal:ready_to_buy"
+  ],
+  "custom_tags": [
+    "custom:split-ac",
+    "custom:general-service",
+    "custom:madhapur"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Replacement-parts pricing was not provided.",
+    "Specific 10:00 AM appointment confirmation and requested message/email were not provided."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:36:34.920334Z",
+  "generation_ok": true
+}

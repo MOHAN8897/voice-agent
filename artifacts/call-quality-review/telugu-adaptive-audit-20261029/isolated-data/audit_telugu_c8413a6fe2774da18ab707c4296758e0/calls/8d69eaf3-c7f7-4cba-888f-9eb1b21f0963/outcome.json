@@ -1,0 +1,112 @@
+{
+  "disposition": "site_visit_planned",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "The caller requested general servicing for a split AC and asked about the price and availability of a technician the next morning at 10:00 AM. The agent quoted ₹599, confirmed Madhapur is within the service area, and said a slot was available. The caller provided the name Shravani, confirmed there was no other issue, and requested booking confirmation at ₹599 for the 10:00 AM slot. The caller then asked about the inspection fee. The agent explained that ₹250 applies to fridge inspection, but for this split AC the inspection fee would not apply. The caller confirmed the booking again, said all questions were clear, and the call ended with thanks. The transcript confirms the requested appointment and service details, but does not explicitly confirm that a booking record was successfully created.",
+  "next_action": null,
+  "extracted_fields": {
+    "appointment_slot": "Tomorrow at 10:00 AM",
+    "budget": "599 rupees",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "inspection_fee": "Not applicable for this split AC service",
+    "issue": "No additional issue; general service only",
+    "locality": "Madhapur",
+    "phone": "+12025550126",
+    "price": "599 rupees",
+    "product": "split AC",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "service": "Split AC general service"
+  },
+  "objections": [],
+  "notes": "The caller requested booking confirmation twice. The agent stated the slot could be scheduled, but the transcript does not explicitly confirm completed booking creation.",
+  "tags": [
+    "intent:booking",
+    "intent:support",
+    "followup:site_visit",
+    "signal:ready_to_buy",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:split-ac",
+    "custom:general-service",
+    "custom:madhapur"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:10:54.889963Z",
+  "generation_ok": true,
+  "facts": {
+    "appointment_slot": "Tomorrow at 10:00 AM",
+    "budget": "599 rupees",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "inspection_fee": "Not applicable for this split AC service",
+    "issue": "No additional issue; general service only",
+    "locality": "Madhapur",
+    "phone": "+12025550126",
+    "price": "599 rupees",
+    "product": "split AC",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "service": "Split AC general service"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:general-service",
+    "custom:madhapur",
+    "custom:split-ac",
+    "followup:site_visit",
+    "intent:booking",
+    "intent:support",
+    "outcome:site_visit_planned",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "907d153c-3c44-57d5-9243-0ee1092cca2f",
+    "agentId": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+    "stage": "qualified",
+    "action": "advanced"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "site_visit_planned",
+    "confidence": 0.97,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "site_visit_planned"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "दो split AC और एक window AC की servicing का total कितना आएगा?", "ts": "2026-10-29T19:37:04.697365Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Split AC की servicing ₹599 और window AC की ₹499 है। तो दो split और एक window AC का total ₹1,697 आएगा। और हाँ, technician inspection के बाद जो spare parts लगेंगे, वो actual MRP पर extra लगेंगे, उसकी price phone पर नहीं बताई जा सकती।", "ts": "2026-10-29T19:37:05.897108Z", "brain_latency_ms": 1202}

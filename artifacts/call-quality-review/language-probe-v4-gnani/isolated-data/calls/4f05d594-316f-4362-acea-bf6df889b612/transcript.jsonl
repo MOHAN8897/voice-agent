@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "મારું fridge cooling નથી કરતું. Technician કાલે morningમાં 10:30 વાગ્યે આવી શકે?", "ts": "2026-10-29T19:39:55.651426Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Fridge cooling નથી કરતું એ જાણીને અફસોસ થયો. હા, કાલે સવારે દસ ત્રીસનો slot મળી શકે છે, પણ અમારી visits next-day slots માં 10 AM થી 6 PM વચ્ચે જ હોય છે. તમે કયા area માં રહો છો? Madhapur, Gachibowli, Kondapur કે Kukatpally માંથી કોઈ છે?", "ts": "2026-10-29T19:39:57.143569Z", "brain_latency_ms": 1494}

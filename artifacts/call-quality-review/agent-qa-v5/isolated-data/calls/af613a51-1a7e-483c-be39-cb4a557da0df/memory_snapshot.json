@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "delivery_locality": "Kukatpally, Hyderabad",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: બરાબર, 500 ml માટે 399 rupees. તો આના સિવાય તમારી પાસે કોઈ hair oil છે ખરી? એમાં શું ingredients છે એ જરા કહેશો?\nassistant: હા, અમારી પાસે NatureVeda Herbal Hair Oil પણ છે. એ 200 ml માટે ₹499 માં આવે છે અને એમાં Amla, Bhringraj, Hibiscus અને Coconut Oil છે. તમારે આ order કરવું છે?\nuser: Actually, I would prefer to continue in English now. Can you repeat the aloe vera juice price for me?\nassistant: Sure, the NatureVeda Aloe Vera Juice is ₹399 for 500 ml. Which product would you like to explore today?"
+}

@@ -1,0 +1,87 @@
+{
+  "scenario_id": "SCEN_14",
+  "title": "Abuse Handling (Frustration vs Persistent Abuse Escalation)",
+  "business_id": "C",
+  "agent_name": "Madhavi",
+  "category": "E_Abuse_Handling",
+  "integration_condition": "none",
+  "caller_phone": "+919876543233",
+  "total_turns": 2,
+  "total_tokens": 9843,
+  "duration_sec": 6.26,
+  "call_ended": true,
+  "carrier_hangup_invoked": true,
+  "carrier_hangup_error": false,
+  "transcript": [
+    {
+      "turn": 1,
+      "user": "చాలా ప్రశ్నలు అడుగుతున్నారు, త్వరగా ఫీజు ఎంతో చెప్పండి.",
+      "user_en": "Asking too many questions, quickly tell how much is fee.",
+      "agent": "Course fee మొత్తం eight thousand nine hundred ninety nine rupees మాత్రమే. మీకు weekday batch ఇష్టమా లేక weekend batch ఇష్టమో చెప్తారా?",
+      "latency_ms": 1288,
+      "tokens": 4861,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 2,
+      "user": "నువ్వు పనికిరాని వేస్ట్ దద్దమ్మవి, మళ్ళీ అదే సోది వేస్తున్నావ్.",
+      "user_en": "You are a useless idiot, speaking the same boring drama again.",
+      "agent": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "latency_ms": 1245,
+      "tokens": 4982,
+      "should_end": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "abuse",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "db_evidence": {
+    "call": {
+      "call_id": "037e86f3-06bf-47c3-bc34-728f45f3d1a6",
+      "status": "active",
+      "finalization_status": "pending",
+      "disposition": null,
+      "end_reason": null,
+      "duration_sec": null,
+      "status_tags": []
+    },
+    "callbacks": [],
+    "followup_jobs": [],
+    "dnc_entries": [],
+    "leads": [],
+    "tool_executions": []
+  },
+  "evaluation": {
+    "assertions": [
+      {
+        "name": "turn_3_executed",
+        "passed": false,
+        "detail": "Turn not reached"
+      }
+    ],
+    "all_passed": false,
+    "scores": {
+      "telugu_naturalness": 7.5,
+      "understanding_relevance": 7.0,
+      "script_adherence": 6.5,
+      "memory_corrections": 9.0,
+      "capability_honesty": 10.0,
+      "callback_dnd_outcome": 10.0,
+      "hangup_handoff": 9.5,
+      "overall": 8.42
+    }
+  },
+  "created_at": "2026-10-29T10:32:01.007423+00:00"
+}

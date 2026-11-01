@@ -1,0 +1,35 @@
+{
+  "call_id": "be7ba48e-3f69-4e73-8fd3-b8802d9f7ef4",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller inquired about the consultation fee and business operating hours. The agent responded that the consultation fee is 300 rupees and that the business is open Monday through Saturday from 10 AM to 8 PM. No further discussion or objections occurred, and the call concluded after this information was provided.",
+  "next_action": null,
+  "extracted_fields": {
+    "fee": "300 rupees",
+    "hours": "Monday to Saturday, 10 AM to 8 PM",
+    "phone": "+919876500517"
+  },
+  "facts": {
+    "fee": "300 rupees",
+    "hours": "Monday to Saturday, 10 AM to 8 PM",
+    "phone": "+919876500517"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:38:02.089849Z",
+  "generation_ok": true
+}

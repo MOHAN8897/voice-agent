@@ -1,0 +1,97 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్కు కాల్ చేశారు. కస్టమర్ హెర్బల్ హెయిర్ ఆయిల్ ధర మరియు పదార్థాల గురించి అడిగారు. ఏజెంట్ 499 రూపాయలకు 200 ml ప్యాక్ అని, అందులో ఉసిరి, భృంగరాజ్, మందార మరియు కొబ్బరి నూనె ఉన్నాయని చెప్పారు. వారానికి రెండు లేదా మూడు సార్లు వాడవచ్చని సూచించారు. కస్టమర్ ఆఫీసులో బిజీగా ఉన్నానని, రేపు సాయంత్రం 6:30 కి కాల్ చేయమని కోరారు. ఏజెంట్ ఈ కాల్ బ్యాక్ అభ్యర్థనను అంగీకరించి కాల్ ముగించారు.",
+  "summary_en": "The agent called the customer to provide information about a product. The caller wanted to know the price and ingredients of the herbal hair oil, and the agent shared that it costs 499 rupees for a 200 ml pack and contains amla, bhringraj, hibiscus, and coconut oil. The agent also advised using it two or three times a week. The caller mentioned having dry hair and requested a callback for tomorrow at 6:30 PM because they were busy at the office. The agent agreed to the callback and ended the call.",
+  "next_action": "Callback the customer tomorrow at 6:30 PM.",
+  "extracted_fields": {
+    "callback_time": "tomorrow at 6:30 PM",
+    "ingredients": "amla, bhringraj, hibiscus, coconut oil",
+    "phone": "+919700000002",
+    "price": "499 rupees",
+    "product": "herbal hair oil",
+    "volume": "200 ml"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:herbal-hair-oil",
+    "custom:dry-hair"
+  ],
+  "unanswered_questions": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T13:10:30.354696Z",
+  "generation_ok": true,
+  "summary_language": "te-IN",
+  "facts": {
+    "callback_time": "tomorrow at 6:30 PM",
+    "ingredients": "amla, bhringraj, hibiscus, coconut oil",
+    "phone": "+919700000002",
+    "price": "499 rupees",
+    "product": "herbal hair oil",
+    "volume": "200 ml"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:dry-hair",
+    "custom:herbal-hair-oil",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "fbaa017c-6a6d-498d-8d9e-8446b7071a92",
+    "agentId": "f6d309d7-5f8f-5de2-ac1e-f7ebefcf75f9",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 60,
+    "band": "warm",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "callback_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

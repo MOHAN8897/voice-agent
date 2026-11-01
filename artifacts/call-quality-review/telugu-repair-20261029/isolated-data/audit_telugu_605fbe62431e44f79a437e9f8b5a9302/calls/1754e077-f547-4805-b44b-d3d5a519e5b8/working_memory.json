@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "caller_name": "కిరణ్",
+    "email": "kiran.audit@example.invalid",
+    "requested_time": "evenings, అంటే రాత్రి 8 to 9 PM"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: సరే, eligibility clear గా ఉంది. మరి ఈ Python course కి fees ని instalments లో కట్టే option ఏమైనా ఉందా? అలాగే నా enquiry save చేశారా, demo arrange చేస్తారా?\nassistant: ఈ Python course కి instalment option ఏమీ లేదు, మొత్తం fee eight thousand nine hundred ninety nine rupees ఒకేసారి కట్టాలి. నా దగ్గర మీ enquiry save అయినట్టు confirmation రాలేదు. Demo లేదా counselling కోసం మీ పేరు, email, qualification మరియు preferred batch వివరాలు చెప్తారా?"
+}

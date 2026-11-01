@@ -1,0 +1,35 @@
+{
+  "call_id": "4bd25220-b87e-4d69-9162-81298b60460c",
+  "language_callback": null,
+  "disposition": "new_lead",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the consultation fee and the operating hours. The agent provided the consultation fee as ₹300 and stated that the office is open from Monday to Saturday, between 10 AM and 8 PM. The caller expressed satisfaction with this information and concluded the call by saying goodbye.",
+  "next_action": null,
+  "extracted_fields": {
+    "fee": "₹300",
+    "hours": "Monday to Saturday, 10 AM to 8 PM",
+    "phone": "+919876500028"
+  },
+  "facts": {
+    "fee": "₹300",
+    "hours": "Monday to Saturday, 10 AM to 8 PM",
+    "phone": "+919876500028"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:new_lead",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:35:27.151853Z",
+  "generation_ok": true
+}

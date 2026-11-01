@@ -1,0 +1,10 @@
+{"seq": 1, "role": "user", "text": "It is too expensive for me.", "ts": "2026-10-30T10:47:46.836688Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I understand. The 3 kW system is 1,95,000 rupees before the government subsidy of 78,000 rupees, so you pay 1,17,000 rupees. Would that help?", "ts": "2026-10-30T10:47:49.014568Z"}
+{"seq": 3, "role": "user", "text": "No, it is still too expensive for us.", "ts": "2026-10-30T10:47:49.014568Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "We also have an EMI option from 2,999 rupees per month for 48 months. Would that make it easier for you?", "ts": "2026-10-30T10:47:51.064493Z"}
+{"seq": 5, "role": "user", "text": "Okay, what is the monthly EMI again?", "ts": "2026-10-30T10:47:51.064493Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "The monthly EMI is 2,999 rupees for 48 months. Would that work for you?", "ts": "2026-10-30T10:47:53.676066Z"}
+{"seq": 7, "role": "user", "text": "Fine, book the free survey. My name is Kiran, I live in Velachery, Saturday works.", "ts": "2026-10-30T10:47:53.676066Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Your enquiry is saved, Kiran. The team will reach out to confirm the Saturday survey in Velachery.", "ts": "2026-10-30T10:47:57.153804Z"}
+{"seq": 9, "role": "user", "text": "Thanks.", "ts": "2026-10-30T10:47:57.154831Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-30T10:47:58.283535Z"}

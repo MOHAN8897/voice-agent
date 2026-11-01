@@ -1,0 +1,15 @@
+{
+  "facts": {
+    "caller_name": "రమణ",
+    "product": "matte cards",
+    "quantity": "200",
+    "delivery_locality": "విజయవాడ",
+    "email": "ramesh.audit@example.invalid",
+    "caller_email": "ramesh.audit@example.invalid"
+  },
+  "preferences": {
+    "finish": "matte finish"
+  },
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "assistant: విజయవాడలో artwork approval తర్వాత delivery మూడు working days పడుతుంది. Design మీరు తర్వాత ఇచ్చినా పర్వాలేదు. మరి order process చేద్దామా?\nuser: సరే, order process చేద్దాం. కానీ, అసలు ప్రస్తుతం మీ దగ్గర ఏ పేరు, ఏ product, ఇంకా ఎంత quantity stock లో ఉన్నాయో చెప్తారా? మళ్ళీ నేను వివరాలు చెప్పను.\nassistant: రమేష్ గారు, stock లో ఎన్ని ఉన్నాయో నాకు exact గా తెలియదు. కానీ మీ order కోసం నేను details note చేసుకుంటాను. మీరు matte finish one hundred cards కావాలని చెప్పారు కదా, మరి మీ పేరు confirm చేస్తారా?"
+}

@@ -1,0 +1,141 @@
+{
+  "call_id": "b9ad1c91-0a12-4f94-981e-cf2c46ecde7b",
+  "tenant_id": "e84e4843-c0dc-47b7-98dc-ad6ce040af59",
+  "agent_id": "67eb8019-5907-4da3-879c-950e4e7c515d",
+  "session_id": "qa-e1ee46739e7a44d7b6caeef3a447ba97",
+  "channel": "pstn",
+  "direction": "outbound",
+  "environment": "development",
+  "tier": "medium",
+  "combination_id": "5b3ecb0dcd721b7f",
+  "compiled_brain_version": "cb_qa_231f0ef39b864ef6",
+  "started_at": "2026-10-31T16:54:56.605749+00:00",
+  "status": "active",
+  "storage_path": "data/calls/b9ad1c91-0a12-4f94-981e-cf2c46ecde7b/",
+  "resolved_stack": {
+    "combination_id": "5b3ecb0dcd721b7f",
+    "tier": "medium",
+    "mode": "frontend",
+    "language": "hi-IN",
+    "voice_preset": "telugu_natural",
+    "stt": {
+      "provider": "sarvam",
+      "model": "saaras:v3-realtime",
+      "config": {
+        "mode": "realtime"
+      }
+    },
+    "llm": {
+      "provider": "sarvam",
+      "model": "sarvam-105b-conversations",
+      "config": {
+        "api_mode": "chat_completions_v1"
+      }
+    },
+    "tts": {
+      "provider": "sarvam",
+      "model": "bulbul:v3",
+      "config": {
+        "speaker": "shubh",
+        "api_mode": "websocket"
+      }
+    }
+  },
+  "pipeline": "composed_voice",
+  "callee_e164": "+919700000017",
+  "caller_id": "+914000000000",
+  "is_test": true,
+  "call_end_policy": {
+    "allowedReasons": [
+      "goodbye",
+      "firm_refusal",
+      "not_interested",
+      "goal_complete",
+      "abuse"
+    ],
+    "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+    "farewellSource": "default"
+  },
+  "stage_usage": {
+    "llm": {
+      "input_tokens": 50615,
+      "output_tokens": 2751,
+      "cached_tokens": 24768
+    },
+    "stt": {
+      "audio_seconds": 0.0
+    }
+  },
+  "language_callback": {
+    "status": "requested",
+    "kind": "language_switch",
+    "id": "898fa097-4595-4acf-a311-5b0398b664c7",
+    "caller_language": "te-IN",
+    "configured_language": "hi-IN",
+    "summary": "Caller asked to continue in Telugu; call back in Telugu with the same agent."
+  },
+  "contact_preference": "callback",
+  "disconnected_at": "2026-10-31T16:56:41.747477+00:00",
+  "ended_at": "2026-10-31T16:56:41.747477+00:00",
+  "end_reason": "user_stop",
+  "duration_sec": 105.0,
+  "provider_cost_result": {
+    "status": "incomplete",
+    "missing": [
+      "provider_cost_snapshot"
+    ],
+    "stages": {},
+    "totalUsd": null,
+    "totalInr": null
+  },
+  "usage": {
+    "cost_accounting_version": 3,
+    "supplier_cost_status": "incomplete",
+    "live_transcript_usd": 0.0,
+    "live_transcript_inr": 0.0,
+    "pipeline": "composed_voice",
+    "duration_sec": 105.0,
+    "telephony_provider": "telnyx",
+    "telephony_usd": 0.028875,
+    "telephony_inr": 2.74168125,
+    "model_cost_usd": null,
+    "model_cost_inr": null,
+    "telnyx_usd": 0.028875,
+    "telnyx_inr": 2.74168125,
+    "telnyx_voice_api_usd": 0.0035,
+    "telnyx_sip_usd": 0.01575,
+    "telnyx_media_stream_usd": 0.006125,
+    "telnyx_call_recording_usd": 0.0035,
+    "telnyx_destination_country": "IN",
+    "telnyx_sip_usd_per_min": 0.009,
+    "telnyx_cost_is_estimate": true,
+    "vobiz_usd": 0.0,
+    "vobiz_inr": 0.0,
+    "carrier_cost_source": "tariff_estimate",
+    "cost_usd": null,
+    "cost_inr": null,
+    "cost_is_estimate": true,
+    "fx_rate_inr": 94.95,
+    "fx_source": "live_cache",
+    "fx_as_of": "2026-10-30",
+    "gst_inr": 0.0,
+    "cost_usd_per_min": null,
+    "cost_inr_per_min": null,
+    "telephony_usd_per_min": 0.0165,
+    "telephony_inr_per_min": 1.566675,
+    "model_cost_usd_per_min": null,
+    "model_cost_inr_per_min": null,
+    "telnyx_usd_per_min": 0.0165,
+    "telnyx_inr_per_min": 1.566675,
+    "vobiz_usd_per_min": 0.0,
+    "vobiz_inr_per_min": 0.0
+  },
+  "callback_request": {
+    "id": "1ce28c70-4568-49c8-9bb0-6b190d9ebd28",
+    "status": "requested",
+    "requestedWhen": "कल सुबह 11 बजे",
+    "requestText": "देखिए, मुझे Telugu ज़्यादा comfortable आती है। क्या आप मुझे कल सुबह 11 बजे call back कर सकते हैं?"
+  },
+  "callback_cancelled": false,
+  "callback_withdrawal_pending": false
+}

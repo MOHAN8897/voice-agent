@@ -1,0 +1,22 @@
+{"seq": 1, "role": "user", "text": "ഒരു മിനിറ്റ് സംസാരിക്കാം. ഞാൻ Lakshmi Reddy ആണ്.", "ts": "2026-10-31T16:50:37.798977Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "നന്ദി Lakshmi Reddy. ഇന്ന് ഏത് herbal product ആണ് നോക്കുന്നത്? ഇതിൽ ഏതാണ് അറിയേണ്ടത്?", "ts": "2026-10-31T16:50:38.956065Z"}
+{"seq": 3, "role": "user", "text": "എനിക്കൊരു face cream നോക്കാനുണ്ട്. ഇതിൽ എന്തൊക്കെയാണ് ingredients എന്ന് പറയാമോ?", "ts": "2026-10-31T16:50:49.516719Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "NatureVeda Herbal Face Cream-ൽ Neem, Turmeric, പിന്നെ Aloe Vera എന്നിവയാണ് ഉള്ളത്. ഇത് 50 g-യ്ക്ക് ₹599 ആണ് വരുന്നത്, moisturizing-നും routine skin care-നും ഒക്കെ നല്ലതാണ്.", "ts": "2026-10-31T16:50:50.966510Z"}
+{"seq": 5, "role": "user", "text": "ശരി, ഇത് കേൾക്കാൻ നല്ലതാണ്. ഞാൻ ഇത് എങ്ങനെ ഉപയോഗിക്കണം?", "ts": "2026-10-31T16:51:06.847456Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "മുഖത്ത് ചെറിയ അളവിൽ എടുത്ത് മൃദുവായി പുരട്ടാം. കഴുകി കളയുന്നതിന് മുൻപ് കുറച്ചു നേരം വെച്ച ശേഷം ഉപയോഗിക്കാവുന്നതാണ്.", "ts": "2026-10-31T16:51:08.397808Z"}
+{"seq": 7, "role": "user", "text": "ശരി, മനസ്സിലായി. ഞാൻ ഒരു face cream-ഉം പിന്നെ 2 bottle hair oil-ഉം എടുക്കാം.", "ts": "2026-10-31T16:51:22.073764Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Herbal Face Cream ₹599-ഉം Hair Oil ₹499-ഉം ആണ് വരുന്നത്.", "ts": "2026-10-31T16:51:23.695122Z"}
+{"seq": 9, "role": "user", "text": "ആകെ എത്രയാകും price?", "ts": "2026-10-31T16:51:29.934723Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "Face cream-ന് ₹599-ഉം hair oil-ന് ₹499-ഉം ആണ് വില. 2 hair oil എടുത്താൽ ആകെ ₹1,497 ആകും. ഓർഡർ place ചെയ്യണോ?", "ts": "2026-10-31T16:51:31.933291Z"}
+{"seq": 11, "role": "user", "text": "ശരി, total price എത്രയാകും?", "ts": "2026-10-31T16:51:42.715885Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "Face cream-ന് ₹599-ഉം 2 hair oil-ന് ₹998-ഉം ആണ് വരുന്നത്. അപ്പോൾ ആകെ ₹1,597 ആകും.", "ts": "2026-10-31T16:51:46.757727Z"}
+{"seq": 13, "role": "user", "text": "Okay, total price 1,597 rupees. ഇതിൽ എന്തെങ്കിലും discount ഉണ്ടോ?", "ts": "2026-10-31T16:51:57.528599Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "ആ വിവരം എനിക്കറിയില്ല.", "ts": "2026-10-31T16:52:00.417625Z"}
+{"seq": 15, "role": "user", "text": "ഓ, discount ഇല്ലാത്തത് ഒരു ബുദ്ധിമുട്ടാണ്. ഞാൻ ആലോചിച്ചിട്ട് വിളിക്കാം, അല്ലെങ്കിൽ വേറെ എന്തെങ്കിലും offer ഉണ്ടോ?", "ts": "2026-10-31T16:52:08.230231Z", "partial": false}
+{"seq": 16, "role": "assistant", "text": "ശരി, മനസ്സിലായി. വേറെ എന്തെങ്കിലും details അറിയണമെന്നുണ്ടോ? അതോ പിന്നീട് വിളിക്കാമോ?", "ts": "2026-10-31T16:52:09.882523Z"}
+{"seq": 17, "role": "user", "text": "ശരി, discount ഒന്നുമില്ലെങ്കിൽ കുഴപ്പമില്ല. ഞാൻ ഓർഡർ ചെയ്യാം. എന്റെ details തരാം. പേര് Lakshmi Reddy.", "ts": "2026-10-31T16:52:21.881282Z", "partial": false}
+{"seq": 18, "role": "assistant", "text": "ശരി Lakshmi Reddy. Order confirm ചെയ്യാൻ delivery address ഒന്ന് പറയാമോ?", "ts": "2026-10-31T16:52:24.031571Z"}
+{"seq": 19, "role": "user", "text": "എന്റെ address Flat 302, Sai Residency, Kukatpally, Hyderabad 500072 ആണ്.", "ts": "2026-10-31T16:52:33.959230Z", "partial": false}
+{"seq": 20, "role": "assistant", "text": "ശരി, Flat 302, Sai Residency, Kukatpally, Hyderabad 500072. അപ്പോൾ ഒരു Herbal Face Cream-ഉം 2 Herbal Hair Oil-ഉം, ആകെ ₹1,597, Lakshmi Reddy-ക്ക് വേണ്ടിയുള്ളതാണ്. ഇത് confirm ചെയ്യട്ടെ?", "ts": "2026-10-31T16:52:36.868319Z"}
+{"seq": 21, "role": "user", "text": "അതെ, confirm ചെയ്യാം. പിന്നെ ഇതിന്റെ delivery എത്ര സമയം എടുക്കും?", "ts": "2026-10-31T16:52:53.956176Z", "partial": false}
+{"seq": 22, "role": "assistant", "text": "ക്ഷമിക്കണം, ഞങ്ങൾക്ക് ഒരു സാങ്കേതിക പ്രശ്നം നേരിടുന്നു. ഞങ്ങൾ നിങ്ങളെ വീണ്ടും വിളിക്കും. നന്ദി.", "ts": "2026-10-31T16:52:55.445033Z"}

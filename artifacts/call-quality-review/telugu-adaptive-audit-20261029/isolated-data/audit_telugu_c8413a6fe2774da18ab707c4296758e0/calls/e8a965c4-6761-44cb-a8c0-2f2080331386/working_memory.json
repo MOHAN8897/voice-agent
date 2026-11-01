@@ -1,0 +1,12 @@
+{
+  "facts": {
+    "caller_name": "రమేష్",
+    "product": "visiting cards",
+    "finish": "Matte",
+    "quantity": "250",
+    "caller_email": "ramesh.audit@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "assistant: Matte finish cards కోసం minimum order one hundred cards ఉంటుంది. one hundred cards కి three hundred fifty rupees అవుతుంది. మీకు ఎన్ని cards కావాలో చెప్తారా?\nuser: ప్రస్తుతం నాకు 250 cards కావాలి. దీనికి ఏమైనా extra charges ఉంటాయా?\nassistant: Extra charges గురించి నాకు సమాచారం లేదు. మీరు proceed అవ్వాలనుకుంటే, మీ పేరు చెప్తారా?\nuser: సరే, నా పేరు రమేష్. నేను నా email ID ramesh.audit@example.invalid ద్వారా designs తర్వాత పంపిస్తాను, ప్రస్తుతానికి ఇంతే చాలు, goodbye.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+}

@@ -1,0 +1,41 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller immediately expressed strong frustration and criticized the way the conversation was being handled, asking the agent to stop wasting time. The agent apologized briefly, thanked the caller, and ended the call. No customer need, facts, or follow-up action was identified.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+12025550141"
+  },
+  "objections": [
+    "Caller objected to the agent's communication style and perceived unhelpful or irrelevant talk."
+  ],
+  "notes": "The call ended immediately after the caller's complaint; no product or service discussion took place.",
+  "tags": [
+    "intent:complaint",
+    "sentiment:frustrated",
+    "sentiment:negative",
+    "signal:objection"
+  ],
+  "custom_tags": [],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:28:11.787526Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+12025550141"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "intent:complaint",
+    "outcome:not_interested",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

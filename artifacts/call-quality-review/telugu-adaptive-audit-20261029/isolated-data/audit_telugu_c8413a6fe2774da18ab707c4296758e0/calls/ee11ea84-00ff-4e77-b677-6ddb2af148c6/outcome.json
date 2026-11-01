@@ -1,0 +1,88 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Shravani from Madhapur requested a general service for her split AC and asked for a technician appointment tomorrow at 10:00 AM, with the appointment added to her calendar and confirmation provided. The agent checked availability, mentioned slots at 10:00 AM and 2:00 AM, and the caller selected 10:00 AM. She provided her name, locality, phone number, and email address, and repeated the request for calendar creation and confirmation. The agent did not confirm that the appointment or calendar entry was created and instead asked whether to call back; the caller explicitly said no callback and requested completion and confirmation. The call ended without the requested appointment being confirmed.",
+  "next_action": "Create the technician appointment for tomorrow at 10:00 AM, add it to the caller’s calendar, and inform Shravani whether it is confirmed.",
+  "extracted_fields": {
+    "callback_phone": "9876543210",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "email_id": "sravani.audit@example.invalid",
+    "location": "Madhapur",
+    "name": "Shravani",
+    "phone": "9876543210",
+    "phone_number": "9876543210",
+    "product": "split AC general service",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "service": "Split AC general service"
+  },
+  "objections": [],
+  "notes": "The caller explicitly declined a callback; the requested calendar appointment and confirmation were not completed during the call.",
+  "tags": [
+    "intent:booking",
+    "intent:support",
+    "followup:site_visit",
+    "action:required",
+    "followup:schedule_pending"
+  ],
+  "custom_tags": [
+    "custom:split-ac-service",
+    "custom:madhapur",
+    "custom:morning-appointment"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:29:18.156414Z",
+  "generation_ok": true,
+  "facts": {
+    "callback_phone": "9876543210",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "email_id": "sravani.audit@example.invalid",
+    "location": "Madhapur",
+    "name": "Shravani",
+    "phone": "9876543210",
+    "phone_number": "9876543210",
+    "product": "split AC general service",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "service": "Split AC general service"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:split-ac-service",
+    "intent:booking",
+    "intent:support",
+    "outcome:callback_required",
+    "signal:do_not_call"
+  ],
+  "lead": {
+    "leadId": "595ccd55-51b5-4a03-a8e2-ec136fd002ea",
+    "agentId": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 0,
+    "band": "disqualified",
+    "disposition": "callback_required",
+    "confidence": 0.98,
+    "components": [],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "caller_opt_out"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

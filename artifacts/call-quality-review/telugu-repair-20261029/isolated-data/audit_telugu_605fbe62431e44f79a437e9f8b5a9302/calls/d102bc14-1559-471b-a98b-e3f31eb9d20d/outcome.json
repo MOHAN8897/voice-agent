@@ -1,0 +1,95 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "Kiran called to learn about the Python course and requested a call tomorrow morning. The agent explained that eligibility requires being a graduate, including BTech, BSc, or BCom, and that final-year students are also eligible; basic computer knowledge is sufficient and prior coding experience is not required. The caller repeated the eligibility question after the agent initially focused on the callback request, then acknowledged the answer and ended the call politely. The agent recorded the caller's details and callback request, but the transcript does not confirm that the callback was completed.",
+  "next_action": "Call Kiran tomorrow morning to follow up about the Python course.",
+  "extracted_fields": {
+    "caller_name": "కిరణ్",
+    "eligibility": "Graduate or final-year student; BTech, BSc, or BCom accepted; basic computer knowledge required; no prior coding experience required",
+    "name": "Kiran",
+    "phone": "+12025550101",
+    "product": "Python course",
+    "requested_callback_time": "Tomorrow morning"
+  },
+  "objections": [],
+  "notes": "Caller provided contact details during the call. No enrollment or purchase was confirmed.",
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-course",
+    "custom:eligibility-inquiry"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T16:36:07.184332Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_name": "కిరణ్",
+    "eligibility": "Graduate or final-year student; BTech, BSc, or BCom accepted; basic computer knowledge required; no prior coding experience required",
+    "name": "Kiran",
+    "phone": "+12025550101",
+    "product": "Python course",
+    "requested_callback_time": "Tomorrow morning"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:eligibility-inquiry",
+    "custom:python-course",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "100a975b-683e-49f1-bd31-cfd8ff8bf537",
+    "agentId": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.99,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

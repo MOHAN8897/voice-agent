@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "quantity": "200",
+    "caller_name": "ರವಿ ಕುಮಾರ್"
+  },
+  "preferences": {
+    "finish": "matte"
+  },
+  "important_context": "",
+  "summary": "user: ನನಗೆ 200 matte ವಿಸಿಟಿಂಗ್ ಕಾರ್ಡ್ಸ್ ಬೇಕು.\nassistant: ಸರಿ, matte finish visiting cards ಒಂದು 100 cards-ಗೆ ₹350 ಆಗುತ್ತೆ. So 200 cards-ಗೆ ₹700 ಆಗುತ್ತೆ. ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು delivery address ಹೇಳ್ತೀರಾ?\nuser: ನನ್ನ ಹೆಸರು ರವಿ ಕುಮಾರ್. ವಿಜಯವಾಡದ 12 MG Road-ಗೆ ಡೆಲಿವರಿ ಮಾಡಿ.\nassistant: ಸರಿ, ರವಿ ಕುಮಾರ್. ವಿಜಯವಾಡದ 12 MG Road-ಗೆ ಡೆಲಿವರಿ ಮಾಡಬಹುದು. ಈಗ order confirm ಮಾಡ್ಲಾ?\nuser: ಹೌದು, ದಯವಿಟ್ಟು order ಕನ್ಫರ್ಮ್ ಮಾಡಿ.\nassistant: ನಿಮ್ಮ order confirm ಆಗಿದೆ.\nuser: ಥ್ಯಾಂಕ್ಸ್, ಅಷ್ಟೇ."
+}

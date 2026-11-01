@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "requested_time": "tomorrow at 11 AM",
+    "caller_name": "Kiran"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "assistant: I understand you have tooth pain and want an appointment tomorrow at 11 AM. Before the front desk can confirm it, I will need your name.\nuser: My name is Kiran.\nassistant: Hi, this is Anjali calling from Sunrise Dental Clinic. Noted, Kiran. Could you tell me what specific problem you are facing so I can pass that along?\nuser: Is my appointment confirmed?\nassistant: I do not have a confirmed booking yet, Kiran. I have noted your name, the tooth pain, and tomorrow at 11 AM for the front desk to confirm.\nuser: Okay, thanks."
+}

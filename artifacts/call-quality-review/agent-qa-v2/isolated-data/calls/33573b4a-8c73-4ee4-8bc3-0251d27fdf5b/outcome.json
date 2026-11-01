@@ -1,0 +1,108 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The business agent called the customer, who expressed interest in the Herbal Face Cream and Herbal Hair Oil. The agent shared the prices and ingredients, but could not confirm whether an email had been sent or verify stock and delivery timelines to Kukatpally. After the customer objected to the lack of these details, the agent agreed to book a team call for tomorrow at 11 AM. The call concluded with the customer satisfied that the callback was scheduled.",
+  "next_action": "Callback scheduled for tomorrow at 11 AM.",
+  "extracted_fields": {
+    "callback_time": "tomorrow at 11 AM",
+    "email": "mohansaiteja.99@gmail.com",
+    "location": "Kukatpally",
+    "phone": "+919700000024",
+    "product_of_interest": "Herbal Face Cream, Herbal Hair Oil"
+  },
+  "objections": [
+    "Agent could not confirm if the requested product details email was sent.",
+    "Agent could not provide stock availability.",
+    "Agent could not provide delivery timelines."
+  ],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral",
+    "followup:schedule_pending"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:face-cream",
+    "custom:hair-oil"
+  ],
+  "unanswered_questions": [
+    "Is the face cream currently in stock?",
+    "When will the order be delivered to Kukatpally?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T14:12:52.192432Z",
+  "generation_ok": true,
+  "summary_language": "en-IN",
+  "facts": {
+    "callback_time": "tomorrow at 11 AM",
+    "email": "mohansaiteja.99@gmail.com",
+    "location": "Kukatpally",
+    "phone": "+919700000024",
+    "product_of_interest": "Herbal Face Cream, Herbal Hair Oil"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:phone_known",
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:herbal-products",
+    "followup:callback",
+    "followup:schedule_pending",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "978a46ae-22ee-456e-9644-6fabbb2042bf",
+    "agentId": "d3143c95-348a-5b09-9df1-28739f9a6213",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 35,
+    "band": "cold",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "callback_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

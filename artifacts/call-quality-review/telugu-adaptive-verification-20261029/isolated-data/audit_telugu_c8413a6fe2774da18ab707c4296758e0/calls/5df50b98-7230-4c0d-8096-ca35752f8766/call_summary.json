@@ -1,0 +1,46 @@
+{
+  "call_id": "5df50b98-7230-4c0d-8096-ca35752f8766",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller asked for the price of 100 matte visiting cards and noted that they had not yet provided their name. The agent quoted ₹350 for 100 cards and asked whether the caller wanted to proceed with an order and provide their name. The caller said they had received the needed details, thanked the agent, and ended the call. No order was placed and no follow-up was agreed.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "caller_name": "ఇంకా",
+    "phone": "+12025550151",
+    "price_quoted": "₹350",
+    "product": "Matte visiting cards",
+    "quantity": "100"
+  },
+  "facts": {
+    "caller_name": "ఇంకా",
+    "phone": "+12025550151",
+    "price_quoted": "₹350",
+    "product": "Matte visiting cards",
+    "quantity": "100"
+  },
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:matte-visiting-cards",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:not_interested",
+    "sentiment:positive",
+    "signal:do_not_call"
+  ],
+  "tags": [
+    "intent:pricing",
+    "intent:purchase",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T15:53:05.617455Z",
+  "generation_ok": true
+}

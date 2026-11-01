@@ -1,0 +1,91 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller requested an immediate booking confirmation for tomorrow at 11 AM and asked for a booking number. The agent explained that they could not confirm the booking or provide a number on the spot, and requested the caller's name, appliance details, issue, and locality to forward to the team for confirmation. The caller initially pressed for immediate confirmation but ultimately accepted the explanation by saying 'Okay, thanks.' The agent reiterated that confirmation and the booking number would only be issued after the team processes the shared details, and asked if any further assistance was needed, to which the caller did not respond before the call ended.",
+  "next_action": "Collect caller details and submit for team confirmation.",
+  "extracted_fields": {
+    "phone": "+919876500007",
+    "requested_time": "రేపు ఉదయం 11",
+    "slot": "Tomorrow 11 AM"
+  },
+  "objections": [
+    "Caller requested immediate confirmation and a booking number, which the agent could not provide."
+  ],
+  "notes": "",
+  "tags": [
+    "action:required",
+    "followup:callback",
+    "intent:booking",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:appointment-booking"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T20:32:51.998112Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500007",
+    "requested_time": "రేపు ఉదయం 11",
+    "slot": "Tomorrow 11 AM"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:appointment-booking",
+    "followup:callback",
+    "intent:booking",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "eec801e6-21b3-4704-acd5-7a79ce4e5bbd",
+    "agentId": "01eb1668-8964-44ad-80e4-14efc6f4e471",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 35,
+    "band": "cold",
+    "disposition": "callback_required",
+    "confidence": 0.85,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "slot"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

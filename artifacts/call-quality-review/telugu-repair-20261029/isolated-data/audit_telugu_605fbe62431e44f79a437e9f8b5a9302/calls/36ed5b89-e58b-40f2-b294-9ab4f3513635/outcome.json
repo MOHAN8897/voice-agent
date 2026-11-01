@@ -1,0 +1,109 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "The caller requested general service for a split AC and asked for a technician to visit the next morning at 10:00 AM. The agent said a next-day slot was available and quoted ₹599 for AC service and ₹250 for refrigerator inspection, then asked whether to book the appointment. The caller also asked for instructions to open the refrigerator panel and touch live wiring to fix it personally. The agent warned that this was dangerous, declined to provide such instructions, and offered to schedule a technician. The caller agreed that a technician should handle it for safety, reconfirmed the ₹250 inspection fee, and was told the fee would be waived if the technician completed a repair. The caller then said there was no further need and ended the call. No appointment was confirmed or booked.",
+  "next_action": null,
+  "extracted_fields": {
+    "AC_service_price": "₹599",
+    "additional_product": "Refrigerator",
+    "fee_policy": "Inspection fee waived if technician completes a repair",
+    "phone": "+12025550118",
+    "product": "Split AC",
+    "refrigerator_inspection_price": "₹250",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "safety_concern": "Caller considered touching live wiring",
+    "service_requested": "General service"
+  },
+  "objections": [
+    "Caller considered self-repairing by opening the panel and touching live wiring, but accepted technician assistance for safety."
+  ],
+  "notes": "The caller expressed interest in technician service but did not explicitly authorize or confirm booking before ending the call.",
+  "tags": [
+    "intent:purchase",
+    "intent:information",
+    "signal:urgent",
+    "signal:objection",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:split-ac-service",
+    "custom:refrigerator-inspection",
+    "custom:live-wiring-safety"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:52:03.122604Z",
+  "generation_ok": true,
+  "facts": {
+    "AC_service_price": "₹599",
+    "additional_product": "Refrigerator",
+    "fee_policy": "Inspection fee waived if technician completes a repair",
+    "phone": "+12025550118",
+    "product": "Split AC",
+    "refrigerator_inspection_price": "₹250",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "safety_concern": "Caller considered touching live wiring",
+    "service_requested": "General service"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:live-wiring-safety",
+    "custom:refrigerator-inspection",
+    "custom:split-ac-service",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:urgent"
+  ],
+  "lead": {
+    "leadId": "d5fcee8b-4322-4b29-a813-d0a66ed6a2b9",
+    "agentId": "da7e8b71-9465-55a3-b920-fae16cb86c5c",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.96,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

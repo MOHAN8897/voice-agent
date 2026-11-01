@@ -1,0 +1,22 @@
+{
+  "call_id": "b6f4aac6-a6ba-48e2-8bbe-829ceb2c0282",
+  "turns": [
+    {
+      "turn": 2,
+      "stt_final_ms": null,
+      "llm_ttft_ms": 2570,
+      "tts_first_audio_ms": null,
+      "e2e_ms": 2570,
+      "memory_ops_applied": 0,
+      "memory_merge_ms": 13,
+      "errors": [],
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "memory_ops_proposed": 0,
+      "memory_ops_rejected": 0,
+      "finish_reason": "unknown"
+    }
+  ]
+}

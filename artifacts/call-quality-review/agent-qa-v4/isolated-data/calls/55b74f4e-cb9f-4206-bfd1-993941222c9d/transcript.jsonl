@@ -1,0 +1,12 @@
+{"seq": 1, "role": "user", "text": "హలోండి, నేను Lakshmi Reddy ని. చెప్పండి, మీరసలు ఏం products అమ్ముతున్నారు?", "ts": "2026-10-31T15:08:50.913548Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "మా దగ్గర నాలుగు herbal products ఉన్నాయి. NatureVeda Herbal Hair Oil ₹499 కి 200 ml వస్తుంది, ఇందులో Amla, Bhringraj, Hibiscus, Coconut Oil ఉంటాయి. మీకు ఏ product గురించి details కావాలి?", "ts": "2026-10-31T15:08:52.485937Z"}
+{"seq": 3, "role": "user", "text": "అది బాగానే ఉంది, ఈ products అన్నీ ఎక్కడ తయారవుతాయి?", "ts": "2026-10-31T15:09:10.300169Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ఆ విషయం ప్రస్తుతం నా system లో అందుబాటులో లేదు, నేను ఊహించి చెప్పలేను.", "ts": "2026-10-31T15:09:11.498640Z"}
+{"seq": 5, "role": "user", "text": "సరే, మీరనే hair oil లో Amla ఇంకా Bhringraj ఏ proportions లో వాడతారో కొంచెం చెప్తారా?", "ts": "2026-10-31T15:09:23.948029Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ఆ proportions ప్రస్తుతం నాకు తెలియదు. మా product లో Amla, Bhringraj, Hibiscus, Coconut Oil అన్నీ ఉన్నాయి, routine hair and scalp care కోసం వాడతాం.", "ts": "2026-10-31T15:09:25.357310Z"}
+{"seq": 7, "role": "user", "text": "సరే, మరి ఈ hair oil డెలివరీకి ఎంత టైం పడుతుంది?", "ts": "2026-10-31T15:09:41.152329Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "ఆ delivery time ప్రస్తుతం నా system లో కనిపించట్లేదు, నేను కచ్చితంగా చెప్పలేను. Team వాళ్ళు confirm చేశాక చెప్తాను. ఈ hair oil order గురించి ఏమైనా details కావాలా?", "ts": "2026-10-31T15:09:42.674868Z"}
+{"seq": 9, "role": "user", "text": "సరే, మరి ఈ ఆయిల్ పై ఏమైనా డిస్కౌంట్స్ ఉన్నాయా?", "ts": "2026-10-31T15:09:59.375598Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "ప్రస్తుతం ఈ product పై ఏ discounts ఉన్నాయో నా system లో కనిపించట్లేదు. నేను ఊహించి చెప్పలేను.", "ts": "2026-10-31T15:10:01.034758Z"}
+{"seq": 11, "role": "user", "text": "సరే, వివరాలు పెద్దగా ఏం లేవు కదా, నేనైతే ఇప్పుడు వేరే products వాడేస్తున్నాను, కాబట్టి నాకు ప్రస్తుతానికి ఇంట్రెస్ట్ లేదు.", "ts": "2026-10-31T15:10:15.847910Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-31T15:10:16.540662Z"}

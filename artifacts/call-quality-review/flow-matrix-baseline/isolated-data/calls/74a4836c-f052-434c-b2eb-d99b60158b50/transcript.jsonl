@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "मेरे order का दूध का packet damage आया है। मुझे मेरा refund कब मिलेगा?", "ts": "2026-10-30T10:40:52.656810Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Damage report करने के बाद refund 5 working days में process हो जाता है।", "ts": "2026-10-30T10:40:55.344005Z"}
+{"seq": 3, "role": "user", "text": "ठीक है, बस इतना ही।", "ts": "2026-10-30T10:40:55.345014Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "समय देने के लिए धन्यवाद। नमस्कार।", "ts": "2026-10-30T10:40:56.346794Z"}

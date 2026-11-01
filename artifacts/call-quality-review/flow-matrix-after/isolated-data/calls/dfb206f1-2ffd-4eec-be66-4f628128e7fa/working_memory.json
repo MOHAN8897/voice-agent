@@ -1,0 +1,6 @@
+{
+  "facts": {},
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: I am busy right now, call me later.\nassistant: I understand you are busy right now. I will call you back later.\nuser: I don't know, sometime later.\nassistant: I understand. You mentioned sometime later. I will note that down and call you back then.\nuser: Okay, bye.\nassistant: I've saved your details and your request for a follow-up call. Thank you for your time. Goodbye."
+}

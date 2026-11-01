@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "product": "Weekday evening batch",
+    "caller_name": "కిరణ్"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: సరే, నా పేరు కిరణ్, email kiran.audit@example.invalid. నేను qualification గురించి తర్వాత చెప్తాను. ప్రస్తుతానికి registration process తెలియదు అన్నారు కదా, మరి ఈ details కోసం admission team ని ఎలా contact అవ్వాలి?\nassistant: Registration process వివరాలు ప్రస్తుతం నాకు తెలియవు. మీరు free demo లేదా admission counselling కోసం మీ పేరు, email, qualification వివరాలు ఇక్కడే save చేయమని అడగగలను. మీరు qualification తర్వాత చెప్తాను అన్నారు కాబట్టి, ప్రస్తుతానికి మిగతావి చెప్తారా?"
+}

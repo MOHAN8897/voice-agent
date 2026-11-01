@@ -1,0 +1,52 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller requested to book a service visit for the following day at 11 AM and demanded immediate confirmation and a booking number. The agent explained that the booking could not be confirmed until the caller provided their name, the specific appliance needing service, the issue description, and their locality. The agent repeated this requirement, but the caller did not provide any of the requested details and simply said, 'Okay, thanks,' before ending the call without sharing any information.",
+  "next_action": "No further action can be taken until the caller provides the missing booking details.",
+  "extracted_fields": {
+    "phone": "+919876500039",
+    "requested_time": "tomorrow 11 AM",
+    "slot": "tomorrow 11 AM"
+  },
+  "objections": [
+    "Caller refused to provide personal and service details required to finalize the booking."
+  ],
+  "notes": "",
+  "tags": [
+    "intent:booking",
+    "sentiment:neutral",
+    "signal:objection",
+    "followup:schedule_pending"
+  ],
+  "custom_tags": [
+    "custom:service-booking"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T20:21:17.128544Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500039",
+    "requested_time": "tomorrow 11 AM",
+    "slot": "tomorrow 11 AM"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:service-booking",
+    "followup:schedule_pending",
+    "intent:booking",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

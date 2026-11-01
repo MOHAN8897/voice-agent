@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "ಎರಡು split ACಗಳು ಮತ್ತು ಒಂದು window AC service ಮಾಡಿದರೆ total ಎಷ್ಟು?", "ts": "2026-10-29T19:32:17.167802Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Split AC service-ಗೆ ₹599 ಆಗುತ್ತೆ, ಮತ್ತೆ window AC-ಗೆ ₹499 ಆಗುತ್ತೆ. So ಎರಡು split AC ಮತ್ತೆ ಒಂದು window AC-ಗೆ total ₹1,697 ಆಗುತ್ತೆ. ನಿಮಗೆ visit schedule ಮಾಡ್ಬೇಕಾ?", "ts": "2026-10-29T19:32:17.724961Z", "brain_latency_ms": 559}
+{"seq": 3, "role": "user", "text": "ಎರಡು split ಮತ್ತು ಒಂದು window ACಗಳ service charges ಸೇರಿಸಿ total ಹೇಳಿ.", "ts": "2026-10-29T19:32:17.738287Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಎರಡು split AC ಮತ್ತು ಒಂದು window AC service-ಗೆ total ₹1,697 ಆಗುತ್ತೆ. ನಿಮಗೆ visit schedule ಮಾಡ್ಬೇಕಾ?", "ts": "2026-10-29T19:32:18.718267Z", "brain_latency_ms": 983}

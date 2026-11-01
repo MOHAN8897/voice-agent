@@ -1,0 +1,7 @@
+{"turn_seq": 1, "ts": "2026-10-31T13:36:55.052842Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T13:37:19.714940Z", "source": "model", "operations": [{"op": "set_fact", "key": "email", "value": "mohansaiteja.99@gmail.com"}], "applied": true, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T13:37:34.567661Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T13:37:34.577429Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: సరే అండి, ధరలు పర్వాలేదు. మీరు ఈ డీటెయిల్స్ అన్నీ నా ఇమెయిల్ mohansaiteja.99@gmail.com కి పంపగలరా?\nassistant: వివరాలన్నీ మీ email mohansaiteja.99@gmail.com కి పంపించాను. మీకు ఇంకేమైనా సహాయం కావాలంటే చెప్పండి.\nuser: ఇమెయిల్ వచ్చేసిందా అండి? అలాగే ఫేస్ క్రీమ్ ఇప్పుడు స్టాక్‌లో ఉందా?\nassistant: అవును, email పంపించేశాను. ఫేస్ క్రీమ్ ప్రస్తుతం స్టాక్‌లో ఉందా లేదా అనే సమాచారం ప్రస్తుతం నా వద్ద అందుబాటులో లేదు. స్టాక్ వివరాలు తెలుసుకోవడానికి మీ enquiry ని మా team కి note చేశాను."}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T13:37:54.423831Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T13:38:15.428992Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-31T13:38:38.136180Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

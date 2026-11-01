@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "నా పేరు శ్రావణి. మాదాపూర్ లో window AC service కావాలి. రేపు ఉదయం 10 గంటలకు ఖాళీ slot ఉందా? చెక్ చేసి చెప్పండి.", "ts": "2026-10-29T17:48:39.580626Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "మాదాపూర్ మా service area లో ఉంది, మరియు next-day visit slots ఉదయం 10 AM నుండి సాయంత్రం 6 PM వరకు available గా ఉంటాయి.", "ts": "2026-10-29T17:48:44.935729Z"}
+{"seq": 3, "role": "user", "text": "నా email sravani.audit@example.invalid. రేపు పది గంటలకు book చేయండి. Booking నిజంగా confirm అయిందా చెప్పండి.", "ts": "2026-10-29T17:48:44.990185Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "శ్రావణి గారు, మీ email sravani. audit@example. invalid note చేసుకున్నాను. కానీ ఇక్కడ నుంచి నేరుగా booking confirm చేయలేము, మా team review చేశాకే అది జరుగుతుంది. రేపు 30th October, 10 AM slot కి సంబంధించి ఒక enquiry save చేయమంటారా?", "ts": "2026-10-29T17:48:48.696878Z"}
+{"seq": 5, "role": "user", "text": "సరే, confirm కానప్పుడు confirm అయింది అనకండి. ప్రస్తుతం ఇంతే చాలు, thank you.", "ts": "2026-10-29T17:48:48.760903Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-29T17:48:49.906945Z"}

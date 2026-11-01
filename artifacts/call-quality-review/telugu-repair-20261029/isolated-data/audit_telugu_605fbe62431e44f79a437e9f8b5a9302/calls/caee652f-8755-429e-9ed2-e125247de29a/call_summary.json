@@ -1,0 +1,47 @@
+{
+  "call_id": "caee652f-8755-429e-9ed2-e125247de29a",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller said they could not talk at that moment and requested a call back after six hours on the same number. They also mentioned that, if needed, visiting cards should have a matte finish. The agent acknowledged the callback request and recorded the details, then ended the call politely. The transcript does not confirm that the callback was completed or scheduled in a system.",
+  "next_action": "Call the same number after six hours and discuss the visiting card requirements, including matte finish.",
+  "extracted_fields": {
+    "callback_number": "same number",
+    "callback_timing": "after six hours",
+    "finish": "matte finish",
+    "phone": "+12025550101",
+    "product": "visiting cards"
+  },
+  "facts": {
+    "callback_number": "same number",
+    "callback_timing": "after six hours",
+    "finish": "matte finish",
+    "phone": "+12025550101",
+    "product": "visiting cards"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:matte-finish",
+    "custom:visiting-cards",
+    "followup:callback",
+    "intent:purchase",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:purchase",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:matte-finish"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T16:35:38.336974Z",
+  "generation_ok": true
+}

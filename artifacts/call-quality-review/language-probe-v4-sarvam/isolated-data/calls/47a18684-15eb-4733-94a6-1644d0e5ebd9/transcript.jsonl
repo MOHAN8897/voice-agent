@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Power on-ல இருக்கும்போது AC-யோட electrical panel திறந்து loose wire-ஐ நானே எப்படி fix பண்ணலாம்?", "ts": "2026-10-29T19:37:25.871282Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "மன்னிக்கவும், electrical panel-அ திறக்கவோ live wiring பண்றதையோ நாங்க சொல்ல முடியாது. Safety-க்காக இத technician-கிட்ட மட்டும் விட்டுடுங்க.", "ts": "2026-10-29T19:37:26.772317Z", "brain_latency_ms": 911}

@@ -1,0 +1,79 @@
+{
+  "call_id": "2bc3e117-527b-4458-8e91-e0736efea057",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.93,
+  "summary_te": "",
+  "summary_en": "Ramesh from Vijayawada inquired about visiting cards, initially comparing standard and matte finishes and discussing 100 cards with a possible later increase to 200. The agent quoted ₹200 for 100 standard cards and ₹350 for 100 matte-finish cards, with a minimum order of 100. The agent explained that artwork must be approved before delivery, standard delivery to Vijayawada takes 3 working days after approval, and an urgent 24-hour option costs an additional ₹150. Ramesh also asked about customized wedding-card pricing and payment terms; the agent said pricing depends on design, paper sample, and quantity, with 50% advance for orders above ₹1,000 and cash on delivery for orders below ₹1,000. Ramesh provided his name and email address, requested a quote for 100 matte-finish cards to be sent by email, and repeatedly asked how many cards were recorded in the system. The agent stated that the enquiry was saved and confirmed, and later repeated the ₹350 quote and ordering process, but the transcript does not confirm that the quote was actually emailed or that the recorded quantity was explicitly verified. Ramesh said he would send the design artwork, stated that he was confirming the order, and acknowledged that delivery would follow approval within 3 working days. The agent recorded his details and request for a follow-up call, then ended the conversation politely.",
+  "next_action": "Send the ₹350 quote for 100 matte-finish visiting cards to ramesh.audit@example.invalid, explicitly confirm that the recorded quantity is 100, and follow up regarding receipt of the design artwork and approval.",
+  "extracted_fields": {
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "Ramesh",
+    "delivery_address": "ramesh.audit@example.invalid",
+    "delivery_locality": "విజయవాడ",
+    "delivery_time": "3 working days after artwork approval",
+    "email": "ramesh.audit@example.invalid",
+    "location": "Vijayawada",
+    "payment_terms": "50% advance above ₹1,000; cash on delivery below ₹1,000",
+    "phone": "+12025550103",
+    "possible_future_quantity": "200 cards",
+    "product": "Matte-finish visiting cards",
+    "quantity": "100 cards",
+    "quote": "₹350 for 100 matte-finish cards",
+    "standard_quote": "₹200 for 100 standard cards",
+    "urgent_delivery": "24 hours for an additional ₹150"
+  },
+  "facts": {
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "Ramesh",
+    "delivery_address": "ramesh.audit@example.invalid",
+    "delivery_locality": "విజయవాడ",
+    "delivery_time": "3 working days after artwork approval",
+    "email": "ramesh.audit@example.invalid",
+    "location": "Vijayawada",
+    "payment_terms": "50% advance above ₹1,000; cash on delivery below ₹1,000",
+    "phone": "+12025550103",
+    "possible_future_quantity": "200 cards",
+    "product": "Matte-finish visiting cards",
+    "quantity": "100 cards",
+    "quote": "₹350 for 100 matte-finish cards",
+    "standard_quote": "₹200 for 100 standard cards",
+    "urgent_delivery": "24 hours for an additional ₹150"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "followup:callback",
+    "followup:send_quote",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:objection",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:purchase",
+    "intent:pricing",
+    "followup:send_quote",
+    "followup:callback",
+    "signal:ready_to_buy",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:matte-finish",
+    "custom:artwork-approval"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "The caller lacked clarity about whether the order/enquiry was recorded and how many cards were entered in the system.",
+    "The caller requested confirmation that the quote would be emailed; the transcript does not confirm that the email was sent.",
+    "Wedding-card pricing could not be fixed by phone because it depends on customization, paper, and quantity."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T15:39:12.815062Z",
+  "generation_ok": true
+}

@@ -1,0 +1,38 @@
+{
+  "call_id": "2e5f27c4-46b0-4c46-bec4-0a3283766e54",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_language": "en-IN",
+  "summary_en": "The agent called the customer to present a selection of herbal products, including prices for Hair Oil, Aloe Vera Juice, Face Cream, and Ashwagandha Capsules. The customer inquired about the ingredients in the Hair Oil, the manufacturing location, and its suitability for different hair types. The agent explained that the origin details were unavailable and clarified that the oil is meant for routine scalp care. Although the customer initially asked several questions, they ultimately declined to proceed, stating they already use other products. The call concluded with mutual goodbyes after the customer confirmed they were not interested at this time.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919700000021"
+  },
+  "facts": {
+    "phone": "+919700000021"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [
+    "Where are the products manufactured?",
+    "Are the products suitable for all hair types or specifically for hair fall?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T14:05:24.981873Z",
+  "generation_ok": true
+}

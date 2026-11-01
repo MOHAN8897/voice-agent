@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "ನನಗೆ 200 matte ವಿಸಿಟಿಂಗ್ ಕಾರ್ಡ್ಸ್ ಬೇಕು.", "ts": "2026-10-29T20:44:15.224269Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ಸರಿ, matte finish visiting cards ಒಂದು 100 cards-ಗೆ ₹350 ಆಗುತ್ತೆ. So 200 cards-ಗೆ ₹700 ಆಗುತ್ತೆ. ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು delivery address ಹೇಳ್ತೀರಾ?", "ts": "2026-10-29T20:44:18.731198Z"}
+{"seq": 3, "role": "user", "text": "ನನ್ನ ಹೆಸರು ರವಿ ಕುಮಾರ್. ವಿಜಯವಾಡದ 12 MG Road-ಗೆ ಡೆಲಿವರಿ ಮಾಡಿ.", "ts": "2026-10-29T20:44:18.732198Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಸರಿ, ರವಿ ಕುಮಾರ್. ವಿಜಯವಾಡದ 12 MG Road-ಗೆ ಡೆಲಿವರಿ ಮಾಡಬಹುದು. ಈಗ order confirm ಮಾಡ್ಲಾ?", "ts": "2026-10-29T20:44:21.801063Z"}
+{"seq": 5, "role": "user", "text": "ಹೌದು, ದಯವಿಟ್ಟು order ಕನ್ಫರ್ಮ್ ಮಾಡಿ.", "ts": "2026-10-29T20:44:21.803070Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ನಿಮ್ಮ order confirm ಆಗಿದೆ.", "ts": "2026-10-29T20:44:25.897270Z"}
+{"seq": 7, "role": "user", "text": "ಥ್ಯಾಂಕ್ಸ್, ಅಷ್ಟೇ.", "ts": "2026-10-29T20:44:25.898276Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.", "ts": "2026-10-29T20:44:27.018506Z"}

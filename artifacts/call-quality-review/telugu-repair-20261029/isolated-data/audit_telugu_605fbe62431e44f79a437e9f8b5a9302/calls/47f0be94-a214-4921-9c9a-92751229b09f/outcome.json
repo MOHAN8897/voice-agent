@@ -1,0 +1,91 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller requested general service for their split AC but said they were unable to talk at that moment. They explicitly asked for a callback to the same number in exactly six hours. The agent acknowledged and recorded the details and callback request, then ended the call politely. No service booking or other details were confirmed.",
+  "next_action": "Arrange a callback to the same number in six hours regarding split AC general service.",
+  "extracted_fields": {
+    "callback_number": "Same number",
+    "callback_time": "6 hours from the call",
+    "phone": "+12025550107",
+    "service_requested": "General service for split AC"
+  },
+  "objections": [],
+  "notes": null,
+  "tags": [
+    "intent:support",
+    "followup:callback",
+    "action:required",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:split-ac",
+    "custom:general-service"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:37:51.381894Z",
+  "generation_ok": true,
+  "facts": {
+    "callback_number": "Same number",
+    "callback_time": "6 hours from the call",
+    "phone": "+12025550107",
+    "service_requested": "General service for split AC"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:general-service",
+    "custom:split-ac",
+    "followup:callback",
+    "intent:support",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "826237f7-93d6-4af0-9f53-91b6df450cb6",
+    "agentId": "da7e8b71-9465-55a3-b920-fae16cb86c5c",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 35,
+    "band": "cold",
+    "disposition": "callback_required",
+    "confidence": 0.99,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "callback_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

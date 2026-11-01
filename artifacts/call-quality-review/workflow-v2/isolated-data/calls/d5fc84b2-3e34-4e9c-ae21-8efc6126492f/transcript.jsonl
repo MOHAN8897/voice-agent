@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "Book it for tomorrow 11 AM and confirm the booking right now.", "ts": "2026-10-29T20:36:59.431549Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I can note that request for you. To confirm the visit, I need your name, the appliance and issue, and your locality. We cover Madhapur, Gachibowli, Kondapur, and Kukatpally only.", "ts": "2026-10-29T20:37:03.625635Z"}
+{"seq": 3, "role": "user", "text": "Is it confirmed? Give me the booking number.", "ts": "2026-10-29T20:37:03.626633Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "It is not confirmed yet, so I do not have a booking number. Once our team confirms the visit, I will share it with you.", "ts": "2026-10-29T20:37:06.743649Z"}
+{"seq": 5, "role": "user", "text": "Okay, thanks.", "ts": "2026-10-29T20:37:06.743649Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "I do not have a booking number yet because the visit is not confirmed. To proceed, I still need your name, the appliance and issue, and your locality. We cover Madhapur, Gachibowli, Kondapur, and Kukatpally only.", "ts": "2026-10-29T20:37:08.829128Z"}

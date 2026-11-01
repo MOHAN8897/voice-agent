@@ -1,0 +1,46 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller requested to book an appointment for tomorrow at 11 AM and demanded immediate confirmation and a booking number. The agent explained that the appointment could not be confirmed without providing their name and details, which the caller refused to share. The caller then said 'Okay, thanks' and ended the call without providing any further information.",
+  "next_action": "No follow-up action was agreed upon.",
+  "extracted_fields": {
+    "phone": "+919876500047"
+  },
+  "objections": [
+    "Caller refused to provide their name and reason for visit, preventing confirmation."
+  ],
+  "notes": "",
+  "tags": [
+    "intent:booking",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:appointment-booking"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T20:22:21.573159Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500047"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:appointment-booking",
+    "intent:booking",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,43 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller requested to book a service visit for tomorrow at 11:00 AM and immediately asked for a booking number to confirm it. The agent explained that the booking was not yet confirmed and requested the caller's name, appliance details, locality, and preferred time to proceed. The caller declined to provide these details, accepted the explanation, and ended the call.",
+  "next_action": "No further action.",
+  "extracted_fields": {
+    "phone": "+919876500055"
+  },
+  "objections": [
+    "Caller did not want to provide personal details or appliance information to finalize the booking."
+  ],
+  "notes": "",
+  "tags": [
+    "intent:booking",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T20:39:20.446414Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500055"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "intent:booking",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

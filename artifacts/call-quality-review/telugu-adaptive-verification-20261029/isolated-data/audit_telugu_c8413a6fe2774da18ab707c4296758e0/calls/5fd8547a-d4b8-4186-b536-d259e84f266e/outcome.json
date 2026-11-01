@@ -1,0 +1,114 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller initially requested 100 visiting cards and identified himself as being from Vijayawada. The agent quoted ₹200 for normal paper and ₹350 for matte finish. The caller selected matte finish, asked about delivery timing, and said the design would be provided later. The agent explained that delivery in Vijayawada takes three working days after artwork approval. The caller then agreed to proceed but asked about the recorded name, product, and quantity because he did not want to repeat the details. The caller corrected the name to Raman and changed the quantity to 200 matte cards. The agent calculated the price as ₹700 and reconfirmed that delivery would take three working days after artwork approval. The caller confirmed the details, requested that the order enquiry be noted, and provided ramesh.audit@example.invalid for confirmation. The call ended politely. The transcript confirms an order enquiry and purchase intent, but not completed payment or order fulfillment.",
+  "next_action": "Send an order enquiry confirmation to ramesh.audit@example.invalid and proceed with the 200 matte visiting-card request after receiving artwork approval.",
+  "extracted_fields": {
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "Raman",
+    "delivery_locality": "విజయవాడ",
+    "delivery_location": "Vijayawada",
+    "delivery_time": "3 working days after artwork approval",
+    "design_status": "Design to be provided later",
+    "email": "ramesh.audit@example.invalid",
+    "phone": "+12025550121",
+    "price": "₹700",
+    "product": "matte-finish visiting cards",
+    "quantity": "200"
+  },
+  "objections": [
+    "The caller requested confirmation of the recorded details so he would not have to repeat them.",
+    "Exact stock availability was not known during the call."
+  ],
+  "notes": "The caller first stated the name as Ramesh and quantity as 100, then corrected the name to Raman and quantity to 200. The agent's closing statement mentioned recording a request to call again, but the caller specifically requested email confirmation and asked to close the call; no callback should be inferred.",
+  "tags": [
+    "intent:purchase",
+    "intent:quote",
+    "followup:send_info",
+    "signal:ready_to_buy",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards",
+    "custom:vijayawada",
+    "custom:artwork-approval"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:43:58.362892Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "Raman",
+    "delivery_locality": "విజయవాడ",
+    "delivery_location": "Vijayawada",
+    "delivery_time": "3 working days after artwork approval",
+    "design_status": "Design to be provided later",
+    "email": "ramesh.audit@example.invalid",
+    "phone": "+12025550121",
+    "price": "₹700",
+    "product": "matte-finish visiting cards",
+    "quantity": "200"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "followup:callback",
+    "followup:send_info",
+    "intent:purchase",
+    "intent:quote",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:objection",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "c33d5feb-9ff7-5e30-b035-04ef764eeda1",
+    "agentId": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.98,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

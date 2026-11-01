@@ -1,0 +1,458 @@
+[
+  {
+    "id": "te-IN/callback/realestate",
+    "scenario": "callback",
+    "language": "te-IN",
+    "business": "realestate",
+    "tenant_id": "52c4f7aa-37ce-403e-b173-a078d4a9b928",
+    "agent_id": "328264d6-cf00-433a-8f8b-5678a55751ac",
+    "call_id": "4edd8791-fac9-4868-9183-8a1a5382f3aa",
+    "phone": "+919876500001",
+    "opening": "హలో, నేను Green Acres Realty నుండి Ravi. మాట్లాడటానికి ఒక moment ఉంటుందా?",
+    "turn_index": 1,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "నేను ఇప్పుడు busy గా ఉన్నాను. రేపు సాయంత్రం 6 కి మళ్ళీ call చేయగలరా?",
+        "caller_en": "I'm busy right now. Can you call me back tomorrow at 6 in the evening?",
+        "reply": "",
+        "farewell": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 1
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "callback",
+    "outcome": {
+      "disposition": "no_outcome",
+      "contact_preference": "callback",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:phone_known",
+        "followup:callback",
+        "outcome:no_outcome",
+        "quality:inconclusive"
+      ],
+      "facts": {
+        "phone": "+919876500001"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "4edd8791-fac9-4868-9183-8a1a5382f3aa",
+          "tenant_id": "52c4f7aa-37ce-403e-b173-a078d4a9b928",
+          "agent_id": "328264d6-cf00-433a-8f8b-5678a55751ac",
+          "session_id": "wf-ee00b42118d04edcaeca5cb8fca30276",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_cb34bb7c48fb4180",
+          "started_at": "2026-10-29 20:02:09.718972+00:00",
+          "ended_at": "2026-10-29 20:02:12.809006+00:00",
+          "duration_sec": 3,
+          "disposition": "no_outcome",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/4edd8791-fac9-4868-9183-8a1a5382f3aa/",
+          "end_reason": "goal_complete",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "action:required",
+            "contact:phone_known",
+            "followup:callback",
+            "outcome:no_outcome",
+            "quality:inconclusive"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:02:09.718972+00:00",
+          "created_at": "2026-10-29 20:02:09.718972+00:00"
+        }
+      ],
+      "callbacks": [
+        {
+          "callback_id": "902384f0-5b43-44dc-a576-dbe05b015c91",
+          "tenant_id": "52c4f7aa-37ce-403e-b173-a078d4a9b928",
+          "user_id": null,
+          "original_call_id": "4edd8791-fac9-4868-9183-8a1a5382f3aa",
+          "original_attempt_id": null,
+          "agent_id": "328264d6-cf00-433a-8f8b-5678a55751ac",
+          "to_e164": "+919876500001",
+          "from_e164": null,
+          "dial_request_id": "requested:4edd8791-fac9-4868-9183-8a1a5382f3aa",
+          "mode": "requested",
+          "status": "requested",
+          "provider": null,
+          "provider_call_control_id": null,
+          "error": null,
+          "created_at": "2026-10-29 20:02:11.741416+00:00",
+          "updated_at": "2026-10-29 20:02:11.741416+00:00"
+        }
+      ],
+      "jobs": [
+        {
+          "id": "c3c23a4a-1257-4978-873b-fa0c9b1504e1",
+          "tenant_id": "52c4f7aa-37ce-403e-b173-a078d4a9b928",
+          "agent_id": "328264d6-cf00-433a-8f8b-5678a55751ac",
+          "origin_key": "callback:902384f0-5b43-44dc-a576-dbe05b015c91",
+          "source_id": "4edd8791-fac9-4868-9183-8a1a5382f3aa",
+          "kind": "callback",
+          "phone": "+919876500001",
+          "status": "planning",
+          "reason": "resolve_requested_time",
+          "payload": {
+            "requestText": "నేను ఇప్పుడు busy గా ఉన్నాను. రేపు సాయంత్రం 6 కి మళ్ళీ call చేయగలరా?",
+            "requestedWhen": "రేపు సాయంత్రం 6 కి",
+            "recentTurns": [
+              {
+                "role": "user",
+                "text": "నేను ఇప్పుడు busy గా ఉన్నాను. రేపు సాయంత్రం 6 కి మళ్ళీ call చేయగలరా?",
+                "at": "2026-10-29T20:02:10.602100Z"
+              }
+            ],
+            "callbackId": "902384f0-5b43-44dc-a576-dbe05b015c91",
+            "timezone": "Asia/Kolkata",
+            "llm": {
+              "provider": "openai",
+              "model": "gpt-5.6-luna",
+              "options": {},
+              "purpose": "configured_post_call_analysis"
+            },
+            "requestedAt": "2026-10-29T20:02:11.767302+00:00"
+          },
+          "due_at": "2026-10-29 20:02:11.767302+00:00",
+          "expires_at": "2026-11-05 20:02:11.767302+00:00",
+          "attempts": 0,
+          "lease_token": null,
+          "lease_until": null,
+          "control_id": null,
+          "authorized_by": "6ccc803c-1be7-46b0-ba7e-2625c9f3dd54",
+          "billing_tenant_id": "52c4f7aa-37ce-403e-b173-a078d4a9b928",
+          "created_at": "2026-10-29 20:02:11.767302+00:00",
+          "updated_at": "2026-10-29 20:02:11.767302+00:00"
+        }
+      ],
+      "dnd": [],
+      "leads": []
+    },
+    "meta": {
+      "callback_request": {
+        "id": "902384f0-5b43-44dc-a576-dbe05b015c91",
+        "status": "requested",
+        "requestedWhen": "రేపు సాయంత్రం 6 కి",
+        "requestText": "నేను ఇప్పుడు busy గా ఉన్నాను. రేపు సాయంత్రం 6 కి మళ్ళీ call చేయగలరా?"
+      },
+      "contact_preference": "callback",
+      "end_reason": "goal_complete"
+    },
+    "verdict": {
+      "passed": false,
+      "failures": [
+        "disposition:no_outcome"
+      ],
+      "disposition": "no_outcome"
+    }
+  },
+  {
+    "id": "te-IN/dnd/appliance",
+    "scenario": "dnd",
+    "language": "te-IN",
+    "business": "appliance",
+    "tenant_id": "3659aa16-1039-4234-ab88-dadadd5f0d69",
+    "agent_id": "c4b2e9e3-f35b-49bb-8a64-189ac7387076",
+    "call_id": "037b2ba3-4d27-4e47-8dd0-89aa1bfc4f51",
+    "phone": "+919876500002",
+    "opening": "నమస్తే! నేను SmartCare Appliance Services నుండి Suresh. చెప్పండి, మీకు ఎలా సహాయం చేయగలను?",
+    "turn_index": 1,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "దయచేసి ఈ number కి మళ్ళీ ఎప్పుడూ call చేయకండి. నా number ని మీ list నుంచి తీసేయండి.",
+        "caller_en": "Please don't call this number ever again. Remove my number from your list.",
+        "reply": "",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 1
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "do_not_call",
+    "outcome": {
+      "disposition": "not_interested",
+      "contact_preference": "do_not_call",
+      "summary": null,
+      "status_tags": [
+        "contact:phone_known",
+        "outcome:not_interested",
+        "signal:do_not_call"
+      ],
+      "facts": {
+        "phone": "+919876500002"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "037b2ba3-4d27-4e47-8dd0-89aa1bfc4f51",
+          "tenant_id": "3659aa16-1039-4234-ab88-dadadd5f0d69",
+          "agent_id": "c4b2e9e3-f35b-49bb-8a64-189ac7387076",
+          "session_id": "wf-caab0447df9c4c428a2bf3e90b97ae6e",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_99a94b8ed1084611",
+          "started_at": "2026-10-29 20:02:29.650165+00:00",
+          "ended_at": "2026-10-29 20:02:32.351396+00:00",
+          "duration_sec": 2,
+          "disposition": "not_interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/037b2ba3-4d27-4e47-8dd0-89aa1bfc4f51/",
+          "end_reason": "firm_refusal",
+          "status": "missed",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "contact:phone_known",
+            "outcome:not_interested",
+            "signal:do_not_call"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:02:29.650165+00:00",
+          "created_at": "2026-10-29 20:02:29.650165+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [
+        {
+          "id": "32e22e23-1e43-4304-8fc1-471b65edbb34",
+          "tenant_id": "3659aa16-1039-4234-ab88-dadadd5f0d69",
+          "phone_e164": "+919876500002",
+          "reason": "verbal_opt_out_live_call",
+          "added_at": "2026-10-29 20:02:46.361549+00:00",
+          "active": true,
+          "source": "live_call_opt_out",
+          "added_by_user_id": null,
+          "removed_at": null,
+          "removed_by_user_id": null,
+          "removal_reason": null,
+          "reconsent_confirmed": false
+        }
+      ],
+      "leads": []
+    },
+    "meta": {
+      "contact_preference": "do_not_call",
+      "end_reason": "firm_refusal"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "not_interested"
+    }
+  },
+  {
+    "id": "te-IN/order/printing",
+    "scenario": "order",
+    "language": "te-IN",
+    "business": "printing",
+    "tenant_id": "8cba32d4-c44f-407d-9563-2e800f7b2e9d",
+    "agent_id": "d7599412-4ff7-41a2-b8db-96a9cce80691",
+    "call_id": "3eb35974-03c1-4772-9d45-b21e8a337875",
+    "phone": "+919876500003",
+    "opening": "నమస్తే! నేను Sri Krishna Digital Prints నుండి Kavitha. చెప్పండి, మీకు ఎలా సహాయం చేయగలను?",
+    "turn_index": 4,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "నాకు 200 matte visiting cards కావాలి.",
+        "caller_en": "I want 200 matte visiting cards.",
+        "reply": "సరే, 200 matte finish visiting cards కి మొత్తం ₹700 అవుతుంది. Minimum order 100 cards కాబట్టి ఇది కుదురుతుంది. మీ పేరు, delivery address చెప్తారా? Order confirm చేస్తాను.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "నా పేరు Ravi Kumar. Vijayawada లోని 12 MG Road కి deliver చేయండి.",
+        "caller_en": "My name is Ravi Kumar. Deliver to 12 MG Road, Vijayawada.",
+        "reply": "మీ order confirm అయింది. 200 matte finish visiting cards, delivery address 12 MG Road, Vijayawada. Artwork approval తర్వాత 3 working days లో delivery అవుతుంది. Cash on delivery ఉంటుంది.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 3,
+        "caller": "అవును, order confirm చేయండి.",
+        "caller_en": "Yes, please confirm the order.",
+        "reply": "మీ order confirm అయింది. ఇంకేమైనా సహాయం కావాలా?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 4,
+        "caller": "Thanks, అంతే.",
+        "caller_en": "Thanks, that's all.",
+        "reply": "సరే, మీ order already confirm అయింది. ఇంకేమైనా వివరాలు కావాలా? లేదంటే ఇక్కడితో ముగిద్దామా?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "సరే, 200 matte finish visiting cards కి మొత్తం ₹700 అవుతుంది. Minimum order 100 cards కాబట్టి ఇది కుదురుతుంది. మీ పేరు, delivery address చెప్తారా? Order confirm చేస్తాను.",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "మీ order confirm అయింది. 200 matte finish visiting cards, delivery address 12 MG Road, Vijayawada. Artwork approval తర్వాత 3 working days లో delivery అవుతుంది. Cash on delivery ఉంటుంది.",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "మీ order confirm అయింది. ఇంకేమైనా సహాయం కావాలా?",
+        "farewell": false
+      },
+      {
+        "turn": 4,
+        "text": "సరే, మీ order already confirm అయింది. ఇంకేమైనా వివరాలు కావాలా? లేదంటే ఇక్కడితో ముగిద్దామా?",
+        "farewell": false
+      }
+    ],
+    "carrier": [],
+    "errors": [],
+    "ended_by_agent": false,
+    "contact_preference": "none",
+    "outcome": {
+      "disposition": "no_outcome",
+      "contact_preference": "none",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:name_known",
+        "contact:phone_known",
+        "outcome:no_outcome",
+        "quality:inconclusive"
+      ],
+      "facts": {
+        "caller_name": "Ravi Kumar",
+        "phone": "+919876500003",
+        "product": "matte visiting cards",
+        "quantity": "200"
+      }
+    },
+    "order_proof": {
+      "version": 1,
+      "call_id": "3eb35974-03c1-4772-9d45-b21e8a337875",
+      "tenant_id": "8cba32d4-c44f-407d-9563-2e800f7b2e9d",
+      "agent_id": "d7599412-4ff7-41a2-b8db-96a9cce80691",
+      "status": "confirmed",
+      "quantity": 200,
+      "customer_name": "Ravi Kumar",
+      "delivery_address": "12 MG Road, Vijayawada",
+      "product": "matte visiting cards",
+      "confirmed_at": "2026-10-29T20:02:53.142188Z"
+    },
+    "db": {
+      "call": [
+        {
+          "call_id": "3eb35974-03c1-4772-9d45-b21e8a337875",
+          "tenant_id": "8cba32d4-c44f-407d-9563-2e800f7b2e9d",
+          "agent_id": "d7599412-4ff7-41a2-b8db-96a9cce80691",
+          "session_id": "wf-a114c4a6b3224c0598de5d004a3caa28",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_76a394ec76fd4efa",
+          "started_at": "2026-10-29 20:02:46.667186+00:00",
+          "ended_at": "2026-10-29 20:02:59.802915+00:00",
+          "duration_sec": 13,
+          "disposition": "no_outcome",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/3eb35974-03c1-4772-9d45-b21e8a337875/",
+          "end_reason": "user_stop",
+          "status": "answered",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "action:required",
+            "contact:name_known",
+            "contact:phone_known",
+            "outcome:no_outcome",
+            "quality:inconclusive"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:02:46.667186+00:00",
+          "created_at": "2026-10-29 20:02:46.668514+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": []
+    },
+    "meta": {
+      "end_reason": "user_stop"
+    },
+    "verdict": {
+      "passed": false,
+      "failures": [
+        "disposition:no_outcome",
+        "speech:too_many_sentences:4",
+        "speech:too_many_sentences:4"
+      ],
+      "disposition": "no_outcome"
+    }
+  }
+]

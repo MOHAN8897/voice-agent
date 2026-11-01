@@ -1,0 +1,53 @@
+{
+  "call_id": "ca8ef4b9-4d25-49a5-81c1-614f30df468c",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the course fee and the availability of a weekend batch. The agent responded by stating that the fee is ₹8,999 with no installment options and that the weekend batch runs from 10 AM to 1 PM. The caller, identifying himself as Kiran, expressed interest and asked the agent to note his inquiry. The agent acknowledged the details and asked for the caller's qualifications and preferred batch. The caller declined to provide further information, stating that was all for now, and the call ended with the agent thanking him.",
+  "next_action": "followup:callback",
+  "extracted_fields": {
+    "budget": "₹8,999",
+    "caller_name": "Kiran",
+    "name": "Kiran",
+    "phone": "+919876500017",
+    "slot": "Weekend, 10 AM to 1 PM"
+  },
+  "facts": {
+    "budget": "₹8,999",
+    "caller_name": "Kiran",
+    "name": "Kiran",
+    "phone": "+919876500017",
+    "slot": "Weekend, 10 AM to 1 PM"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:course-fee",
+    "custom:weekend-batch",
+    "followup:callback",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:price_sensitive",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "followup:callback",
+    "action:required",
+    "signal:ready_to_buy",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:weekend-batch",
+    "custom:course-fee"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:18:21.576180Z",
+  "generation_ok": true
+}

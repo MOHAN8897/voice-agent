@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "Split AC servicing కి ఎంత అవుతుంది?", "ts": "2026-10-29T20:15:38.202064Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Split AC servicing కి ₹599 అవుతుంది.", "ts": "2026-10-29T20:15:41.851149Z"}
+{"seq": 3, "role": "user", "text": "Okay, నా enquiry note చేసుకోండి. నా పేరు Kiran, నాకు interest ఉంది.", "ts": "2026-10-29T20:15:41.852154Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "సరే కిరణ్ గారు, మీ Split AC servicing enquiry తీసుకున్నాను. మీకు service కావాలంటే, మీ locality మరియు మీకు అనుకూలమైన time చెప్పండి, మా team confirm చేస్తుంది.", "ts": "2026-10-29T20:15:47.826246Z"}
+{"seq": 5, "role": "user", "text": "For now అంతే, thank you.", "ts": "2026-10-29T20:15:47.850037Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-29T20:15:49.348412Z"}

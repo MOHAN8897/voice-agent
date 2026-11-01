@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Split AC service பண்ண எவ்வளவு ஆகும்?", "ts": "2026-10-29T19:14:33.825939Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Split AC servicing-க்கு 599 rupees ஆகும். வேற ஏதாச்சும் details வேணுமா?", "ts": "2026-10-29T19:14:34.426499Z", "brain_latency_ms": 603}

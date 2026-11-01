@@ -1,0 +1,6 @@
+{"turn_seq": 1, "ts": "2026-10-31T16:19:03.000040Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-31T16:19:19.234934Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-31T16:19:46.412273Z", "include_summary": true, "projection": ""}
+{"turn_seq": 7, "ts": "2026-10-31T16:20:10.062567Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 60"}
+{"turn_seq": 9, "ts": "2026-10-31T16:20:33.228247Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 60"}
+{"turn_seq": 11, "ts": "2026-10-31T16:20:55.495232Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 60"}

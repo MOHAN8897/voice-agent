@@ -1,0 +1,115 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "Ramana from Vijayawada called to inquire about approximately 200 matte visiting cards and asked how to submit the artwork. The agent quoted ₹350 per 100 cards, totaling ₹700 for 200 cards, and stated that delivery in Vijayawada takes 3 working days after artwork approval. Ramana also asked about flex banners; the agent quoted ₹15 per square foot for normal flex and ₹20 for star flex, but Ramana decided to consider banners later. For payment, the agent explained that orders below ₹1,000 can use cash on delivery, while orders above ₹1,000 require a 50% advance; phone-based online or credit-card processing is unavailable. Ramana confirmed that cash on delivery was acceptable, and the agent recorded his name and the visiting-card quantity. The agent stated office hours as Monday through Saturday, 9:30 AM to 8:00 PM, with Sunday closed. Ramana again requested details about the artwork approval process, but the agent could not provide them. Ramana said he would send the design files later and ended the call. No concrete order placement or follow-up appointment was confirmed.",
+  "next_action": "Provide the artwork submission and approval process when available; await Ramana's design files or further contact.",
+  "extracted_fields": {
+    "banner_pricing": "₹15/sq ft normal flex; ₹20/sq ft star flex",
+    "caller_name": "Ramana",
+    "delivery_locality": "విజయవాడ",
+    "delivery_time": "3 working days after artwork approval",
+    "location": "Vijayawada",
+    "name": "Ramana",
+    "office_hours": "Monday-Saturday, 9:30 AM-8:00 PM; Sunday closed",
+    "payment_method": "Cash on delivery",
+    "phone": "+12025550139",
+    "product": "Matte visiting cards",
+    "quantity": "200",
+    "quoted_price": "₹700 total for 200 cards"
+  },
+  "objections": [
+    "Artwork submission and approval process was not explained.",
+    "Online payment or credit-card processing is unavailable by phone."
+  ],
+  "notes": "The caller expressed interest but did not place a confirmed order. The caller said he would send design files later; the call ended politely.",
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "followup:send_info",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards",
+    "custom:artwork-approval",
+    "custom:vijayawada-delivery"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:22:31.452239Z",
+  "generation_ok": true,
+  "facts": {
+    "banner_pricing": "₹15/sq ft normal flex; ₹20/sq ft star flex",
+    "caller_name": "Ramana",
+    "delivery_locality": "విజయవాడ",
+    "delivery_time": "3 working days after artwork approval",
+    "location": "Vijayawada",
+    "name": "Ramana",
+    "office_hours": "Monday-Saturday, 9:30 AM-8:00 PM; Sunday closed",
+    "payment_method": "Cash on delivery",
+    "phone": "+12025550139",
+    "product": "Matte visiting cards",
+    "quantity": "200",
+    "quoted_price": "₹700 total for 200 cards"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:artwork-approval",
+    "custom:matte-visiting-cards",
+    "followup:callback",
+    "followup:send_info",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "62843ad3-010f-4af5-bbc3-10adcffd4ecd",
+    "agentId": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.97,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

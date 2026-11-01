@@ -1,0 +1,89 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller contacted support to report that a milk packet in their order was damaged and inquired about when the refund would be processed. The agent explained that the refund would be processed within 5 working days of reporting the damage and requested the caller's order ID and name for the team to verify. The caller agreed to provide this information and the call concluded with the agent promising that the team would call back to assist.",
+  "next_action": "Agent to call back the customer once they provide the order ID and name to process the refund.",
+  "extracted_fields": {
+    "issue": "damaged milk packet",
+    "phone": "+919876500543"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:support",
+    "followup:callback",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:damaged-goods",
+    "custom:refund-query"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:45:51.409470Z",
+  "generation_ok": true,
+  "facts": {
+    "issue": "damaged milk packet",
+    "phone": "+919876500543"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:damaged-goods",
+    "custom:refund-query",
+    "followup:callback",
+    "intent:support",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "8561d5eb-eb5d-4c19-94df-045d85769b28",
+    "agentId": "7e0b7c16-e148-4c37-9b55-dde77c24c535",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 10,
+    "band": "cold",
+    "disposition": "callback_required",
+    "confidence": 0.85,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

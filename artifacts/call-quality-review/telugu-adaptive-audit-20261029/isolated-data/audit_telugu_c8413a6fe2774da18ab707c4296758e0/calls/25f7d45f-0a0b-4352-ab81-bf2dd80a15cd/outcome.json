@@ -1,0 +1,46 @@
+{
+  "disposition": "wrong_number",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller identified himself as Kiran and stated that the call had reached the wrong number and that he had no training inquiry. He asked for the call to end. The agent apologized, acknowledged the issue, and clarified that no team handoff or follow-up could be promised. The caller confirmed he understood and ended the call politely. No further action was agreed.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_name": "Kiran",
+    "phone": "+12025550142"
+  },
+  "objections": [],
+  "notes": "Caller requested no further contact regarding a training inquiry.",
+  "tags": [
+    "intent:information",
+    "signal:do_not_call",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:wrong-number",
+    "custom:training-inquiry"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:28:21.525044Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_name": "Kiran",
+    "phone": "+12025550142"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:training-inquiry",
+    "custom:wrong-number",
+    "intent:information",
+    "outcome:wrong_number",
+    "sentiment:neutral"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

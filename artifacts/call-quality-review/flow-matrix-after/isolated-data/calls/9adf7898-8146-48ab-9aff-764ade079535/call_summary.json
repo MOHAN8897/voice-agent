@@ -1,0 +1,29 @@
+{
+  "call_id": "9adf7898-8146-48ab-9aff-764ade079535",
+  "language_callback": null,
+  "disposition": "no_outcome",
+  "disposition_confidence": 0.0,
+  "summary_te": "",
+  "summary_en": "Automatic summary generation failed. Transcript review: User: మా roof మీద already solar ఉంది. Assistant: క్షమించండి, సమాధానం చెప్పడంలో తాత్కాలిక సమస్య వచ్చింది. మీ ప్రశ్నను మరోసారి చెప్తారా?",
+  "next_action": "Review the transcript and captured facts.",
+  "extracted_fields": {
+    "phone": "+919876500541"
+  },
+  "facts": {
+    "phone": "+919876500541"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "outcome:no_outcome",
+    "quality:agent_failure",
+    "quality:inconclusive"
+  ],
+  "tags": [],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:08:57.019355Z",
+  "generation_ok": false
+}

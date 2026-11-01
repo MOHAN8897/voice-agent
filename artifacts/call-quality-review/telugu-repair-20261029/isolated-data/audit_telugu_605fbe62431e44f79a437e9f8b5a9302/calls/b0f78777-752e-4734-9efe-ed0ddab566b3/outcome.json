@@ -1,0 +1,72 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Raman requested 200 matte visiting cards for delivery in Vijayawada and asked when artwork should be finalized. The agent explained that delivery takes 3 working days after artwork approval. Raman asked about payment and was told that orders above ₹1,000 require 50% advance payment, while lower-value orders can use cash on delivery; Raman preferred cash on delivery. He also asked about flex banners and was told their Vijayawada delivery time is 3 working days after artwork approval. The agent confirmed the visiting-card product, quantity, and delivery location were noted. Office hours were provided as Monday–Saturday, 9:30 AM–8:00 PM, with Sunday closed. Raman requested a call at 6:00 PM, and the agent noted this, although no confirmed follow-up completion was established. The agent explained that the order can be processed remotely without an office visit. Raman requested order details by email at ramesh.audit@example.invalid, but the agent said email could not be sent. Raman ended the call by saying no further information was needed and asked not to be called again; the agent acknowledged and closed the call.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "additional_product_interest": "Flex banners",
+    "customer_name": "Raman",
+    "delivery_locality": "విజయవాడ",
+    "delivery_location": "Vijayawada",
+    "email": "ramesh.audit@example.invalid",
+    "payment_method": "Cash on delivery",
+    "phone": "+12025550123",
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "requested_call_time": "6:00 PM"
+  },
+  "objections": [
+    "Email delivery of order details was not available.",
+    "Customer requested no further calls."
+  ],
+  "notes": "The customer showed purchase interest but did not explicitly confirm the order or payment. A 6:00 PM call was noted, but the customer subsequently requested not to be called again.",
+  "tags": [
+    "intent:purchase",
+    "intent:information",
+    "signal:price_sensitive",
+    "signal:do_not_call",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards",
+    "custom:flex-banners",
+    "custom:vijayawada"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:49:54.802057Z",
+  "generation_ok": true,
+  "facts": {
+    "additional_product_interest": "Flex banners",
+    "customer_name": "Raman",
+    "delivery_locality": "విజయవాడ",
+    "delivery_location": "Vijayawada",
+    "email": "ramesh.audit@example.invalid",
+    "payment_method": "Cash on delivery",
+    "phone": "+12025550123",
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "requested_call_time": "6:00 PM"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:matte-visiting-cards",
+    "intent:information",
+    "intent:purchase",
+    "outcome:not_interested",
+    "sentiment:positive",
+    "signal:do_not_call",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

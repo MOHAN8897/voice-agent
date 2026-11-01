@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "मुझे दाँत में दर्द है। मुझे कल सुबह 11 बजे का appointment चाहिए।", "ts": "2026-10-30T11:04:13.578877Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ठीक है, समझ गई। दाँत के दर्द के लिए कल सुबह 11 बजे का time नोट कर लिया है। Appointment book करने के लिए अपना नाम बता दीजिए।", "ts": "2026-10-30T11:04:17.118942Z"}
+{"seq": 3, "role": "user", "text": "मेरा नाम किरण है।", "ts": "2026-10-30T11:04:17.118942Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "धन्यवाद किरण। कल सुबह 11 बजे का समय नोट कर लिया है। Appointment book करने के लिए कृपया बताएँ कि दाँत में exactly क्या problem हो रही है आपको?", "ts": "2026-10-30T11:04:20.876497Z"}
+{"seq": 5, "role": "user", "text": "क्या मेरा appointment confirm हो गया है?", "ts": "2026-10-30T11:04:20.876497Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "अभी तक appointment confirm नहीं हुआ है, क्योंकि आपकी details अभी पूरी नहीं हैं। हमारी फ्रंट डेस्क आपकी booking confirm कर देगी। क्या आपका कोई और सवाल है?", "ts": "2026-10-30T11:04:24.168341Z"}
+{"seq": 7, "role": "user", "text": "ठीक है, thanks।", "ts": "2026-10-30T11:04:24.168341Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "समय देने के लिए धन्यवाद। नमस्कार।", "ts": "2026-10-30T11:04:25.184905Z"}

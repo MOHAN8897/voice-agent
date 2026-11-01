@@ -1,0 +1,109 @@
+{
+  "disposition": "converted",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to purchase 200 matte finish visiting cards. The agent provided a quote of ₹350 per 100 cards, totaling ₹700. The caller, identifying himself as Ravi Kumar, requested delivery to 12 MG Road in Vijayawada. The agent confirmed the delivery address and requested confirmation of the quantity, after which the caller agreed to proceed. The agent then confirmed the order, stating that delivery would occur within 3 working days of artwork approval and that payment would be cash on delivery. The caller thanked the agent and ended the call.",
+  "next_action": "No further action required.",
+  "extracted_fields": {
+    "budget": "700 INR",
+    "caller_name": "Ravi Kumar",
+    "delivery_address": "12 MG Road, Vijayawada",
+    "name": "Ravi Kumar",
+    "payment_terms": "cash on delivery",
+    "phone": "+919876500022",
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "slot": "3 working days after artwork approval"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:purchase",
+    "sentiment:positive",
+    "signal:ready_to_buy",
+    "action:required",
+    "followup:send_info",
+    "followup:send_quote"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:cash-on-delivery",
+    "custom:vijayawada-delivery"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T20:34:43.982258Z",
+  "generation_ok": true,
+  "facts": {
+    "budget": "700 INR",
+    "caller_name": "Ravi Kumar",
+    "delivery_address": "12 MG Road, Vijayawada",
+    "name": "Ravi Kumar",
+    "payment_terms": "cash on delivery",
+    "phone": "+919876500022",
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "slot": "3 working days after artwork approval"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:cash-on-delivery",
+    "custom:vijayawada-delivery",
+    "custom:visiting-cards",
+    "followup:send_info",
+    "followup:send_quote",
+    "intent:purchase",
+    "outcome:converted",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "de7c3394-be9f-435a-b9ba-84cad0ff1406",
+    "agentId": "bceff9b0-ef07-4281-8b6a-644d947a864a",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 100,
+    "band": "hot",
+    "disposition": "converted",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "converted"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "slot"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

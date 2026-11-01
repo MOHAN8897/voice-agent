@@ -1,0 +1,81 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller inquired about the consultation fee and business operating hours. The agent responded that the consultation fee is 300 rupees and that the business is open Monday through Saturday from 10 AM to 8 PM. No further discussion or objections occurred, and the call concluded after this information was provided.",
+  "next_action": null,
+  "extracted_fields": {
+    "fee": "300 rupees",
+    "hours": "Monday to Saturday, 10 AM to 8 PM",
+    "phone": "+919876500517"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:38:02.089849Z",
+  "generation_ok": true,
+  "facts": {
+    "fee": "300 rupees",
+    "hours": "Monday to Saturday, 10 AM to 8 PM",
+    "phone": "+919876500517"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "e34c4842-b928-46b4-ace7-83157dcfc66a",
+    "agentId": "bc80f979-19c1-409d-b9b0-88a48d39c32e",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 50,
+    "band": "warm",
+    "disposition": "interested",
+    "confidence": 0.9,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

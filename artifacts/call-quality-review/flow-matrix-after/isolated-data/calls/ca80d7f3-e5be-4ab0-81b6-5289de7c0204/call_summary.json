@@ -1,0 +1,49 @@
+{
+  "call_id": "ca80d7f3-e5be-4ab0-81b6-5289de7c0204",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller inquired about the cost and potential subsidies for a 3 kW rooftop system. The agent provided pricing details, explaining that the total cost is ₹1,95,000, which includes a ₹78,000 government subsidy, resulting in a net payment of ₹1,17,000. The agent also shared an EMI option of ₹2,999 per month for 48 months. The caller expressed that the pricing seemed reasonable. The agent then requested the caller's name, area, and preferred day to schedule a free site survey. The caller agreed to provide the information. However, the caller did not actually provide any of these details during the call, and the call ended with the agent waiting for the caller to share their details.",
+  "next_action": "callback_required",
+  "extracted_fields": {
+    "budget": "1,17,000 rupees (after subsidy)",
+    "phone": "+919876500519",
+    "slot": "not provided"
+  },
+  "facts": {
+    "budget": "1,17,000 rupees (after subsidy)",
+    "phone": "+919876500519",
+    "slot": "not provided"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:rooftop-system",
+    "custom:site-survey",
+    "followup:callback",
+    "followup:site_visit",
+    "intent:information",
+    "intent:quote",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:quote",
+    "sentiment:positive",
+    "followup:callback",
+    "followup:site_visit",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:rooftop-system",
+    "custom:site-survey"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:02:31.166366Z",
+  "generation_ok": true
+}

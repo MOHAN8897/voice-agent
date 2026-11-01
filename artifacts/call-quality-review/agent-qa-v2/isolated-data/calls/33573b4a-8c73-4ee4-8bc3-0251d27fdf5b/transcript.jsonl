@@ -1,0 +1,18 @@
+{"seq": 1, "role": "user", "text": "Haan, theek hai, we can talk for a couple of minutes.", "ts": "2026-10-31T14:10:06.906401Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Great. Which herbal product or category would you like to explore today?", "ts": "2026-10-31T14:10:08.532651Z"}
+{"seq": 3, "role": "user", "text": "I am actually interested in your face cream and your hair oil.", "ts": "2026-10-31T14:10:20.558527Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "The Herbal Face Cream is 599 rupees for 50 g, and it contains Neem, Turmeric, and Aloe Vera for moisturizing and routine skin care. The Herbal Hair Oil is 499 rupees for 200 ml, with Amla, Bhringraj, Hibiscus, and Coconut Oil for routine hair and scalp care.", "ts": "2026-10-31T14:10:22.569067Z"}
+{"seq": 5, "role": "user", "text": "Accha, that sounds fine, but could you please email me all these product details and prices to mohansaiteja.99@gmail.com?", "ts": "2026-10-31T14:10:45.936544Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "I’m unable to send that email right now. I’ve noted your email address as mohansaiteja.99@gmail.com, but I cannot confirm that the message has been sent.", "ts": "2026-10-31T14:10:48.338038Z"}
+{"seq": 7, "role": "user", "text": "Arre, achha, but can you please check if the email was successfully sent now?", "ts": "2026-10-31T14:11:07.062973Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "I’m unable to confirm that the email was successfully sent. I noted your email as mohansaiteja. com, but I cannot verify that the message went through.", "ts": "2026-10-31T14:11:09.288220Z"}
+{"seq": 9, "role": "user", "text": "The email ID is mohansaiteja.99@gmail.com, please check again and let me know if it is sent properly.", "ts": "2026-10-31T14:11:28.436490Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "I am unable to confirm that the email was successfully sent. 99@gmail.", "ts": "2026-10-31T14:11:30.604758Z"}
+{"seq": 11, "role": "user", "text": "Theap, koi baat nahi, please tell me if your face cream is currently in stock.", "ts": "2026-10-31T14:11:44.212164Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "The information on stock availability is currently unavailable.", "ts": "2026-10-31T14:11:45.594167Z"}
+{"seq": 13, "role": "user", "text": "Acha theek hai, can you tell me when it would be delivered to Kukatpally?", "ts": "2026-10-31T14:11:58.472964Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "The information on delivery timelines to Kukatpally is currently unavailable.", "ts": "2026-10-31T14:11:59.931324Z"}
+{"seq": 15, "role": "user", "text": "Acha, since you are unable to check these details right now, can you please book a short call with your team tomorrow at 11 AM so that I can place the order?", "ts": "2026-10-31T14:12:19.171524Z", "partial": false}
+{"seq": 16, "role": "assistant", "text": "I have successfully booked a short call with our team for tomorrow at 11 AM. The calendar event is confirmed. However, I am unable to confirm that your previous request went through, so please do not treat it as done yet.", "ts": "2026-10-31T14:12:26.436481Z"}
+{"seq": 17, "role": "user", "text": "Theek hai, thank you so much for booking that call. Have a good evening, bye!", "ts": "2026-10-31T14:12:48.967446Z", "partial": false}
+{"seq": 18, "role": "assistant", "text": "Okay, I've noted your callback. Thank you for your time. Goodbye.", "ts": "2026-10-31T14:12:49.709775Z"}

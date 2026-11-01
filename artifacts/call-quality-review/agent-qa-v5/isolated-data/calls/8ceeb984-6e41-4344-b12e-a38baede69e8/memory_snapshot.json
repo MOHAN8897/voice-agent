@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "quantity": "1",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "assistant: தள்ளுபடி பத்தின விவரங்கள் இப்போ எங்ககிட்ட கிடைக்கலைங்க. எங்க குழு அதை உறுதி செய்வாங்க. இப்போதைக்கு இந்த order-அ proceed பண்ணலாமா?\nuser: சரி, discount இல்லன்னாலும் பரவாயில்லை. Delivery எப்போ வரும்னு சொல்ல முடியுமா?\nassistant: மன்னிக்கவும், delivery எப்போது வரும் என்ற விவரங்கள் இப்போ எங்ககிட்ட கிடைக்கலைங்க. எங்கள் குழு அதை உறுதி செய்வாங்க.\nuser: சரி, delivery time தெரியலன்னா பரவாயில்ல. அப்படியே order-அ confirm பண்ணிடுங்க. அடுத்து என்ன பண்ணனும்னு சொல்லுங்க.\nassistant: உங்க order confirm ஆயிடுச்சு. அடுத்ததா எங்க குழு இத process பண்ணுவாங்க, delivery details-அ அவங்க confirm பண்ணுவாங்க."
+}

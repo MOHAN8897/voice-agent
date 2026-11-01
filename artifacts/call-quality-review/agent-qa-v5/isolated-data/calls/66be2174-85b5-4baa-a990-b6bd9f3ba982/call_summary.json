@@ -1,0 +1,48 @@
+{
+  "call_id": "66be2174-85b5-4baa-a990-b6bd9f3ba982",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 1.0,
+  "summary_te": "வணிகர் வாடிக்கையாளரை அழைத்து NatureVeda Herbal Hair Oil பற்றிய தகவல்களை வழங்கினார். வாடிக்கையாளர் அதன் விலை மற்றும் பயன்பாட்டு முறைகள் குறித்து கேட்டறிந்தார். வாடிக்கையாளர் அலுவலகப் பணிகளில் பிஸியாக இருப்பதாகக் கூறி, மறுநாள் மாலை 6:30 மணிக்குத் திரும்ப அழைக்கக் கோரினார். வணிகர் இந்த அழைப்பைத் திரும்பச் செய்வதாக ஒப்புக்கொண்டு அழைப்பை முடித்தார்.",
+  "summary_language": "ta-IN",
+  "summary_en": "The agent called the customer to offer NatureVeda Herbal Hair Oil for dry hair. The customer inquired about the price, ingredients, and application method, which the agent explained. The customer mentioned being busy at the office and requested a callback for tomorrow at 6:30 PM on the same number. The agent agreed to note the callback and concluded the call.",
+  "next_action": "Callback the customer tomorrow at 6:30 PM.",
+  "extracted_fields": {
+    "callback_time": "Tomorrow at 6:30 PM",
+    "phone": "+919700000009",
+    "product_interest": "NatureVeda Herbal Hair Oil"
+  },
+  "facts": {
+    "callback_time": "Tomorrow at 6:30 PM",
+    "phone": "+919700000009",
+    "product_interest": "NatureVeda Herbal Hair Oil"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:dry-hair",
+    "custom:hair-oil",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:hair-oil",
+    "custom:dry-hair"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Caller is busy at the office."
+  ],
+  "unanswered_questions": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T16:22:18.655214Z",
+  "generation_ok": true
+}

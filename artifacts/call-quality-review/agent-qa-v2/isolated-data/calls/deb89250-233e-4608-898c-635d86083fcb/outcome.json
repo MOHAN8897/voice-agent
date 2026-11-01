@@ -1,0 +1,120 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The agent called the customer to offer information about aloe vera juice. The agent shared that the 500 ml aloe vera juice costs 399 rupees and the 200 ml hair oil costs 499 rupees, totaling 898 rupees. The customer stated that the price was acceptable but that she was still thinking about the purchase. The agent respected her hesitation and offered to let her decide later. The customer thanked the agent and ended the call without placing an order. Language handoff: Caller asked to continue in Hindi; call back in Hindi with the same agent.",
+  "next_action": "Call back in Hindi with the same agent (Callback needed in another language). No callback time has been booked.",
+  "extracted_fields": {
+    "phone": "+919700000023",
+    "price_hair_oil": "499 rupees",
+    "price_juice": "399 rupees",
+    "product": "Aloe Vera Juice and Herbal Hair Oil",
+    "total_price": "898 rupees",
+    "preferred_language": "hi-IN",
+    "callback_requested": "true",
+    "requested_language": "hi-IN",
+    "language_switch": "true"
+  },
+  "objections": [
+    "Still thinking about it"
+  ],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:aloe-vera",
+    "custom:hair-oil"
+  ],
+  "unanswered_questions": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T14:09:43.328418Z",
+  "generation_ok": true,
+  "summary_language": "en-IN",
+  "language_callback": {
+    "status": "requested",
+    "kind": "language_switch",
+    "id": "1ab3369a-4b39-4e99-8891-4d6ef88a389a",
+    "caller_language": "hi-IN",
+    "configured_language": "en-IN",
+    "summary": "Caller asked to continue in Hindi; call back in Hindi with the same agent."
+  },
+  "language_switch": {
+    "requested_language": "hi-IN",
+    "original_language": "en-IN"
+  },
+  "facts": {
+    "phone": "+919700000023",
+    "price_hair_oil": "499 rupees",
+    "price_juice": "399 rupees",
+    "product": "Aloe Vera Juice and Herbal Hair Oil",
+    "total_price": "898 rupees",
+    "preferred_language": "hi-IN",
+    "callback_requested": "true",
+    "requested_language": "hi-IN",
+    "language_switch": "true"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "contact:preferred_language",
+    "custom:aloe-vera",
+    "custom:hair-oil",
+    "followup:callback",
+    "followup:language_switch",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "25e1a114-c5a3-4ff7-986f-7d1e462fe4aa",
+    "agentId": "d3143c95-348a-5b09-9df1-28739f9a6213",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 35,
+    "band": "cold",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

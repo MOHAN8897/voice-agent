@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-29T17:52:55.230400Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T17:53:00.745567Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: Python training"}
+{"turn_seq": 5, "ts": "2026-10-29T17:53:05.772347Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: Python training | caller_name: కిరణ్ | email: kiran.audit@example.invalid"}
+{"turn_seq": 7, "ts": "2026-10-29T17:53:08.145392Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: Python training | caller_name: కిరణ్ | email: kiran.audit@example.invalid | qualification: B.Com"}

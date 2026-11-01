@@ -1,0 +1,104 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller asked about general servicing for a split AC, including the price and whether a technician could visit the next morning around 10 AM. The agent quoted ₹599 for general servicing and said a next-day visit window from 10 AM to 6 PM was available, then asked whether the caller wanted an appointment. The caller accepted the ₹599 price but asked whether spare parts would cost extra. The agent explained that any replacement parts would be charged additionally at actual MRP and that the technician would provide an exact quote after inspection; no fixed parts price could be given over the phone. The caller said the AC-service questions were clear. Before ending, the caller also asked about an inspection fee, and the agent stated that fridge inspection costs ₹250, waived if repair is completed through the technician. The caller acknowledged the information and ended the call. No appointment was explicitly confirmed.",
+  "next_action": null,
+  "extracted_fields": {
+    "available_visit_window": "10 AM to 6 PM",
+    "fridge_inspection_fee": "₹250, waived if repair is completed through the technician",
+    "phone": "+12025550112",
+    "product": "Split AC",
+    "requested_visit_time": "Next morning around 10 AM",
+    "service": "General servicing",
+    "service_price": "₹599",
+    "spare_parts_charges": "Additional, at actual MRP"
+  },
+  "objections": [
+    "Spare parts may incur additional charges beyond the ₹599 service fee."
+  ],
+  "notes": "The agent mentioned an available next-day slot, but the caller did not explicitly accept or confirm an appointment. The final inspection-fee discussion concerned a fridge, while the primary request was for split AC servicing.",
+  "tags": [
+    "intent:pricing",
+    "intent:information",
+    "intent:purchase",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:split-ac-service",
+    "custom:next-day-slot",
+    "custom:spare-parts"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:43:57.904508Z",
+  "generation_ok": true,
+  "facts": {
+    "available_visit_window": "10 AM to 6 PM",
+    "fridge_inspection_fee": "₹250, waived if repair is completed through the technician",
+    "phone": "+12025550112",
+    "product": "Split AC",
+    "requested_visit_time": "Next morning around 10 AM",
+    "service": "General servicing",
+    "service_price": "₹599",
+    "spare_parts_charges": "Additional, at actual MRP"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:next-day-slot",
+    "custom:spare-parts",
+    "custom:split-ac-service",
+    "intent:information",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "8965a160-cae4-4ff7-bdb0-6423e8003e33",
+    "agentId": "da7e8b71-9465-55a3-b920-fae16cb86c5c",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.98,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

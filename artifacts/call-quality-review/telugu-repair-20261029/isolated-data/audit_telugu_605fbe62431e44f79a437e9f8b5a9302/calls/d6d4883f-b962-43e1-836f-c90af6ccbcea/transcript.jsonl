@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "నా పేరు కిరణ్. Python course గురించి తెలుసుకుంటున్నాను. నాకు రేపు ఉదయం call చేయండి. ఈ course కి eligibility ఏంటి?", "ts": "2026-10-29T17:48:25.161221Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "కిరణ్ గారు, ఈ Python course కి eligibility విషయానికి వస్తే, BTech, BSc లేదా BCom లాంటి ఏ graduate అయినా చేరవచ్చు. Final year student అయినా పర్వాలేదు, కాకపోతే basic computer knowledge ఉండాలి. Prior coding experience అవసరం లేదు. రేపు ఉదయం మీకు call చేయమని note చేసుకున్నాను.", "ts": "2026-10-29T17:48:28.552426Z"}
+{"seq": 3, "role": "user", "text": "ఆగండి, నా ప్రశ్నకి జవాబు కావాలి. ఈ course కి eligibility ఏంటి?", "ts": "2026-10-29T17:48:28.631996Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "కిరణ్ గారు, ఈ course కి eligibility ఏంటంటే, BTech, BSc లేదా BCom లాంటి ఏ graduate అయినా చేరవచ్చు. Final year student అయినా పర్వాలేదు, కాకపోతే basic computer knowledge ఉండాలి. Prior coding అవసరం లేదు. మీకు ఇంకా ఏమైనా details కావాలా?", "ts": "2026-10-29T17:48:32.318546Z"}
+{"seq": 5, "role": "user", "text": "సరే, ఇంతే చాలు. ధన్యవాదాలు.", "ts": "2026-10-29T17:48:32.370607Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-29T17:48:34.278432Z"}

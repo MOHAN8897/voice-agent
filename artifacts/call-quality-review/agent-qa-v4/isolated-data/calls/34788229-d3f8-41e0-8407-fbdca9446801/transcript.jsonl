@@ -1,0 +1,12 @@
+{"seq": 1, "role": "user", "text": "Yes, tell me. Nenu Lakshmi Reddy. Ee company gurinchi nenu eppudu vinaledu, meeru em sell chestaru?", "ts": "2026-10-31T15:00:22.995663Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "నమస్కారం Lakshmi Reddy గారు. మేము herbal products అమ్ముతాము. మా దగ్గర Hair Oil ₹499 కి, Aloe Vera Juice ₹399 కి, Face Cream ₹599 కి, ఇంకా Ashwagandha Capsules ₹699 కి ఉన్నాయి.", "ts": "2026-10-31T15:00:24.814162Z"}
+{"seq": 3, "role": "user", "text": "Oh, अच्छा. Hair oil baguntunda? Ah price entha annaru, four ninety-nine a?", "ts": "2026-10-31T15:00:43.534589Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "అవును, కరెక్ట్. NatureVeda Herbal Hair Oil 200 ml కి ₹499 ఉంటుంది. మీకు ఏ details కావాలి?", "ts": "2026-10-31T15:00:45.250925Z"}
+{"seq": 5, "role": "user", "text": "Ayite organic ingredients use chestaru kada, results ela untayi?", "ts": "2026-10-31T15:00:57.274296Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "మా Hair Oil లో Amla, Bhringraj, Hibiscus, ఇంకా Coconut Oil ఉంటాయి. అయితే, మా products ఎలాంటి diseases ని cure చేయవు, అలాగే results కూడా guarantee ఇవ్వలేము.", "ts": "2026-10-31T15:00:58.779887Z"}
+{"seq": 7, "role": "user", "text": "Oh achha, guarantee em ledu antunnaru, sare mari ikkadi varaku details cheppinanduku thanks.", "ts": "2026-10-31T15:01:16.534085Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "పర్వాలేదు. మీకు order పెట్టాలంటే చెప్పండి, లేదంటే ఇంకేమైనా details కావాలా?", "ts": "2026-10-31T15:01:17.484024Z"}
+{"seq": 9, "role": "user", "text": "Ledandi, ippatiki aithe order em ledu, kani me products gurinchi inka konchem teluskovali.", "ts": "2026-10-31T15:01:30.368284Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "సరే, no problem. మీకు వేరే ఏ product గురించి తెలుసుకోవాలని ఉంది?", "ts": "2026-10-31T15:01:31.858979Z"}
+{"seq": 11, "role": "user", "text": "Nakku asalu ee calls chala ekkuva vastunnayi. Dayachesi na number ni eppudu call cheyyoddu, ma name remove cheyandi.", "ts": "2026-10-31T15:01:45.448853Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "సరే, ఈ నంబర్‌కి మళ్లీ కాల్ చేయము. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-31T15:01:47.372538Z"}

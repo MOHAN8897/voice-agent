@@ -1,0 +1,987 @@
+{
+  "scenario": {
+    "id": "A_enquiry_failure",
+    "business": "A",
+    "kind": "enquiry",
+    "integration": "failure",
+    "policy": "review",
+    "max_turns": 12,
+    "goal": "Learn standard versus matte visiting-card pricing, minimum quantity, design approval, delivery, rush surcharge and advance-payment conditions. Start with 100 cards, later correct to 200. Ask about wedding-card price once as an unknown fact. Try to submit a quote/internal order request with your final details. Ask what quantity they recorded after intervening conversation. Stay curious for roughly 10 caller turns if the conversation remains useful. Around the middle, thank them and ask another relevant question in the SAME turn, without ending the call. At the end, clearly say all your questions are answered and thank them."
+  },
+  "agent": {
+    "id": "A",
+    "key": "printing",
+    "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+    "name": "Sri Krishna Digital Prints",
+    "agent_name": "Kavitha",
+    "role": "sales",
+    "industry": "printing",
+    "brief": "Agent name Kavitha. Company name Sri Krishna Digital Prints.\nOutbound and inbound customer inquiries in Telugu.\nWe print visiting cards: normal paper visiting cards cost 200 rupees for 100 cards,\nmatte finish cards cost 350 rupees for 100 cards. Minimum order quantity 100 cards.\nWedding invitation cards are customized: pricing depends on design, paper sample and quantity, no fixed price over the phone.\nFlex banners: normal flex 15 rupees per square foot, star flex 20 rupees per square foot.\nDelivery in Vijayawada takes 3 working days after design artwork approval; urgent 24-hour delivery is extra 150 rupees.\nPayment: Cash on delivery accepted for orders up to 1000 rupees; 50% advance payment required for orders above 1000 rupees.\nNo online payment or credit card processing on phone call.\nOffice hours Monday to Saturday 9:30 AM to 8:00 PM, Sunday closed.\nGoal: answer customer questions on cards, banners and pricing; understand their requirement.\nIf interested, take preferred name, quantity and delivery locality for a quote or order request.\nDo not force details before answering questions.\nCustomer refusing visiting cards may still want flex banners or wedding cards.\nNever claim an order is paid or dispatched without artwork approval and design confirmation.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Kavitha",
+      "company_name": "Sri Krishna Digital Prints",
+      "role": "Sales and customer enquiries",
+      "permitted_next_steps": "Collect customer name, item type, quantity and delivery locality in Vijayawada to submit an internal quote/order request. Explain that artwork approval is required before printing.",
+      "payment_rules": "Cash on delivery for orders up to 1000 rupees; 50% advance for orders above 1000 rupees. No online payment collection on call.",
+      "delivery_details": "Local delivery in Vijayawada takes 3 working days after artwork approval. Urgent 24-hour delivery is extra 150 rupees.",
+      "wedding_cards": "Customized quotation only based on design and paper sample. No fixed price on phone.",
+      "visiting_cards": "Standard 200 rupees for 100 cards; Matte finish 350 rupees for 100 cards. Minimum order 100 cards.",
+      "forbidden_actions": "Never confirm external courier shipment or take card payment on phone. Never guarantee delivery without artwork approval."
+    },
+    "user_id": "c0afb80f-ba42-4f85-ad75-ac1c23a9873f",
+    "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408"
+  },
+  "call_id": "20c1fc10-d341-4cdd-b8c2-d99afdb5fd50",
+  "session_id": "adaptive-59276e1da7ff4e8c962613f590f81164",
+  "phone": "+12025550110",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_ce356842dc55",
+  "turn_index": 4,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నమస్తే కవిత గారు. నాకు విజిటింగ్ కార్డ్స్ కావాలి. స్టాండర్డ్ మరియు మ్యాట్ ఫినిషింగ్ మధ్య ధరల్లో తేడా ఏంటి? అలాగే కనీసం ఎన్ని కార్డ్స్ ఆర్డర్ చేయాలో చెప్పండి. మొదట 100 అనుకున్నాను, కానీ తర్వాత 200 కావచ్చు.",
+        "intends_end": false,
+        "intent": "Inquire about pricing, minimum quantity, and finish options for visiting cards",
+        "elapsed_s": 0.875
+      },
+      "spoken": "స్టాండర్డ్ పేపర్ విజిటింగ్ కార్డ్స్ one hundred కార్డ్స్ కి two hundred rupees అవుతాయి, అదే మ్యాట్ ఫినిషింగ్ అయితే one hundred కార్డ్స్ కి three hundred fifty rupees అవుతుంది. కనీస ఆర్డర్ పరిమాణం one hundred కార్డ్స్ ఉంటుంది, కాబట్టి మీరు two hundred కార్డ్స్ తీసుకున్నా కూడా అదే రేటు వర్తిస్తుంది.",
+      "elapsed_s": 4.781,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "విజిటింగ్ కార్డ్స్",
+          "quantity": "200"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        103,
+        104,
+        105,
+        106,
+        107,
+        108
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "స్టాండర్డ్ పేపర్ విజిటింగ్ కార్డ్స్ one hundred కార్డ్స్ కి two hundred rupees అవుతాయి, అదే మ్యాట్ ఫినిషింగ్ అయితే one hundred కార్డ్స్ కి three hundred fifty rupees అవుతుంది. కనీస ఆర్డర్ పరిమాణం one hundred కార్డ్స్ ఉంటుంది, కాబట్టి మీరు two hundred కార్డ్స్ తీసుకున్నా కూడా అదే రేటు వర్తిస్తుంది.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4831,
+            "output_tokens": 74,
+            "cached_tokens": 3264,
+            "total_tokens": 4905
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 2,
+      "caller": {
+        "utterance": "సరే, ఈ ధరలు బాగున్నాయి. డిజైన్ అప్రూవల్ ఎలా చేస్తారు? నా email ramesh.audit@example.invalid. అలాగే డెలివరీకి ఎంత సమయం పడుతుంది, రష్ ఆర్డర్ అయితే ఏమైనా extra charge ఉంటుందా?",
+        "intends_end": false,
+        "intent": "Ask about design approval, delivery time, and rush surcharge",
+        "elapsed_s": 0.687
+      },
+      "spoken": "డిజైన్ artwork approve అయిన తర్వాత Vijayawada లో delivery కి మూడు working days పడుతుంది. రష్ ఆర్డర్ అంటే 24 గంటల లోపల కావాలంటే extra one hundred fifty rupees charge ఉంటుంది. మీ email ramesh. audit@example. invalid note చేసుకున్నాను.",
+      "elapsed_s": 6.641,
+      "memory_before": {
+        "facts": {
+          "product": "విజిటింగ్ కార్డ్స్",
+          "quantity": "200"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "విజిటింగ్ కార్డ్స్",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        110,
+        111,
+        112,
+        113,
+        114,
+        115
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "డిజైన్ artwork approve అయిన తర్వాత Vijayawada లో delivery కి మూడు working days పడుతుంది. రష్ ఆర్డర్ అంటే 24 గంటల లోపల కావాలంటే extra one hundred fifty rupees charge ఉంటుంది. మీ email ramesh. audit@example. invalid note చేసుకున్నాను.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4913,
+            "output_tokens": 63,
+            "cached_tokens": 3264,
+            "total_tokens": 4976
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 3,
+      "caller": {
+        "utterance": "సరే, advance payment ఏమైనా చేయాలా? అలాగే, wedding cards price ఎంత ఉంటుందో కూడా చెప్పగలరా?",
+        "intends_end": false,
+        "intent": "Ask about advance payment and inquire about wedding card pricing",
+        "elapsed_s": 0.641
+      },
+      "spoken": "మీ order one thousand rupees పైన ఉంటే 50% advance payment చేయాలి. ఇక wedding invitation cards విషయానికి వస్తే, వాటి ధర design, paper sample, quantity మీద ఆధారపడి ఉంటుంది, ఫోన్ లో fixed price చెప్పలేము.",
+      "elapsed_s": 3.828,
+      "memory_before": {
+        "facts": {
+          "product": "విజిటింగ్ కార్డ్స్",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "విజిటింగ్ కార్డ్స్",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "assistant: డిజైన్ artwork approve అయిన తర్వాత Vijayawada లో delivery కి మూడు working days పడుతుంది. రష్ ఆర్డర్ అంటే 24 గంటల లోపల కావాలంటే extra one hundred fifty rupees charge ఉంటుంది. మీ email ramesh. audit@example. invalid note చేసుకున్నాను.\nuser: సరే, advance payment ఏమైనా చేయాలా? అలాగే, wedding cards price ఎంత ఉంటుందో కూడా చెప్పగలరా?\nassistant: మీ order one thousand rupees పైన ఉంటే 50% advance payment చేయాలి. ఇక wedding invitation cards విషయానికి వస్తే, వాటి ధర design, paper sample, quantity మీద ఆధారపడి ఉంటుంది, ఫోన్ లో fixed price చెప్పలేము."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        117,
+        118,
+        119,
+        120,
+        121,
+        122
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "మీ order one thousand rupees పైన ఉంటే 50% advance payment చేయాలి. ఇక wedding invitation cards విషయానికి వస్తే, వాటి ధర design, paper sample, quantity మీద ఆధారపడి ఉంటుంది, ఫోన్ లో fixed price చెప్పలేము.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4998,
+            "output_tokens": 63,
+            "cached_tokens": 3264,
+            "total_tokens": 5061
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 4,
+      "caller": {
+        "utterance": "సరే, wedding cards విషయం అర్థమైంది. నా final details చెప్తున్నాను, 200 matte visiting cards కి quote లేదా order request note చేయండి. నా పేరు రమేష్, విజయవాడ. ఇప్పుడే మీరు ఎన్ని quantity record చేసుకున్నారో ఒకసారి చెప్తారా?",
+        "intends_end": false,
+        "intent": "Submit final details for an internal order request and verify recorded quantity",
+        "elapsed_s": 0.828
+      },
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 23.031,
+      "memory_before": {
+        "facts": {
+          "product": "విజిటింగ్ కార్డ్స్",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "assistant: డిజైన్ artwork approve అయిన తర్వాత Vijayawada లో delivery కి మూడు working days పడుతుంది. రష్ ఆర్డర్ అంటే 24 గంటల లోపల కావాలంటే extra one hundred fifty rupees charge ఉంటుంది. మీ email ramesh. audit@example. invalid note చేసుకున్నాను.\nuser: సరే, advance payment ఏమైనా చేయాలా? అలాగే, wedding cards price ఎంత ఉంటుందో కూడా చెప్పగలరా?\nassistant: మీ order one thousand rupees పైన ఉంటే 50% advance payment చేయాలి. ఇక wedding invitation cards విషయానికి వస్తే, వాటి ధర design, paper sample, quantity మీద ఆధారపడి ఉంటుంది, ఫోన్ లో fixed price చెప్పలేము."
+      },
+      "memory_after": {
+        "facts": {
+          "product": "విజిటింగ్ కార్డ్స్",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "assistant: డిజైన్ artwork approve అయిన తర్వాత Vijayawada లో delivery కి మూడు working days పడుతుంది. రష్ ఆర్డర్ అంటే 24 గంటల లోపల కావాలంటే extra one hundred fifty rupees charge ఉంటుంది. మీ email ramesh. audit@example. invalid note చేసుకున్నాను.\nuser: సరే, advance payment ఏమైనా చేయాలా? అలాగే, wedding cards price ఎంత ఉంటుందో కూడా చెప్పగలరా?\nassistant: మీ order one thousand rupees పైన ఉంటే 50% advance payment చేయాలి. ఇక wedding invitation cards విషయానికి వస్తే, వాటి ధర design, paper sample, quantity మీద ఆధారపడి ఉంటుంది, ఫోన్ లో fixed price చెప్పలేము."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        124,
+        125,
+        126,
+        127,
+        128,
+        129
+      ],
+      "done": [],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": false
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "స్టాండర్డ్ పేపర్ విజిటింగ్ కార్డ్స్ one hundred కార్డ్స్ కి two hundred rupees అవుతాయి, అదే మ్యాట్ ఫినిషింగ్ అయితే one hundred కార్డ్స్ కి three hundred fifty rupees అవుతుంది. కనీస ఆర్డర్ పరిమాణం one hundred కార్డ్స్ ఉంటుంది, కాబట్టి మీరు two hundred కార్డ్స్ తీసుకున్నా కూడా అదే రేటు వర్తిస్తుంది.",
+      "at": 126273.359
+    },
+    {
+      "turn": 2,
+      "text": "డిజైన్ artwork approve అయిన తర్వాత Vijayawada లో delivery కి మూడు working days పడుతుంది. రష్ ఆర్డర్ అంటే 24 గంటల లోపల కావాలంటే extra one hundred fifty rupees charge ఉంటుంది. మీ email ramesh. audit@example. invalid note చేసుకున్నాను.",
+      "at": 126280.703
+    },
+    {
+      "turn": 3,
+      "text": "మీ order one thousand rupees పైన ఉంటే 50% advance payment చేయాలి. ఇక wedding invitation cards విషయానికి వస్తే, వాటి ధర design, paper sample, quantity మీద ఆధారపడి ఉంటుంది, ఫోన్ లో fixed price చెప్పలేము.",
+      "at": 126285.171
+    },
+    {
+      "turn": 4,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 126305.0
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "స్టాండర్డ్ పేపర్ విజిటింగ్ కార్డ్స్ one hundred కార్డ్స్ కి two hundred rupees అవుతాయి, అదే మ్యాట్ ఫినిషింగ్ అయితే one hundred కార్డ్స్ కి three hundred fifty rupees అవుతుంది. కనీస ఆర్డర్ పరిమాణం one hundred కార్డ్స్ ఉంటుంది, కాబట్టి మీరు two hundred కార్డ్స్ తీసుకున్నా కూడా అదే రేటు వర్తిస్తుంది.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4831,
+        "output_tokens": 74,
+        "cached_tokens": 3264,
+        "total_tokens": 4905
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "డిజైన్ artwork approve అయిన తర్వాత Vijayawada లో delivery కి మూడు working days పడుతుంది. రష్ ఆర్డర్ అంటే 24 గంటల లోపల కావాలంటే extra one hundred fifty rupees charge ఉంటుంది. మీ email ramesh. audit@example. invalid note చేసుకున్నాను.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4913,
+        "output_tokens": 63,
+        "cached_tokens": 3264,
+        "total_tokens": 4976
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "మీ order one thousand rupees పైన ఉంటే 50% advance payment చేయాలి. ఇక wedding invitation cards విషయానికి వస్తే, వాటి ధర design, paper sample, quantity మీద ఆధారపడి ఉంటుంది, ఫోన్ లో fixed price చెప్పలేము.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4998,
+        "output_tokens": 63,
+        "cached_tokens": 3264,
+        "total_tokens": 5061
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "ధరల్లో తేడా మరియు కనీస ఆర్డర్ పరిమాణం ఎంత?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "product",
+            "value": "విజిటింగ్ కార్డ్స్"
+          },
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "200"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నమస్తే కవిత గారు. నాకు విజిటింగ్ కార్డ్స్ కావాలి. స్టాండర్డ్ మరియు మ్యాట్ ఫినిషింగ్ మధ్య ధరల్లో తేడా ఏంటి? అలాగే కనీసం ఎన్ని కార్డ్స్ ఆర్డర్ చేయాలో చెప్పండి. మొదట 100 అనుకున్నాను, కానీ తర్వాత 200 కావచ్చు.",
+      "at": 126272.765
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "డిజైన్ అప్రూవల్ ఎలా చేస్తారు? డెలివరీకి ఎంత సమయం పడుతుంది, రష్ ఆర్డర్ అయితే ఏమైనా extra charge ఉంటుందా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "email",
+            "value": "ramesh.audit@example.invalid"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, ఈ ధరలు బాగున్నాయి. డిజైన్ అప్రూవల్ ఎలా చేస్తారు? నా email ramesh.audit@example.invalid. అలాగే డెలివరీకి ఎంత సమయం పడుతుంది, రష్ ఆర్డర్ అయితే ఏమైనా extra charge ఉంటుందా?",
+      "at": 126280.093
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "advance payment ఏమైనా చేయాలా? wedding cards price ఎంత ఉంటుందో కూడా చెప్పగలరా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, advance payment ఏమైనా చేయాలా? అలాగే, wedding cards price ఎంత ఉంటుందో కూడా చెప్పగలరా?",
+      "at": 126284.656
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 126306.015,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 126273.39
+    },
+    {
+      "turn_seq": 3,
+      "at": 126280.718
+    },
+    {
+      "turn_seq": 5,
+      "at": 126285.218
+    }
+  ],
+  "started_at": "2026-10-29T17:25:44.915069+00:00",
+  "errors": [],
+  "brain_checksum": "f1701af0d53369e603869a1bafee427e6d3493490cec35765d0b259410b7068c",
+  "runtime_checksum": "24e02fd7087c832858e2d6db4bca57f7f79a5e3617429d149011e26fa44a6d19",
+  "available_tools": [
+    "HUBSPOT_CREATE_CONTACT",
+    "GOOGLECALENDAR_CREATE_EVENT",
+    "GOOGLECALENDAR_FIND_FREE_SLOTS",
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 126271.921,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 2,
+      "start_s": 126279.156,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 67,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 3,
+      "start_s": 126284.046,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 105,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 4,
+      "start_s": 126288.968,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 105,
+      "rolling_chars": 552
+    }
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "callback_required",
+    "disposition_confidence": 0.97,
+    "summary_te": "",
+    "summary_en": "The caller requested visiting cards and first asked about the price difference between standard and matte finishes and the minimum order quantity. The agent quoted ₹200 for 100 standard cards, ₹350 for 100 matte cards, and stated that the minimum order is 100 cards, with the same rate applying for 200 cards. The caller said the prices were acceptable and asked about design approval, delivery timing, and rush-order charges. The agent stated that delivery in Vijayawada takes three working days after artwork approval, and a rush order within 24 hours incurs an extra ₹150 charge; the caller provided the email ramesh.audit@example.invalid. The caller also asked about advance payment and wedding-card pricing. The agent said orders above ₹1,000 require 50% advance payment and that wedding-card pricing depends on design, paper sample, and quantity. The caller then identified himself as Ramesh from Vijayawada and requested that a quote or order request be noted for 200 matte visiting cards, asking how much quantity had been recorded. The agent did not confirm the quantity, record the quote/order request, or provide a clear next step before ending the call, so follow-up is required.",
+    "next_action": "Confirm and record the requested quote/order for 200 matte visiting cards, then contact Ramesh to confirm the quantity and provide the quote and design-approval process.",
+    "extracted_fields": {
+      "advance_payment": "50% for orders above ₹1,000",
+      "delivery_time": "3 working days in Vijayawada after artwork approval",
+      "email": "ramesh.audit@example.invalid",
+      "finish": "Matte",
+      "location": "Vijayawada",
+      "matte_price": "₹350 per 100 cards",
+      "minimum_order_quantity": "100 cards",
+      "name": "Ramesh",
+      "phone": "+12025550110",
+      "product": "Visiting cards",
+      "quantity": "200",
+      "rush_order_charge": "₹150 for delivery within 24 hours",
+      "standard_price": "₹200 per 100 cards"
+    },
+    "objections": [],
+    "notes": "The caller was positive about the quoted prices and showed clear purchase intent. The agent's final response did not address the caller's request to confirm the recorded quantity or explicitly confirm the quote/order request.",
+    "tags": [
+      "intent:purchase",
+      "intent:quote",
+      "sentiment:positive",
+      "followup:callback",
+      "action:required",
+      "signal:ready_to_buy"
+    ],
+    "custom_tags": [
+      "custom:visiting-cards",
+      "custom:matte-finish",
+      "custom:200-cards"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T17:26:28.989757Z",
+    "generation_ok": true,
+    "facts": {
+      "advance_payment": "50% for orders above ₹1,000",
+      "delivery_time": "3 working days in Vijayawada after artwork approval",
+      "email": "ramesh.audit@example.invalid",
+      "finish": "Matte",
+      "location": "Vijayawada",
+      "matte_price": "₹350 per 100 cards",
+      "minimum_order_quantity": "100 cards",
+      "name": "Ramesh",
+      "phone": "+12025550110",
+      "product": "Visiting cards",
+      "quantity": "200",
+      "rush_order_charge": "₹150 for delivery within 24 hours",
+      "standard_price": "₹200 per 100 cards"
+    },
+    "disclosure_status": null,
+    "contact_preference": "none",
+    "status_tags": [
+      "action:required",
+      "contact:email_known",
+      "contact:name_known",
+      "contact:phone_known",
+      "custom:matte-finish",
+      "custom:visiting-cards",
+      "followup:callback",
+      "intent:purchase",
+      "intent:quote",
+      "outcome:callback_required",
+      "sentiment:positive",
+      "signal:ready_to_buy"
+    ],
+    "lead": {
+      "leadId": "f3428bbe-6ee5-4eb8-82b8-b4ee4a64969e",
+      "agentId": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+      "stage": "contacted",
+      "action": "created"
+    },
+    "lead_assessment": {
+      "score": 75,
+      "band": "hot",
+      "disposition": "callback_required",
+      "confidence": 0.97,
+      "components": [
+        {
+          "signal": "interest",
+          "points": 40,
+          "max": 40,
+          "evidence": "callback_required"
+        },
+        {
+          "signal": "requirements",
+          "points": 25,
+          "max": 25,
+          "evidence": "product"
+        },
+        {
+          "signal": "timing",
+          "points": 0,
+          "max": 25,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "contact",
+          "points": 10,
+          "max": 10,
+          "evidence": "phone"
+        }
+      ],
+      "version": 1,
+      "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+      "reason": "recorded_signals"
+    },
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "20c1fc10-d341-4cdd-b8c2-d99afdb5fd50",
+        "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+        "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+        "session_id": "adaptive-59276e1da7ff4e8c962613f590f81164",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_ce356842dc55",
+        "started_at": "2026-10-29 17:25:44.899254+00:00",
+        "ended_at": "2026-10-29 17:26:23.219237+00:00",
+        "duration_sec": 38,
+        "disposition": "callback_required",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/20c1fc10-d341-4cdd-b8c2-d99afdb5fd50/",
+        "end_reason": "agent_hangup",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "action:required",
+          "contact:email_known",
+          "contact:name_known",
+          "contact:phone_known",
+          "custom:matte-finish",
+          "custom:visiting-cards",
+          "followup:callback",
+          "intent:purchase",
+          "intent:quote",
+          "outcome:callback_required",
+          "sentiment:positive",
+          "signal:ready_to_buy"
+        ],
+        "last_heartbeat_at": "2026-10-29 17:25:44.899254+00:00",
+        "created_at": "2026-10-29 17:25:44.899254+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [],
+    "dnd": [],
+    "leads": [
+      {
+        "lead_id": "f3428bbe-6ee5-4eb8-82b8-b4ee4a64969e",
+        "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+        "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+        "name": "Ramesh",
+        "phone": "+12025550110",
+        "email": "ramesh.audit@example.invalid",
+        "stage": "contacted",
+        "notes": "[Call reference: 20c1fc10-d341-4cdd-b8c2-d99afdb5fd50]\nThe caller requested visiting cards and first asked about the price difference between standard and matte finishes and the minimum order quantity. The agent quoted ₹200 for 100 standard cards, ₹350 for 100 matte cards, and stated that the minimum order is 100 cards, with the same rate applying for 200 cards. The caller said the prices were acceptable and asked about design approval, delivery timing, and rush-order charges. The agent stated that delivery in Vijayawada takes three working days after artwork approval, and a rush order within 24 hours incurs an extra ₹150 charge; the caller provided the email ramesh.audit@example.invalid. The caller also asked about advance payment and wedding-card pricing. The agent said orders above ₹1,000 require 50% advance payment and that wedding-card pricing depends on design, paper sample, and quantity. The caller then identified himself as Ramesh from Vijayawada and requested that a quote or order request be noted for 200 matte visiting cards, asking how much quantity had been recorded. The agent did not confirm the quantity, record the quote/order request, or provide a clear next step before ending the call, so follow-up is required.\n\nNext step: Confirm and record the requested quote/order for 200 matte visiting cards, then contact Ramesh to confirm the quantity and provide the quote and design-approval process.\n\nCall outcome: callback required (97% confidence)",
+        "created_at": "2026-10-29 17:26:29.013175+00:00",
+        "updated_at": "2026-10-29 17:26:29.013175+00:00"
+      }
+    ],
+    "tools": [],
+    "assessments": [
+      {
+        "id": "6b2cbc75-928d-4e61-ac99-d80211cc9a4b",
+        "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+        "lead_id": "f3428bbe-6ee5-4eb8-82b8-b4ee4a64969e",
+        "source_call_id": "20c1fc10-d341-4cdd-b8c2-d99afdb5fd50",
+        "assessment": {
+          "score": 75,
+          "band": "hot",
+          "disposition": "callback_required",
+          "confidence": 0.97,
+          "components": [
+            {
+              "signal": "interest",
+              "points": 40,
+              "max": 40,
+              "evidence": "callback_required"
+            },
+            {
+              "signal": "requirements",
+              "points": 25,
+              "max": 25,
+              "evidence": "product"
+            },
+            {
+              "signal": "timing",
+              "points": 0,
+              "max": 25,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "contact",
+              "points": 10,
+              "max": 10,
+              "evidence": "phone"
+            }
+          ],
+          "version": 1,
+          "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+          "reason": "recorded_signals"
+        },
+        "updated_at": "2026-10-29 17:26:23.219237+00:00"
+      }
+    ]
+  },
+  "metadata": {
+    "call_id": "20c1fc10-d341-4cdd-b8c2-d99afdb5fd50",
+    "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+    "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+    "session_id": "adaptive-59276e1da7ff4e8c962613f590f81164",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_ce356842dc55",
+    "started_at": "2026-10-29T17:25:44.899254+00:00",
+    "status": "active",
+    "storage_path": "data/calls/20c1fc10-d341-4cdd-b8c2-d99afdb5fd50/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550110",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 41894,
+        "output_tokens": 3366,
+        "cached_tokens": 23232
+      }
+    },
+    "hangup_reason": "agent_hangup",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 0,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": false,
+    "callback_close_phase": "idle",
+    "contact_preference": "none",
+    "disconnected_at": "2026-10-29T17:26:23.219237+00:00",
+    "ended_at": "2026-10-29T17:26:23.219237+00:00",
+    "end_reason": "agent_hangup",
+    "duration_sec": 38.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 38.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.007916666666666666,
+      "telephony_inr": 0.7542208333333332,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.007916666666666666,
+      "telnyx_inr": 0.7542208333333332,
+      "telnyx_voice_api_usd": 0.0012666666666666666,
+      "telnyx_sip_usd": 0.0031666666666666666,
+      "telnyx_media_stream_usd": 0.0022166666666666667,
+      "telnyx_call_recording_usd": 0.0012666666666666666,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.27,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-29",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.012499999999999999,
+      "telephony_inr_per_min": 1.190875,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.012499999999999999,
+      "telnyx_inr_per_min": 1.190875,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_07c9864462f1a1bb016ae381c0112487d1b47aa55831510360": {
+          "input_tokens": 1579,
+          "output_tokens": 560,
+          "cached_tokens": 0,
+          "cache_write_tokens": 1576,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.0010666
+        }
+      },
+      "post_call_analysis_usd": 0.0010666,
+      "post_call_analysis_inr": 0.10161498199999999
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నమస్తే కవిత గారు. నాకు విజిటింగ్ కార్డ్స్ కావాలి. స్టాండర్డ్ మరియు మ్యాట్ ఫినిషింగ్ మధ్య ధరల్లో తేడా ఏంటి? అలాగే కనీసం ఎన్ని కార్డ్స్ ఆర్డర్ చేయాలో చెప్పండి. మొదట 100 అనుకున్నాను, కానీ తర్వాత 200 కావచ్చు.",
+      "ts": "2026-10-29T17:25:45.810467Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "స్టాండర్డ్ పేపర్ విజిటింగ్ కార్డ్స్ one hundred కార్డ్స్ కి two hundred rupees అవుతాయి, అదే మ్యాట్ ఫినిషింగ్ అయితే one hundred కార్డ్స్ కి three hundred fifty rupees అవుతుంది. కనీస ఆర్డర్ పరిమాణం one hundred కార్డ్స్ ఉంటుంది, కాబట్టి మీరు two hundred కార్డ్స్ తీసుకున్నా కూడా అదే రేటు వర్తిస్తుంది.",
+      "ts": "2026-10-29T17:25:50.555142Z"
+    },
+    {
+      "seq": 3,
+      "role": "user",
+      "text": "సరే, ఈ ధరలు బాగున్నాయి. డిజైన్ అప్రూవల్ ఎలా చేస్తారు? నా email ramesh.audit@example.invalid. అలాగే డెలివరీకి ఎంత సమయం పడుతుంది, రష్ ఆర్డర్ అయితే ఏమైనా extra charge ఉంటుందా?",
+      "ts": "2026-10-29T17:25:51.288094Z",
+      "partial": false
+    },
+    {
+      "seq": 4,
+      "role": "assistant",
+      "text": "డిజైన్ artwork approve అయిన తర్వాత Vijayawada లో delivery కి మూడు working days పడుతుంది. రష్ ఆర్డర్ అంటే 24 గంటల లోపల కావాలంటే extra one hundred fifty rupees charge ఉంటుంది. మీ email ramesh. audit@example. invalid note చేసుకున్నాను.",
+      "ts": "2026-10-29T17:25:57.894569Z"
+    },
+    {
+      "seq": 5,
+      "role": "user",
+      "text": "సరే, advance payment ఏమైనా చేయాలా? అలాగే, wedding cards price ఎంత ఉంటుందో కూడా చెప్పగలరా?",
+      "ts": "2026-10-29T17:25:58.594982Z",
+      "partial": false
+    },
+    {
+      "seq": 6,
+      "role": "assistant",
+      "text": "మీ order one thousand rupees పైన ఉంటే 50% advance payment చేయాలి. ఇక wedding invitation cards విషయానికి వస్తే, వాటి ధర design, paper sample, quantity మీద ఆధారపడి ఉంటుంది, ఫోన్ లో fixed price చెప్పలేము.",
+      "ts": "2026-10-29T17:26:02.370284Z"
+    },
+    {
+      "seq": 7,
+      "role": "user",
+      "text": "సరే, wedding cards విషయం అర్థమైంది. నా final details చెప్తున్నాను, 200 matte visiting cards కి quote లేదా order request note చేయండి. నా పేరు రమేష్, విజయవాడ. ఇప్పుడే మీరు ఎన్ని quantity record చేసుకున్నారో ఒకసారి చెప్తారా?",
+      "ts": "2026-10-29T17:26:03.274027Z",
+      "partial": false
+    },
+    {
+      "seq": 8,
+      "role": "assistant",
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T17:26:22.197962Z"
+    }
+  ],
+  "wall_elapsed_s": 44.328,
+  "simulated_exchange_timeline_s": 80,
+  "request_count": 28
+}

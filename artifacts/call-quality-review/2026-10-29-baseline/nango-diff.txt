@@ -1,0 +1,110 @@
+status 200
+existing: {
+ "airtable": "airtable",
+ "asana": "asana",
+ "basecamp": "basecamp",
+ "cal-com-v2": "cal-com-v2",
+ "calendly": "calendly",
+ "clickup": "clickup",
+ "confluence": "confluence",
+ "discord-bot": "discord-bot",
+ "freshdesk": "freshdesk",
+ "github-getting-started": "github",
+ "google-calendar": "google-calendar",
+ "google-mail": "google-mail",
+ "hubspot": "hubspot",
+ "intercom": "intercom",
+ "jira": "jira",
+ "linear": "linear",
+ "mailchimp": "mailchimp",
+ "monday": "monday",
+ "notion": "notion",
+ "salesforce": "salesforce",
+ "sendgrid": "sendgrid",
+ "shopify-api-key": "shopify-api-key",
+ "slack": "slack",
+ "stripe-api-key": "stripe-api-key",
+ "supabase": "supabase",
+ "todoist": "todoist",
+ "twilio": "twilio",
+ "whatsapp-business": "whatsapp-business",
+ "woocommerce": "woocommerce",
+ "zendesk": "zendesk",
+ "zoom": "zoom"
+}
+catalog attrs: ['CATALOG_INTEGRATIONS']
+
+map diff:
+  OK  AIRTABLE               airtable
+  OK  ASANA                  asana
+  MISSING BOX                    box
+  OK  CALCOM                 cal-com-v2
+  OK  CALENDLY               calendly
+  OK  CLICKUP                clickup
+  OK  DISCORD                discord-bot
+  MISSING DROPBOX                dropbox
+  OK  FRESHDESK              freshdesk
+  OK  GITHUB                 github-getting-started
+  OK  GMAIL                  google-mail
+  OK  GOOGLECALENDAR         google-calendar
+  OK  GOOGLEMAIL             google-mail
+  MISSING GOOGLESHEETS           google-sheet
+  OK  HUBSPOT                hubspot
+  OK  INTERCOM               intercom
+  OK  JIRA                   jira
+  OK  LINEAR                 linear
+  OK  MAILCHIMP              mailchimp
+  MISSING MICROSOFTTEAMS         microsoft-teams
+  OK  MONDAY                 monday
+  OK  NOTION                 notion
+  MISSING OUTLOOKCALENDAR        outlook-calendar
+  MISSING PIPEDRIVE              pipedrive
+  OK  SALESFORCE             salesforce
+  OK  SENDGRID               sendgrid
+  OK  SHOPIFY                shopify-api-key
+  OK  SLACK                  slack
+  OK  SUPABASE               supabase
+  OK  TODOIST                todoist
+  MISSING TRELLO                 trello
+  OK  TWILIO                 twilio
+  OK  TWILIOSMS              twilio
+  OK  TWILIO_SMS             twilio
+  MISSING TYPEFORM               typeform
+  OK  WHATSAPP               whatsapp-business
+  OK  WOOCOMMERCE            woocommerce
+  OK  ZENDESK                zendesk
+  MISSING ZOHOCRM                zoho-crm
+  MISSING ZOHO_CRM               zoho-crm
+  OK  ZOOM                   zoom
+Traceback (most recent call last):
+  File "C:\Users\subha\AppData\Local\Temp\claude\D--voice-agent\2dcb8c9b-3759-4d80-b5f3-8e78036cf64f\scratchpad\nango_session_probe.py", line 4, in <module>
+    from server.services.nango_service import get_provider_key
+ImportError: cannot import name 'get_provider_key' from 'server.services.nango_service' (D:\voice agent\server\services\nango_service.py)
+GOOGLECALENDAR   google-calendar          201 TOKEN
+CALENDLY         calendly                 201 TOKEN
+CALCOM           cal-com-v2               201 TOKEN
+ZOOM             zoom                     201 TOKEN
+HUBSPOT          hubspot                  201 TOKEN
+SALESFORCE       salesforce               201 TOKEN
+ZENDESK          zendesk                  201 TOKEN
+INTERCOM         intercom                 201 TOKEN
+JIRA             jira                     201 TOKEN
+LINEAR           linear                   201 TOKEN
+FRESHDESK        freshdesk                201 TOKEN
+SHOPIFY          shopify-api-key          201 TOKEN
+WOOCOMMERCE      woocommerce              201 TOKEN
+SLACK            slack                    201 TOKEN
+TWILIO_SMS       twilio                   201 TOKEN
+WHATSAPP         whatsapp-business        201 TOKEN
+DISCORD          discord-bot              201 TOKEN
+GMAIL            google-mail              201 TOKEN
+SENDGRID         sendgrid                 201 TOKEN
+MAILCHIMP        mailchimp                201 TOKEN
+AIRTABLE         airtable                 201 TOKEN
+NOTION           notion                   201 TOKEN
+SUPABASE         supabase                 201 TOKEN
+ASANA            asana                    201 TOKEN
+CLICKUP          clickup                  201 TOKEN
+MONDAY           monday                   201 TOKEN
+TODOIST          todoist                  201 TOKEN
+GITHUB           github-getting-started   201 TOKEN

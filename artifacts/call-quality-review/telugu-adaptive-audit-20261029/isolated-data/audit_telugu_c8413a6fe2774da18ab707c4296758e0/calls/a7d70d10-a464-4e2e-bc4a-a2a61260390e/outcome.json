@@ -1,0 +1,122 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.94,
+  "summary_te": "",
+  "summary_en": "Kiran called to inquire about learning Python, SQL, and PowerBI while working, specifically asking about weekend or evening batches, fees, installments, placement support, eligibility, and course duration. The agent explained that weekend classes run from 10 AM to 1 PM and weekday evening classes from 8 PM to 9 PM, with a total fee of ₹8,999 and no installment option. The agent clarified that only a Python with Data Analytics course is currently available, lasting eight weeks, and open to graduates or final-year students with basic computer knowledge. Placement assistance includes resume building, interview preparation, and job referrals, but there is no job or salary guarantee. Kiran expressed interest, provided his name, email, graduate qualification, and preference for the evening batch, and requested a demo during the upcoming weekend, preferably Saturday or Sunday. The agent could not confirm that the enquiry was saved or that the demo was scheduled due to a system issue. The call ended politely with the caller expecting follow-up to arrange the demo and save the enquiry.",
+  "next_action": "Follow up with Kiran to confirm/save the enquiry and schedule a demo session for Saturday or Sunday during the upcoming weekend.",
+  "extracted_fields": {
+    "batch_preference": "Evening batch",
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "course": "Python with Data Analytics",
+    "course_duration": "8 weeks",
+    "demo_preference": "Upcoming weekend, Saturday or Sunday",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550115",
+    "placement_support": "Resume building, interview preparation, and job referrals; no job or salary guarantee",
+    "product": "Python with Data Analytics course",
+    "qualification": "Graduate",
+    "requested_time": "evening batch"
+  },
+  "objections": [
+    "No installments are available.",
+    "Job guarantee and salary promise are not provided.",
+    "Enquiry saving and demo scheduling could not be confirmed due to a system issue."
+  ],
+  "notes": "Caller’s questions were otherwise answered and he ended positively, but the demo appointment was not concretely scheduled.",
+  "tags": [
+    "intent:demo",
+    "intent:information",
+    "followup:callback",
+    "followup:schedule_pending",
+    "sentiment:positive",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:python-data-analytics",
+    "custom:evening-batch",
+    "custom:weekend-demo"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:08:36.036490Z",
+  "generation_ok": true,
+  "facts": {
+    "batch_preference": "Evening batch",
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "course": "Python with Data Analytics",
+    "course_duration": "8 weeks",
+    "demo_preference": "Upcoming weekend, Saturday or Sunday",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550115",
+    "placement_support": "Resume building, interview preparation, and job referrals; no job or salary guarantee",
+    "product": "Python with Data Analytics course",
+    "qualification": "Graduate",
+    "requested_time": "evening batch"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:python-data-analytics",
+    "followup:callback",
+    "followup:schedule_pending",
+    "intent:demo",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "83aa9f4b-9373-45bf-b494-5d1001f2e6c9",
+    "agentId": "4c5270a8-990a-5800-868d-9d685eca9a09",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.94,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

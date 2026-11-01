@@ -1,0 +1,97 @@
+{
+  "disposition": "new_lead",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The agent called the customer to offer NatureVeda Ashwagandha Capsules priced at 699 rupees for 60 capsules. The customer asked about safety while on blood pressure medication, and the agent advised consulting a healthcare professional because complete safety information was unavailable. The customer also inquired whether the product could cure stress or guarantee results, to which the agent responded that such claims were not supported and that no guarantees were offered. The customer said they would discuss the product with their doctor before deciding. The call ended with the customer thanking the agent and saying goodbye.",
+  "next_action": "{}",
+  "extracted_fields": {
+    "phone": "+919700000022",
+    "price": "699 rupees for 60 capsules",
+    "product": "NatureVeda Ashwagandha Capsules"
+  },
+  "objections": [
+    "Safety concerns regarding daily blood pressure medication usage"
+  ],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:ashwagandha-capsules",
+    "custom:blood-pressure"
+  ],
+  "unanswered_questions": [
+    "Is it completely safe to use the Ashwagandha capsules while taking daily blood pressure medicine?",
+    "Will this completely cure my stress, and are the results guaranteed?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T14:07:19.804600Z",
+  "generation_ok": true,
+  "summary_language": "en-IN",
+  "facts": {
+    "phone": "+919700000022",
+    "price": "699 rupees for 60 capsules",
+    "product": "NatureVeda Ashwagandha Capsules"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:ashwagandha-capsules",
+    "custom:blood-pressure",
+    "followup:send_info",
+    "intent:information",
+    "outcome:new_lead",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "f92d612f-8f1d-4590-9e5e-94426a577613",
+    "agentId": "d3143c95-348a-5b09-9df1-28739f9a6213",
+    "stage": "new",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 35,
+    "band": "cold",
+    "disposition": "new_lead",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

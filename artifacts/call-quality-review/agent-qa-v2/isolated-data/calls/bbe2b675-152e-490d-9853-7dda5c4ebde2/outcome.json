@@ -1,0 +1,114 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "व्यवसायी ने ग्राहक को फोन किया। ग्राहक ने फेस क्रीम और हेयर ऑयल की कीमत और विवरण ईमेल पर भेजने का अनुरोध किया। एजेंट ने बताया कि ईमेल भेजने में तकनीकी समस्या है, लेकिन टीम विवरण भेजेगी। ग्राहक ने स्टॉक और कुकटपल्ली डिलीवरी के समय के बारे में पूछा, जिसका एजेंट के पास उत्तर नहीं था। अंत में, ग्राहक ने कल सुबह 11 बजे टीम के साथ एक कॉल बुक करने के लिए सहमति व्यक्त की, और कॉल समाप्त हो गई।",
+  "summary_en": "The agent called the customer to provide product details. The customer requested prices and details for a face cream and hair oil to be sent to her email address. The agent explained that an email could not be sent immediately due to a technical issue but confirmed the inquiry was saved. The customer asked about stock availability and delivery timelines, but the agent did not have that information. They agreed that the team would schedule a callback for the customer tomorrow at 11 AM to assist with the order, and the call ended politely.",
+  "next_action": "Team to schedule a callback for the customer at 11 AM tomorrow.",
+  "extracted_fields": {
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919700000016",
+    "requested_time": "कल सुबह 11 बजे",
+    "handoff_requested": "true"
+  },
+  "objections": [
+    "Agent could not send details via email due to technical issues.",
+    "Agent could not confirm if the team would send the email by tomorrow morning."
+  ],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:kukatpally-delivery"
+  ],
+  "unanswered_questions": [
+    "Is the face cream currently in stock?",
+    "How long will delivery to Kukatpally take?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T13:54:27.939087Z",
+  "generation_ok": true,
+  "summary_language": "hi-IN",
+  "facts": {
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919700000016",
+    "requested_time": "कल सुबह 11 बजे",
+    "handoff_requested": "true"
+  },
+  "human_handoff": {
+    "contactRole": "team",
+    "reason": "Customer wants a short call with the team tomorrow at 11 AM to place an order for face cream and hair oil.",
+    "requestedTime": "कल सुबह 11 बजे",
+    "callerWords": "कल सुबह 11 बजे team के साथ short call book करनी है order place करने के लिए",
+    "id": "68dbbe57-a258-4ce5-afa9-e780df521119",
+    "status": "requested",
+    "requestedWhen": "कल सुबह 11 बजे",
+    "requestText": "कल सुबह 11 बजे team के साथ short call book करनी है order place करने के लिए"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:phone_known",
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:kukatpally-delivery",
+    "followup:callback",
+    "followup:handoff",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "b6b4a7b5-2fa8-5fd2-be2e-81647068ceeb",
+    "agentId": "eaea2c23-5008-5e24-b360-60e19a219561",
+    "stage": "qualified",
+    "action": "advanced"
+  },
+  "lead_assessment": {
+    "score": 10,
+    "band": "cold",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

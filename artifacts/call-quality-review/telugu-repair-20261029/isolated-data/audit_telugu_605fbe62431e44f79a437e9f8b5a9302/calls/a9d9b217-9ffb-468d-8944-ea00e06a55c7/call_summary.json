@@ -1,0 +1,62 @@
+{
+  "call_id": "a9d9b217-9ffb-468d-8944-ea00e06a55c7",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "Kiran inquired about a Python and Data Analytics course, preferring weekend or evening classes because of work. The agent quoted a total fee of ₹8,999 and explained that placement assistance includes resume building, interview preparation, and job referrals, but does not include a guaranteed job or salary. Kiran accepted the fee, requested that his details be created in the system, and provided his name, email, B.Com qualification, and weekend-only availability. The agent said the details were noted and later confirmed that they had been saved, although the transcript does not independently verify the system action. Kiran thanked the agent and closed the enquiry; no enrollment or payment was completed.",
+  "next_action": null,
+  "extracted_fields": {
+    "availability": "Weekends only",
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "course": "Python with Data Analytics",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550106",
+    "placement_terms": "Placement assistance with resume building, interview preparation, and job referrals; no job guarantee or salary promise",
+    "qualification": "B.Com"
+  },
+  "facts": {
+    "availability": "Weekends only",
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "course": "Python with Data Analytics",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550106",
+    "placement_terms": "Placement assistance with resume building, interview preparation, and job referrals; no job guarantee or salary promise",
+    "qualification": "B.Com"
+  },
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:placement-assistance",
+    "custom:python-data-analytics",
+    "custom:weekend-classes",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:purchase",
+    "intent:information",
+    "signal:price_sensitive",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:python-data-analytics",
+    "custom:weekend-classes",
+    "custom:placement-assistance"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T16:49:10.889544Z",
+  "generation_ok": true
+}

@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "दो split AC और एक window AC की servicing का total कितना आएगा?", "ts": "2026-10-29T19:15:28.274934Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Split AC servicing का charge 599 rupees है, और window AC का 499 rupees है। तो दो split AC और एक window AC का total 1797 rupees आएगा। क्या मैं आपकी visit arrange कर दूँ?", "ts": "2026-10-29T19:15:28.863281Z", "brain_latency_ms": 583}

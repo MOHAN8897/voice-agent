@@ -1,0 +1,1 @@
+{"turn_seq": 1, "ts": "2026-10-29T20:38:48.063751Z", "source": "model", "operations": [{"op": "set_preference", "key": "do_not_block", "value": "എന്റെ number ബ്ലോക്ക് ചെയ്യരുത്"}, {"op": "set_preference", "key": "interest", "value": "എനിക്ക് താല്പര്യമുണ്ട്"}], "applied": true, "validation_errors": []}

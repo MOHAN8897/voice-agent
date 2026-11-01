@@ -1,0 +1,101 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "The caller was looking for part-time Python training and asked about the fees and whether paying that day could secure a high-salary job guarantee. The agent quoted a total fee of ₹8,999 and clarified that the program provides 100% placement assistance but does not guarantee a job or salary. The caller accepted that limitation and asked what the placement assistance includes, which companies participate, and how the training works. The agent explained that assistance includes resume building, interview preparation, and job referrals, but could not provide details about participating companies or the training format. The caller said no further information was needed, thanked the agent, and the call ended without a booking or follow-up arrangement.",
+  "next_action": null,
+  "extracted_fields": {
+    "course": "Python with Data Analytics",
+    "fee": "₹8,999",
+    "job_guarantee": "Not offered",
+    "phone": "+12025550120",
+    "placement_assistance": "Resume building, interview preparation, and job referrals",
+    "training_schedule": "Part-time"
+  },
+  "objections": [
+    "The caller initially requested a high-salary job guarantee, which the agent could not provide."
+  ],
+  "notes": "The caller showed interest in the course and pricing but did not commit to enrollment or request a follow-up.",
+  "tags": [
+    "intent:information",
+    "intent:pricing",
+    "intent:purchase",
+    "signal:objection",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-training",
+    "custom:data-analytics",
+    "custom:placement-assistance"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:51:36.254480Z",
+  "generation_ok": true,
+  "facts": {
+    "course": "Python with Data Analytics",
+    "fee": "₹8,999",
+    "job_guarantee": "Not offered",
+    "phone": "+12025550120",
+    "placement_assistance": "Resume building, interview preparation, and job referrals",
+    "training_schedule": "Part-time"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:data-analytics",
+    "custom:placement-assistance",
+    "custom:python-training",
+    "intent:information",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "e202dac8-3648-44e1-8cf5-ac1781117172",
+    "agentId": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 50,
+    "band": "warm",
+    "disposition": "interested",
+    "confidence": 0.96,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

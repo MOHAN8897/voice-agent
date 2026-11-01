@@ -1,0 +1,53 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "வணிகர் வாடிக்கையாளரைத் தொடர்பு கொண்டு தயாரிப்பு விவரங்களை வழங்கினார். வாடிக்கையாளர் தயாரிப்புகளின் உற்பத்தி இடம் மற்றும் டெலிவரி நேரம் குறித்துக் கேட்டார், ஆனால் முகவருக்கு அந்தத் தகவல்கள் தெரியவில்லை. தயாரிப்புகளில் உள்ள இயற்கை மூலப்பொருட்கள் பற்றி முகவர் விளக்கினார். வாடிக்கையாளர் தற்போது வேறு தயாரிப்புகளைப் பயன்படுத்துவதால், தற்போது எதையும் வாங்க விருப்பமில்லை என்று கூறி அழைப்பை முடித்துக்கொண்டார்.",
+  "summary_en": "The agent called the customer to present product options. The customer inquired about the manufacturing location and delivery timelines, but the agent stated that the team would need to confirm those details. The agent did share the natural ingredients in the hair oil. Ultimately, the customer declined to purchase anything because they were already using different products, and the call ended politely.",
+  "next_action": "No further action required.",
+  "extracted_fields": {
+    "phone": "+919700000020"
+  },
+  "objections": [
+    "The customer stated they already use different products and have no interest in purchasing at this time."
+  ],
+  "notes": "",
+  "tags": [
+    "sentiment:neutral",
+    "intent:information",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:delivery-query"
+  ],
+  "unanswered_questions": [
+    "What is the manufacturing location of the products?",
+    "How long does delivery take?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T17:04:45.402578Z",
+  "generation_ok": true,
+  "summary_language": "ta-IN",
+  "facts": {
+    "phone": "+919700000020"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:delivery-query",
+    "custom:herbal-products",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

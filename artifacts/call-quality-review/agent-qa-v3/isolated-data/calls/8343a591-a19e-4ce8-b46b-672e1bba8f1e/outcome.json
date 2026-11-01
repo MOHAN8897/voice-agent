@@ -1,0 +1,58 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "బయటికి వెళ్ళిన ప్రతినిధి కస్టమర్ కు నేచర్‌వేద హెర్బల్ హెయిర్ ఆయిల్ ధర మరియు డెలివరీ ఛార్జీల గురించి సమాచారం అందించారు. డెలివరీ ఛార్జీల వివరాలు ఏజెంట్ వద్ద లేవు. కస్టమర్ ఆ తర్వాత తన నంబర్‌ను తొలగించమని మరియు ఇకపై కాల్స్ చేయవద్దని అభ్యంతరం వ్యక్తం చేశారు. ప్రతినిధి ఆ అభ్యంతరాన్ని అంగీకరించి కాల్‌ను ముగించారు.",
+  "summary_en": "An agent from the business called the customer to share details about herbal hair care products. The agent disclosed that the 200 ml Natureveda herbal hair oil costs ₹499, but admitted they did not have information regarding delivery charges. When the customer requested these missing details to place a future order, the agent offered to check. The customer then objected to receiving further calls and requested to be removed from the contact list, which the agent accepted before ending the call.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+919700000001",
+    "price": "₹499",
+    "product": "Natureveda Herbal Hair Oil 200 ml"
+  },
+  "objections": [
+    "Customer requested to stop receiving calls."
+  ],
+  "notes": "",
+  "tags": [
+    "signal:objection",
+    "signal:do_not_call",
+    "sentiment:neutral",
+    "intent:information",
+    "followup:callback"
+  ],
+  "custom_tags": [
+    "custom:hair-oil",
+    "custom:delivery-charges"
+  ],
+  "unanswered_questions": [
+    "What are the delivery charges?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T14:19:10.731393Z",
+  "generation_ok": true,
+  "summary_language": "te-IN",
+  "facts": {
+    "phone": "+919700000001",
+    "price": "₹499",
+    "product": "Natureveda Herbal Hair Oil 200 ml"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:delivery-charges",
+    "custom:hair-oil",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,59 @@
+{
+  "call_id": "9e3daacb-ba5a-4ead-b4b2-6ac456df8d2e",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "NatureVeda Herbals ఏజెంట్ కస్టమర్కు కాల్ చేసి, aloe vera juice మరియు hair oil ధరల గురించి వివరించారు. కస్టమర్ మొత్తం ₹898 ధరను విన్నారు, కానీ వెంటనే ఆర్డర్ చేయడానికి నిరాకరించి, ఆలోచించి చెబుతానని చెప్పారు. ఏజెంట్ ఈ వివరాలను అందించి, ఆర్డర్ పెట్టమని కోరారు. కస్టమర్ ఆలోచించడానికి సమయం కావాలని అడగడంతో, కాల్ మర్యాదపూర్వకంగా ముగిసింది.",
+  "summary_language": "te-IN",
+  "summary_en": "NatureVeda Herbals called the customer to provide details on aloe vera juice and herbal hair oil. The agent shared that the aloe vera juice is ₹399 for 500 ml and the hair oil is ₹499 for 200 ml, totaling ₹898. The customer asked how and when to consume the juice, but the agent stated that this information was unavailable in the system. Although the customer inquired about the total price, they declined to order immediately, saying they would think about it and get back later. The call ended politely after the customer thanked the agent.",
+  "next_action": "await_customer_decision",
+  "extracted_fields": {
+    "phone": "+919700000007",
+    "price_1": "₹399",
+    "price_2": "₹499",
+    "product_1": "Aloe Vera Juice 500 ml",
+    "product_2": "Herbal Hair Oil 200 ml",
+    "total_price": "₹898"
+  },
+  "facts": {
+    "phone": "+919700000007",
+    "price_1": "₹399",
+    "price_2": "₹499",
+    "product_1": "Aloe Vera Juice 500 ml",
+    "product_2": "Herbal Hair Oil 200 ml",
+    "total_price": "₹898"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:aloe-vera-juice",
+    "custom:herbal-hair-oil",
+    "followup:callback",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "sentiment:neutral",
+    "followup:callback"
+  ],
+  "custom_tags": [
+    "custom:aloe-vera-juice",
+    "custom:herbal-hair-oil"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "The customer requested consumption instructions for the aloe vera juice, which the agent could not provide."
+  ],
+  "unanswered_questions": [
+    "How should the aloe vera juice be consumed?",
+    "When should the aloe vera juice be taken?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T15:33:48.198752Z",
+  "generation_ok": true
+}

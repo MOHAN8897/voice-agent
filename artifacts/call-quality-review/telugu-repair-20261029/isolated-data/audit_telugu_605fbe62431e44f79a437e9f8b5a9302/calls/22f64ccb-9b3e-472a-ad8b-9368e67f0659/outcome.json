@@ -1,0 +1,107 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Shravani, who lives in Madapur, called to arrange general service for her split AC. She requested a technician visit tomorrow at 10:00 AM and provided the email address sravani.audit@example.invalid. The agent stated that a slot was available, quoted a service price of ₹599, and noted her email and Madapur address. Shravani accepted the price and asked for the appointment to be created and confirmed in the calendar. The agent stated that the booking was created and confirmed for October 30 from 10:00–11:00 AM. Shravani asked whether an email confirmation would also arrive; the agent said the calendar appointment was confirmed but could not verify email delivery. She accepted this information and ended the call courteously.\n\nServer check: no confirmed order was recorded for this call, so it was not marked as converted.",
+  "next_action": null,
+  "extracted_fields": {
+    "appointment_date": "October 30",
+    "appointment_slot": "10:00 AM–11:00 AM",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "location": "Madapur",
+    "phone": "+12025550119",
+    "price": "₹599",
+    "requested_time": "రేపు ఉదయం 10 గంటల time",
+    "service": "Split AC general service"
+  },
+  "objections": [],
+  "notes": "Calendar booking was stated to be created and confirmed. Email confirmation delivery was not verified.",
+  "tags": [
+    "intent:booking",
+    "intent:purchase",
+    "signal:ready_to_buy",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:split-ac",
+    "custom:general-service",
+    "custom:technician-visit"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:52:28.080249Z",
+  "generation_ok": true,
+  "facts": {
+    "appointment_date": "October 30",
+    "appointment_slot": "10:00 AM–11:00 AM",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "location": "Madapur",
+    "phone": "+12025550119",
+    "price": "₹599",
+    "requested_time": "రేపు ఉదయం 10 గంటల time",
+    "service": "Split AC general service"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:general-service",
+    "custom:split-ac",
+    "custom:technician-visit",
+    "intent:booking",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "3d769af5-3a9e-4f69-b0c4-61afd636d169",
+    "agentId": "da7e8b71-9465-55a3-b920-fae16cb86c5c",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.98,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "service"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

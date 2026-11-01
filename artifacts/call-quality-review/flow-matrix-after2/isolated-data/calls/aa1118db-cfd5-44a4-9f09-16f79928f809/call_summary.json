@@ -1,0 +1,35 @@
+{
+  "call_id": "aa1118db-cfd5-44a4-9f09-16f79928f809",
+  "language_callback": null,
+  "disposition": "no_outcome",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the consultation fee and the clinic's operating hours. The agent attempted to respond but encountered a temporary technical issue. When the caller repeated the question in English, the agent apologized again, reported a persistent technical problem, and requested that the caller call back. The call concluded without resolving the caller's query.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500518"
+  },
+  "facts": {
+    "phone": "+919876500518"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "followup:callback",
+    "intent:information",
+    "outcome:no_outcome",
+    "quality:agent_failure",
+    "quality:inconclusive",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "followup:callback"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:06:54.978234Z",
+  "generation_ok": true
+}

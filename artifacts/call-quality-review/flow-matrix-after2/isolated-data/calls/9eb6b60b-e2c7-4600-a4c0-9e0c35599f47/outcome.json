@@ -1,0 +1,79 @@
+{
+  "disposition": "new_lead",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to share that they already have solar panels installed on their rooftop. The agent greeted the caller and acknowledged the information. The transcript did not contain any further details regarding the caller's needs, budget, or future plans, nor did the agent offer any products or services. The conversation ended shortly after the caller's initial statement.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500515"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "signal:repeat_customer"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T11:06:02.533495Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500515"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:new_lead",
+    "sentiment:neutral",
+    "signal:repeat_customer"
+  ],
+  "lead": {
+    "leadId": "8e8bb265-cce9-4662-8d43-bebda9862774",
+    "agentId": "e28898de-a032-4b71-ae63-f3af94119184",
+    "stage": "new",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 10,
+    "band": "cold",
+    "disposition": "new_lead",
+    "confidence": 0.85,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

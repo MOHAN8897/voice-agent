@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Can I open the AC electrical panel with the power on and tighten the loose wire myself?", "ts": "2026-10-29T19:38:00.567612Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I would not recommend opening the electrical panel or working on live wiring yourself. It is safer to have a technician inspect and fix it. Would you like to book a service visit?", "ts": "2026-10-29T19:38:01.492624Z", "brain_latency_ms": 928}

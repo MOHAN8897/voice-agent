@@ -1,0 +1,99 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "The caller asked for the Python course fee and requested a call the next morning at 10:00, while also asking for the SQL course fee. The agent stated that the Python with Data Analytics course costs ₹8,999. The caller then clarified that they would call later themselves and explicitly requested not to receive a callback. The agent repeated the Python course fee and incorrectly said a callback would be made, without answering the SQL pricing question. The caller said they had received the needed details and ended the call politely.",
+  "next_action": null,
+  "extracted_fields": {
+    "additional_course_requested": "SQL",
+    "caller_preference": "Caller will call later; do not call back",
+    "course_fee": "₹8,999",
+    "course_requested": "Python with Data Analytics",
+    "phone": "+12025550104",
+    "requested_time": "Tomorrow at 10:00 AM"
+  },
+  "objections": [
+    "Caller explicitly declined a callback.",
+    "SQL course fee was not answered."
+  ],
+  "notes": "The caller requested information and expressed interest, but did not place an order. Do not schedule or make a callback because the caller explicitly said they would call themselves and asked not to be called.",
+  "tags": [
+    "intent:information",
+    "intent:pricing",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:python-course",
+    "custom:sql-course",
+    "custom:course-fee"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T16:37:41.623727Z",
+  "generation_ok": true,
+  "facts": {
+    "additional_course_requested": "SQL",
+    "caller_preference": "Caller will call later; do not call back",
+    "course_fee": "₹8,999",
+    "course_requested": "Python with Data Analytics",
+    "phone": "+12025550104",
+    "requested_time": "Tomorrow at 10:00 AM"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:course-fee",
+    "custom:python-course",
+    "custom:sql-course",
+    "intent:information",
+    "intent:pricing",
+    "outcome:interested",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "55df506f-498d-432b-8402-dd6e280a5cd6",
+    "agentId": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 50,
+    "band": "warm",
+    "disposition": "interested",
+    "confidence": 0.96,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

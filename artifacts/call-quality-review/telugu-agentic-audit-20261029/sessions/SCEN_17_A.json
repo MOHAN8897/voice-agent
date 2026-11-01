@@ -1,0 +1,87 @@
+{
+  "scenario_id": "SCEN_17",
+  "title": "Platform Failure Paths: Cross-Tenant Fail Closed, Duplicate End, Carrier Ack Failure",
+  "business_id": "A",
+  "agent_name": "Kavitha",
+  "category": "K_Failure_Paths_Platform",
+  "integration_condition": "platform_checks",
+  "caller_phone": "+919876543240",
+  "total_turns": 2,
+  "total_tokens": 5215,
+  "duration_sec": 4.93,
+  "call_ended": true,
+  "carrier_hangup_invoked": false,
+  "carrier_hangup_error": true,
+  "transcript": [
+    {
+      "turn": 1,
+      "user": "నమస్కారం, ప్రింటింగ్ ఆర్డర్ తీసుకోవడానికి అనుమతి ఉందా?",
+      "user_en": "Hello, is there permission to take a printing order?",
+      "agent": "అవును, తప్పకుండా order తీసుకోవచ్చు. Visiting cards కి normal paper one hundred కి two hundred rupees అవుతుంది, matte finish three hundred fifty rupees అవుతుంది. Minimum order one hundred cards ఉండాలి. మీకు ఏ details కావాలి?",
+      "latency_ms": 1247,
+      "tokens": 5215,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 2,
+      "user": "సరే ఇంకేమీ లేదు, పెట్టేయండి.",
+      "user_en": "Okay nothing else, hang up.",
+      "agent": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "latency_ms": 25,
+      "tokens": 0,
+      "should_end": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      },
+      "finish_reason": "rule_close"
+    }
+  ],
+  "db_evidence": {
+    "call": {
+      "call_id": "761e540a-afd9-4a49-97be-5417cfdb1732",
+      "status": "active",
+      "finalization_status": "pending",
+      "disposition": null,
+      "end_reason": null,
+      "duration_sec": null,
+      "status_tags": []
+    },
+    "callbacks": [],
+    "followup_jobs": [],
+    "dnc_entries": [],
+    "leads": [],
+    "tool_executions": []
+  },
+  "evaluation": {
+    "assertions": [
+      {
+        "name": "carrier_acknowledgement_failure_recorded",
+        "passed": true,
+        "detail": "Carrier hangup failure handled safely without reporting false success"
+      }
+    ],
+    "all_passed": true,
+    "scores": {
+      "telugu_naturalness": 9.0,
+      "understanding_relevance": 9.5,
+      "script_adherence": 9.0,
+      "memory_corrections": 9.0,
+      "capability_honesty": 10.0,
+      "callback_dnd_outcome": 10.0,
+      "hangup_handoff": 8.0,
+      "overall": 9.25
+    }
+  },
+  "created_at": "2026-10-29T10:32:19.323244+00:00"
+}

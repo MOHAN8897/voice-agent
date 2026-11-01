@@ -1,0 +1,16 @@
+{"seq": 1, "role": "user", "text": "હા, કહો ને. હું સાંભળું છું.", "ts": "2026-10-31T16:39:38.186176Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "સરસ. આજે તમે કયો herbal product જોવા માંગો છો? અમારી પાસે Hair Oil, Aloe Vera Juice, Face Cream અને Ashwagandha Capsules છે.", "ts": "2026-10-31T16:39:39.158030Z"}
+{"seq": 3, "role": "user", "text": "Hair oil વિશે જણાવશો? મારા વાળ બહુ dry થઈ ગયા છે.", "ts": "2026-10-31T16:39:52.982473Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "હા ચોક્કસ. અમારી NatureVeda Herbal Hair Oil 200 ml માટે ₹499 ની છે. order કરવો છે આજે?", "ts": "2026-10-31T16:39:55.273932Z"}
+{"seq": 5, "role": "user", "text": "₹499? આટલી price છે? એમાં શું ingredients નાખ્યા છે એ જણાવશો?", "ts": "2026-10-31T16:40:06.564785Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "હા, આ Hair Oil ની price ₹499 જ છે. એમાં Amla, Bhringraj, Hibiscus અને Coconut Oil નાખેલા છે, જે routine hair અને scalp care માટે સારા છે.", "ts": "2026-10-31T16:40:08.125413Z"}
+{"seq": 7, "role": "user", "text": "આ ingredients સારા છે. આ oil કેટલી વાર use કરવાનું હોય?", "ts": "2026-10-31T16:40:22.853824Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "એ માહિતી મારી પાસે નથી. Usage કેટલી વાર કરવાનું એ product label પર લખેલું હોય છે, એટલે એકવાર check કરી લેજો.", "ts": "2026-10-31T16:40:25.619902Z"}
+{"seq": 9, "role": "user", "text": "અચ્છા, તો label પર જોઈ લઈશ. આ oil માં ખરેખર સારા ingredients લાગે છે.", "ts": "2026-10-31T16:40:39.534396Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "સારું. જો તમારે order કરવો હોય તો કહેજો.", "ts": "2026-10-31T16:40:40.450621Z"}
+{"seq": 11, "role": "user", "text": "હા, order તો કરવો છે પણ મને આની delivery ક્યારે મળશે એ જણાવશો?", "ts": "2026-10-31T16:40:49.469538Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "એ information મારી પાસે અત્યારે ઉપલબ્ધ નથી. જો તમે order place કરવા માંગતા હોવ, તો હું તે કરી શકું છું. શું આપણે order place કરીએ?", "ts": "2026-10-31T16:40:51.347966Z"}
+{"seq": 13, "role": "user", "text": "Delivery ની details અત્યારે ખબર નથી? તો કંઈ વાંધો નહીં, હું પછીથી વિચારીશ.", "ts": "2026-10-31T16:41:06.372070Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "કંઈ વાંધો નહીં, તમે આરામથી વિચારી લો. જ્યારે પણ order કરવો હોય ત્યારે જણાવી દેજો.", "ts": "2026-10-31T16:41:07.293665Z"}
+{"seq": 15, "role": "user", "text": "સારુ, હું વિચારીને કાલે જણાવીશ. અત્યારે હું કામમાં છું ને થોડો busy છું, તો કાલે સાંજે 6:30 વાગ્યે આ જ number પર મને પાછો call કરી લેજો.", "ts": "2026-10-31T16:41:24.390334Z", "partial": false}
+{"seq": 16, "role": "assistant", "text": "સારું, તમારો callback note કરી લીધો છે. તમારા સમય માટે આભાર. આવજો.", "ts": "2026-10-31T16:41:25.638897Z"}

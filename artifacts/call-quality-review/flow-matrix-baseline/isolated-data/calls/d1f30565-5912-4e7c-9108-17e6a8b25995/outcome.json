@@ -1,0 +1,78 @@
+{
+  "disposition": "new_lead",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call but was initially unclear and hesitant. After the agent asked for the purpose of the call, the caller simply responded with \"hello hello\" without stating a clear intent. The agent, identifying himself as Arjun from FreshCart, asked the caller to explain what they needed. The conversation ended at this point without any further details being shared, objections raised, or next steps being agreed upon.",
+  "next_action": "No immediate next action was agreed upon during the call.",
+  "extracted_fields": {
+    "phone": "+919876500531"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:42:44.756282Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500531"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "intent:information",
+    "outcome:new_lead",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "961944f6-3a0f-42dc-b47e-e7b658a488ae",
+    "agentId": "67fb7bcd-17ed-47cd-a4dd-e83829bd3da5",
+    "stage": "new",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 10,
+    "band": "cold",
+    "disposition": "new_lead",
+    "confidence": 0.85,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,98 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller contacted support because they were experiencing tooth pain and requested an appointment for tomorrow at 11:00 AM. The agent noted the requested time and gathered the caller's name, Kiran. When the caller asked if the appointment was confirmed, the agent clarified that it was not yet confirmed and explained that the team would reach out to finalize the booking. The caller accepted this, thanked the agent, and the call ended.",
+  "next_action": "Team to confirm the appointment for tomorrow at 11:00 AM with Kiran.",
+  "extracted_fields": {
+    "caller_name": "Kiran",
+    "phone": "+919876500510",
+    "requested_time": "రేపు ఉదయం 11 కి",
+    "slot": "tomorrow at 11:00 AM"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:support",
+    "followup:callback",
+    "followup:schedule_pending",
+    "signal:objection",
+    "sentiment:neutral",
+    "action:urgent"
+  ],
+  "custom_tags": [
+    "custom:dental-appointment",
+    "custom:toothache"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T11:19:38.437381Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_name": "Kiran",
+    "phone": "+919876500510",
+    "requested_time": "రేపు ఉదయం 11 కి",
+    "slot": "tomorrow at 11:00 AM"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "action:urgent",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:dental-appointment",
+    "followup:callback",
+    "followup:schedule_pending",
+    "followup:site_visit",
+    "intent:support",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "e9f34146-09f1-4b83-b7af-e48af2ec2dbc",
+    "agentId": "e0f7a407-8411-4c40-8ce6-9149c2af253c",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 35,
+    "band": "cold",
+    "disposition": "callback_required",
+    "confidence": 0.85,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "slot"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,132 @@
+{
+  "call_id": "17c733f1-59b9-4ffe-b6b9-65712208ad5d",
+  "tenant_id": "95d30740-782a-4c61-87c5-d71b9bb615b6",
+  "agent_id": "58700315-0379-50ee-81b1-70ec18f28407",
+  "session_id": "qa-08138944c55745eaaa42d4532e3a83b1",
+  "channel": "pstn",
+  "direction": "outbound",
+  "environment": "development",
+  "tier": "medium",
+  "combination_id": "5b3ecb0dcd721b7f",
+  "compiled_brain_version": "cb_v20261031_9f60c0bbf824",
+  "started_at": "2026-10-31T14:30:49.529984+00:00",
+  "status": "active",
+  "storage_path": "data/calls/17c733f1-59b9-4ffe-b6b9-65712208ad5d/",
+  "resolved_stack": {
+    "combination_id": "5b3ecb0dcd721b7f",
+    "tier": "medium",
+    "mode": "frontend",
+    "language": "te-IN",
+    "voice_preset": "telugu_natural",
+    "stt": {
+      "provider": "sarvam",
+      "model": "saaras:v3-realtime",
+      "config": {
+        "mode": "realtime"
+      }
+    },
+    "llm": {
+      "provider": "sarvam",
+      "model": "sarvam-105b-conversations",
+      "config": {
+        "api_mode": "chat_completions_v1"
+      }
+    },
+    "tts": {
+      "provider": "sarvam",
+      "model": "bulbul:v3",
+      "config": {
+        "speaker": "shubh",
+        "api_mode": "websocket"
+      }
+    }
+  },
+  "pipeline": "composed_voice",
+  "callee_e164": "+919700000008",
+  "caller_id": "+914000000000",
+  "is_test": true,
+  "call_end_policy": {
+    "allowedReasons": [
+      "goodbye",
+      "firm_refusal",
+      "not_interested",
+      "goal_complete",
+      "abuse"
+    ],
+    "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+    "farewellSource": "default"
+  },
+  "stage_usage": {
+    "llm": {
+      "input_tokens": 110222,
+      "output_tokens": 4519,
+      "cached_tokens": 61984
+    },
+    "stt": {
+      "audio_seconds": 0.0
+    }
+  },
+  "disconnected_at": "2026-10-31T14:33:25.972419+00:00",
+  "ended_at": "2026-10-31T14:33:25.972419+00:00",
+  "end_reason": "user_stop",
+  "duration_sec": 156.0,
+  "provider_cost_result": {
+    "status": "incomplete",
+    "missing": [
+      "provider_cost_snapshot"
+    ],
+    "stages": {},
+    "totalUsd": null,
+    "totalInr": null
+  },
+  "usage": {
+    "cost_accounting_version": 3,
+    "supplier_cost_status": "incomplete",
+    "live_transcript_usd": 0.0,
+    "live_transcript_inr": 0.0,
+    "pipeline": "composed_voice",
+    "duration_sec": 156.0,
+    "telephony_provider": "telnyx",
+    "telephony_usd": 0.0429,
+    "telephony_inr": 4.073355,
+    "model_cost_usd": null,
+    "model_cost_inr": null,
+    "telnyx_usd": 0.0429,
+    "telnyx_inr": 4.073355,
+    "telnyx_voice_api_usd": 0.005200000000000001,
+    "telnyx_sip_usd": 0.0234,
+    "telnyx_media_stream_usd": 0.0091,
+    "telnyx_call_recording_usd": 0.005200000000000001,
+    "telnyx_destination_country": "IN",
+    "telnyx_sip_usd_per_min": 0.009,
+    "telnyx_cost_is_estimate": true,
+    "vobiz_usd": 0.0,
+    "vobiz_inr": 0.0,
+    "carrier_cost_source": "tariff_estimate",
+    "cost_usd": null,
+    "cost_inr": null,
+    "cost_is_estimate": true,
+    "fx_rate_inr": 94.95,
+    "fx_source": "live_cache",
+    "fx_as_of": "2026-10-30",
+    "gst_inr": 0.0,
+    "cost_usd_per_min": null,
+    "cost_inr_per_min": null,
+    "telephony_usd_per_min": 0.0165,
+    "telephony_inr_per_min": 1.566675,
+    "model_cost_usd_per_min": null,
+    "model_cost_inr_per_min": null,
+    "telnyx_usd_per_min": 0.0165,
+    "telnyx_inr_per_min": 1.566675,
+    "vobiz_usd_per_min": 0.0,
+    "vobiz_inr_per_min": 0.0
+  },
+  "callback_request": {
+    "id": "9ce72232-ef1d-4157-83d0-500c8b7ca874",
+    "status": "requested",
+    "requestedWhen": "రేపు ఉదయం 11 గంటలకు",
+    "requestText": "సరే అండి, పంపండి. అలాగే రేపు ఉదయం 11 గంటలకు ఆర్డర్ ప్లేస్ చేయడానికి మీ టీమ్ తో ఒక షార్ట్ కాల్ బుక్ చేయగలరా?"
+  },
+  "callback_cancelled": false,
+  "callback_withdrawal_pending": false
+}

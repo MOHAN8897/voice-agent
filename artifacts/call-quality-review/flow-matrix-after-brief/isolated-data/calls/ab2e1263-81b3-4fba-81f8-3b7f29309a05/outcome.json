@@ -1,0 +1,93 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller contacted support to inquire about the status of their order (ID FC10234), which they had not yet received. The agent explained that they could not check live order tracking over the phone, collected the caller's name as Kiran, and promised that the support team would look into the order and call back. The agent asked for a preferred callback time, but the caller simply agreed and thanked the agent. The call ended with the agent thanking the caller.",
+  "next_action": "Support team to check order FC10234 and call the customer back.",
+  "extracted_fields": {
+    "caller_name": "Kiran",
+    "order_id": "FC10234",
+    "phone": "+919876500513"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:support",
+    "followup:callback",
+    "sentiment:neutral",
+    "signal:objection",
+    "action:required",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:order-status"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:51:49.930950Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_name": "Kiran",
+    "order_id": "FC10234",
+    "phone": "+919876500513"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:order-status",
+    "followup:callback",
+    "followup:send_info",
+    "intent:support",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "6bcd029c-c98e-4e0b-a1fb-1567a91b3112",
+    "agentId": "cebc027a-6eb2-4f89-9cd4-085a5d1f7eda",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 10,
+    "band": "cold",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "quantity": "1",
+    "caller_name": "Lakshmi Reddy",
+    "email": "mohansaiteja.99@gmail.com"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "assistant: email note कर लिया है।\nuser: ठीक है। अब अपना phone number बता देती हूँ, ये मेरा number है।\nassistant: phone number note कर लिया है। team order confirm कर देगी, और कोई जानकारी चाहिए?\nuser: बस एक बात और, ये order confirm होने के बाद आगे क्या होगा? मुझे थोड़ा बताइए।\nassistant: इसकी जानकारी मेरे पास नहीं है। team order confirm होने के बाद आपसे contact कर लेगी। और कोई जानकारी चाहिए?\nuser: अरे, फिर तो team खुद ही बताएगी आगे क्या करना है? ठीक है, ठीक है।\nassistant: हाँ, team order confirm होने के बाद आपसे contact कर लेगी।"
+}

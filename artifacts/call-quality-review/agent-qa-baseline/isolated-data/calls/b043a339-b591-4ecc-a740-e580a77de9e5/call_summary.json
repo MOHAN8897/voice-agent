@@ -1,0 +1,40 @@
+{
+  "call_id": "b043a339-b591-4ecc-a740-e580a77de9e5",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్‌కు ఫోన్ చేసి హెర్బల్ హెయిర్ ఆయిల్, అలోవెరా జ్యూస్, ఫేస్ క్రీమ్ మరియు అశ్వగంధ క్యాప్సూల్స్ వంటి ఉత్పత్తుల గురించి వివరించారు. కస్టమర్ ప్రస్తుతం వేరే ఉత్పత్తులను వాడుతున్నందున, తనకు ఇవి అవసరం లేదని స్పష్టం చేశారు. ఏజెంట్ ఈ విషయాన్ని అంగీకరించి భవిష్యత్తులో అవసరమైతే సంప్రదించవచ్చని చెప్పారు. కస్టమర్ ఈ సమాధానాన్ని అంగీకరించి కాల్ ముగించారు.",
+  "summary_language": "te-IN",
+  "summary_en": "The agent called the customer to share details about the company's herbal products. The customer stated that they did not need these items at present because they were already using different products. The agent accepted this objection and suggested that the customer could reach out in the future if required. The customer agreed and thanked the agent before ending the call.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919700000005"
+  },
+  "facts": {
+    "phone": "+919700000005"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:herbal-products",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "sentiment:neutral",
+    "intent:information",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:herbal-products"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "I do not need these products right now because I am already using different ones."
+  ],
+  "unanswered_questions": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T13:15:08.830658Z",
+  "generation_ok": true
+}

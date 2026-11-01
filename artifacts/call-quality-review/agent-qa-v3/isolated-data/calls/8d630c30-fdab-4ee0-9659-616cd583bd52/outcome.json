@@ -1,0 +1,57 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్ కు ఫోన్ చేసి, హెయిర్ ఆయిల్, అలోవెరా జ్యూస్, ఫేస్ క్రీమ్ మరియు అశ్వగంధ క్యాప్సూల్స్ వంటి ఉత్పత్తుల గురించి వివరించారు. కస్టమర్ హెయిర్ ఆయిల్ లోని పదార్థాలు మరియు అశ్వగంధ క్యాప్సూల్స్ ధర గురించి అడిగారు. తయారీ స్థలం గురించి అడిగిన ప్రశ్నకు ఏజెంట్ వద్ద సమాచారం లేదని తెలిపారు. కస్టమర్ ఇప్పటికే వేరే ఉత్పత్తులను వాడుతున్నందున తనకు ఆసక్తి లేదని స్పష్టం చేశారు, దాంతో ఏజెంట్ ఈ విషయాన్ని అంగీకరించి సంభాషణను ముగించారు.",
+  "summary_en": "The agent called the customer to describe the company's available products, including herbal hair oil and ashwagandha capsules. The customer inquired about the hair oil ingredients, manufacturing location, and the price of the ashwagandha capsules. When asked about the manufacturing location, the agent stated they did not have that information. Ultimately, the customer declined further interest because they already use different products, and the agent accepted this and ended the call.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919700000005",
+    "product_ashwagandha_price": "699 INR for 60 capsules",
+    "product_hair_oil_price": "499 INR for 200 ml"
+  },
+  "objections": [
+    "Customer stated they already use other products and have no interest right now."
+  ],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "signal:objection",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:hair-care"
+  ],
+  "unanswered_questions": [
+    "Where is the hair oil manufactured?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T14:26:56.579723Z",
+  "generation_ok": true,
+  "summary_language": "te-IN",
+  "facts": {
+    "phone": "+919700000005",
+    "product_ashwagandha_price": "699 INR for 60 capsules",
+    "product_hair_oil_price": "499 INR for 200 ml"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:hair-care",
+    "custom:herbal-products",
+    "followup:send_info",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

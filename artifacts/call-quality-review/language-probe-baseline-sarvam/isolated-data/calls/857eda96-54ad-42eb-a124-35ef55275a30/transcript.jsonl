@@ -1,0 +1,3 @@
+{"seq": 1, "role": "user", "text": "Window AC service price ಎಷ್ಟು? Kondapur ಕ್ಕೂ service cover ಮಾಡ್ತೀರಾ?", "ts": "2026-10-29T18:42:52.545664Z", "partial": false}
+{"seq": 2, "role": "user", "text": "Window AC service charge ಎಷ್ಟು, ಮತ್ತು Kondapur ನಿಮ್ಮ service area ಅಲ್ಲವಾ?", "ts": "2026-10-29T18:42:53.187963Z", "partial": false}
+{"seq": 3, "role": "assistant", "text": "Window AC servicing charge four hundred ninety nine rupees ಆಗುತ್ತೆ. ಆದ್ರೆ Kondapur ನಮ್ಮ service area ಒಳಗಡೆ ಬರುತ್ತೆ, so ಅಲ್ಲಿ ಖಂಡಿತ service ಸಿಗುತ್ತೆ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?", "ts": "2026-10-29T18:42:54.009909Z", "brain_latency_ms": 825}

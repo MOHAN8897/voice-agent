@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "Split AC servicing-க்கு எவ்வளவு charge பண்ணுவீங்க?", "ts": "2026-10-29T20:56:16.050797Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Split AC servicing-க்கு ₹599 charge பண்ணுவோம்.", "ts": "2026-10-29T20:56:19.597988Z"}
+{"seq": 3, "role": "user", "text": "Okay, எனக்கு இதுதான் வேணும். Thanks, bye.", "ts": "2026-10-29T20:56:19.598987Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.", "ts": "2026-10-29T20:56:21.041153Z"}

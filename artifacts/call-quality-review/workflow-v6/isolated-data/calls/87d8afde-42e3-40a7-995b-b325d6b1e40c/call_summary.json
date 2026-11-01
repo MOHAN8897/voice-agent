@@ -1,0 +1,40 @@
+{
+  "call_id": "87d8afde-42e3-40a7-995b-b325d6b1e40c",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller stated that they were currently busy and requested a callback for tomorrow evening at 6:00 PM. The agent acknowledged this request and confirmed that the callback details were logged. The call ended after the agent confirmed the callback time.",
+  "next_action": "Call the caller back tomorrow at 6:00 PM as requested.",
+  "extracted_fields": {
+    "callback_time": "Tomorrow at 6:00 PM",
+    "phone": "+919876500003"
+  },
+  "facts": {
+    "callback_time": "Tomorrow at 6:00 PM",
+    "phone": "+919876500003"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:callback-request",
+    "followup:callback",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:callback-request"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Caller was busy and unavailable to continue the conversation."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T21:03:24.887883Z",
+  "generation_ok": true
+}

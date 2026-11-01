@@ -1,0 +1,8 @@
+{"turn_seq": 1, "ts": "2026-10-29T15:44:19.418813Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T15:44:21.454254Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-29T15:44:23.826422Z", "include_summary": true, "projection": ""}
+{"turn_seq": 7, "ts": "2026-10-29T15:44:26.231453Z", "include_summary": false, "projection": "[Preferences]\nproduct: demo session"}
+{"turn_seq": 9, "ts": "2026-10-29T15:44:28.288827Z", "include_summary": false, "projection": "[Preferences]\nproduct: demo session | batch_preference: evening batch"}
+{"turn_seq": 11, "ts": "2026-10-29T15:44:30.382636Z", "include_summary": false, "projection": "[Preferences]\nproduct: demo session | batch_preference: evening batch"}
+{"turn_seq": 13, "ts": "2026-10-29T15:44:32.632437Z", "include_summary": false, "projection": "[Preferences]\nproduct: demo session | batch_preference: evening batch"}
+{"turn_seq": 15, "ts": "2026-10-29T15:44:34.693240Z", "include_summary": false, "projection": "[Preferences]\nproduct: demo session | batch_preference: evening batch"}

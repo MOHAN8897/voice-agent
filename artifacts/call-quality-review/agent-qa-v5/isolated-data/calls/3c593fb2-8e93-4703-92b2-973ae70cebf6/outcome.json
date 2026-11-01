@@ -1,0 +1,110 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "एजेंट ने ग्राहक लक्ष्मी रेड्डी को फोन किया। ग्राहक ने हर्बल फेस क्रीम और हेयर ऑयल की सामग्री और कीमत के बारे में पूछा, और 2 हेयर ऑयल तथा 1 फेस क्रीम का ऑर्डर देने का निर्णय लिया। एजेंट ने कीमत ₹1,497 बताई, लेकिन डिलीवरी समय, छूट और ऑर्डर के बाद की प्रक्रिया के बारे में जानकारी न होने की बात कही। ग्राहक ने अपना नाम, ईमेल, फोन नंबर और पता साझा किया, और एजेंट ने टीम को ऑर्डर की पुष्टि करने के लिए अनुरोध भेजने का वादा किया, जिसके बाद कॉल समाप्त हुई।",
+  "summary_en": "The agent called Lakshmi Reddy to share product details. The caller inquired about ingredients and pricing, then decided to purchase 2 bottles of hair oil and 1 face cream for a total of ₹1,497. The agent shared the product specifications but could not provide the delivery timeline, available discounts, or post-order procedure. After the caller provided her contact details and address, the agent promised to forward the request to the team for confirmation. The call ended with the understanding that the team would contact the caller next.",
+  "next_action": "Team to confirm the order with Lakshmi Reddy.",
+  "extracted_fields": {
+    "address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "caller_name": "Lakshmi Reddy",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone_number": "Not provided",
+    "product": "Herbal Hair Oil and Herbal Face Cream",
+    "quantity": "2 hair oil, 1 face cream",
+    "total_price": "₹1,497"
+  },
+  "objections": [
+    "The agent could not provide the delivery timeline.",
+    "The agent could not provide information on discounts.",
+    "The agent could not explain what happens after the order is confirmed."
+  ],
+  "notes": "",
+  "tags": [
+    "intent:purchase",
+    "followup:callback",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:herbal-skincare",
+    "custom:order-capture"
+  ],
+  "unanswered_questions": [
+    "How long will delivery take?",
+    "Is there any discount available?",
+    "What happens after the order is confirmed?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T16:04:42.279661Z",
+  "generation_ok": true,
+  "summary_language": "hi-IN",
+  "facts": {
+    "address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "caller_name": "Lakshmi Reddy",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone_number": "Not provided",
+    "product": "Herbal Hair Oil and Herbal Face Cream",
+    "quantity": "2 hair oil, 1 face cream",
+    "total_price": "₹1,497"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:herbal-skincare",
+    "custom:order-capture",
+    "followup:callback",
+    "intent:purchase",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "2f91dc07-f703-42a5-a33d-7478dcd9c124",
+    "agentId": "67eb8019-5907-4da3-879c-950e4e7c515d",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone_number"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,45 @@
+{
+  "call_id": "d075bf0b-f8dc-48b1-a490-4a056713b29a",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "வாடிக்கையாளர் ப்ரியாவிடம் தனது தயாரிப்புகள் குறித்த உற்பத்தி விவரங்கள் மற்றும் மூலப்பொருட்கள் பற்றி கேட்டார். முகவர் அந்தத் தகவல்கள் தற்போது தன்னிடம் இல்லை என்றும், குழுவினர் மட்டுமே அதை உறுதி செய்ய முடியும் என்றும் கூறினார். வாடிக்கையாளர் அந்த விவரங்கள் இல்லாமல் ஆர்டர் செய்ய முடியாது என்று கூறி, தான் ஏற்கனவே வேறு தயாரிப்புகளைப் பயன்படுத்துவதாகவும், தற்போது வாங்க விருப்பமில்லை என்றும் தெரிவித்தார். முகவர் இதை ஏற்றுக்கொண்டு, எதிர்காலத்தில் தேவைப்பட்டால் அழைக்கலாம் என்று கூறி அழைப்பை முடித்தார்.",
+  "summary_language": "ta-IN",
+  "summary_en": "The agent called the customer to discuss available products, and the customer inquired about manufacturing details and ingredients. The agent explained that this information was unavailable and could only be confirmed by the team. The customer objected to purchasing without these specifics and stated they were already using different products, making it impossible to buy. The agent acknowledged this, and the call ended with the customer declining further contact for the time being.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919700000011"
+  },
+  "facts": {
+    "phone": "+919700000011"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:manufacturing-details",
+    "custom:product-inquiry",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "sentiment:neutral",
+    "signal:objection",
+    "intent:information"
+  ],
+  "custom_tags": [
+    "custom:product-inquiry",
+    "custom:manufacturing-details"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Unable to purchase without manufacturing and ingredient details."
+  ],
+  "unanswered_questions": [
+    "Where are these products manufactured?",
+    "What are the ingredients of these products?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T16:26:48.452281Z",
+  "generation_ok": true
+}

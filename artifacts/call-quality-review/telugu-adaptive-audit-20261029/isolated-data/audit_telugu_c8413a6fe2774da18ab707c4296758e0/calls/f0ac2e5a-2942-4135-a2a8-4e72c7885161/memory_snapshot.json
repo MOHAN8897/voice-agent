@@ -1,0 +1,13 @@
+{
+  "facts": {
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "product": "split AC",
+    "requested_time": "రేపు 10 AM"
+  },
+  "preferences": {
+    "caller_name": "సురేష్ గారు"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "user: సరే సురేష్ గారు, ఐదు వందల తొంభై తొమ్మిది రూపాయలు అంటే okay. కానీ ఇది booking confirm అయిపోయిందా లేక కేవలం request మాత్రమేనా? రేపు morning 10 AM కి technician వస్తారని ఖచ్చితంగా confirm చేయగలరా?\nassistant: ఇది కేవలం request మాత్రమే, ఇంకా పూర్తిగా confirm అవ్వలేదు. నేను మీ details తీసుకుని మా team తో మాట్లాడి confirm చేస్తాను. మరి మీ locality Madhapur అని, అలాగే మీ పేరు Shr… శ్రావణి అని రాసుకున్నాను కదా?"
+}

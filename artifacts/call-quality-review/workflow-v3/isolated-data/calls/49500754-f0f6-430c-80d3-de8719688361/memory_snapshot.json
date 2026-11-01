@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "caller_name": "Ravi Kumar"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: எனக்கு 200 matte visiting cards வேணும்.\nassistant: சரி. Matte finish visiting cards 100-க்கு ₹350 வரும். உங்க பேர், delivery address சொல்ல முடியுமா?\nuser: என் பேரு Ravi Kumar. Vijayawada-ல இருக்குற 12 MG Road-க்கு deliver பண்ணுங்க.\nassistant: சரி ரவி குமார். 200 matte visiting cards-க்கு மொத்தம் ₹700 வரும். உங்க order-அ இப்போவே confirm பண்ணட்டுமா?\nuser: ஆமா, order-அ confirm பண்ணுங்க.\nassistant: உங்க order confirm ஆயிடுச்சு. Artwork approval முடிஞ்சதும் Vijayawada-ல 3 working days-ல delivery வந்துடும்.\nuser: Thanks, அவ்வளவுதான்."
+}

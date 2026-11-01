@@ -1,0 +1,44 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call and explicitly stated they had no interest in the service, thanking the agent before ending the conversation. The agent acknowledged the rejection and concluded the call without attempting further engagement or proposing any next steps.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500008"
+  },
+  "objections": [
+    "No interest in the service"
+  ],
+  "notes": "",
+  "tags": [
+    "sentiment:neutral",
+    "intent:information",
+    "signal:objection",
+    "action:required"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T20:32:55.447345Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500008"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

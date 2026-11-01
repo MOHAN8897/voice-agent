@@ -1,0 +1,5 @@
+{"turn_seq": 1, "ts": "2026-10-31T13:55:11.596968Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T13:55:35.627480Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T13:56:01.099034Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T13:56:01.114699Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: Haan, that makes sense. And what about the face cream, is it suitable for sensitive skin?\nassistant: The Herbal Face Cream costs 599 rupees for 50 g, contains Neem, Turmeric, and Aloe Vera, and is intended for moisturizing and routine skin care. I don't have details on whether it is specifically suitable for sensitive skin. The information is currently unavailable."}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T13:56:28.256252Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

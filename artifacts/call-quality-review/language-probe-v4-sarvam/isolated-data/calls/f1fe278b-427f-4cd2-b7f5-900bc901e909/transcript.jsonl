@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Window AC service price how much, and do you provide service in Kondapur?", "ts": "2026-10-29T19:37:47.549787Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Window AC servicing is 499 rupees, and yes, we do cover Kondapur.", "ts": "2026-10-29T19:37:48.071391Z", "brain_latency_ms": 523}

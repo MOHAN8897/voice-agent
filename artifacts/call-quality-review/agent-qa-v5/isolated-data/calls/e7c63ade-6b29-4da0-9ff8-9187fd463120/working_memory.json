@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "quantity": "1",
+    "caller_name": "लक्ष्मी रेड्डी"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: हाँ, आप order place कर दीजिए।\nassistant: आपका order confirm हो गया है। Team जल्दी ही आपसे contact करेगी।\nuser: ठीक है। मेरे number पर confirmation message आएगा क्या?\nassistant: इसकी जानकारी मेरे पास उपलब्ध नहीं है। Team जल्दी ही आपसे contact करेगी। और कुछ पूछना है तो बताइए।\nuser: ठीक है, confirmation message की जानकारी नहीं है तो कोई बात नहीं। Team जब call करेगी तो मैं details पूछ लूँगी।\nassistant: noted।\nuser: ठीक है प्रिया जी, तो आगे का process क्या रहेगा?\nassistant: Team जल्दी ही आपसे contact करके order की details confirm कर देगी। और कुछ जानकारी चाहिए तो बताइए।"
+}

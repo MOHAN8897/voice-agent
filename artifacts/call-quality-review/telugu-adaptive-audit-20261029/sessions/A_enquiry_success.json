@@ -1,0 +1,1366 @@
+{
+  "scenario": {
+    "id": "A_enquiry_success",
+    "business": "A",
+    "kind": "enquiry",
+    "integration": "success",
+    "policy": "review",
+    "max_turns": 12,
+    "goal": "Learn standard versus matte visiting-card pricing, minimum quantity, design approval, delivery, rush surcharge and advance-payment conditions. Start with 100 cards, later correct to 200. Ask about wedding-card price once as an unknown fact. Try to submit a quote/internal order request with your final details. Ask what quantity they recorded after intervening conversation. Stay curious for roughly 10 caller turns if the conversation remains useful. Around the middle, thank them and ask another relevant question in the SAME turn, without ending the call. At the end, clearly say all your questions are answered and thank them."
+  },
+  "agent": {
+    "id": "A",
+    "key": "printing",
+    "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "name": "Sri Krishna Digital Prints",
+    "agent_name": "Kavitha",
+    "role": "sales",
+    "industry": "printing",
+    "brief": "Agent name Kavitha. Company name Sri Krishna Digital Prints.\nOutbound and inbound customer inquiries in Telugu.\nWe print visiting cards: normal paper visiting cards cost 200 rupees for 100 cards,\nmatte finish cards cost 350 rupees for 100 cards. Minimum order quantity 100 cards.\nWedding invitation cards are customized: pricing depends on design, paper sample and quantity, no fixed price over the phone.\nFlex banners: normal flex 15 rupees per square foot, star flex 20 rupees per square foot.\nDelivery in Vijayawada takes 3 working days after design artwork approval; urgent 24-hour delivery is extra 150 rupees.\nPayment: Cash on delivery accepted for orders up to 1000 rupees; 50% advance payment required for orders above 1000 rupees.\nNo online payment or credit card processing on phone call.\nOffice hours Monday to Saturday 9:30 AM to 8:00 PM, Sunday closed.\nGoal: answer customer questions on cards, banners and pricing; understand their requirement.\nIf interested, take preferred name, quantity and delivery locality for a quote or order request.\nDo not force details before answering questions.\nCustomer refusing visiting cards may still want flex banners or wedding cards.\nNever claim an order is paid or dispatched without artwork approval and design confirmation.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Kavitha",
+      "company_name": "Sri Krishna Digital Prints",
+      "role": "Sales and customer enquiries",
+      "permitted_next_steps": "Collect customer name, item type, quantity and delivery locality in Vijayawada to submit an internal quote/order request. Explain that artwork approval is required before printing.",
+      "payment_rules": "Cash on delivery for orders up to 1000 rupees; 50% advance for orders above 1000 rupees. No online payment collection on call.",
+      "delivery_details": "Local delivery in Vijayawada takes 3 working days after artwork approval. Urgent 24-hour delivery is extra 150 rupees.",
+      "wedding_cards": "Customized quotation only based on design and paper sample. No fixed price on phone.",
+      "visiting_cards": "Standard 200 rupees for 100 cards; Matte finish 350 rupees for 100 cards. Minimum order 100 cards.",
+      "forbidden_actions": "Never confirm external courier shipment or take card payment on phone. Never guarantee delivery without artwork approval."
+    },
+    "user_id": "de625f35-524c-4767-a252-106cb34cdfae",
+    "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e"
+  },
+  "call_id": "b2868c40-c6a9-4a5b-aebf-1b6322fd18cc",
+  "session_id": "adaptive-6e789f8afca44e3588983c40eaafe35c",
+  "phone": "+12025550102",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_8649a3d49b8f",
+  "turn_index": 6,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నమస్తే Kavitha గారు. నాకు visiting cards కావాలి. ముందుగా standard మరియు matte finish మధ్య price difference ఎంత ఉంటుందో చెప్తారా? అలాగే minimum ఎన్ని cards order చేయాలో కూడా చెప్పండి, నేను 100 అనుకున్నాను కానీ తర్వాత 200 కి పెంచుకోవచ్చు.",
+        "intends_end": false,
+        "intent": "Inquire about pricing, finish options, and minimum order quantity",
+        "elapsed_s": 0.688
+      },
+      "spoken": "Standard paper cards one hundred కి two hundred rupees అవుతుంది, matte finish cards one hundred కి three hundred fifty rupees అవుతుంది. Minimum order one hundred cards ఉంటుంది, మీరు two hundred కి పెంచుకోవచ్చు. మీకు ఏది కావాలి?",
+      "elapsed_s": 1.687,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "100"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        25,
+        26,
+        27
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "Standard paper cards one hundred కి two hundred rupees అవుతుంది, matte finish cards one hundred కి three hundred fifty rupees అవుతుంది. Minimum order one hundred cards ఉంటుంది, మీరు two hundred కి పెంచుకోవచ్చు. మీకు ఏది కావాలి?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5175,
+            "output_tokens": 55,
+            "total_tokens": 5230
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": null
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 2,
+      "caller": {
+        "utterance": "సరే, matte finish అయితేనే బాగుంటుంది. మరి design approval ఎలా జరుగుతుంది? నేను design తర్వాత ఇస్తాను. అలాగే delivery ఎంత రోజుల్లో అవుతుంది, ఏమైనా rush surcharge ఉంటుందా?",
+        "intends_end": false,
+        "intent": "Inquire about design approval, delivery timeline, and rush surcharge",
+        "elapsed_s": 0.625
+      },
+      "spoken": "Design artwork approval తర్వాత Vijayawada లో delivery మూడు working days లో అవుతుంది. Urgent 24-hour delivery కావాలంటే extra one hundred fifty rupees అవుతుంది. మీరు design ఎప్పుడు పంపిస్తారో చెప్తారా?",
+      "elapsed_s": 1.609,
+      "memory_before": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "100"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "100"
+        },
+        "preferences": {
+          "product_finish": "matte finish"
+        },
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        29,
+        30,
+        31
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "Design artwork approval తర్వాత Vijayawada లో delivery మూడు working days లో అవుతుంది. Urgent 24-hour delivery కావాలంటే extra one hundred fifty rupees అవుతుంది. మీరు design ఎప్పుడు పంపిస్తారో చెప్తారా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5288,
+            "output_tokens": 43,
+            "cached_tokens": 2080,
+            "total_tokens": 5331
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": null
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 3,
+      "caller": {
+        "utterance": "Design నేను తర్వాత పంపిస్తాను. ఒకవేళ పెళ్లి కార్డుల price కూడా చెప్తే బాగుంటుంది, అలాగే advance payment ఎంత కట్టాలి, ఏమైనా conditions ఉన్నాయా?",
+        "intends_end": false,
+        "intent": "Inquire about wedding card pricing, advance payment, and conditions",
+        "elapsed_s": 0.594
+      },
+      "spoken": "Wedding invitation cards design, paper sample, ఇంకా quantity బట్టి మారుతాయి, so phone లో fixed price చెప్పలేము. Advance payment గురించి చెప్పాలంటే, order one thousand rupees పైన ఉంటే 50% advance కట్టాలి, అంతకంటే తక్కువ ఉంటే cash on delivery ఉంటుంది.",
+      "elapsed_s": 1.64,
+      "memory_before": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "100"
+        },
+        "preferences": {
+          "product_finish": "matte finish"
+        },
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "పెళ్లి కార్డులు",
+          "quantity": "100"
+        },
+        "preferences": {
+          "product_finish": "matte finish"
+        },
+        "important_context": "",
+        "summary": "user: Design నేను తర్వాత పంపిస్తాను. ఒకవేళ పెళ్లి కార్డుల price కూడా చెప్తే బాగుంటుంది, అలాగే advance payment ఎంత కట్టాలి, ఏమైనా conditions ఉన్నాయా?\nassistant: Wedding invitation cards design, paper sample, ఇంకా quantity బట్టి మారుతాయి, so phone లో fixed price చెప్పలేము. Advance payment గురించి చెప్పాలంటే, order one thousand rupees పైన ఉంటే 50% advance కట్టాలి, అంతకంటే తక్కువ ఉంటే cash on delivery ఉంటుంది."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        33,
+        34,
+        35
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "Wedding invitation cards design, paper sample, ఇంకా quantity బట్టి మారుతాయి, so phone లో fixed price చెప్పలేము. Advance payment గురించి చెప్పాలంటే, order one thousand rupees పైన ఉంటే 50% advance కట్టాలి, అంతకంటే తక్కువ ఉంటే cash on delivery ఉంటుంది.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5337,
+            "output_tokens": 74,
+            "total_tokens": 5411
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": null
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 4,
+      "caller": {
+        "utterance": "సరే, అర్థమైంది. నా email ramesh.audit@example.invalid. నేను matte finish లో 200 cards కి order పెట్టాలనుకుంటున్నాను. దీనికి సంబంధించి quote లేదా internal order request submit చేయొచ్చా?",
+        "intends_end": false,
+        "intent": "Submit an internal order request and ask about the recorded quantity",
+        "elapsed_s": 0.609
+      },
+      "spoken": "మీ enquiry save అయింది. మా team దీన్ని review చేసి త్వరలోనే మిమ్మల్ని సంప్రదిస్తారు. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+      "elapsed_s": 1.594,
+      "memory_before": {
+        "facts": {
+          "product": "పెళ్లి కార్డులు",
+          "quantity": "100"
+        },
+        "preferences": {
+          "product_finish": "matte finish"
+        },
+        "important_context": "",
+        "summary": "user: Design నేను తర్వాత పంపిస్తాను. ఒకవేళ పెళ్లి కార్డుల price కూడా చెప్తే బాగుంటుంది, అలాగే advance payment ఎంత కట్టాలి, ఏమైనా conditions ఉన్నాయా?\nassistant: Wedding invitation cards design, paper sample, ఇంకా quantity బట్టి మారుతాయి, so phone లో fixed price చెప్పలేము. Advance payment గురించి చెప్పాలంటే, order one thousand rupees పైన ఉంటే 50% advance కట్టాలి, అంతకంటే తక్కువ ఉంటే cash on delivery ఉంటుంది."
+      },
+      "memory_after": {
+        "facts": {
+          "product": "పెళ్లి కార్డులు",
+          "quantity": "200",
+          "caller_name": "ramesh.audit@example.invalid",
+          "caller_email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {
+          "product_finish": "matte finish",
+          "finish": "matte finish"
+        },
+        "important_context": "Caller provided contact details in this call.",
+        "summary": "user: Design నేను తర్వాత పంపిస్తాను. ఒకవేళ పెళ్లి కార్డుల price కూడా చెప్తే బాగుంటుంది, అలాగే advance payment ఎంత కట్టాలి, ఏమైనా conditions ఉన్నాయా?\nassistant: Wedding invitation cards design, paper sample, ఇంకా quantity బట్టి మారుతాయి, so phone లో fixed price చెప్పలేము. Advance payment గురించి చెప్పాలంటే, order one thousand rupees పైన ఉంటే 50% advance కట్టాలి, అంతకంటే తక్కువ ఉంటే cash on delivery ఉంటుంది."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        37,
+        38,
+        39
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "మీ enquiry save అయింది. మా team దీన్ని review చేసి త్వరలోనే మిమ్మల్ని సంప్రదిస్తారు. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 6208,
+            "output_tokens": 28,
+            "cached_tokens": 5152,
+            "total_tokens": 6236
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [
+            "enquiry_saved"
+          ],
+          "order_proof": false,
+          "action_outcome_unconfirmed": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": null
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 5,
+      "caller": {
+        "utterance": "సరే, ఇంకో విషయం, మీరు నా కోసం record చేసిన quantity ఎంత? నా 200 cards order ని internal order request కింద submit చేస్తున్నాను, నా email ramesh.audit@example.invalid.",
+        "intends_end": false,
+        "intent": "Confirm recorded quantity and submit internal order request",
+        "elapsed_s": 0.609
+      },
+      "spoken": "నేను మీ కోసం two hundred matte finish cards quantity note చేసుకున్నాను. మీ email కూడా save అయింది. మరి మీ పేరు చెప్తారా? order process కి అది అవసరం అవుతుంది.",
+      "elapsed_s": 1.578,
+      "memory_before": {
+        "facts": {
+          "product": "పెళ్లి కార్డులు",
+          "quantity": "200",
+          "caller_name": "ramesh.audit@example.invalid",
+          "caller_email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {
+          "product_finish": "matte finish",
+          "finish": "matte finish"
+        },
+        "important_context": "Caller provided contact details in this call.",
+        "summary": "user: Design నేను తర్వాత పంపిస్తాను. ఒకవేళ పెళ్లి కార్డుల price కూడా చెప్తే బాగుంటుంది, అలాగే advance payment ఎంత కట్టాలి, ఏమైనా conditions ఉన్నాయా?\nassistant: Wedding invitation cards design, paper sample, ఇంకా quantity బట్టి మారుతాయి, so phone లో fixed price చెప్పలేము. Advance payment గురించి చెప్పాలంటే, order one thousand rupees పైన ఉంటే 50% advance కట్టాలి, అంతకంటే తక్కువ ఉంటే cash on delivery ఉంటుంది."
+      },
+      "memory_after": {
+        "facts": {
+          "product": "పెళ్లి కార్డులు",
+          "quantity": "200",
+          "caller_name": "ramesh.audit@example.invalid",
+          "caller_email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {
+          "product_finish": "matte finish",
+          "finish": "matte finish"
+        },
+        "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+        "summary": "user: Design నేను తర్వాత పంపిస్తాను. ఒకవేళ పెళ్లి కార్డుల price కూడా చెప్తే బాగుంటుంది, అలాగే advance payment ఎంత కట్టాలి, ఏమైనా conditions ఉన్నాయా?\nassistant: Wedding invitation cards design, paper sample, ఇంకా quantity బట్టి మారుతాయి, so phone లో fixed price చెప్పలేము. Advance payment గురించి చెప్పాలంటే, order one thousand rupees పైన ఉంటే 50% advance కట్టాలి, అంతకంటే తక్కువ ఉంటే cash on delivery ఉంటుంది."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        41,
+        42,
+        43
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "నేను మీ కోసం two hundred matte finish cards quantity note చేసుకున్నాను. మీ email కూడా save అయింది. మరి మీ పేరు చెప్తారా? order process కి అది అవసరం అవుతుంది.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5507,
+            "output_tokens": 37,
+            "cached_tokens": 4480,
+            "total_tokens": 5544
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": null
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 6,
+      "caller": {
+        "utterance": "నా పేరు రమేష్ అండి. నా పేరు, email ramesh.audit@example.invalid తో పాటు ఈ 200 matte finish cards quantity తో internal order request submit చేసేయండి.",
+        "intends_end": false,
+        "intent": "Provide final details to submit the internal order request",
+        "elapsed_s": 0.703
+      },
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 3.281,
+      "memory_before": {
+        "facts": {
+          "product": "పెళ్లి కార్డులు",
+          "quantity": "200",
+          "caller_name": "ramesh.audit@example.invalid",
+          "caller_email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {
+          "product_finish": "matte finish",
+          "finish": "matte finish"
+        },
+        "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+        "summary": "user: Design నేను తర్వాత పంపిస్తాను. ఒకవేళ పెళ్లి కార్డుల price కూడా చెప్తే బాగుంటుంది, అలాగే advance payment ఎంత కట్టాలి, ఏమైనా conditions ఉన్నాయా?\nassistant: Wedding invitation cards design, paper sample, ఇంకా quantity బట్టి మారుతాయి, so phone లో fixed price చెప్పలేము. Advance payment గురించి చెప్పాలంటే, order one thousand rupees పైన ఉంటే 50% advance కట్టాలి, అంతకంటే తక్కువ ఉంటే cash on delivery ఉంటుంది."
+      },
+      "memory_after": {
+        "facts": {
+          "product": "పెళ్లి కార్డులు",
+          "quantity": "200",
+          "caller_name": "రమేష్",
+          "caller_email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {
+          "product_finish": "matte finish",
+          "finish": "matte finish"
+        },
+        "important_context": "Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call.",
+        "summary": "user: Design నేను తర్వాత పంపిస్తాను. ఒకవేళ పెళ్లి కార్డుల price కూడా చెప్తే బాగుంటుంది, అలాగే advance payment ఎంత కట్టాలి, ఏమైనా conditions ఉన్నాయా?\nassistant: Wedding invitation cards design, paper sample, ఇంకా quantity బట్టి మారుతాయి, so phone లో fixed price చెప్పలేము. Advance payment గురించి చెప్పాలంటే, order one thousand rupees పైన ఉంటే 50% advance కట్టాలి, అంతకంటే తక్కువ ఉంటే cash on delivery ఉంటుంది."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        45,
+        46,
+        47
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 6339,
+            "output_tokens": 30,
+            "cached_tokens": 5088,
+            "total_tokens": 6369
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [
+            "enquiry_saved"
+          ],
+          "order_proof": false,
+          "action_outcome_unconfirmed": false,
+          "end_call": {
+            "should_end": true,
+            "reason": "goal_complete",
+            "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+            "contact_preference": "end_call"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "Standard paper cards one hundred కి two hundred rupees అవుతుంది, matte finish cards one hundred కి three hundred fifty rupees అవుతుంది. Minimum order one hundred cards ఉంటుంది, మీరు two hundred కి పెంచుకోవచ్చు. మీకు ఏది కావాలి?",
+      "at": 103441.125
+    },
+    {
+      "turn": 2,
+      "text": "Design artwork approval తర్వాత Vijayawada లో delivery మూడు working days లో అవుతుంది. Urgent 24-hour delivery కావాలంటే extra one hundred fifty rupees అవుతుంది. మీరు design ఎప్పుడు పంపిస్తారో చెప్తారా?",
+      "at": 103443.375
+    },
+    {
+      "turn": 3,
+      "text": "Wedding invitation cards design, paper sample, ఇంకా quantity బట్టి మారుతాయి, so phone లో fixed price చెప్పలేము. Advance payment గురించి చెప్పాలంటే, order one thousand rupees పైన ఉంటే 50% advance కట్టాలి, అంతకంటే తక్కువ ఉంటే cash on delivery ఉంటుంది.",
+      "at": 103445.609
+    },
+    {
+      "turn": 4,
+      "text": "మీ enquiry save అయింది. మా team దీన్ని review చేసి త్వరలోనే మిమ్మల్ని సంప్రదిస్తారు. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+      "at": 103447.859
+    },
+    {
+      "turn": 5,
+      "text": "నేను మీ కోసం two hundred matte finish cards quantity note చేసుకున్నాను. మీ email కూడా save అయింది. మరి మీ పేరు చెప్తారా? order process కి అది అవసరం అవుతుంది.",
+      "at": 103450.031
+    },
+    {
+      "turn": 6,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 103452.937
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "Standard paper cards one hundred కి two hundred rupees అవుతుంది, matte finish cards one hundred కి three hundred fifty rupees అవుతుంది. Minimum order one hundred cards ఉంటుంది, మీరు two hundred కి పెంచుకోవచ్చు. మీకు ఏది కావాలి?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5175,
+        "output_tokens": 55,
+        "total_tokens": 5230
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "done": true,
+      "text": "Design artwork approval తర్వాత Vijayawada లో delivery మూడు working days లో అవుతుంది. Urgent 24-hour delivery కావాలంటే extra one hundred fifty rupees అవుతుంది. మీరు design ఎప్పుడు పంపిస్తారో చెప్తారా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5288,
+        "output_tokens": 43,
+        "cached_tokens": 2080,
+        "total_tokens": 5331
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "done": true,
+      "text": "Wedding invitation cards design, paper sample, ఇంకా quantity బట్టి మారుతాయి, so phone లో fixed price చెప్పలేము. Advance payment గురించి చెప్పాలంటే, order one thousand rupees పైన ఉంటే 50% advance కట్టాలి, అంతకంటే తక్కువ ఉంటే cash on delivery ఉంటుంది.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5337,
+        "output_tokens": 74,
+        "total_tokens": 5411
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "done": true,
+      "text": "మీ enquiry save అయింది. మా team దీన్ని review చేసి త్వరలోనే మిమ్మల్ని సంప్రదిస్తారు. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 6208,
+        "output_tokens": 28,
+        "cached_tokens": 5152,
+        "total_tokens": 6236
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [
+        "enquiry_saved"
+      ],
+      "order_proof": false,
+      "action_outcome_unconfirmed": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "done": true,
+      "text": "నేను మీ కోసం two hundred matte finish cards quantity note చేసుకున్నాను. మీ email కూడా save అయింది. మరి మీ పేరు చెప్తారా? order process కి అది అవసరం అవుతుంది.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5507,
+        "output_tokens": 37,
+        "cached_tokens": 4480,
+        "total_tokens": 5544
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "done": true,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 6339,
+        "output_tokens": 30,
+        "cached_tokens": 5088,
+        "total_tokens": 6369
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [
+        "enquiry_saved"
+      ],
+      "order_proof": false,
+      "action_outcome_unconfirmed": false,
+      "end_call": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      },
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "product",
+            "value": "visiting cards"
+          },
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "100"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "transcript": "నమస్తే Kavitha గారు. నాకు visiting cards కావాలి. ముందుగా standard మరియు matte finish మధ్య price difference ఎంత ఉంటుందో చెప్తారా? అలాగే minimum ఎన్ని cards order చేయాలో కూడా చెప్పండి, నేను 100 అనుకున్నాను కానీ తర్వాత 200 కి పెంచుకోవచ్చు.",
+      "at": 103441.156
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_preference",
+            "key": "product_finish",
+            "value": "matte finish"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "transcript": "సరే, matte finish అయితేనే బాగుంటుంది. మరి design approval ఎలా జరుగుతుంది? నేను design తర్వాత ఇస్తాను. అలాగే delivery ఎంత రోజుల్లో అవుతుంది, ఏమైనా rush surcharge ఉంటుందా?",
+      "at": 103443.39
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "product",
+            "value": "పెళ్లి కార్డులు"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "transcript": "Design నేను తర్వాత పంపిస్తాను. ఒకవేళ పెళ్లి కార్డుల price కూడా చెప్తే బాగుంటుంది, అలాగే advance payment ఎంత కట్టాలి, ఏమైనా conditions ఉన్నాయా?",
+      "at": 103445.625
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "ramesh.audit@example.invalid"
+          },
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "200"
+          },
+          {
+            "op": "set_preference",
+            "key": "finish",
+            "value": "matte finish"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "transcript": "సరే, అర్థమైంది. నా email ramesh.audit@example.invalid. నేను matte finish లో 200 cards కి order పెట్టాలనుకుంటున్నాను. దీనికి సంబంధించి quote లేదా internal order request submit చేయొచ్చా?",
+      "at": 103447.875
+    },
+    {
+      "turn": 5,
+      "proposal": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "200"
+          },
+          {
+            "op": "set_fact",
+            "key": "caller_email",
+            "value": "ramesh.audit@example.invalid"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "transcript": "సరే, ఇంకో విషయం, మీరు నా కోసం record చేసిన quantity ఎంత? నా 200 cards order ని internal order request కింద submit చేస్తున్నాను, నా email ramesh.audit@example.invalid.",
+      "at": 103450.046
+    },
+    {
+      "turn": 6,
+      "proposal": {
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "నా పేరు రమేష్ అండి. నా పేరు, email ramesh.audit@example.invalid తో పాటు ఈ 200 matte finish cards quantity తో internal order request submit చేసేయండి.",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "రమేష్"
+          },
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "200"
+          },
+          {
+            "op": "set_fact",
+            "key": "caller_email",
+            "value": "ramesh.audit@example.invalid"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      },
+      "transcript": "నా పేరు రమేష్ అండి. నా పేరు, email ramesh.audit@example.invalid తో పాటు ఈ 200 matte finish cards quantity తో internal order request submit చేసేయండి.",
+      "at": 103452.921
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 6,
+      "at": 103452.937
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 6,
+      "at": 103454.0,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 103441.171
+    },
+    {
+      "turn_seq": 3,
+      "at": 103443.406
+    },
+    {
+      "turn_seq": 5,
+      "at": 103445.656
+    },
+    {
+      "turn_seq": 7,
+      "at": 103447.89
+    },
+    {
+      "turn_seq": 9,
+      "at": 103450.062
+    },
+    {
+      "turn_seq": 11,
+      "at": 103452.953
+    }
+  ],
+  "started_at": "2026-10-29T11:05:15.992414+00:00",
+  "errors": [],
+  "brain_checksum": "d7487c1b2dea5826404c86011255aca0744ec1e7a417db967a2e864c26523e17",
+  "runtime_checksum": "e7a4cb2ad5f6383f917506c58a138ad23a76a33287296a6c788f43b89218acc5",
+  "available_tools": [
+    "HUBSPOT_CREATE_CONTACT",
+    "GOOGLECALENDAR_CREATE_EVENT",
+    "GOOGLECALENDAR_FIND_FREE_SLOTS",
+    "SAVE_ENQUIRY"
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "callback_required",
+    "disposition_confidence": 0.96,
+    "summary_te": "",
+    "summary_en": "The caller initially asked about visiting-card pricing and minimum order quantity, comparing standard and matte finishes. The agent quoted ₹200 for 100 standard cards and ₹350 for 100 matte-finish cards, with a 100-card minimum and the option to increase the quantity. The caller selected matte finish and asked about design approval, delivery timing, and rush charges. The agent explained that delivery in Vijayawada takes three working days after artwork approval, while 24-hour delivery costs an additional ₹150. The caller said the design would be sent later and also asked about wedding-invitation pricing and payment conditions. The agent said wedding-card pricing depends on design, paper sample, and quantity; orders above ₹1,000 require 50% advance, while smaller orders are cash on delivery. The caller then stated an intention to order 200 matte-finish cards, provided the name Ramesh and email ramesh.audit@example.invalid, and requested an internal order request or quote. The agent confirmed that the inquiry, quantity, and email were noted and said the team would review and contact the caller. The call ended politely, but the transcript does not confirm that the internal order request or quote was actually submitted, so follow-up is required.",
+    "next_action": "Review and submit the internal order request or prepare a quote for 200 matte-finish visiting cards, then contact Ramesh at ramesh.audit@example.invalid. Obtain the design when provided and confirm final pricing, payment, and delivery details.",
+    "extracted_fields": {
+      "advance_payment_condition": "50% advance for orders above ₹1,000; cash on delivery for smaller orders",
+      "caller_email": "ramesh.audit@example.invalid",
+      "caller_name": "రమేష్",
+      "design_status": "Caller will send the design later",
+      "email": "ramesh.audit@example.invalid",
+      "finish": "Matte finish",
+      "matte_finish_price": "₹350 per 100 cards",
+      "minimum_order_quantity": "100 cards",
+      "name": "Ramesh",
+      "phone": "+12025550102",
+      "product": "Visiting cards",
+      "quantity": "200 cards",
+      "standard_delivery": "3 working days in Vijayawada after artwork approval",
+      "standard_price": "₹200 per 100 cards",
+      "urgent_delivery": "24-hour delivery for an additional ₹150",
+      "wedding_card_pricing": "Depends on design, paper sample, and quantity"
+    },
+    "objections": [],
+    "notes": "The caller also asked about wedding invitation cards, but no fixed price was provided. The caller expressed purchase intent, but order submission was requested rather than confirmed as completed.",
+    "tags": [
+      "intent:purchase",
+      "intent:pricing",
+      "intent:quote",
+      "followup:callback",
+      "action:required",
+      "sentiment:positive"
+    ],
+    "custom_tags": [
+      "custom:visiting-cards",
+      "custom:matte-finish",
+      "custom:200-cards"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T11:05:37.473409Z",
+    "generation_ok": true,
+    "facts": {
+      "advance_payment_condition": "50% advance for orders above ₹1,000; cash on delivery for smaller orders",
+      "caller_email": "ramesh.audit@example.invalid",
+      "caller_name": "రమేష్",
+      "design_status": "Caller will send the design later",
+      "email": "ramesh.audit@example.invalid",
+      "finish": "Matte finish",
+      "matte_finish_price": "₹350 per 100 cards",
+      "minimum_order_quantity": "100 cards",
+      "name": "Ramesh",
+      "phone": "+12025550102",
+      "product": "Visiting cards",
+      "quantity": "200 cards",
+      "standard_delivery": "3 working days in Vijayawada after artwork approval",
+      "standard_price": "₹200 per 100 cards",
+      "urgent_delivery": "24-hour delivery for an additional ₹150",
+      "wedding_card_pricing": "Depends on design, paper sample, and quantity"
+    },
+    "disclosure_status": null,
+    "contact_preference": "end_call",
+    "status_tags": [
+      "action:required",
+      "contact:email_known",
+      "contact:name_known",
+      "contact:phone_known",
+      "custom:matte-finish",
+      "custom:visiting-cards",
+      "followup:callback",
+      "intent:pricing",
+      "intent:purchase",
+      "intent:quote",
+      "outcome:callback_required",
+      "sentiment:positive"
+    ],
+    "lead": {
+      "leadId": "ce36224d-44a8-5cf9-9982-98df46016ae1",
+      "agentId": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+      "stage": "contacted",
+      "action": "unchanged"
+    },
+    "lead_assessment": {
+      "score": 75,
+      "band": "hot",
+      "disposition": "callback_required",
+      "confidence": 0.96,
+      "components": [
+        {
+          "signal": "interest",
+          "points": 40,
+          "max": 40,
+          "evidence": "callback_required"
+        },
+        {
+          "signal": "requirements",
+          "points": 25,
+          "max": 25,
+          "evidence": "product"
+        },
+        {
+          "signal": "timing",
+          "points": 0,
+          "max": 25,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "contact",
+          "points": 10,
+          "max": 10,
+          "evidence": "phone"
+        }
+      ],
+      "version": 1,
+      "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+      "reason": "recorded_signals"
+    },
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "b2868c40-c6a9-4a5b-aebf-1b6322fd18cc",
+        "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+        "session_id": "adaptive-6e789f8afca44e3588983c40eaafe35c",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_8649a3d49b8f",
+        "started_at": "2026-10-29 11:05:15.975268+00:00",
+        "ended_at": "2026-10-29 11:05:31.208930+00:00",
+        "duration_sec": 15,
+        "disposition": "callback_required",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/b2868c40-c6a9-4a5b-aebf-1b6322fd18cc/",
+        "end_reason": "goal_complete",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "action:required",
+          "contact:email_known",
+          "contact:name_known",
+          "contact:phone_known",
+          "custom:matte-finish",
+          "custom:visiting-cards",
+          "followup:callback",
+          "intent:pricing",
+          "intent:purchase",
+          "intent:quote",
+          "outcome:callback_required",
+          "sentiment:positive"
+        ],
+        "last_heartbeat_at": "2026-10-29 11:05:15.975268+00:00",
+        "created_at": "2026-10-29 11:05:15.975268+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [],
+    "dnd": [],
+    "leads": [
+      {
+        "lead_id": "ce36224d-44a8-5cf9-9982-98df46016ae1",
+        "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+        "name": "Ramesh",
+        "phone": "+12025550102",
+        "email": "ramesh.audit@example.invalid",
+        "stage": "contacted",
+        "notes": "Caller enquiry — call b2868c40-c6a9-4a5b-aebf-1b6322fd18cc\n{\"request\": \"Customer wants to place order for 200 matte finish visiting cards. Email: ramesh.audit@example.invalid. Design to be shared later. Requesting quote or internal order.\", \"customer_name\": \"Ramesh\", \"product\": \"Visiting Cards - Matte Finish\", \"quantity\": \"200 cards\"}\n\nEnquiry update:\n{\"customer_name\": \"Ramesh\", \"request\": \"Internal order request for 200 matte finish visiting cards. Email: ramesh.audit@example.invalid.\"}\n\n---\n[Call reference: b2868c40-c6a9-4a5b-aebf-1b6322fd18cc]\nThe caller initially asked about visiting-card pricing and minimum order quantity, comparing standard and matte finishes. The agent quoted ₹200 for 100 standard cards and ₹350 for 100 matte-finish cards, with a 100-card minimum and the option to increase the quantity. The caller selected matte finish and asked about design approval, delivery timing, and rush charges. The agent explained that delivery in Vijayawada takes three working days after artwork approval, while 24-hour delivery costs an additional ₹150. The caller said the design would be sent later and also asked about wedding-invitation pricing and payment conditions. The agent said wedding-card pricing depends on design, paper sample, and quantity; orders above ₹1,000 require 50% advance, while smaller orders are cash on delivery. The caller then stated an intention to order 200 matte-finish cards, provided the name Ramesh and email ramesh.audit@example.invalid, and requested an internal order request or quote. The agent confirmed that the inquiry, quantity, and email were noted and said the team would review and contact the caller. The call ended politely, but the transcript does not confirm that the internal order reque\n\nNext step: Review and submit the internal order request or prepare a quote for 200 matte-finish visiting cards, then contact Ramesh at ramesh.audit@example.invalid. Obtain the design when provided and confirm final pricing, payment, and delivery detai\n\nCall outcome: callback required (96% confidence)",
+        "created_at": "2026-10-29 11:05:24.416762+00:00",
+        "updated_at": "2026-10-29 11:05:37.503641+00:00"
+      }
+    ],
+    "tools": [],
+    "assessments": [
+      {
+        "id": "87e06967-ce1e-4998-b96f-01c12ec96581",
+        "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "lead_id": "ce36224d-44a8-5cf9-9982-98df46016ae1",
+        "source_call_id": "b2868c40-c6a9-4a5b-aebf-1b6322fd18cc",
+        "assessment": {
+          "score": 75,
+          "band": "hot",
+          "disposition": "callback_required",
+          "confidence": 0.96,
+          "components": [
+            {
+              "signal": "interest",
+              "points": 40,
+              "max": 40,
+              "evidence": "callback_required"
+            },
+            {
+              "signal": "requirements",
+              "points": 25,
+              "max": 25,
+              "evidence": "product"
+            },
+            {
+              "signal": "timing",
+              "points": 0,
+              "max": 25,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "contact",
+              "points": 10,
+              "max": 10,
+              "evidence": "phone"
+            }
+          ],
+          "version": 1,
+          "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+          "reason": "recorded_signals"
+        },
+        "updated_at": "2026-10-29 11:05:31.208930+00:00"
+      }
+    ]
+  },
+  "metadata": {
+    "call_id": "b2868c40-c6a9-4a5b-aebf-1b6322fd18cc",
+    "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "session_id": "adaptive-6e789f8afca44e3588983c40eaafe35c",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_8649a3d49b8f",
+    "started_at": "2026-10-29T11:05:15.975268+00:00",
+    "status": "active",
+    "storage_path": "data/calls/b2868c40-c6a9-4a5b-aebf-1b6322fd18cc/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550102",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 75138,
+        "output_tokens": 1963,
+        "cached_tokens": 32736
+      }
+    },
+    "contact_preference": "end_call",
+    "hangup_reason": "goal_complete",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 62,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": true,
+    "callback_close_phase": "idle",
+    "disconnected_at": "2026-10-29T11:05:31.208930+00:00",
+    "ended_at": "2026-10-29T11:05:31.208930+00:00",
+    "end_reason": "goal_complete",
+    "duration_sec": 15.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 15.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.003125,
+      "telephony_inr": 0.2975625,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.003125,
+      "telnyx_inr": 0.2975625,
+      "telnyx_voice_api_usd": 0.0005,
+      "telnyx_sip_usd": 0.00125,
+      "telnyx_media_stream_usd": 0.000875,
+      "telnyx_call_recording_usd": 0.0005,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.22,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-28",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.0125,
+      "telephony_inr_per_min": 1.19025,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.0125,
+      "telnyx_inr_per_min": 1.19025,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_0b93e3fa330dc8c0016ae3287c152c87d2ac84e42412be1bb6": {
+          "input_tokens": 1615,
+          "output_tokens": 611,
+          "cached_tokens": 0,
+          "cache_write_tokens": 1612,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.0011367999999999999
+        }
+      },
+      "post_call_analysis_usd": 0.0011367999999999999,
+      "post_call_analysis_inr": 0.10824609599999999
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నమస్తే Kavitha గారు. నాకు visiting cards కావాలి. ముందుగా standard మరియు matte finish మధ్య price difference ఎంత ఉంటుందో చెప్తారా? అలాగే minimum ఎన్ని cards order చేయాలో కూడా చెప్పండి, నేను 100 అనుకున్నాను కానీ తర్వాత 200 కి పెంచుకోవచ్చు.",
+      "ts": "2026-10-29T11:05:16.705209Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "Standard paper cards one hundred కి two hundred rupees అవుతుంది, matte finish cards one hundred కి three hundred fifty rupees అవుతుంది. Minimum order one hundred cards ఉంటుంది, మీరు two hundred కి పెంచుకోవచ్చు. మీకు ఏది కావాలి?",
+      "ts": "2026-10-29T11:05:18.344847Z",
+      "brain_latency_ms": 1356
+    },
+    {
+      "seq": 3,
+      "role": "user",
+      "text": "సరే, matte finish అయితేనే బాగుంటుంది. మరి design approval ఎలా జరుగుతుంది? నేను design తర్వాత ఇస్తాను. అలాగే delivery ఎంత రోజుల్లో అవుతుంది, ఏమైనా rush surcharge ఉంటుందా?",
+      "ts": "2026-10-29T11:05:19.007076Z",
+      "partial": false
+    },
+    {
+      "seq": 4,
+      "role": "assistant",
+      "text": "Design artwork approval తర్వాత Vijayawada లో delivery మూడు working days లో అవుతుంది. Urgent 24-hour delivery కావాలంటే extra one hundred fifty rupees అవుతుంది. మీరు design ఎప్పుడు పంపిస్తారో చెప్తారా?",
+      "ts": "2026-10-29T11:05:20.580471Z",
+      "brain_latency_ms": 1299
+    },
+    {
+      "seq": 5,
+      "role": "user",
+      "text": "Design నేను తర్వాత పంపిస్తాను. ఒకవేళ పెళ్లి కార్డుల price కూడా చెప్తే బాగుంటుంది, అలాగే advance payment ఎంత కట్టాలి, ఏమైనా conditions ఉన్నాయా?",
+      "ts": "2026-10-29T11:05:21.227564Z",
+      "partial": false
+    },
+    {
+      "seq": 6,
+      "role": "assistant",
+      "text": "Wedding invitation cards design, paper sample, ఇంకా quantity బట్టి మారుతాయి, so phone లో fixed price చెప్పలేము. Advance payment గురించి చెప్పాలంటే, order one thousand rupees పైన ఉంటే 50% advance కట్టాలి, అంతకంటే తక్కువ ఉంటే cash on delivery ఉంటుంది.",
+      "ts": "2026-10-29T11:05:22.818342Z",
+      "brain_latency_ms": 1319
+    },
+    {
+      "seq": 7,
+      "role": "user",
+      "text": "సరే, అర్థమైంది. నా email ramesh.audit@example.invalid. నేను matte finish లో 200 cards కి order పెట్టాలనుకుంటున్నాను. దీనికి సంబంధించి quote లేదా internal order request submit చేయొచ్చా?",
+      "ts": "2026-10-29T11:05:23.487979Z",
+      "partial": false
+    },
+    {
+      "seq": 8,
+      "role": "assistant",
+      "text": "మీ enquiry save అయింది. మా team దీన్ని review చేసి త్వరలోనే మిమ్మల్ని సంప్రదిస్తారు. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+      "ts": "2026-10-29T11:05:25.068740Z",
+      "brain_latency_ms": 1336
+    },
+    {
+      "seq": 9,
+      "role": "user",
+      "text": "సరే, ఇంకో విషయం, మీరు నా కోసం record చేసిన quantity ఎంత? నా 200 cards order ని internal order request కింద submit చేస్తున్నాను, నా email ramesh.audit@example.invalid.",
+      "ts": "2026-10-29T11:05:25.715150Z",
+      "partial": false
+    },
+    {
+      "seq": 10,
+      "role": "assistant",
+      "text": "నేను మీ కోసం two hundred matte finish cards quantity note చేసుకున్నాను. మీ email కూడా save అయింది. మరి మీ పేరు చెప్తారా? order process కి అది అవసరం అవుతుంది.",
+      "ts": "2026-10-29T11:05:27.235344Z",
+      "brain_latency_ms": 1267
+    },
+    {
+      "seq": 11,
+      "role": "user",
+      "text": "నా పేరు రమేష్ అండి. నా పేరు, email ramesh.audit@example.invalid తో పాటు ఈ 200 matte finish cards quantity తో internal order request submit చేసేయండి.",
+      "ts": "2026-10-29T11:05:28.020027Z",
+      "partial": false
+    },
+    {
+      "seq": 12,
+      "role": "assistant",
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T11:05:30.123583Z",
+      "brain_latency_ms": 1857
+    }
+  ],
+  "wall_elapsed_s": 21.703,
+  "simulated_exchange_timeline_s": 120,
+  "request_count": 24
+}

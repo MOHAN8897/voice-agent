@@ -1,0 +1,64 @@
+{
+  "call_id": "2e0f63ad-adce-401f-bff9-e7d6a8ffa7d5",
+  "tenant_id": "bc287ec8-62fb-497b-b4af-e446ef0ca748",
+  "agent_id": "60e25f6e-5494-59f3-99a0-dcd3c42c309a",
+  "session_id": "qa-e87437f4f0354813affbc503641060f4",
+  "channel": "pstn",
+  "direction": "outbound",
+  "environment": "development",
+  "tier": "medium",
+  "combination_id": "5b3ecb0dcd721b7f",
+  "compiled_brain_version": "cb_v20261031_2a2863d717b5",
+  "started_at": "2026-10-31T15:19:21.346002+00:00",
+  "status": "active",
+  "storage_path": "data/calls/2e0f63ad-adce-401f-bff9-e7d6a8ffa7d5/",
+  "resolved_stack": {
+    "combination_id": "5b3ecb0dcd721b7f",
+    "tier": "medium",
+    "mode": "frontend",
+    "language": "te-IN",
+    "voice_preset": "telugu_natural",
+    "stt": {
+      "provider": "sarvam",
+      "model": "saaras:v3-realtime",
+      "config": {
+        "mode": "realtime"
+      }
+    },
+    "llm": {
+      "provider": "sarvam",
+      "model": "sarvam-105b-conversations",
+      "config": {
+        "api_mode": "chat_completions_v1"
+      }
+    },
+    "tts": {
+      "provider": "sarvam",
+      "model": "bulbul:v3",
+      "config": {
+        "speaker": "shubh",
+        "api_mode": "websocket"
+      }
+    }
+  },
+  "pipeline": "composed_voice",
+  "callee_e164": "+919700000008",
+  "caller_id": "+914000000000",
+  "is_test": true,
+  "call_end_policy": {
+    "allowedReasons": [
+      "goodbye",
+      "firm_refusal",
+      "not_interested",
+      "goal_complete",
+      "abuse"
+    ],
+    "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+    "farewellSource": "default"
+  },
+  "stage_usage": {
+    "stt": {
+      "audio_seconds": 0.0
+    }
+  }
+}

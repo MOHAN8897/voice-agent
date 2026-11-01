@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "caller_name": "Ravi Kumar"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "assistant: సరే, matte finish visiting cards 100 కి ₹350 అవుతుంది. అంటే 200 cards కి ₹700 అవుతుంది. మీ పేరు మరియు delivery address చెబితే order confirm చేస్తాను.\nuser: నా పేరు Ravi Kumar. Vijayawada లోని 12 MG Road కి deliver చేయండి.\nassistant: సరే, మీ delivery address 12 MG Road, Vijayawada కదా, ఒకసారి సరిచూసుకోండి. Vijayawada లో delivery కి artwork approval తర్వాత 3 working days పడుతుంది. Order confirm చేయమంటారా?\nuser: అవును, order confirm చేయండి.\nassistant: మీ order confirm అయింది. Artwork approval తర్వాత 3 working days లో delivery అవుతుంది.\nuser: Thanks, అంతే."
+}

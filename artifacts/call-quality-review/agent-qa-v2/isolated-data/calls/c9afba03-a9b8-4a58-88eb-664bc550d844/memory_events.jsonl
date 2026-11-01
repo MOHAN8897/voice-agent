@@ -1,0 +1,8 @@
+{"turn_seq": 1, "ts": "2026-10-31T13:24:21.308499Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T13:24:36.470512Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T13:24:52.392696Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T13:24:52.404436Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "assistant: అవును, మేము నాలుగు ఉత్పత్తులు అమ్ముతున్నాము. మన దగ్గర హెయిర్ ఆయిల్ 200 మి. మీకు వీటిలో ఏ ఉత్పత్తి గురించి మరింత తెలుసుకోవాలని ఉంది?\nuser: ఆ హెయిర్ ఆయిల్ price ఎంత ఉంటుంది?\nassistant: నేచర్‌వేదా హెర్బల్ హెయిర్ ఆయిల్ 200 ml కి 499 రూపాయలు ఉంటుంది. ఇందులో ఉసిరికాయ, భృంగరాజ్, మందార మరియు కొబ్బరి నూనె ఉన్నాయి.\nuser: ఓహో, 499 రూపాదులా? సరే, ఇది రాలడాన్ని తగ్గిస్తుందా అండి?\nassistant: ఈ హెయిర్ ఆయిల్ సాధారణ జుట్టు మరియు తల చర్మ సంరక్షణ కోసం ఉద్దేశించబడింది. ఇది రాలడాన్ని తగ్గిస్తుందా అనే విషయం నాకు తెలియదు. మీకు ఏ వివరాలు కావాలి?"}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T13:25:08.732568Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T13:25:21.666851Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-31T13:25:32.161730Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 13, "ts": "2026-10-31T13:25:58.748575Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

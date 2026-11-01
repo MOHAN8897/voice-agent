@@ -1,0 +1,34 @@
+{
+  "call_id": "0c899047-5d1a-4848-bf34-0b7495e412b8",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the interaction, but immediately stated they were not interested and thanked the agent. The agent acknowledged the response and concluded the call by saying goodbye. No further discussion or next steps were agreed upon.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500040"
+  },
+  "facts": {
+    "phone": "+919876500040"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "sentiment:neutral",
+    "intent:information"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [
+    "caller_declined_interest"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:21:20.196538Z",
+  "generation_ok": true
+}

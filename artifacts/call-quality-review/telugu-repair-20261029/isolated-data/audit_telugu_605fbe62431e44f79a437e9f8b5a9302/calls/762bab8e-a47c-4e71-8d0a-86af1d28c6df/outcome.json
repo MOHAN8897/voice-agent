@@ -1,0 +1,112 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Shravani from Madhapur requested general servicing for her split AC and asked for a technician visit tomorrow at 10:00 AM. She provided her email address and accepted the quoted service price of ₹599. She repeatedly requested that the appointment be created in her calendar and confirmed, but the agent explained that it could not check or confirm the slot, create a calendar appointment, record the technician request, or send a confirmation message because the required permissions and capabilities were unavailable. No appointment or follow-up message was completed. The caller understood the limitation and ended the call without requesting anything further.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "location": "Madhapur",
+    "phone": "+12025550101",
+    "price": "₹599",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు ఉదయం 10 AM",
+    "service": "Split AC general service"
+  },
+  "objections": [
+    "Appointment could not be created or confirmed due to lack of calendar permission.",
+    "Technician visit request could not be recorded and no confirmation message could be sent."
+  ],
+  "notes": "Caller was willing to proceed at ₹599, but the requested appointment and confirmation were not completed. Call ended after the caller acknowledged the limitation.",
+  "tags": [
+    "intent:booking",
+    "intent:purchase",
+    "signal:price_sensitive",
+    "signal:objection",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:split-ac-service",
+    "custom:tomorrow-10am",
+    "custom:technician-visit"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T16:36:35.516631Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "location": "Madhapur",
+    "phone": "+12025550101",
+    "price": "₹599",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు ఉదయం 10 AM",
+    "service": "Split AC general service"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:split-ac-service",
+    "custom:technician-visit",
+    "custom:tomorrow-10am",
+    "intent:booking",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "9a7cc253-734d-4494-ba47-21d284264a0a",
+    "agentId": "da7e8b71-9465-55a3-b920-fae16cb86c5c",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.98,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "service"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

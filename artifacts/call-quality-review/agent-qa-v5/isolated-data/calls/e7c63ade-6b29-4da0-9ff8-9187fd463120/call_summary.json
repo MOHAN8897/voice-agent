@@ -1,0 +1,62 @@
+{
+  "call_id": "e7c63ade-6b29-4da0-9ff8-9187fd463120",
+  "language_callback": null,
+  "disposition": "converted",
+  "disposition_confidence": 0.85,
+  "summary_te": "प्रिया जी ने लक्ष्मी रेड्डी को फोन किया था। लक्ष्मी ने फेस क्रीम के उपयोग और डिलीवरी के समय और डिस्काउंट के बारे में पूछा, लेकिन एजेंट के पास यह जानकारी नहीं थी। इसके बाद लक्ष्मी ने 2 हेयर ऑयल और 1 फेस क्रीम का ऑर्डर ₹1,497 में देने के लिए अपना नाम और पता बताया। एजेंट ने ऑर्डर कन्फर्म कर दिया, लेकिन कन्फर्मेशन मैसेज के बारे में भी कोई जानकारी नहीं दे सका। अंत में, एजेंट ने कहा कि टीम जल्द ही उनसे संपर्क करेगी और कॉल समाप्त हो गया।",
+  "summary_language": "hi-IN",
+  "summary_en": "The agent called Lakshmi Reddy to provide information about hair oil and face cream. Lakshmi inquired about product usage, delivery times, and discounts, but the agent did not have those details. Lakshmi then requested to order 2 bottles of hair oil and 1 face cream for a total of ₹1,497. The agent collected her name and delivery address and confirmed the order, though the agent could not confirm if a confirmation message would be sent. Lakshmi agreed to wait for the team to contact her to finalize the details, and the call ended.",
+  "next_action": "callback_required",
+  "extracted_fields": {
+    "caller_name": "लक्ष्मी रेड्डी",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "phone": "+919735932593",
+    "product": "Hair Oil, Face Cream",
+    "quantity": "2 hair oil, 1 face cream",
+    "total_price": "₹1,497"
+  },
+  "facts": {
+    "caller_name": "लक्ष्मी रेड्डी",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "phone": "+919735932593",
+    "product": "Hair Oil, Face Cream",
+    "quantity": "2 hair oil, 1 face cream",
+    "total_price": "₹1,497"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:delivery-pending",
+    "custom:herbal-products",
+    "custom:order-placed",
+    "followup:callback",
+    "intent:purchase",
+    "outcome:converted",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:purchase",
+    "sentiment:neutral",
+    "followup:callback",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:order-placed",
+    "custom:delivery-pending"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "The agent did not know the delivery time.",
+    "The agent did not know if a confirmation message would be sent."
+  ],
+  "unanswered_questions": [
+    "How long will delivery take?",
+    "Is there any discount available?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T17:36:52.325994Z",
+  "generation_ok": true
+}

@@ -1,0 +1,7 @@
+{"turn_seq": 1, "ts": "2026-10-31T14:25:16.684692Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T14:25:37.036262Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T14:25:57.325186Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T14:25:57.338785Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: ఆ హెయిర్ ఆయిల్ లో ఏమేమి ingredients వాడతారు అండి?\nassistant: ఆ హెయిర్ ఆయిల్ లో ఉసిరి, భృంగరాజ్, మందార మరియు కొబ్బరి నూనె ఉంటాయి. ఇది 200 ml కి 499 రూపాయలు అవుతుంది, సాధారణ జుట్టు మరియు తల సంరక్షణ కోసం ఇది ఉపయోగపడుతుంది. మీరు వేరే product గురించి వినాలనుకుంటున్నారా?\nuser: సరే అండి, ఈ ఆయిల్ ఎక్కడ తయారు చేస్తారు?\nassistant: ఆ వివరాలు నాకు తెలియవు. మీరు ఇంకేదైనా product గురించి తెలుసుకోవాలనుకుంటున్నారా?"}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T14:26:10.077159Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T14:26:26.929472Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-31T14:26:49.388791Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

@@ -1,0 +1,117 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "Kiran, a working professional, enquired about Python, SQL, and PowerBI training, specifically requesting evening or weekend batches and asking about duration, fees, eligibility, instalments, and placement support. The agent provided Python course details: an 8-week online live course with hands-on projects, evening and weekend availability, a fee of INR 8,999, eligibility for graduates or final-year students with basic computer knowledge and no prior coding requirement, and no instalment option. SQL and PowerBI duration and fees were not available. The agent clarified that there is no job guarantee, but placement assistance includes resume building, interview preparation, and job referrals. Kiran provided his email and requested an evening batch, demo/discussion, and that his enquiry be saved. The agent stated that the name, email, and batch preference were noted and described registering the details so the team could discuss a demo or admission. Kiran agreed to proceed, reiterated concern about the lack of a job guarantee, then confirmed that his questions were answered and asked to save the enquiry. The call ended with the agent stating that his details and request for a future call had been recorded; the transcript does not independently confirm that the enquiry or demo was actually saved or scheduled.",
+  "next_action": "Verify that Kiran's enquiry was recorded and arrange or follow up regarding an evening-batch demo/discussion; provide the outstanding SQL and PowerBI duration and fee details if available.",
+  "extracted_fields": {
+    "batch_preference": "Evening batches; weekends also requested",
+    "caller_name": "Kiran",
+    "course": "Python with Data Analytics",
+    "duration": "8 weeks",
+    "eligibility": "Graduate or final-year student with basic computer knowledge; no prior coding required",
+    "email": "kiran.audit@example.invalid",
+    "fee": "INR 8,999",
+    "installments": "Not available; full fee payable at once",
+    "phone": "+12025550107",
+    "placement_support": "Resume building, interview preparation, and job referrals; no job guarantee",
+    "product": "Python course",
+    "requested_action": "Save enquiry and arrange a demo or discussion"
+  },
+  "objections": [
+    "The caller found the one-time INR 8,999 payment difficult and asked about instalments.",
+    "The caller was concerned that the course does not provide a job guarantee."
+  ],
+  "notes": "SQL and PowerBI pricing and duration were not provided. The agent claimed the details were noted and would be registered, but completion of the save or demo scheduling is not confirmed in the transcript.",
+  "tags": [
+    "intent:information",
+    "intent:demo",
+    "intent:pricing",
+    "followup:send_info",
+    "signal:objection",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-training",
+    "custom:evening-batch",
+    "custom:placement-assistance"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:39:32.783563Z",
+  "generation_ok": true,
+  "facts": {
+    "batch_preference": "Evening batches; weekends also requested",
+    "caller_name": "Kiran",
+    "course": "Python with Data Analytics",
+    "duration": "8 weeks",
+    "eligibility": "Graduate or final-year student with basic computer knowledge; no prior coding required",
+    "email": "kiran.audit@example.invalid",
+    "fee": "INR 8,999",
+    "installments": "Not available; full fee payable at once",
+    "phone": "+12025550107",
+    "placement_support": "Resume building, interview preparation, and job referrals; no job guarantee",
+    "product": "Python course",
+    "requested_action": "Save enquiry and arrange a demo or discussion"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "followup:callback",
+    "followup:send_info",
+    "intent:demo",
+    "intent:information",
+    "intent:pricing",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "a547532c-230a-4ad9-80e5-2b5d04a3ec62",
+    "agentId": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.96,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

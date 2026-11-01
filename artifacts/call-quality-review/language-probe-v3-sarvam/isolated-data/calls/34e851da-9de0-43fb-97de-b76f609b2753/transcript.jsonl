@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "can you send someone tomorrow morning at 10 30 the fridge is not cooling", "ts": "2026-10-29T19:28:55.385587Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I can note that for you, but same-day visits are not guaranteed and we only cover Madhapur, Gachibowli, Kondapur, and Kukatpally. Could you tell me your name and locality so I can pass this on?", "ts": "2026-10-29T19:28:56.112593Z", "brain_latency_ms": 723}

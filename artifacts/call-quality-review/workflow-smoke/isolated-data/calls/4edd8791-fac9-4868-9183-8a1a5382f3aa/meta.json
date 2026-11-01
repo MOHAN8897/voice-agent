@@ -1,0 +1,137 @@
+{
+  "call_id": "4edd8791-fac9-4868-9183-8a1a5382f3aa",
+  "tenant_id": "52c4f7aa-37ce-403e-b173-a078d4a9b928",
+  "agent_id": "328264d6-cf00-433a-8f8b-5678a55751ac",
+  "session_id": "wf-ee00b42118d04edcaeca5cb8fca30276",
+  "channel": "pstn",
+  "direction": "outbound",
+  "environment": "development",
+  "tier": "medium",
+  "combination_id": "5b3ecb0dcd721b7f",
+  "compiled_brain_version": "cb_sim_cb34bb7c48fb4180",
+  "started_at": "2026-10-29T20:02:09.718972+00:00",
+  "status": "active",
+  "storage_path": "data/calls/4edd8791-fac9-4868-9183-8a1a5382f3aa/",
+  "resolved_stack": {
+    "combination_id": "5b3ecb0dcd721b7f",
+    "tier": "medium",
+    "mode": "frontend",
+    "language": "te-IN",
+    "voice_preset": "telugu_natural",
+    "stt": {
+      "provider": "sarvam",
+      "model": "saaras:v3-realtime",
+      "config": {
+        "mode": "realtime"
+      }
+    },
+    "llm": {
+      "provider": "sarvam",
+      "model": "sarvam-105b-conversations",
+      "config": {
+        "api_mode": "chat_completions_v1"
+      }
+    },
+    "tts": {
+      "provider": "sarvam",
+      "model": "bulbul:v3",
+      "config": {
+        "speaker": "shubh",
+        "api_mode": "websocket"
+      }
+    }
+  },
+  "pipeline": "composed_voice",
+  "callee_e164": "+919876500001",
+  "caller_id": "+914000000000",
+  "is_test": true,
+  "call_end_policy": {
+    "allowedReasons": [
+      "goodbye",
+      "firm_refusal",
+      "not_interested",
+      "goal_complete",
+      "abuse"
+    ],
+    "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+    "farewellSource": "default"
+  },
+  "stage_usage": {
+    "llm": {
+      "input_tokens": 1605,
+      "output_tokens": 226,
+      "cached_tokens": 0
+    }
+  },
+  "callback_request": {
+    "id": "902384f0-5b43-44dc-a576-dbe05b015c91",
+    "status": "requested",
+    "requestedWhen": "రేపు సాయంత్రం 6 కి",
+    "requestText": "నేను ఇప్పుడు busy గా ఉన్నాను. రేపు సాయంత్రం 6 కి మళ్ళీ call చేయగలరా?"
+  },
+  "callback_cancelled": false,
+  "callback_withdrawal_pending": false,
+  "contact_preference": "callback",
+  "hangup_reason": "goal_complete",
+  "hangup_initiator": "agent",
+  "hangup_outcome": "agent_ended",
+  "hangup_playback_wait_ms": 0,
+  "hangup_trail_ms": 1000,
+  "hangup_heard_playback": false,
+  "callback_close_phase": "semantic_pending",
+  "disconnected_at": "2026-10-29T20:02:12.809006+00:00",
+  "ended_at": "2026-10-29T20:02:12.809006+00:00",
+  "end_reason": "goal_complete",
+  "duration_sec": 3.0,
+  "provider_cost_result": {
+    "status": "incomplete",
+    "missing": [
+      "provider_cost_snapshot"
+    ],
+    "stages": {},
+    "totalUsd": null,
+    "totalInr": null
+  },
+  "usage": {
+    "cost_accounting_version": 3,
+    "supplier_cost_status": "incomplete",
+    "live_transcript_usd": 0.0,
+    "live_transcript_inr": 0.0,
+    "pipeline": "composed_voice",
+    "duration_sec": 3.0,
+    "telephony_provider": "telnyx",
+    "telephony_usd": 0.0008250000000000001,
+    "telephony_inr": 0.07859775000000001,
+    "model_cost_usd": null,
+    "model_cost_inr": null,
+    "telnyx_usd": 0.0008250000000000001,
+    "telnyx_inr": 0.07859775000000001,
+    "telnyx_voice_api_usd": 0.0001,
+    "telnyx_sip_usd": 0.00045,
+    "telnyx_media_stream_usd": 0.00017500000000000003,
+    "telnyx_call_recording_usd": 0.0001,
+    "telnyx_destination_country": "IN",
+    "telnyx_sip_usd_per_min": 0.009,
+    "telnyx_cost_is_estimate": true,
+    "vobiz_usd": 0.0,
+    "vobiz_inr": 0.0,
+    "carrier_cost_source": "tariff_estimate",
+    "cost_usd": null,
+    "cost_inr": null,
+    "cost_is_estimate": true,
+    "fx_rate_inr": 95.27,
+    "fx_source": "live_cache",
+    "fx_as_of": "2026-10-29",
+    "gst_inr": 0.0,
+    "cost_usd_per_min": null,
+    "cost_inr_per_min": null,
+    "telephony_usd_per_min": 0.0165,
+    "telephony_inr_per_min": 1.571955,
+    "model_cost_usd_per_min": null,
+    "model_cost_inr_per_min": null,
+    "telnyx_usd_per_min": 0.0165,
+    "telnyx_inr_per_min": 1.571955,
+    "vobiz_usd_per_min": 0.0,
+    "vobiz_inr_per_min": 0.0
+  }
+}

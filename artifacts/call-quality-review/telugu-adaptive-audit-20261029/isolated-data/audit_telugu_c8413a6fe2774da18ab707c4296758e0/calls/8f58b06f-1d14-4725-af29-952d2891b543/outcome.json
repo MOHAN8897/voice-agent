@@ -1,0 +1,53 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "The caller first clearly requested that this number never be called again and stated they do not want any future calls. They then mentioned a visiting-card requirement: matte finish, with designs to be provided later. The agent acknowledged the caller and ended the call politely without discussing pricing, quantity, or next steps. No further follow-up was agreed; the do-not-call request is explicit.",
+  "next_action": null,
+  "extracted_fields": {
+    "designs": "To be provided later",
+    "finish": "matte",
+    "phone": "+12025550105",
+    "product": "visiting cards"
+  },
+  "objections": [
+    "Caller requested no further calls to this number."
+  ],
+  "notes": "Honor the caller's permanent do-not-call request.",
+  "tags": [
+    "signal:do_not_call",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:matte-finish"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:06:13.657263Z",
+  "generation_ok": true,
+  "facts": {
+    "designs": "To be provided later",
+    "finish": "matte",
+    "phone": "+12025550105",
+    "product": "visiting cards"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:matte-finish",
+    "custom:visiting-cards",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

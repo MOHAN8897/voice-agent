@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "requested_time": "આવતીકાલે સવારે 11 વાગ્યાનું"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: આવતીકાલે સવારે 11 વાગ્યાનું બુક કરી દો અને અત્યારે જ booking confirm કરી દો.\nassistant: આવતીકાલે સવારે 11 વાગ્યાનો time મેં note કરી લીધો છે. Booking confirm કરવા માટે તમારું નામ અને શું તકલીફ છે એ જણાવશો?\nuser: Confirm થઈ ગયું છે? મને booking number આપો.\nassistant: હજી સુધી booking confirm નથી થયું, તેથી હું તમને booking number આપી શકતી નથી. Booking confirm કરવા માટે મારે તમારું નામ અને શું તકલીફ છે એ જાણવું પડશે.\nuser: ઠીક છે, આભાર.\nassistant: તમારા સમય માટે આભાર. આવજો."
+}

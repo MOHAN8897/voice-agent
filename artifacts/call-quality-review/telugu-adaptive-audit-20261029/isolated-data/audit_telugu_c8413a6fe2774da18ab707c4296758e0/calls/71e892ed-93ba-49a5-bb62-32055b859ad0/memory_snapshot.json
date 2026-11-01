@@ -1,0 +1,14 @@
+{
+  "facts": {
+    "caller_name": "Ramana",
+    "product": "visiting cards",
+    "quantity": "200",
+    "delivery_locality": "విజయవాడ"
+  },
+  "preferences": {
+    "payment_method": "cash on delivery",
+    "product": "banners"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "user: సరే, banners కోసం ప్రస్తుతానికి ఆలోచిస్తాను. మరి payment ఎలా చేయాలి? online లో చేయొచ్చా లేక cash ఇయ్యాలా?\nassistant: Orderupees one thousand rupees కంటే తక్కువ ఉంటే cash on delivery తీసుకోవచ్చు. one thousand rupees పైన అయితే 50% advance payment తప్పనిసరి. Phone లో online payment లేదా credit card processing ఉండదు. మరి మీకు ఏది సౌకర్యంగా ఉంటుంది?"
+}

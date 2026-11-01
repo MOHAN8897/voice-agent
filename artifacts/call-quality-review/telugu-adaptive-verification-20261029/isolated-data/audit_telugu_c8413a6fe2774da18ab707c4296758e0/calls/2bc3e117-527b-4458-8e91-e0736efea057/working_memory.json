@@ -1,0 +1,13 @@
+{
+  "facts": {
+    "caller_name": "రమేష్",
+    "product": "matte finish visiting cards",
+    "quantity": "100",
+    "delivery_locality": "విజయవాడ",
+    "caller_email": "ramesh.audit@example.invalid",
+    "delivery_address": "ramesh.audit@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "assistant: మీ enquiry already record అయింది, confirm అయింది.\nuser: సరే Kavitha గారు, నా 100 matte finish visiting cards కి సంబంధించిన quote ని ramesh.audit@example.invalid కి పంపించి, system లో ఎన్ని quantity నమోదు చేశారో ఒకసారి confirm చేస్తారా? అలాగే ఈ order process ఎలా జరుగుతుంది?\nassistant: మీ enquiry already record అయింది, confirm అయింది. one hundred matte finish cards కి quote three hundred fifty rupees అవుతుంది. ఈ order process లో మొదట design approval తీసుకుని, ఆ తర్వాతే delivery schedule అవుతుంది. మరి దీన్ని proceed చేద్దామా?"
+}

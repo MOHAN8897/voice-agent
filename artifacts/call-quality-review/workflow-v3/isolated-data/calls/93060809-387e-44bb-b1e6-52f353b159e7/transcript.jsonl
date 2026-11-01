@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "ನಾಳೆಗೆ 11 AM-ಗೆ ಬುಕ್ ಮಾಡಿ, ಈಗಲೇ ಬುಕ್ಕಿಂಗ್ ಕನ್ಫರ್ಮ್ ಮಾಡಿ.", "ts": "2026-10-29T20:44:29.809200Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ನಾಳೆ ಬೆಳಿಗ್ಗೆ 11 ಗಂಟೆಗೆ appointment ಬುಕ್ ಮಾಡಬೇಕು ಅಂತ ಕೇಳಿದ್ರಿ. ಅದನ್ನು confirm ಮಾಡಲು ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು ಯಾವ ಸಮಸ್ಯೆಗೆ treatment ಬೇಕು ಅಂತ ತಿಳಿಸಬೇಕಾಗುತ್ತದೆ.", "ts": "2026-10-29T20:44:32.961385Z"}
+{"seq": 3, "role": "user", "text": "ಕನ್ಫರ್ಮ್ ಆಯ್ತಾ? ನನಗೆ ಬುಕ್ಕಿಂಗ್ number ಕೊಡಿ.", "ts": "2026-10-29T20:44:32.976164Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಸದ್ಯಕ್ಕೆ booking number generate ಆಗಿಲ್ಲ. ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು ಯಾವ ಸಮಸ್ಯೆಗೆ treatment ಬೇಕು ಅಂತ ಹೇಳಿದ್ರೆ, ನಾನು details note ಮಾಡ್ಕೊಂಡು front desk ಇಂದ confirm ಮಾಡಿಸ್ತೀನಿ. ನಿಮ್ಮ ಹೆಸರು ಹೇಳ್ತೀರಾ?", "ts": "2026-10-29T20:44:35.602360Z"}
+{"seq": 5, "role": "user", "text": "ಓಕೆ, ಥ್ಯಾಂಕ್ಸ್.", "ts": "2026-10-29T20:44:35.602360Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ಇಲ್ಲ, ಸದ್ಯಕ್ಕೆ booking confirm ಆಗಿಲ್ಲ ಮತ್ತು ಯಾವುದೇ booking number ಸಿಕ್ಕಿಲ್ಲ. ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು ಯಾವ ಸಮಸ್ಯೆಗೆ treatment ಬೇಕು ಅಂತ ತಿಳಿಸಿದರೆ, ನಾನು details note ಮಾಡ್ಕೊಂಡು front desk ಇಂದ confirm ಮಾಡಿಸ್ತೀನಿ.", "ts": "2026-10-29T20:44:37.721958Z"}

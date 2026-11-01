@@ -1,0 +1,6 @@
+{"turn_seq": 1, "ts": "2026-10-29T11:09:32.439715Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T11:09:34.603914Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-29T11:09:36.670248Z", "include_summary": true, "projection": ""}
+{"turn_seq": 7, "ts": "2026-10-29T11:09:38.889147Z", "include_summary": true, "projection": ""}
+{"turn_seq": 9, "ts": "2026-10-29T11:09:41.061105Z", "include_summary": true, "projection": ""}
+{"turn_seq": 11, "ts": "2026-10-29T11:09:41.791275Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: శ్రావణి | product: general service | email: sravani.audit@example.invalid | delivery_locality: మాదాపూర్ | requested_time: రేపు 10 AM | caller_email: sravani.audit@example.invalid | parts_extra_charge: parts కి extra charge పడతాయన్నమాట | confirmation_email: sravani.audit@example.invalid | latest_caller_correction: సరే, email confirmation లేకపోతే పర్వాలేదు. నా పేరు శ్రావణి, మాదాపూర్ locality. రేపు 10 AM కి technician confirm కదా? ఇక వేరే ఏమీ లేదు, just general service మాత్రమే. అంతా okay అయితే goodbye.\n[Preferences]\nservice_type: general service | requested_time: రేపు morning 10 A…"}

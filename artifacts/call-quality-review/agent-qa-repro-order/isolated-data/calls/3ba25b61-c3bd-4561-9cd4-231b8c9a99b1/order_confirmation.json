@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "call_id": "3ba25b61-c3bd-4561-9cd4-231b8c9a99b1",
+  "tenant_id": "bdf055df-bfa5-414b-8267-e72dee3d905a",
+  "agent_id": "3fbcddd3-459e-5611-acb7-c66db20dd4f1",
+  "status": "confirmed",
+  "quantity": 3,
+  "customer_name": "लक्ष्मी रेड्डी",
+  "delivery_address": "फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072",
+  "product": "2 x Herbal Hair Oil, 1 x Face Cream",
+  "confirmed_at": "2026-10-31T14:45:15.061941Z"
+}

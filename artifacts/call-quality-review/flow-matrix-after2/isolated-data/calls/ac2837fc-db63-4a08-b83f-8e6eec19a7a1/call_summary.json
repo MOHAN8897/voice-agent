@@ -1,0 +1,40 @@
+{
+  "call_id": "ac2837fc-db63-4a08-b83f-8e6eec19a7a1",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller expressed that they needed to discuss the offer with their family before proceeding. After the agent acknowledged this, the caller requested a callback on Sunday at 7 PM. The agent confirmed that they had logged the callback request and ended the call.",
+  "next_action": "Callback the caller on Sunday at 7 PM.",
+  "extracted_fields": {
+    "callback_time": "Sunday at 7 PM",
+    "phone": "+919876500502"
+  },
+  "facts": {
+    "callback_time": "Sunday at 7 PM",
+    "phone": "+919876500502"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:family-discussion",
+    "followup:callback",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:family-discussion"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Need to discuss with family first"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:02:26.535461Z",
+  "generation_ok": true
+}

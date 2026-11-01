@@ -1,0 +1,116 @@
+[
+  {
+    "case": "te-IN/sarvam/numbers",
+    "language": "te-IN",
+    "tts": "sarvam",
+    "probe": "numbers",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "రెండు split ACలు, ఒక window AC service చేస్తే total ఎంత అవుతుంది?",
+        "reply": "ఒక split AC కి five hundred ninety nine rupees, అలాగే ఒక window AC కి four hundred ninety nine rupees అవుతుంది. సో, రెండు split ACలు, ఒక window AC కి total one thousand six hundred ninety seven rupees అవుతుంది. మీకు మా team ని visit కి పంపించాలా?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 1.42,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "over_soft_length:246",
+          "three_sentences",
+          "heavy_english_mixing:33/169",
+          "english_number_words_in_indic_reply"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "five hundred ninety nine rupees... four hundred ninety nine rupees... one thousand six hundred ninety seven rupees",
+          "fix": "Telugu phone speechలో ‘ఐదు వందల తొంభై తొమ్మిది రూపాయలు’, ‘నాలుగు వందల తొంభై తొమ్మిది’, ‘మొత్తం వెయ్యి ఆరు వందల తొంభై ఏడు’ అని చెప్పడం మరింత సహజం; లేదా ‘five ninety nine’ లాంటి compact readout వాడాలి."
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "మీకు మా team ని visit కి పంపించాలా?",
+          "fix": "Caller కేవలం total అడిగారు, కాబట్టి price చెప్పి ఆపడం మంచిది; కావాలంటే చాలా సాఫ్ట్‌గా ‘booking కావాలంటే చెప్పండి’ అనవచ్చు."
+        }
+      ],
+      "verdict_note": "ధరలు, మొత్తం కరెక్ట్‌గా చెప్పారు, Telugu-English mix కూడా ఎక్కువగా సహజంగానే ఉంది. కానీ number readout కొంచెం TTS/English-scriptలా ఉంది, చివర్లో visit question కొద్దిగా sales pushలా వినిపిస్తుంది."
+    },
+    "passed": true
+  },
+  {
+    "case": "te-IN/sarvam/price",
+    "language": "te-IN",
+    "tts": "sarvam",
+    "probe": "price",
+    "variant": "clean",
+    "turns": [
+      {
+        "caller": "స్ప్లిట్ ఏసీ సర్వీసింగ్‌కి ఎంత ఖర్చవుతుంది?",
+        "reply": "Split AC servicing కి five hundred ninety nine rupees అవుతుంది. మీకు visit schedule చేయమంటారా?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 2.55,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "heavy_english_mixing:12/68",
+          "english_number_words_in_indic_reply"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "five hundred ninety nine rupees",
+          "fix": "తెలుగు కాల్‌లో సహజంగా 'ఐదు వందల తొంభై తొమ్మిది రూపాయలు' లేదా 'ఫైవ్ నైన్టీ నైన్ రూపీస్' అనడం బాగుంటుంది."
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "మీకు visit schedule చేయమంటారా?",
+          "fix": "ప్రశ్నకి ధర మాత్రమే అడిగారు; అవసరమైతే 'బుక్ చేయాలంటే చెప్పండి' లాంటి చిన్న optional line సరిపోతుంది, లేక ధర చెప్పి ఆగాలి."
+        }
+      ],
+      "verdict_note": "సమాధానం factually correct and brief. Telugu-English code-mix mostly natural, కానీ number readout కొంచెం TTS/Englishలా ఉంది, అలాగే caller అడగకముందే scheduling push కొద్దిగా అవసరం లేనిది."
+    },
+    "passed": true
+  }
+]

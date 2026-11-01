@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "caller_name": "sravani",
+    "product": "split AC",
+    "email": "sravani.audit@example.invalid",
+    "caller_email": "sravani.audit@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller provided contact details in this call.",
+  "summary": ""
+}

@@ -1,0 +1,7 @@
+{"turn_seq": 1, "ts": "2026-10-31T15:00:24.818677Z", "source": "model", "operations": [{"op": "set_fact", "key": "caller_name", "value": "Lakshmi Reddy"}], "applied": true, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T15:00:45.254326Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T15:00:58.783412Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T15:00:58.801220Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: Oh, अच्छा. Hair oil baguntunda? Ah price entha annaru, four ninety-nine a?\nassistant: అవును, కరెక్ట్. NatureVeda Herbal Hair Oil 200 ml కి ₹499 ఉంటుంది. మీకు ఏ details కావాలి?\nuser: Ayite organic ingredients use chestaru kada, results ela untayi?\nassistant: మా Hair Oil లో Amla, Bhringraj, Hibiscus, ఇంకా Coconut Oil ఉంటాయి. అయితే, మా products ఎలాంటి diseases ని cure చేయవు, అలాగే results కూడా guarantee ఇవ్వలేము."}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T15:01:17.487244Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T15:01:31.862573Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-31T15:01:47.375676Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

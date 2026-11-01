@@ -1,0 +1,56 @@
+{
+  "call_id": "021ec9b8-5a0a-4054-9417-8a01b574311e",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "வணிகர் வாடிக்கையாளரை அழைத்து Herbal Hair Oil 200 ml-இன் விலை மற்றும் மூலப்பொருட்கள் குறித்து விளக்கினார். வாடிக்கையாளர் லக்ஷ்மி ரெட்டி அதன் பயன்பாட்டு விவரங்களை கேட்டார், ஆனால் முகவர் அதை உறுதிப்படுத்த முடியவில்லை. டெலிவரி நேரம் குறித்த கேள்வியையும் முகவர் பதிலளிக்க முடியவில்லை. வாடிக்கையாளர் தற்போது வேலையில் பிஸியாக இருப்பதால், நாளை மாலை 6:30 மணிக்கு மீண்டும் அழைக்க வேண்டும் என்று கேட்டுக்கொண்டார், அதன்பிறகு அழைப்பு முடிந்தது.",
+  "summary_language": "ta-IN",
+  "summary_en": "The agent called the customer and shared details about the 200 ml Herbal Hair Oil priced at 499 rupees, including its ingredients. The customer asked how to use the product and when delivery would arrive, but the agent could not provide the exact application instructions or the delivery timeline. The customer, who identified herself as Lakshmi Reddy, stated she was busy at work and requested a callback for tomorrow evening at 6:30. The agent agreed to schedule this callback, and the call ended.",
+  "next_action": "Call the customer back tomorrow evening at 6:30.",
+  "extracted_fields": {
+    "callback_time": "Tomorrow evening at 6:30",
+    "caller_name": "Lakshmi Reddy",
+    "phone": "+919700000019",
+    "price": "499 rupees",
+    "product": "Herbal Hair Oil 200 ml"
+  },
+  "facts": {
+    "callback_time": "Tomorrow evening at 6:30",
+    "caller_name": "Lakshmi Reddy",
+    "phone": "+919700000019",
+    "price": "499 rupees",
+    "product": "Herbal Hair Oil 200 ml"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:callback-requested",
+    "custom:herbal-hair-oil",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:herbal-hair-oil",
+    "custom:callback-requested"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Caller was busy at work."
+  ],
+  "unanswered_questions": [
+    "When will the delivery arrive?",
+    "What are the exact instructions on how to apply the product?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T17:02:46.320607Z",
+  "generation_ok": true
+}

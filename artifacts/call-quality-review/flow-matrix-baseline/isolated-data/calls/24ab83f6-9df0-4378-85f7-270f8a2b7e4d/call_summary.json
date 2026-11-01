@@ -1,0 +1,63 @@
+{
+  "call_id": "24ab83f6-9df0-4378-85f7-270f8a2b7e4d",
+  "language_callback": null,
+  "disposition": "site_visit_planned",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, initiated the call expressing that the proposed 3 kW rooftop system was too expensive. The agent explained the pricing structure, including the upfront cost of 1,95,000 rupees, the 78,000 rupee government subsidy, the net cost of 1,17,000 rupees, and the monthly EMI option of 2,999 rupees for 48 months. Although the caller initially objected to the cost, they reconsidered after hearing the EMI details and agreed to book a free site survey. Kiran provided their name as Kiran, confirmed their locality as Velachery, and requested Saturday as their preferred slot. The agent acknowledged and noted these details, then asked if they should finalize the booking. The caller responded with thanks, and the agent concluded the call with a goodbye.",
+  "next_action": "Agent to finalize the free site survey booking for Saturday in Velachery.",
+  "extracted_fields": {
+    "budget": "Too expensive initially, accepted EMI option",
+    "caller_name": "Kiran",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "name": "Kiran",
+    "phone": "+919876500501",
+    "requested_time": "Saturday",
+    "slot": "Saturday"
+  },
+  "facts": {
+    "budget": "Too expensive initially, accepted EMI option",
+    "caller_name": "Kiran",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "name": "Kiran",
+    "phone": "+919876500501",
+    "requested_time": "Saturday",
+    "slot": "Saturday"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:free-survey",
+    "custom:rooftop-system",
+    "followup:site_visit",
+    "intent:information",
+    "intent:purchase",
+    "outcome:site_visit_planned",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "signal:price_sensitive",
+    "signal:objection",
+    "followup:site_visit",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:rooftop-system",
+    "custom:free-survey",
+    "custom:velachery-locality"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "The cost is too high"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:32:58.998008Z",
+  "generation_ok": true
+}

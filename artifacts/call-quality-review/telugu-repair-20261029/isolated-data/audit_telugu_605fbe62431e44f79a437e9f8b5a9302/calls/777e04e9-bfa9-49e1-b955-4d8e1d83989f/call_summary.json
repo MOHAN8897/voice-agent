@@ -1,0 +1,56 @@
+{
+  "call_id": "777e04e9-bfa9-49e1-b955-4d8e1d83989f",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "The caller was looking for part-time Python training and asked about the fees and whether paying that day could secure a high-salary job guarantee. The agent quoted a total fee of ₹8,999 and clarified that the program provides 100% placement assistance but does not guarantee a job or salary. The caller accepted that limitation and asked what the placement assistance includes, which companies participate, and how the training works. The agent explained that assistance includes resume building, interview preparation, and job referrals, but could not provide details about participating companies or the training format. The caller said no further information was needed, thanked the agent, and the call ended without a booking or follow-up arrangement.",
+  "next_action": null,
+  "extracted_fields": {
+    "course": "Python with Data Analytics",
+    "fee": "₹8,999",
+    "job_guarantee": "Not offered",
+    "phone": "+12025550120",
+    "placement_assistance": "Resume building, interview preparation, and job referrals",
+    "training_schedule": "Part-time"
+  },
+  "facts": {
+    "course": "Python with Data Analytics",
+    "fee": "₹8,999",
+    "job_guarantee": "Not offered",
+    "phone": "+12025550120",
+    "placement_assistance": "Resume building, interview preparation, and job referrals",
+    "training_schedule": "Part-time"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:data-analytics",
+    "custom:placement-assistance",
+    "custom:python-training",
+    "intent:information",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:pricing",
+    "intent:purchase",
+    "signal:objection",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-training",
+    "custom:data-analytics",
+    "custom:placement-assistance"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "The caller initially requested a high-salary job guarantee, which the agent could not provide."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:51:36.254480Z",
+  "generation_ok": true
+}

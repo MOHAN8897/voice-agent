@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "product": "visiting cards"
+  },
+  "preferences": {
+    "finish": "matte"
+  },
+  "important_context": "",
+  "summary": "assistant: Minimum order quantity one hundred cards ఉంటుంది. Matte finish cards one hundred కి three hundred fifty rupees అవుతుంది. మీరు design పంపిన తర్వాత మేము quote ఇస్తాము.\nuser: సరే, 100 cards minimum order అంటే నాకు okay. ఈ quote లో GST కూడా కలుపుకుని ఉందా?\nassistant: ఈ quote లో GST కలుపుకున్నారా లేదా అనేది ప్రస్తుతం తెలియదు.\nuser: సరే, GST వివరాలు తర్వాత తెలుసుకుంటాను. నాకు ఈ information చాలు, ఇంకేమీ అవసరం లేదు. ధన్యవాదాలు.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+}

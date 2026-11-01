@@ -1,0 +1,35 @@
+{
+  "call_id": "dfb206f1-2ffd-4eec-be66-4f628128e7fa",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 1.0,
+  "summary_te": "",
+  "summary_en": "The caller initially stated they were busy and requested a callback later. They expressed uncertainty about when exactly they would be available, saying 'sometime later.' The agent acknowledged this, noted the request for a follow-up, and confirmed they would call back. The caller agreed to the callback and ended the call.",
+  "next_action": "Call the caller back at a later time as requested.",
+  "extracted_fields": {
+    "phone": "+919876500504"
+  },
+  "facts": {
+    "phone": "+919876500504"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "followup:callback",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [
+    "Caller stated they are busy right now."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:59:39.416884Z",
+  "generation_ok": true
+}

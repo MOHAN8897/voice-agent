@@ -1,0 +1,87 @@
+{
+  "disposition": "new_lead",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the status of their order, providing the order ID FC10234 and their name as Kiran. The agent explained that live order status checks cannot be performed over the phone and requested that the caller's details be passed to the support team to investigate and call back. The caller did not object but simply thanked the agent and ended the call when asked if they were busy. No concrete next steps, callbacks, or appointments were agreed upon.",
+  "next_action": null,
+  "extracted_fields": {
+    "name": "Kiran",
+    "order_id": "FC10234",
+    "phone": "+919876500507"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "followup:callback"
+  ],
+  "custom_tags": [
+    "custom:order-status"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T11:03:17.617152Z",
+  "generation_ok": true,
+  "facts": {
+    "name": "Kiran",
+    "order_id": "FC10234",
+    "phone": "+919876500507"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:order-status",
+    "followup:callback",
+    "intent:information",
+    "outcome:new_lead",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "27db897f-f060-485d-8e43-65801b16205d",
+    "agentId": "1a626e0b-0c28-442c-b5d9-9b22412e8af4",
+    "stage": "new",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 10,
+    "band": "cold",
+    "disposition": "new_lead",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

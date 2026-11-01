@@ -1,0 +1,44 @@
+{
+  "call_id": "1c523803-3d31-49ca-9125-69e166517d08",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the cost of split AC servicing. The agent quoted a price of ₹599 and specified that service is only available in Madhapur, Gachibowli, Kondapur, and Kukatpally. The caller indicated that this information was sufficient for their needs, thanked the agent, and ended the call without scheduling a visit or sharing their location details.",
+  "next_action": "No further action required as the caller's query was resolved and they concluded the call.",
+  "extracted_fields": {
+    "budget": "₹599",
+    "phone": "+919876500052",
+    "service": "split AC servicing"
+  },
+  "facts": {
+    "budget": "₹599",
+    "phone": "+919876500052",
+    "service": "split AC servicing"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:ac-servicing",
+    "custom:pricing-query",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "signal:price_sensitive",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:ac-servicing",
+    "custom:pricing-query"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:38:46.040958Z",
+  "generation_ok": true
+}

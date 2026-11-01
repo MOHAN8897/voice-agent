@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "requested_time": "कल सुबह 11 बजे",
+    "caller_name": "किरण"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "assistant: ठीक है, समझ गई। दाँत के दर्द के लिए कल सुबह 11 बजे का time नोट कर लिया है। Appointment book करने के लिए अपना नाम बता दीजिए।\nuser: मेरा नाम किरण है।\nassistant: धन्यवाद किरण। कल सुबह 11 बजे का समय नोट कर लिया है। Appointment book करने के लिए कृपया बताएँ कि दाँत में exactly क्या problem हो रही है आपको?\nuser: क्या मेरा appointment confirm हो गया है?\nassistant: अभी तक appointment confirm नहीं हुआ है, क्योंकि आपकी details अभी पूरी नहीं हैं। हमारी फ्रंट डेस्क आपकी booking confirm कर देगी। क्या आपका कोई और सवाल है?\nuser: ठीक है, thanks।"
+}

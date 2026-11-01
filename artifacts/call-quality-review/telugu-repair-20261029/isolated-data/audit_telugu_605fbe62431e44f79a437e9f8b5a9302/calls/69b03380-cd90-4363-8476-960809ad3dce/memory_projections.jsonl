@@ -1,0 +1,8 @@
+{"turn_seq": 1, "ts": "2026-10-29T17:36:44.059601Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T17:36:50.024985Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: split AC | delivery_locality: మాదాపూర్"}
+{"turn_seq": 5, "ts": "2026-10-29T17:37:01.270439Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: split AC | delivery_locality: మాదాపూర్"}
+{"turn_seq": 7, "ts": "2026-10-29T17:37:06.279391Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: split AC | delivery_locality: మాదాపూర్"}
+{"turn_seq": 9, "ts": "2026-10-29T17:37:19.577571Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: split AC | delivery_locality: మాదాపూర్"}
+{"turn_seq": 11, "ts": "2026-10-29T17:37:27.815383Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: split AC | delivery_locality: మాదాపూర్"}
+{"turn_seq": 13, "ts": "2026-10-29T17:37:34.662652Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: split AC | delivery_locality: మాదాపూర్ | requested_time: రేపు 10 AM"}
+{"turn_seq": 15, "ts": "2026-10-29T17:37:37.932318Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: split AC | delivery_locality: మాదాపూర్ | requested_time: రేపు 10 AM"}

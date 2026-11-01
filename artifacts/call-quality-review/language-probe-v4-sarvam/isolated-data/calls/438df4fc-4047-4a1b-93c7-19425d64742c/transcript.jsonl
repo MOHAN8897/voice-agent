@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "How much do you charge for split AC servicing?", "ts": "2026-10-29T19:37:59.414906Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Split AC servicing is 599 rupees. Which area are you located in?", "ts": "2026-10-29T19:37:59.928281Z", "brain_latency_ms": 515}
+{"seq": 3, "role": "user", "text": "Actually, it is a window AC, not a split AC. How much would the service cost?", "ts": "2026-10-29T19:37:59.941428Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Window AC servicing is 499 rupees. Is your location in Madhapur, Gachibowli, Kondapur, or Kukatpally?", "ts": "2026-10-29T19:38:00.489979Z", "brain_latency_ms": 551}

@@ -1,0 +1,13 @@
+{
+  "facts": {
+    "qualification": "B.Com",
+    "email": "kiran.audit@example.invalid",
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్"
+  },
+  "preferences": {
+    "batch": "weekend"
+  },
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "user: సరే, weekend batch అయితే బాగుంటుంది. నా వివరాలు ఒకసారి note చేసుకోండి — పేరు కిరణ్, qualification B.Com, email kiran.audit@example.invalid. నా contact ని మీ system లో create చేయగలరా?\nassistant: మీ contact create అయింది. అలాగే మీ enquiry కూడా save చేశాను.\nuser: నా contact నిజంగా system లో save అయిందో లేదో ఒకసారి confirm చేస్తారా? ఒకవేళ అవ్వకపోతే, దయచేసి నా details మళ్ళీ save చేయండి — పేరు కిరణ్, qualification B.Com, email kiran.audit@example.invalid.\nassistant: మీ contact system లో save అయింది, అలాగే enquiry కూడా save అయింది."
+}

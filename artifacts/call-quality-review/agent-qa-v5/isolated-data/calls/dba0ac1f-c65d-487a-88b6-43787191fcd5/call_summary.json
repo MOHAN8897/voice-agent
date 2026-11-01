@@ -1,0 +1,80 @@
+{
+  "call_id": "dba0ac1f-c65d-487a-88b6-43787191fcd5",
+  "language_callback": {
+    "status": "requested",
+    "kind": "language_switch",
+    "id": "2694d5be-c671-418b-a8d8-974d29aef87e",
+    "caller_language": "hi-IN",
+    "configured_language": "en-IN",
+    "summary": "Caller asked to continue in Hindi; call back in Hindi with the same agent."
+  },
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_language": "en-IN",
+  "summary_en": "The business's agent called the customer to discuss herbal products. The customer inquired about aloe vera juice priced at 399 rupees and hair oil priced at 499 rupees, but objected that the hair oil was too expensive. The agent could not confirm whether the aloe vera juice contained added sugar or preservatives, nor could they verify delivery availability to Kukatpally, Hyderabad. The customer requested a callback in Hindi tomorrow morning around 11, which the agent agreed to schedule. The call ended after the agent confirmed the callback note. Language handoff: Caller asked to continue in Hindi; call back in Hindi with the same agent.",
+  "next_action": "Call back in Hindi with the same agent (Callback needed in another language). No callback time has been booked.",
+  "extracted_fields": {
+    "callback_time": "tomorrow morning around 11",
+    "delivery_locality": "Kukatpally, Hyderabad",
+    "language_preference": "Hindi",
+    "locality": "Kukatpally, Hyderabad",
+    "phone": "+919700000006",
+    "price_discussed": "399 rupees, 499 rupees",
+    "product": "aloe vera juice",
+    "product_interest": "aloe vera juice, hair oil",
+    "preferred_language": "hi-IN",
+    "callback_requested": "true",
+    "requested_language": "hi-IN",
+    "language_switch": "true"
+  },
+  "facts": {
+    "callback_time": "tomorrow morning around 11",
+    "delivery_locality": "Kukatpally, Hyderabad",
+    "language_preference": "Hindi",
+    "locality": "Kukatpally, Hyderabad",
+    "phone": "+919700000006",
+    "price_discussed": "399 rupees, 499 rupees",
+    "product": "aloe vera juice",
+    "product_interest": "aloe vera juice, hair oil",
+    "preferred_language": "hi-IN",
+    "callback_requested": "true",
+    "requested_language": "hi-IN",
+    "language_switch": "true"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "contact:preferred_language",
+    "custom:hair-growth",
+    "custom:herbal-products",
+    "followup:callback",
+    "followup:language_switch",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral",
+    "intent:information",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:hair-growth"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "The customer felt 499 rupees was too high for the hair oil."
+  ],
+  "unanswered_questions": [
+    "Does the aloe vera juice contain added sugar or preservatives?",
+    "Is delivery available to Kukatpally, Hyderabad?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T16:14:35.593589Z",
+  "generation_ok": true
+}

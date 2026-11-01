@@ -1,0 +1,5 @@
+{"turn_seq": 1, "ts": "2026-10-30T10:38:19.087592Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-30T10:38:21.303044Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-30T10:38:24.364281Z", "include_summary": true, "projection": ""}
+{"turn_seq": 7, "ts": "2026-10-30T10:38:29.183598Z", "include_summary": false, "projection": ""}
+{"turn_seq": 9, "ts": "2026-10-30T10:38:30.403517Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: किरण | delivery_locality: Velachery | requested_time: शनिवार"}

@@ -1,0 +1,59 @@
+{
+  "call_id": "5e6d6718-1c45-4a7c-9476-256b20a697e5",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller asked about general servicing for a split AC, including the price and whether a technician could visit the next morning around 10 AM. The agent quoted ₹599 for general servicing and said a next-day visit window from 10 AM to 6 PM was available, then asked whether the caller wanted an appointment. The caller accepted the ₹599 price but asked whether spare parts would cost extra. The agent explained that any replacement parts would be charged additionally at actual MRP and that the technician would provide an exact quote after inspection; no fixed parts price could be given over the phone. The caller said the AC-service questions were clear. Before ending, the caller also asked about an inspection fee, and the agent stated that fridge inspection costs ₹250, waived if repair is completed through the technician. The caller acknowledged the information and ended the call. No appointment was explicitly confirmed.",
+  "next_action": null,
+  "extracted_fields": {
+    "available_visit_window": "10 AM to 6 PM",
+    "fridge_inspection_fee": "₹250, waived if repair is completed through the technician",
+    "phone": "+12025550112",
+    "product": "Split AC",
+    "requested_visit_time": "Next morning around 10 AM",
+    "service": "General servicing",
+    "service_price": "₹599",
+    "spare_parts_charges": "Additional, at actual MRP"
+  },
+  "facts": {
+    "available_visit_window": "10 AM to 6 PM",
+    "fridge_inspection_fee": "₹250, waived if repair is completed through the technician",
+    "phone": "+12025550112",
+    "product": "Split AC",
+    "requested_visit_time": "Next morning around 10 AM",
+    "service": "General servicing",
+    "service_price": "₹599",
+    "spare_parts_charges": "Additional, at actual MRP"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:next-day-slot",
+    "custom:spare-parts",
+    "custom:split-ac-service",
+    "intent:information",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:pricing",
+    "intent:information",
+    "intent:purchase",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:split-ac-service",
+    "custom:next-day-slot",
+    "custom:spare-parts"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Spare parts may incur additional charges beyond the ₹599 service fee."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:43:57.904508Z",
+  "generation_ok": true
+}

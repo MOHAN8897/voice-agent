@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "Okay, ನಾನು ಸ್ವಲ್ಪ think ಮಾಡಿ later ಮತ್ತೆ call ಮಾಡ್ತೀನಿ.", "ts": "2026-10-29T19:37:38.588574Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ಸರಿ, ತೊಂದ್ರೆ ಇಲ್ಲ. ನೀವು ಯಾವಾಗ ಬೇಕಾದ್ರೂ call ಮಾಡಬಹುದು. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಿದ್ರೆ ತಿಳಿಸಿ.", "ts": "2026-10-29T19:37:39.431201Z", "brain_latency_ms": 854}
+{"seq": 3, "role": "user", "text": "ಹೌದು, ಈಗ ಬೇಡ. ನಾನು think ಮಾಡಿ maybe later call back ಮಾಡ್ತೀನಿ.", "ts": "2026-10-29T19:37:39.453118Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಸರಿ, ಅರ್ಥ ಆಯ್ತು. ನೀವು ಆರಾಮಾಗಿ ಯೋಚಿಸಿ ಆಮೇಲೆ call ಮಾಡಿ. ಧನ್ಯವಾದಗಳು.", "ts": "2026-10-29T19:37:40.008903Z", "brain_latency_ms": 561}

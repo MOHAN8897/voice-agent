@@ -1,0 +1,6 @@
+{"turn_seq": 1, "ts": "2026-10-31T14:17:46.506791Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T14:18:08.843193Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T14:18:30.598024Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T14:18:30.611931Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: అవును, మీ హెర్బల్ హెయిర్ ఆయిల్ price ఎంత ఉందో కొంచెం చెప్తారా?\nassistant: మా నేచర్‌వేద హెర్బల్ హెయిర్ ఆయిల్ 200 ml ధర ₹499 ఉంటుంది. ఇందులో ఉసిరి, భృంగరాజ్, మందార మరియు కొబ్బరి నూనె ఉంటాయి, ఇది సాధారణ జుట్టు మరియు తల సంరక్షణ కోసం ఉపయోగపడుతుంది. మీరు వేరే product గురించి వినాలనుకుంటున్నారా?\nuser: అది మంచిగా ఉందండి, మరి దీనికి ఏమైనా delivery charges ఉన్నాయా?\nassistant: ఆ విషయం నాకు తెలియదు. Delivery charges గురించి ప్రస్తుతానికి మా దగ్గర ఆ వివరాలు లేవు. మీరు order చేయాలనుకుంటే నేను check చేసి చెప్తాను."}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T14:18:48.131008Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T14:19:08.087589Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

@@ -1,0 +1,131 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The business's agent called the customer to discuss herbal products. The customer inquired about aloe vera juice priced at 399 rupees and hair oil priced at 499 rupees, but objected that the hair oil was too expensive. The agent could not confirm whether the aloe vera juice contained added sugar or preservatives, nor could they verify delivery availability to Kukatpally, Hyderabad. The customer requested a callback in Hindi tomorrow morning around 11, which the agent agreed to schedule. The call ended after the agent confirmed the callback note. Language handoff: Caller asked to continue in Hindi; call back in Hindi with the same agent.",
+  "next_action": "Call back in Hindi with the same agent (Callback needed in another language). No callback time has been booked.",
+  "extracted_fields": {
+    "callback_time": "tomorrow morning around 11",
+    "delivery_locality": "Kukatpally, Hyderabad",
+    "language_preference": "Hindi",
+    "locality": "Kukatpally, Hyderabad",
+    "phone": "+919700000006",
+    "price_discussed": "399 rupees, 499 rupees",
+    "product": "aloe vera juice",
+    "product_interest": "aloe vera juice, hair oil",
+    "preferred_language": "hi-IN",
+    "callback_requested": "true",
+    "requested_language": "hi-IN",
+    "language_switch": "true"
+  },
+  "objections": [
+    "The customer felt 499 rupees was too high for the hair oil."
+  ],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral",
+    "intent:information",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:hair-growth"
+  ],
+  "unanswered_questions": [
+    "Does the aloe vera juice contain added sugar or preservatives?",
+    "Is delivery available to Kukatpally, Hyderabad?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T16:14:35.593589Z",
+  "generation_ok": true,
+  "summary_language": "en-IN",
+  "language_callback": {
+    "status": "requested",
+    "kind": "language_switch",
+    "id": "2694d5be-c671-418b-a8d8-974d29aef87e",
+    "caller_language": "hi-IN",
+    "configured_language": "en-IN",
+    "summary": "Caller asked to continue in Hindi; call back in Hindi with the same agent."
+  },
+  "language_switch": {
+    "requested_language": "hi-IN",
+    "original_language": "en-IN"
+  },
+  "facts": {
+    "callback_time": "tomorrow morning around 11",
+    "delivery_locality": "Kukatpally, Hyderabad",
+    "language_preference": "Hindi",
+    "locality": "Kukatpally, Hyderabad",
+    "phone": "+919700000006",
+    "price_discussed": "399 rupees, 499 rupees",
+    "product": "aloe vera juice",
+    "product_interest": "aloe vera juice, hair oil",
+    "preferred_language": "hi-IN",
+    "callback_requested": "true",
+    "requested_language": "hi-IN",
+    "language_switch": "true"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "contact:preferred_language",
+    "custom:hair-growth",
+    "custom:herbal-products",
+    "followup:callback",
+    "followup:language_switch",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "b7d1a765-4ddd-434d-87a8-ecb61bb6b7b7",
+    "agentId": "8fbc9848-05fa-4d72-b6be-57c2ae899e1c",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 60,
+    "band": "warm",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "callback_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

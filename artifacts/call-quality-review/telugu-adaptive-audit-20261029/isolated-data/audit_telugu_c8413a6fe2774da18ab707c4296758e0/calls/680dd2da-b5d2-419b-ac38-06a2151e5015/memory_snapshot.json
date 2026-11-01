@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_email": "ramesh.audit@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller provided contact details in this call.",
+  "summary": ""
+}

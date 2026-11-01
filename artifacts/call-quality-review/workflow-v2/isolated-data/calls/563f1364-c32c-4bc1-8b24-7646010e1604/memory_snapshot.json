@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "requested_time": "రేపు ఉదయం 11"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "assistant: నేను ఇప్పుడే booking confirm చేయలేను. రేపు ఉదయం 11 గంటలకి visit కోసం మీ పేరు, ఏ appliance, సమస్య ఏమిటి, locality వివరాలు చెబితే మా team దాన్ని confirm చేస్తారు.\nuser: Confirm అయిందా లేదా? నాకు booking number ఇవ్వండి.\nassistant: నేను ఇప్పుడే booking confirm చేయలేను, కాబట్టి booking number కూడా ఇవ్వలేను. మీ details తీసుకుని మా team confirm చేస్తేనే number వస్తుంది. మీ పేరు చెప్తారా?\nuser: Okay, thanks.\nassistant: నేను ఇప్పుడే booking confirm చేయలేను, కాబట్టి booking number కూడా ఇవ్వలేను. మీ details తీసుకుని మా team confirm చేస్తేనే number వస్తుంది. మీకు ఇంకా ఏదైనా సహాయం కావాలా?"
+}

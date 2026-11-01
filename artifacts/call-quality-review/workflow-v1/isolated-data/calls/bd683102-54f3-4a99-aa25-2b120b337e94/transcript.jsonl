@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "I want 200 matte visiting cards.", "ts": "2026-10-29T20:22:52.619707Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ശരി. Matte finish visiting cards-ന് 100 എണ്ണത്തിന് ₹350 ആണ് rate. അപ്പൊ 200 എണ്ണത്തിന് ₹700 ആകും. Minimum order 100 cards ആണ്. Order place ചെയ്യാൻ നിങ്ങളുടെ പേരും delivery address-ഉം ഒന്ന് പറയാമോ?", "ts": "2026-10-29T20:22:56.637179Z"}
+{"seq": 3, "role": "user", "text": "My name is Ravi Kumar. Deliver to 12 MG Road, Vijayawada.", "ts": "2026-10-29T20:22:56.638971Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Draft-ൽ പറഞ്ഞിരിക്കുന്ന total cost (₹700) മാത്രമേ ഉറപ്പിക്കാൻ കഴിയൂ. Matte visiting cards-ന് 100 എണ്ണത്തിന് ₹350 ആണ് rate, അപ്പൊ 200 എണ്ണത്തിന് ₹700 ആകും. Minimum order 100 cards ആണ്.", "ts": "2026-10-29T20:23:01.142656Z"}
+{"seq": 5, "role": "user", "text": "Yes, please confirm the order.", "ts": "2026-10-29T20:23:01.143658Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "Order confirm ആയിട്ടുണ്ട്. 200 matte visiting cards-ന് ₹700 ആണ് total amount. Delivery address 12 MG Road, Vijayawada ആണ്. Payment method cash on delivery ആണ്.", "ts": "2026-10-29T20:23:03.792275Z"}
+{"seq": 7, "role": "user", "text": "Thanks, that's all.", "ts": "2026-10-29T20:23:03.793786Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "നിങ്ങളുടെ സമയത്തിന് നന്ദി. നമസ്കാരം.", "ts": "2026-10-29T20:23:04.808372Z"}

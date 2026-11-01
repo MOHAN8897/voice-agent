@@ -1,0 +1,8 @@
+{"turn_seq": 1, "ts": "2026-10-31T13:39:17.572835Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T13:39:36.216331Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T13:39:52.307959Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T13:39:52.318120Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: नमस्ते प्रिया जी। हाँ, बताइए आप लोग क्या-क्या बेचते हैं?\nassistant: हमारे पास चार main products हैं। Hair oil ₹499 का है 200 ml के लिए, जिसमें Amla, Bhringraj, Hibiscus और Coconut Oil है। आपको किस product के बारे में और details चाहिए?\nuser: अच्छा, hair oil natural ingredients वाला लग रहा है।\nassistant: हाँ, बिल्कुल। Hair oil में Amla, Bhringraj, Hibiscus और Coconut Oil है, जो routine hair और scalp care के लिए अच्छा है।\nuser: अच्छा, और इस hair oil का shipping charges कुछ लगता है क्या?\nassistant: माफ़ कीजिए, shipping charges की जानकारी अभी उपलब्ध नहीं है।"}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T13:40:04.405273Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T13:40:19.289985Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-31T13:40:29.577955Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 13, "ts": "2026-10-31T13:40:49.048190Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

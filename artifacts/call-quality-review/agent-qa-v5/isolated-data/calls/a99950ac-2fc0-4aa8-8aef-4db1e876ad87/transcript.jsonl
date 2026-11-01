@@ -1,0 +1,20 @@
+{"seq": 1, "role": "user", "text": "ಹೌದು, ಹೇಳಿ. ನಾನು NatureVeda ಇಂದ call receive ಮಾಡ್ತಿದ್ದೀನಿ.", "ts": "2026-10-31T16:31:40.100824Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ಸರಿ. ನಮ್ಮ ಹತ್ರ Herbal Hair Oil ₹499-ಗೆ, Aloe Vera Juice ₹399-ಗೆ, Face Cream ₹599-ಗೆ, ಮತ್ತೆ Ashwagandha Capsules ₹699-ಗೆ ಇದೆ. ಇವುಗಳಲ್ಲಿ ಯಾವುದರ ಬಗ್ಗೆ ತಿಳ್ಕೊಬೇಕಿತ್ತು?", "ts": "2026-10-31T16:31:42.187255Z"}
+{"seq": 3, "role": "user", "text": "Face cream ಬಗ್ಗೆ ಸ್ವಲ್ಪ details ಕೊಡ್ತೀರಾ? ಅದರಲ್ಲಿ ಯಾವ ingredients ಇದೆ ಅಂತ ತಿಳ್ಕೊಬೇಕಿತ್ತು.", "ts": "2026-10-31T16:31:59.157594Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಖಂಡಿತ. NatureVeda Herbal Face Cream ₹599-ಗೆ 50 g ಬರುತ್ತೆ. ಇದರಲ್ಲಿ Neem, Turmeric, ಮತ್ತೆ Aloe Vera ingredients ಇದೆ, ಇದು skin moisturize ಮಾಡೋಕೆ ಮತ್ತೆ routine skin care-ಗೆ ಒಳ್ಳೇದು.", "ts": "2026-10-31T16:32:00.595731Z"}
+{"seq": 5, "role": "user", "text": "ಸರಿ, ಇದು ಚೆನ್ನಾಗಿ ಕಾಣ್ತಿದೆ. ಇದನ್ನ ಹೆಂಗೆ use ಮಾಡ್ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?", "ts": "2026-10-31T16:32:17.564512Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "Face cream-ನ clean ಆಗಿರೋ ಮುಖಕ್ಕೆ ಸ್ವಲ್ಪ ಪ್ರಮಾಣದಲ್ಲಿ ಹಚ್ಚಿ, gentle ಆಗಿ massage ಮಾಡಿ. ಆಮೇಲೆ ಅದು ಚೆನ್ನಾಗಿ absorb ಆಗೋವರೆಗೂ ಬಿಡಿ. ನಿಮಗೆ order ಮಾಡ್ಬೇಕಾ?", "ts": "2026-10-31T16:32:18.896738Z"}
+{"seq": 7, "role": "user", "text": "ಹೌದು, ನಾನು order ಮಾಡ್ತೀನಿ. ಎರಡು bottles hair oil ಮತ್ತೆ ಒಂದು face cream ತಗೊಳ್ತೀನಿ. Total price ಎಷ್ಟಾಗುತ್ತೆ ಅಂತ ಹೇಳ್ತೀರಾ?", "ts": "2026-10-31T16:32:37.248108Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "ಸರಿ. ಎರಡು bottles hair oil ಅಂದ್ರೆ 2 times 499, ಅಂದ್ರೆ ₹998 ಆಗುತ್ತೆ. Order confirm ಮಾಡ್ಲಾ?", "ts": "2026-10-31T16:32:40.101181Z"}
+{"seq": 9, "role": "user", "text": "ಸರಿ, total ₹998 ಜೊತೆಗೆ face cream ₹599 ಸೇರಿ ₹1597 ಆಗುತ್ತೆ ಅಲ್ವಾ? ಈ order-ಗೆ ಏನಾದ್ರೂ discount ಇದ್ಯಾ?", "ts": "2026-10-31T16:32:53.591931Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "ಈ order-ಗೆ discount ಇದೆಯಾ ಅನ್ನೋ ಮಾಹಿತಿ ನನ್ನ ಬಳಿ ಇಲ್ಲ.", "ts": "2026-10-31T16:32:56.240385Z"}
+{"seq": 11, "role": "user", "text": "ಸರಿ, discount ಇಲ್ಲ ಅಂದ್ರೆ ಪರವಾಗಿಲ್ಲ ಬಿಡಿ. ಈ order delivery ಆಗೋಕೆ ಎಷ್ಟು time ತಗೊಳ್ಳುತ್ತೆ ಅಂತ ಹೇಳ್ತೀರಾ?", "ts": "2026-10-31T16:33:06.869554Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "ಆ ಮಾಹಿತಿ ನನ್ನ ಬಳಿ ಇಲ್ಲ. Delivery time ಬಗ್ಗೆ exact ಆಗಿ ಹೇಳ್ಬೇಕಂದ್ರೆ, ನಮ್ಮ team ಕಡೆಯಿಂದ confirm ಮಾಡ್ಬೇಕಾಗುತ್ತೆ. ನಿಮ್ಮ order details ತಗೊಂಡು note ಮಾಡ್ಲಾ?", "ts": "2026-10-31T16:33:10.425950Z"}
+{"seq": 13, "role": "user", "text": "ಸರಿ, details ತಗೊಂಡು note ಮಾಡ್ಕೊಳ್ಳಿ. ನನ್ನ ಹೆಸರು Lakshmi Reddy.", "ts": "2026-10-31T16:33:25.119127Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "Lakshmi Reddy ಅವರ details ತಗೊಂಡು note ಮಾಡ್ಕೊಳ್ತೀನಿ. ನಿಮ್ಮ delivery address ಹೇಳ್ತೀರಾ? order ಕಳಿಸೋಕೆ ಅದು ಬೇಕಾಗುತ್ತೆ.", "ts": "2026-10-31T16:33:27.016251Z"}
+{"seq": 15, "role": "user", "text": "ನನ್ನ address Flat 302, Sai Residency, Kukatpally, Hyderabad 500072.", "ts": "2026-10-31T16:33:39.417897Z", "partial": false}
+{"seq": 16, "role": "assistant", "text": "ಸರಿ, Flat 302, Sai Residency, Kukatpally, Hyderabad 500072 ಅಂತ note ಮಾಡ್ಕೊಂಡಿದ್ದೀನಿ. ಈಗ order confirm ಮಾಡ್ಲಾ?", "ts": "2026-10-31T16:33:40.889328Z"}
+{"seq": 17, "role": "user", "text": "ಸರಿ, order confirm ಮಾಡ್ತೀನಿ. ಮುಂದೆ ಏನಾಗುತ್ತೆ ಅಂತ ಹೇಳ್ತೀರಾ?", "ts": "2026-10-31T16:33:52.591339Z", "partial": false}
+{"seq": 18, "role": "assistant", "text": "Order confirm ಆದ್ಮೇಲೆ ನಮ್ಮ team ಅದನ್ನ process ಮಾಡ್ತಾರೆ. Delivery ಬಗ್ಗೆ ನಮ್ಮ team ಕಡೆಯಿಂದ ನಿಮಗೊಂದು update ಬರುತ್ತೆ.", "ts": "2026-10-31T16:33:54.467113Z"}
+{"seq": 19, "role": "user", "text": "ಸರಿ, team ಕಡೆಯಿಂದ update ಬರುತ್ತೆ ಅಂದ್ರೆ ಸಾಕು. ನನ್ನ mobile number 9949012345, ಇದನ್ನ ಕೂಡ note ಮಾಡ್ಕೊಳ್ತೀರಾ?", "ts": "2026-10-31T16:34:09.127209Z", "partial": false}
+{"seq": 20, "role": "assistant", "text": "ಹೌದು, ನಿಮ್ಮ mobile number ಅಂತ note ಮಾಡ್ಕೊಂಡಿದ್ದೀನಿ. ಈಗ order confirm ಮಾಡ್ಲಾ?", "ts": "2026-10-31T16:34:10.958025Z"}

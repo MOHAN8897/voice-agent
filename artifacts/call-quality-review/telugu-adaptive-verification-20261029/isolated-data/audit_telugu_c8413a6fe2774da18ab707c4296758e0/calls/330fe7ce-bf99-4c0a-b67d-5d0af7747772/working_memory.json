@@ -1,0 +1,13 @@
+{
+  "facts": {
+    "product": "split AC",
+    "requested_time": "రేపు 10 AM",
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "caller_email": "sravani.audit@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "assistant: మాదాపూర్ మా service area లోకే వస్తుంది. Extra charges ఏమీ ఉండవు, five hundred ninety nine rupees మాత్రమే అవుతుంది. రేపు ఉదయం 10 AM slot కి మీ పేరు, split AC issue చెప్తే booking note చేసుకుంటాను, సరేనా?\nuser: సరే, మాదాపూర్ కి five hundred ninety nine rupees charge అవుతుంది కదా. రేపు 10 AM కి booking note చేసుకోండి. ఇంకేమైనా details కావాలా?\nassistant: అవును, five hundred ninety nine rupees మాత్రమే అవుతుంది. మీ పేరు చెప్తారా, booking note చేసుకుంటాను?"
+}

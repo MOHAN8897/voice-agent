@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "caller_name": "కిరణ్",
+    "product": "Python course"
+  },
+  "preferences": {
+    "requested_time": "రేపు ఉదయం"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "assistant: సరే కిరణ్ గారు, eligibility విషయానికి వస్తే ఏదైనా graduate లేదా final year college student ఈ course join అవ్వచ్చు. రేపు ఉదయం మీకు ఏ time కి call చేయమంటారు?\nuser: ఆగండి, నా ప్రశ్నకి జవాబు కావాలి. ఈ course కి eligibility ఏంటి?\nassistant: ఏదైనా graduate లేదా final year college student ఈ course కి join అవ్వచ్చు. ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు.\nuser: సరే, ఇంతే చాలు. ధన్యవాదాలు.\nassistant: మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+}

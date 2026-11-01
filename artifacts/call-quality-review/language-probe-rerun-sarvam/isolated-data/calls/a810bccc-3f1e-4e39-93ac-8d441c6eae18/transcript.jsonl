@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "दो AC का annual maintenance contract AMC कितने का पड़ेगा", "ts": "2026-10-29T19:09:55.450229Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "देखिए, हमारे यहाँ annual maintenance contract का कोई fixed package नहीं है। Window AC की servicing 499 rupees और split AC की 599 rupees है। आपको किस type के AC की servicing करवानी है?", "ts": "2026-10-29T19:09:56.186253Z", "brain_latency_ms": 742}

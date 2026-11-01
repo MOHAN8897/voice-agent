@@ -1,0 +1,49 @@
+{
+  "call_id": "fe5f77c1-0b57-4d34-8282-a98fd0efc72f",
+  "language_callback": null,
+  "disposition": "site_visit_planned",
+  "disposition_confidence": 0.75,
+  "summary_te": "",
+  "summary_en": "The caller inquired about the consultation fee and clinic operating hours. The agent stated the fee was 300 rupees and the clinic was open Monday to Saturday from 10 AM to 8 PM. The caller then asked in Hindi if they could come in the next day due to a toothache. The agent confirmed they could visit the following day, Saturday, October 31st, and recommended an immediate visit. The agent requested the caller's name, details of the problem, and a preferred time to allow the front desk to confirm the appointment. The caller agreed by saying 'Okay, thanks,' after which the agent thanked them and ended the call.",
+  "next_action": "Confirm appointment details with the front desk based on the caller's preferred time and name.",
+  "extracted_fields": {
+    "budget": "300 rupees",
+    "phone": "+919876500515",
+    "slot": "Saturday, October 31st"
+  },
+  "facts": {
+    "budget": "300 rupees",
+    "phone": "+919876500515",
+    "slot": "Saturday, October 31st"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:dental-consultation",
+    "custom:toothache",
+    "followup:site_visit",
+    "intent:booking",
+    "intent:information",
+    "outcome:site_visit_planned",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:booking",
+    "followup:site_visit",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:ready_to_buy"
+  ],
+  "custom_tags": [
+    "custom:dental-consultation",
+    "custom:toothache"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:37:44.478865Z",
+  "generation_ok": true
+}

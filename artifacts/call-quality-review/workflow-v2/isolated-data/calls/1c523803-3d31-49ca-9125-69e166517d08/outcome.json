@@ -1,0 +1,90 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the cost of split AC servicing. The agent quoted a price of ₹599 and specified that service is only available in Madhapur, Gachibowli, Kondapur, and Kukatpally. The caller indicated that this information was sufficient for their needs, thanked the agent, and ended the call without scheduling a visit or sharing their location details.",
+  "next_action": "No further action required as the caller's query was resolved and they concluded the call.",
+  "extracted_fields": {
+    "budget": "₹599",
+    "phone": "+919876500052",
+    "service": "split AC servicing"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "signal:price_sensitive",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:ac-servicing",
+    "custom:pricing-query"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T20:38:46.040958Z",
+  "generation_ok": true,
+  "facts": {
+    "budget": "₹599",
+    "phone": "+919876500052",
+    "service": "split AC servicing"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:ac-servicing",
+    "custom:pricing-query",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "4940296c-6d83-42ed-98ea-16b877294496",
+    "agentId": "0287d0b1-33f5-40d5-95ce-ee6c54f38758",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.85,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "service"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

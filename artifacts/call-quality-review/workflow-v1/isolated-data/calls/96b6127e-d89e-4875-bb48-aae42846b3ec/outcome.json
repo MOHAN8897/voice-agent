@@ -1,0 +1,85 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, expressed interest in the service while driving and explicitly requested not to block their number. They asked to be called back next Monday morning on the same number. The agent acknowledged and confirmed the callback details. The call ended with the agreement that the agent would reach out to Kiran next Monday morning.",
+  "next_action": "Call the caller next Monday morning on the same number.",
+  "extracted_fields": {
+    "callback_time": "next Monday morning",
+    "name": "Kiran",
+    "phone": "+919876500037"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "sentiment:positive",
+    "intent:information"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T20:20:51.727975Z",
+  "generation_ok": true,
+  "facts": {
+    "callback_time": "next Monday morning",
+    "name": "Kiran",
+    "phone": "+919876500037"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:positive"
+  ],
+  "lead": {
+    "leadId": "44642057-16e5-4863-817d-10644015fa6d",
+    "agentId": "9c68ec75-2c7d-479a-81f7-dfbf754721f8",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 35,
+    "band": "cold",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "callback_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

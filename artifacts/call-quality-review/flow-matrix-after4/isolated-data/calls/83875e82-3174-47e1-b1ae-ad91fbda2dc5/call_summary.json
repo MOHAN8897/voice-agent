@@ -1,0 +1,61 @@
+{
+  "call_id": "83875e82-3174-47e1-b1ae-ad91fbda2dc5",
+  "language_callback": null,
+  "disposition": "site_visit_planned",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initially expressed that the 3-kilowatt solar system was too costly. The agent explained the total cost of ₹1,95,000, the government subsidy of ₹78,000, and the net payment of ₹1,17,000. The caller then requested the monthly EMI details, which the agent provided as starting from ₹2,999 for 48 months. After hearing the EMI option, the caller agreed to book the free survey. The caller shared their name as Kiran, their location as Velachery, and requested the survey for Saturday. The agent confirmed that the details were saved and that the team would confirm the Saturday survey. The call ended with the caller thanking the agent.",
+  "next_action": "Team to confirm the Saturday site survey with Kiran.",
+  "extracted_fields": {
+    "budget": "₹1,17,000 (after subsidy)",
+    "caller_name": "Kiran",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "phone": "+919876500507",
+    "requested_time": "சனிக்கிழமை",
+    "slot": "Saturday"
+  },
+  "facts": {
+    "budget": "₹1,17,000 (after subsidy)",
+    "caller_name": "Kiran",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "phone": "+919876500507",
+    "requested_time": "சனிக்கிழமை",
+    "slot": "Saturday"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:emi-financing",
+    "custom:solar-survey",
+    "followup:site_visit",
+    "intent:information",
+    "intent:purchase",
+    "outcome:site_visit_planned",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "signal:price_sensitive",
+    "followup:site_visit",
+    "sentiment:neutral",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:solar-survey",
+    "custom:emi-financing",
+    "custom:saturday-slot"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "The caller initially objected that the system was too costly."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:35:00.252704Z",
+  "generation_ok": true
+}

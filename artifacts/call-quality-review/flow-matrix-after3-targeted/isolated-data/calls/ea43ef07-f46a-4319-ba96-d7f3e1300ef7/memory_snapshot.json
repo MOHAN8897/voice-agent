@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "caller_name": "Kiran",
+    "delivery_locality": "Velachery",
+    "requested_time": "Saturday"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "assistant: A 3 kW rooftop system costs 1,95,000 rupees before the government subsidy of 78,000 rupees, so you only pay 1,17,000 rupees. EMI is also available from 2,999 rupees per month for 48 months. Would you like to go ahead with a free site survey?\nuser: No, it is still too expensive for us.\nassistant: I understand. Would you still like to go ahead with a free site survey?\nuser: Okay, what is the monthly EMI again?\nassistant: The monthly EMI is 2,999 rupees for 48 months.\nuser: Fine, book the free survey. My name is Kiran, I live in Velachery, Saturday works."
+}

@@ -1,0 +1,587 @@
+{
+  "scenario": {
+    "id": "B_callback_auto",
+    "business": "B",
+    "kind": "callback",
+    "integration": "none",
+    "policy": "automatic",
+    "max_turns": 5,
+    "goal": "You are interested in the future but cannot talk now. Ask for a callback SIX HOURS from now. Answer one truly missing detail if asked, use this same dialed number, then clearly confirm the callback request and end. You are NOT rejecting the business and NOT opting out."
+  },
+  "agent": {
+    "id": "B",
+    "key": "appliances",
+    "tenant_id": "f207fff4-a55e-442a-ae77-92b1c59d6379",
+    "name": "SmartCare Appliance Services",
+    "agent_name": "Suresh",
+    "role": "support",
+    "industry": "home_services",
+    "brief": "Need helpful support agent Suresh for SmartCare Appliance Services.\nPhone customer support and booking inquiries in Telugu.\nHyderabad home appliance repair and maintenance services.\nAC servicing: basic Window AC servicing 499 rupees, Split AC servicing 599 rupees.\nFridge inspection charge 250 rupees; if repair is done by technician, inspection charge is completely waived.\nReplacement parts are extra at actual MRP and technician quotes after inspection; no fixed parts quotes over phone.\nWorking days: Monday to Sunday 9:00 AM to 7:00 PM.\nService areas: Hyderabad West - Madhapur, Gachibowli, Kondapur, Kukatpally.\nSecunderabad and Old City areas are currently not covered.\nSlots: Next-day visit slots between 10 AM and 6 PM. Same-day emergency service not guaranteed.\nGoal: answer service pricing and area questions honestly.\nIf customer requests appointment, take caller name, appliance type, issue, locality and preferred slot.\nNever advise customer to open electrical panels or live wiring themselves.\nDo not sell AMC contracts or courses. Caller declining AC may still need fridge service.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Suresh",
+      "company_name": "SmartCare Appliance Services",
+      "role": "Support and service appointment booking",
+      "permitted_next_steps": "Check locality and appliance issue; collect name, phone, address and preferred slot (10 AM - 6 PM next day) to book or request technician visit.",
+      "service_areas": "Hyderabad West only: Madhapur, Gachibowli, Kondapur, Kukatpally. Secunderabad and Old City are not serviced.",
+      "pricing_terms": "Split AC 599 rupees, Window AC 499 rupees. Fridge inspection 250 rupees (waived if repair accepted). Spare parts extra at actuals.",
+      "safety_rules": "Never advise live electrical inspection. Tell customer to unplug faulty appliances and wait for certified technician.",
+      "forbidden_actions": "Do not promise same-day visit or quote parts prices before technician inspection. No advance payment on call."
+    },
+    "user_id": "eefd222d-ca9c-4335-8dcd-7e1f1bf424fd",
+    "agent_id": "4d27a483-2fd7-5330-9856-6dd40d0284ce"
+  },
+  "call_id": "08d09119-bb7a-4796-9b69-5613980bbb4b",
+  "session_id": "adaptive-bbf3590e5a2d410b8e705da76d3723a7",
+  "phone": "+12025550110",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_1663d24c6a75",
+  "turn_index": 1,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నమస్తే సురేష్. నా split AC కి general service కావాలి. మాదాపూర్ లో ఉన్నాను. ఇప్పుడు మాట్లాడలేను, దయచేసి కరెక్ట్ గా 6 hours తర్వాత ఇదే నెంబర్ కి నాకు callback arrange చేస్తారా?",
+        "intends_end": true,
+        "intent": "Request a callback in 6 hours and end the call",
+        "elapsed_s": 0.609
+      },
+      "spoken": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 1.422,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        155
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "end_call": {
+            "should_end": true,
+            "reason": "goal_complete",
+            "farewell": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+            "contact_preference": "callback"
+          },
+          "finish_reason": "rule_close",
+          "usage": {},
+          "memory_update": {
+            "operations": []
+          },
+          "memory_parse_failed": false,
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 103565.39
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "end_call": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "farewell": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "callback"
+      },
+      "finish_reason": "rule_close",
+      "usage": {},
+      "memory_update": {
+        "operations": []
+      },
+      "memory_parse_failed": false,
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "farewell": "మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నోట్ చేసుకున్నాను. ధన్యవాదాలు."
+      },
+      "result": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "farewell": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "callback"
+      },
+      "transcript": "నమస్తే సురేష్. నా split AC కి general service కావాలి. మాదాపూర్ లో ఉన్నాను. ఇప్పుడు మాట్లాడలేను, దయచేసి కరెక్ట్ గా 6 hours తర్వాత ఇదే నెంబర్ కి నాకు callback arrange చేస్తారా?",
+      "at": 103565.343
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [
+    {
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 1,
+      "at": 103565.39
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 103566.468,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 103565.406
+    }
+  ],
+  "started_at": "2026-10-29T11:07:21.664465+00:00",
+  "errors": [],
+  "brain_checksum": "4bf05f4353ac70d52622b45763e9adb89e0251114ce0c4b37e14f72bb51d4d59",
+  "runtime_checksum": "81b0d400412e89cba6054ee108e8fdce33f6e1f8cc4ae57562e0022c01396958",
+  "available_tools": [
+    "SAVE_ENQUIRY"
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "callback_required",
+    "disposition_confidence": 0.99,
+    "summary_te": "",
+    "summary_en": "The caller requested general servicing for a split AC and stated they are located in Madhapur. They could not talk at the time of the call and explicitly asked for a callback to the same number exactly six hours later. The agent acknowledged and recorded the callback request, and the call ended politely.",
+    "next_action": "Call the same number exactly six hours after the initial call.",
+    "extracted_fields": {
+      "callback_number": "Same number",
+      "callback_time": "Exactly 6 hours after the call",
+      "location": "Madhapur",
+      "phone": "+12025550110",
+      "service": "General service for split AC"
+    },
+    "objections": [],
+    "notes": null,
+    "tags": [
+      "followup:callback",
+      "intent:support",
+      "sentiment:neutral"
+    ],
+    "custom_tags": [
+      "custom:split-ac",
+      "custom:general-service",
+      "custom:madhapur"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T11:07:26.702504Z",
+    "generation_ok": true,
+    "facts": {
+      "callback_number": "Same number",
+      "callback_time": "Exactly 6 hours after the call",
+      "location": "Madhapur",
+      "phone": "+12025550110",
+      "service": "General service for split AC"
+    },
+    "disclosure_status": null,
+    "contact_preference": "callback",
+    "status_tags": [
+      "action:required",
+      "contact:phone_known",
+      "custom:general-service",
+      "custom:madhapur",
+      "custom:split-ac",
+      "followup:callback",
+      "intent:support",
+      "outcome:callback_required",
+      "sentiment:neutral"
+    ],
+    "lead": {
+      "leadId": "03ce5a76-6682-43c0-90eb-9b78ad02c9f6",
+      "agentId": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+      "stage": "contacted",
+      "action": "created"
+    },
+    "lead_assessment": {
+      "score": 100,
+      "band": "hot",
+      "disposition": "callback_required",
+      "confidence": 0.99,
+      "components": [
+        {
+          "signal": "interest",
+          "points": 40,
+          "max": 40,
+          "evidence": "callback_required"
+        },
+        {
+          "signal": "requirements",
+          "points": 25,
+          "max": 25,
+          "evidence": "service"
+        },
+        {
+          "signal": "timing",
+          "points": 25,
+          "max": 25,
+          "evidence": "callback_time"
+        },
+        {
+          "signal": "contact",
+          "points": 10,
+          "max": 10,
+          "evidence": "phone"
+        }
+      ],
+      "version": 1,
+      "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+      "reason": "recorded_signals"
+    },
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "08d09119-bb7a-4796-9b69-5613980bbb4b",
+        "tenant_id": "f207fff4-a55e-442a-ae77-92b1c59d6379",
+        "agent_id": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+        "session_id": "adaptive-bbf3590e5a2d410b8e705da76d3723a7",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_1663d24c6a75",
+        "started_at": "2026-10-29 11:07:21.648472+00:00",
+        "ended_at": "2026-10-29 11:07:23.671508+00:00",
+        "duration_sec": 2,
+        "disposition": "callback_required",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/08d09119-bb7a-4796-9b69-5613980bbb4b/",
+        "end_reason": "goal_complete",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "action:required",
+          "contact:phone_known",
+          "custom:general-service",
+          "custom:madhapur",
+          "custom:split-ac",
+          "followup:callback",
+          "intent:support",
+          "outcome:callback_required",
+          "sentiment:neutral"
+        ],
+        "last_heartbeat_at": "2026-10-29 11:07:21.648472+00:00",
+        "created_at": "2026-10-29 11:07:21.648472+00:00"
+      }
+    ],
+    "callbacks": [
+      {
+        "callback_id": "ef132e51-6f9d-4cef-b9ee-76221807e14b",
+        "tenant_id": "f207fff4-a55e-442a-ae77-92b1c59d6379",
+        "user_id": null,
+        "original_call_id": "08d09119-bb7a-4796-9b69-5613980bbb4b",
+        "original_attempt_id": null,
+        "agent_id": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+        "to_e164": "+12025550110",
+        "from_e164": null,
+        "dial_request_id": "requested:08d09119-bb7a-4796-9b69-5613980bbb4b",
+        "mode": "requested",
+        "status": "requested",
+        "provider": null,
+        "provider_call_control_id": null,
+        "error": null,
+        "created_at": "2026-10-29 11:07:22.545492+00:00",
+        "updated_at": "2026-10-29 11:07:22.545492+00:00"
+      }
+    ],
+    "jobs": [
+      {
+        "id": "2ce48ff3-f85c-4a25-9dd4-57d5cfa87264",
+        "tenant_id": "f207fff4-a55e-442a-ae77-92b1c59d6379",
+        "agent_id": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+        "origin_key": "callback:ef132e51-6f9d-4cef-b9ee-76221807e14b",
+        "source_id": "08d09119-bb7a-4796-9b69-5613980bbb4b",
+        "kind": "callback",
+        "phone": "+12025550110",
+        "status": "planning",
+        "reason": "resolve_requested_time",
+        "payload": {
+          "requestText": "నమస్తే సురేష్. నా split AC కి general service కావాలి. మాదాపూర్ లో ఉన్నాను. ఇప్పుడు మాట్లాడలేను, దయచేసి కరెక్ట్ గా 6 hours తర్వాత ఇదే నెంబర్ కి నాకు callback arrange చేస్తారా?",
+          "requestedWhen": "",
+          "recentTurns": [
+            {
+              "role": "user",
+              "text": "నమస్తే సురేష్. నా split AC కి general service కావాలి. మాదాపూర్ లో ఉన్నాను. ఇప్పుడు మాట్లాడలేను, దయచేసి కరెక్ట్ గా 6 hours తర్వాత ఇదే నెంబర్ కి నాకు callback arrange చేస్తారా?",
+              "at": "2026-10-29T11:07:22.292310Z"
+            }
+          ],
+          "callbackId": "ef132e51-6f9d-4cef-b9ee-76221807e14b",
+          "timezone": "Asia/Kolkata",
+          "llm": {
+            "provider": "openai",
+            "model": "gpt-5.6-luna",
+            "options": {},
+            "purpose": "configured_post_call_analysis"
+          },
+          "requestedAt": "2026-10-29T11:07:22.551941+00:00"
+        },
+        "due_at": "2026-10-29 11:07:22.551941+00:00",
+        "expires_at": "2026-11-05 11:07:22.551941+00:00",
+        "attempts": 0,
+        "lease_token": null,
+        "lease_until": null,
+        "control_id": null,
+        "authorized_by": "eefd222d-ca9c-4335-8dcd-7e1f1bf424fd",
+        "billing_tenant_id": "f207fff4-a55e-442a-ae77-92b1c59d6379",
+        "created_at": "2026-10-29 11:07:22.557728+00:00",
+        "updated_at": "2026-10-29 11:07:22.557728+00:00"
+      }
+    ],
+    "dnd": [],
+    "leads": [
+      {
+        "lead_id": "03ce5a76-6682-43c0-90eb-9b78ad02c9f6",
+        "tenant_id": "f207fff4-a55e-442a-ae77-92b1c59d6379",
+        "agent_id": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+        "name": "New lead",
+        "phone": "+12025550110",
+        "email": null,
+        "stage": "contacted",
+        "notes": "[Call reference: 08d09119-bb7a-4796-9b69-5613980bbb4b]\nThe caller requested general servicing for a split AC and stated they are located in Madhapur. They could not talk at the time of the call and explicitly asked for a callback to the same number exactly six hours later. The agent acknowledged and recorded the callback request, and the call ended politely.\n\nNext step: Call the same number exactly six hours after the initial call.\n\nCall outcome: callback required (99% confidence)",
+        "created_at": "2026-10-29 11:07:26.725467+00:00",
+        "updated_at": "2026-10-29 11:07:26.725467+00:00"
+      }
+    ],
+    "tools": [],
+    "assessments": [
+      {
+        "id": "3a6ef291-8771-4303-9386-0ebe4a8ef3f4",
+        "tenant_id": "f207fff4-a55e-442a-ae77-92b1c59d6379",
+        "lead_id": "03ce5a76-6682-43c0-90eb-9b78ad02c9f6",
+        "source_call_id": "08d09119-bb7a-4796-9b69-5613980bbb4b",
+        "assessment": {
+          "score": 100,
+          "band": "hot",
+          "disposition": "callback_required",
+          "confidence": 0.99,
+          "components": [
+            {
+              "signal": "interest",
+              "points": 40,
+              "max": 40,
+              "evidence": "callback_required"
+            },
+            {
+              "signal": "requirements",
+              "points": 25,
+              "max": 25,
+              "evidence": "service"
+            },
+            {
+              "signal": "timing",
+              "points": 25,
+              "max": 25,
+              "evidence": "callback_time"
+            },
+            {
+              "signal": "contact",
+              "points": 10,
+              "max": 10,
+              "evidence": "phone"
+            }
+          ],
+          "version": 1,
+          "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+          "reason": "recorded_signals"
+        },
+        "updated_at": "2026-10-29 11:07:23.671508+00:00"
+      }
+    ]
+  },
+  "metadata": {
+    "call_id": "08d09119-bb7a-4796-9b69-5613980bbb4b",
+    "tenant_id": "f207fff4-a55e-442a-ae77-92b1c59d6379",
+    "agent_id": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+    "session_id": "adaptive-bbf3590e5a2d410b8e705da76d3723a7",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_1663d24c6a75",
+    "started_at": "2026-10-29T11:07:21.648472+00:00",
+    "status": "active",
+    "storage_path": "data/calls/08d09119-bb7a-4796-9b69-5613980bbb4b/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550110",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "callback_request": {
+      "id": "ef132e51-6f9d-4cef-b9ee-76221807e14b",
+      "status": "requested",
+      "requestedWhen": "నమస్తే సురేష్. నా split AC కి general service కావాలి. మాదాపూర్ లో ఉన్నాను. ఇప్పుడు మాట్లాడలేను, దయచేసి కరెక్ట్ గా 6 hours తర్వాత ఇదే నెంబర్ కి నాకు callback arrange చేస్తారా?",
+      "requestText": "నమస్తే సురేష్. నా split AC కి general service కావాలి. మాదాపూర్ లో ఉన్నాను. ఇప్పుడు మాట్లాడలేను, దయచేసి కరెక్ట్ గా 6 hours తర్వాత ఇదే నెంబర్ కి నాకు callback arrange చేస్తారా?"
+    },
+    "contact_preference": "callback",
+    "hangup_reason": "goal_complete",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 77,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": true,
+    "callback_close_phase": "closing_allowed",
+    "disconnected_at": "2026-10-29T11:07:23.671508+00:00",
+    "ended_at": "2026-10-29T11:07:23.671508+00:00",
+    "end_reason": "goal_complete",
+    "duration_sec": 2.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 2.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.00041666666666666664,
+      "telephony_inr": 0.039674999999999995,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.00041666666666666664,
+      "telnyx_inr": 0.039674999999999995,
+      "telnyx_voice_api_usd": 6.666666666666667e-05,
+      "telnyx_sip_usd": 0.00016666666666666666,
+      "telnyx_media_stream_usd": 0.00011666666666666667,
+      "telnyx_call_recording_usd": 6.666666666666667e-05,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.22,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-28",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.012499999999999999,
+      "telephony_inr_per_min": 1.1902499999999998,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.012499999999999999,
+      "telnyx_inr_per_min": 1.1902499999999998,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_0ba7313152d1342d016ae328ec78f487d286d8ed837badaf8d": {
+          "input_tokens": 978,
+          "output_tokens": 196,
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.0004308
+        }
+      },
+      "post_call_analysis_usd": 0.0004308,
+      "post_call_analysis_inr": 0.041020776
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నమస్తే సురేష్. నా split AC కి general service కావాలి. మాదాపూర్ లో ఉన్నాను. ఇప్పుడు మాట్లాడలేను, దయచేసి కరెక్ట్ గా 6 hours తర్వాత ఇదే నెంబర్ కి నాకు callback arrange చేస్తారా?",
+      "ts": "2026-10-29T11:07:22.292310Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T11:07:22.586931Z",
+      "brain_latency_ms": 7
+    }
+  ],
+  "wall_elapsed_s": 5.203,
+  "simulated_exchange_timeline_s": 20,
+  "request_count": 2
+}

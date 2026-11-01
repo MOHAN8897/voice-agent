@@ -1,0 +1,1086 @@
+{
+  "scenario": {
+    "id": "C_callback_review",
+    "business": "C",
+    "kind": "callback",
+    "integration": "none",
+    "policy": "review",
+    "max_turns": 5,
+    "goal": "Ask for a callback tomorrow morning, without an exact time. If needed, choose 10 AM India time, give your name, accept a request awaiting team review and end. Never say you already booked anything."
+  },
+  "agent": {
+    "id": "C",
+    "key": "academy",
+    "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+    "name": "Teja Data Academy",
+    "agent_name": "Madhavi",
+    "role": "counsellor",
+    "industry": "education",
+    "brief": "Agent name Madhavi, company Teja Data Academy.\nPhone counselling and course admissions in Telugu.\nWe offer practical Python with Data Analytics certification course.\nDuration: 8 weeks online live classes with hands-on projects.\nBatches: Weekday batch 8:00 PM to 9:00 PM (Mon-Fri); Weekend batch 10:00 AM to 1:00 PM (Sat-Sun).\nFee: Final fee is 8,999 rupees total. An old leaflet mentions 12000/15000 rupees, discard that old fee. Current fee 8,999 rupees only.\nNo installment discounts.\nEligibility: Any graduate (BTech, BSc, BCom) or final year college student. Basic computer knowledge needed, prior coding not required.\nPlacement policy: 100% placement assistance provided (resume building, interview preparation, job referrals); strictly NO job guarantee or salary promise.\nGoal: answer course curriculum, fees, batches and timing questions.\nIf interested in free demo session or admission counselling, collect preferred name, email, qualification and preferred batch.\nNo payment collected over the phone.\nRefund policy: No refund once classes start after the first week.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Madhavi",
+      "company_name": "Teja Data Academy",
+      "role": "Course counselling and demo registration",
+      "permitted_next_steps": "Collect student name, email, educational qualification and batch preference (weekday/weekend) to book a free demo class or counsellor callback.",
+      "fee_terms": "Final course fee is 8,999 rupees total. Disregard any old fees. No installment discounts.",
+      "placement_policy": "Placement assistance provided (interview prep, resume building, referrals); strictly no job guarantee.",
+      "eligibility_rules": "Any graduate or final year student; no prior coding experience required.",
+      "forbidden_actions": "Never guarantee a job, salary package or placement. Never collect fees or credit card numbers on call."
+    },
+    "user_id": "77b8a5cc-673a-4043-88b6-648e7d5f1b45",
+    "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09"
+  },
+  "call_id": "d4c57d8f-d38a-485b-87b4-edd1e84a53f4",
+  "session_id": "adaptive-f19db3cb301e414a8f8355be55310635",
+  "phone": "+12025550120",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_fef6bbf1152f",
+  "turn_index": 3,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నమస్తే Madhavi గారు, నేను కిరణ్ ని మాట్లాడుతున్నాను. నాకు Python ఇంకా data training గురించి తెలుసుకోవాలి. రేపు ఉదయం ఒక callback arrange చేస్తారా? ఒక 10 AM India time కి అయితే బాగుంటుంది. నా details note చేసుకోండి, team review కోసం request pending లో ఉంచండి.",
+        "intends_end": true,
+        "intent": "Request a callback for tomorrow morning and conclude the call",
+        "elapsed_s": 0.75
+      },
+      "spoken": "కొంచెం నెమ్మదిగా చెప్తారా? ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇంకేమైనా details కావాలా?",
+      "elapsed_s": 1.812,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        351,
+        352,
+        353
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "కొంచెం నెమ్మదిగా చెప్తారా? ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇంకేమైనా details కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5644,
+            "output_tokens": 34,
+            "cached_tokens": 4320,
+            "total_tokens": 5678
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [
+            "enquiry_saved"
+          ],
+          "order_proof": false,
+          "action_outcome_unconfirmed": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 2,
+      "caller": {
+        "utterance": "సరేనండి, అర్థమైంది. నా పేరు కిరణ్, నా email kiran.audit@example.invalid. రేపు ఉదయం team review కోసం request pending లో ఉంచండి, నేను wait చేస్తాను.",
+        "intends_end": true,
+        "intent": "Confirming callback request and ending the call",
+        "elapsed_s": 0.625
+      },
+      "spoken": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇంకేమైనా వివరాలు కావాలా?",
+      "elapsed_s": 1.531,
+      "memory_before": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "కిరణ్",
+          "email": "kiran.audit@example.invalid",
+          "caller_email": "kiran.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call.",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        355,
+        356,
+        357
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇంకేమైనా వివరాలు కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5810,
+            "output_tokens": 37,
+            "cached_tokens": 4320,
+            "total_tokens": 5847
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [
+            "enquiry_saved"
+          ],
+          "order_proof": false,
+          "action_outcome_unconfirmed": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 3,
+      "caller": {
+        "utterance": "సరేనండి, అర్థమైంది. నా పేరు కిరణ్, email kiran.audit@example.invalid. రేపు ఉదయం team review కోసం request pending లో ఉంచండి, నేను wait చేస్తాను. ఇంకేమీ అవసరం లేదు, thank you.",
+        "intends_end": true,
+        "intent": "Accept limitation and end call",
+        "elapsed_s": 0.812
+      },
+      "spoken": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 2.766,
+      "memory_before": {
+        "facts": {
+          "caller_name": "కిరణ్",
+          "email": "kiran.audit@example.invalid",
+          "caller_email": "kiran.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call.",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "కిరణ్",
+          "email": "kiran.audit@example.invalid",
+          "caller_email": "kiran.audit@example.invalid",
+          "requested_time": "రేపు ఉదయం"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+        "summary": "user: సరేనండి, అర్థమైంది. నా పేరు కిరణ్, నా email kiran.audit@example.invalid. రేపు ఉదయం team review కోసం request pending లో ఉంచండి, నేను wait చేస్తాను.\nassistant: ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇంకేమైనా వివరాలు కావాలా?\nuser: సరేనండి, అర్థమైంది. నా పేరు కిరణ్, email kiran.audit@example.invalid. రేపు ఉదయం team review కోసం request pending లో ఉంచండి, నేను wait చేస్తాను. ఇంకేమీ అవసరం లేదు, thank you.\nassistant: మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        359,
+        360,
+        361
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5939,
+            "output_tokens": 25,
+            "cached_tokens": 4320,
+            "total_tokens": 5964
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [
+            "enquiry_saved"
+          ],
+          "order_proof": false,
+          "action_outcome_unconfirmed": false,
+          "end_call": {
+            "should_end": true,
+            "reason": "goal_complete",
+            "contact_preference": "callback",
+            "farewell": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "కొంచెం నెమ్మదిగా చెప్తారా? ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇంకేమైనా details కావాలా?",
+      "at": 120128.89
+    },
+    {
+      "turn": 2,
+      "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇంకేమైనా వివరాలు కావాలా?",
+      "at": 120131.078
+    },
+    {
+      "turn": 3,
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 120133.593
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "కొంచెం నెమ్మదిగా చెప్తారా? ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇంకేమైనా details కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5644,
+        "output_tokens": 34,
+        "cached_tokens": 4320,
+        "total_tokens": 5678
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [
+        "enquiry_saved"
+      ],
+      "order_proof": false,
+      "action_outcome_unconfirmed": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇంకేమైనా వివరాలు కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5810,
+        "output_tokens": 37,
+        "cached_tokens": 4320,
+        "total_tokens": 5847
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [
+        "enquiry_saved"
+      ],
+      "order_proof": false,
+      "action_outcome_unconfirmed": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5939,
+        "output_tokens": 25,
+        "cached_tokens": 4320,
+        "total_tokens": 5964
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [
+        "enquiry_saved"
+      ],
+      "order_proof": false,
+      "action_outcome_unconfirmed": false,
+      "end_call": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "contact_preference": "callback",
+        "farewell": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "callback",
+        "contact_evidence": "రేపు ఉదయం ఒక callback arrange చేస్తారా? ఒక 10 AM India time కి అయితే బాగుంటుంది.",
+        "callback_time": "రేపు ఉదయం ఒక 10 AM India time కి",
+        "remaining_request": "Python ఇంకా data training గురించి తెలుసుకోవాలి. నా details note చేసుకోండి, team review కోసం request pending లో ఉంచండి.",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "కిరణ్",
+            "modality": "asserted"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నమస్తే Madhavi గారు, నేను కిరణ్ ని మాట్లాడుతున్నాను. నాకు Python ఇంకా data training గురించి తెలుసుకోవాలి. రేపు ఉదయం ఒక callback arrange చేస్తారా? ఒక 10 AM India time కి అయితే బాగుంటుంది. నా details note చేసుకోండి, team review కోసం request pending లో ఉంచండి.",
+      "at": 120128.89
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "callback",
+        "contact_evidence": "రేపు ఉదయం team review కోసం request pending లో ఉంచండి, నేను wait చేస్తాను.",
+        "callback_time": "రేపు ఉదయం",
+        "remaining_request": "pending request for team review",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "కిరణ్",
+            "modality": "asserted"
+          },
+          {
+            "op": "set_fact",
+            "key": "email",
+            "value": "kiran.audit@example.invalid",
+            "modality": "asserted"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరేనండి, అర్థమైంది. నా పేరు కిరణ్, నా email kiran.audit@example.invalid. రేపు ఉదయం team review కోసం request pending లో ఉంచండి, నేను wait చేస్తాను.",
+      "at": 120131.078
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "ఇంకేమీ అవసరం లేదు, thank you.",
+        "contact_intent": "callback",
+        "contact_evidence": "రేపు ఉదయం team review కోసం request pending లో ఉంచండి, నేను wait చేస్తాను.",
+        "callback_time": "రేపు ఉదయం",
+        "remaining_request": "",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "కిరణ్",
+            "modality": "asserted"
+          },
+          {
+            "op": "set_fact",
+            "key": "email",
+            "value": "kiran.audit@example.invalid",
+            "modality": "asserted"
+          },
+          {
+            "op": "set_fact",
+            "key": "requested_time",
+            "value": "రేపు ఉదయం",
+            "modality": "asserted"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "contact_preference": "callback",
+        "farewell": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "transcript": "సరేనండి, అర్థమైంది. నా పేరు కిరణ్, email kiran.audit@example.invalid. రేపు ఉదయం team review కోసం request pending లో ఉంచండి, నేను wait చేస్తాను. ఇంకేమీ అవసరం లేదు, thank you.",
+      "at": 120133.546
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [
+    {
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 3,
+      "at": 120133.593
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 120134.64,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 120128.906
+    },
+    {
+      "turn_seq": 3,
+      "at": 120131.109
+    },
+    {
+      "turn_seq": 5,
+      "at": 120133.64
+    }
+  ],
+  "started_at": "2026-10-29T15:43:23.555943+00:00",
+  "errors": [],
+  "brain_checksum": "c7d8c5f29a52189aef028520c3f378e2870fca7a4f34a1f2b508b443764b3141",
+  "runtime_checksum": "d4523a91d6292e598a9272cf480e961a7b2f6a68a0933ca9b07de0569ed6a3fa",
+  "available_tools": [
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 120127.14,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 2,
+      "start_s": 120129.578,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 42,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 3,
+      "start_s": 120131.937,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 179,
+      "rolling_chars": 0
+    }
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "callback_required",
+    "disposition_confidence": 0.93,
+    "summary_te": "",
+    "summary_en": "Kiran called to learn about Python and data training and requested a callback tomorrow morning at 10:00 AM India time for a team review. He provided his name and email address and repeatedly asked that the request remain pending while he waited. The agent initially explained that it could remember the information but could not send it to the team or guarantee follow-up. At the end, the agent stated that Kiran’s details and request for a return call had been recorded, but the transcript does not confirm that a callback was actually scheduled or that the team review request was submitted. The call ended with thanks and a goodbye.",
+    "next_action": "Review Kiran’s request for Python and data training and arrange a callback for tomorrow at 10:00 AM India time if possible.",
+    "extracted_fields": {
+      "caller_email": "kiran.audit@example.invalid",
+      "caller_name": "Kiran",
+      "email": "kiran.audit@example.invalid",
+      "interest": "Python and data training",
+      "phone": "+12025550120",
+      "request": "Team review request pending",
+      "requested_callback_time": "Tomorrow at 10:00 AM India time",
+      "requested_time": "రేపు ఉదయం"
+    },
+    "objections": [
+      "The agent stated that it could not send the request to the team or guarantee follow-up."
+    ],
+    "notes": "The agent’s closing statement says the details and callback request were recorded, but no completed callback arrangement or team submission is confirmed.",
+    "tags": [
+      "followup:callback",
+      "followup:schedule_pending",
+      "intent:information",
+      "intent:demo",
+      "sentiment:neutral"
+    ],
+    "custom_tags": [
+      "custom:python-training",
+      "custom:data-training",
+      "custom:team-review"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T15:43:36.779968Z",
+    "generation_ok": true,
+    "facts": {
+      "caller_email": "kiran.audit@example.invalid",
+      "caller_name": "Kiran",
+      "email": "kiran.audit@example.invalid",
+      "interest": "Python and data training",
+      "phone": "+12025550120",
+      "request": "Team review request pending",
+      "requested_callback_time": "Tomorrow at 10:00 AM India time",
+      "requested_time": "రేపు ఉదయం"
+    },
+    "disclosure_status": null,
+    "contact_preference": "callback",
+    "status_tags": [
+      "action:required",
+      "contact:email_known",
+      "contact:name_known",
+      "contact:phone_known",
+      "custom:python-training",
+      "followup:callback",
+      "followup:schedule_pending",
+      "intent:demo",
+      "intent:information",
+      "outcome:callback_required",
+      "sentiment:neutral",
+      "signal:objection"
+    ],
+    "lead": {
+      "leadId": "0713313e-d45f-49b0-bd97-a504fac4e702",
+      "agentId": "4c5270a8-990a-5800-868d-9d685eca9a09",
+      "stage": "contacted",
+      "action": "unchanged"
+    },
+    "lead_assessment": {
+      "score": 50,
+      "band": "warm",
+      "disposition": "callback_required",
+      "confidence": 0.93,
+      "components": [
+        {
+          "signal": "interest",
+          "points": 40,
+          "max": 40,
+          "evidence": "callback_required"
+        },
+        {
+          "signal": "requirements",
+          "points": 0,
+          "max": 25,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "timing",
+          "points": 0,
+          "max": 25,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "contact",
+          "points": 10,
+          "max": 10,
+          "evidence": "phone"
+        }
+      ],
+      "version": 1,
+      "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+      "reason": "recorded_signals"
+    },
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "d4c57d8f-d38a-485b-87b4-edd1e84a53f4",
+        "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09",
+        "session_id": "adaptive-f19db3cb301e414a8f8355be55310635",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_fef6bbf1152f",
+        "started_at": "2026-10-29 15:43:23.540549+00:00",
+        "ended_at": "2026-10-29 15:43:31.851053+00:00",
+        "duration_sec": 8,
+        "disposition": "callback_required",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/d4c57d8f-d38a-485b-87b4-edd1e84a53f4/",
+        "end_reason": "goal_complete",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "action:required",
+          "contact:email_known",
+          "contact:name_known",
+          "contact:phone_known",
+          "custom:python-training",
+          "followup:callback",
+          "followup:schedule_pending",
+          "intent:demo",
+          "intent:information",
+          "outcome:callback_required",
+          "sentiment:neutral",
+          "signal:objection"
+        ],
+        "last_heartbeat_at": "2026-10-29 15:43:23.540549+00:00",
+        "created_at": "2026-10-29 15:43:23.542976+00:00"
+      }
+    ],
+    "callbacks": [
+      {
+        "callback_id": "2025d165-0c68-4d9e-9bf4-f8d6b850b041",
+        "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "user_id": null,
+        "original_call_id": "d4c57d8f-d38a-485b-87b4-edd1e84a53f4",
+        "original_attempt_id": null,
+        "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09",
+        "to_e164": "+12025550120",
+        "from_e164": null,
+        "dial_request_id": "requested:d4c57d8f-d38a-485b-87b4-edd1e84a53f4",
+        "mode": "requested",
+        "status": "requested",
+        "provider": null,
+        "provider_call_control_id": null,
+        "error": null,
+        "created_at": "2026-10-29 15:43:30.752478+00:00",
+        "updated_at": "2026-10-29 15:43:30.752478+00:00"
+      }
+    ],
+    "jobs": [
+      {
+        "id": "262fc670-75e5-48cc-b5b5-53374397e39b",
+        "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09",
+        "origin_key": "callback:bb45a167-01a2-40ee-b68e-4939697321bc",
+        "source_id": "1df75626-4728-4a87-ad6f-02b7632c2226",
+        "kind": "callback",
+        "phone": "+12025550120",
+        "status": "cancelled",
+        "reason": "newer_callback_request",
+        "payload": {
+          "requestText": "సరే, ఎనిమిది వేల తొమ్మిది వందల తొంభై తొమ్మిది రూపాయలు అంటే కొంచెం ఎక్కువే అనిపిస్తోంది. నాకు రేపు ఉదయం ఒక callback arrange చేస్తారా? నా పేరు కిరణ్, team review తర్వాత నాకు call చేయమని చెప్పండి.",
+          "requestedWhen": "",
+          "recentTurns": [
+            {
+              "role": "user",
+              "text": "నమస్తే, నేను కిరణ్ ని మాట్లాడుతున్నాను. నాకు Python ఇంకా data training గురించి తెలుసుకోవాలి. నేను job చేస్తూ evenings లేదా weekends లో attend అవ్వగలను. దీని fees, placement details గురించి కొంచెం చెప్తారా?",
+              "at": "2026-10-29T11:08:59.803661Z"
+            },
+            {
+              "role": "assistant",
+              "text": "కిరణ్ గారు, మా weekday batch రాత్రి eight PM నుంచి nine PM వరకు, weekend batch Saturday and Sunday ఉదయం ten AM నుంచి one PM వరకు ఉంటాయి. Total fee eight thousand nine hundred ninety nine rupees మాత్రమే.",
+              "at": "2026-10-29T11:09:01.577573Z"
+            },
+            {
+              "role": "user",
+              "text": "సరే, ఎనిమిది వేల తొమ్మిది వందల తొంభై తొమ్మిది రూపాయలు అంటే కొంచెం ఎక్కువే అనిపిస్తోంది. నాకు రేపు ఉదయం ఒక callback arrange చేస్తారా? నా పేరు కిరణ్, team review తర్వాత నాకు call చేయమని చెప్పండి.",
+              "at": "2026-10-29T11:09:02.504257Z"
+            }
+          ],
+          "callbackId": "bb45a167-01a2-40ee-b68e-4939697321bc",
+          "timezone": "Asia/Kolkata",
+          "llm": {
+            "provider": "openai",
+            "model": "gpt-5.6-luna",
+            "options": {},
+            "purpose": "configured_post_call_analysis"
+          },
+          "requestedAt": "2026-10-29T11:09:02.820092+00:00"
+        },
+        "due_at": null,
+        "expires_at": "2026-11-05 11:09:02.820092+00:00",
+        "attempts": 0,
+        "lease_token": null,
+        "lease_until": null,
+        "control_id": null,
+        "authorized_by": "77b8a5cc-673a-4043-88b6-648e7d5f1b45",
+        "billing_tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "created_at": "2026-10-29 11:09:02.827147+00:00",
+        "updated_at": "2026-10-29 15:43:30.757949+00:00"
+      },
+      {
+        "id": "b4e5d523-ec96-446c-8a0e-ceabbd44f9ab",
+        "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09",
+        "origin_key": "callback:2025d165-0c68-4d9e-9bf4-f8d6b850b041",
+        "source_id": "d4c57d8f-d38a-485b-87b4-edd1e84a53f4",
+        "kind": "callback",
+        "phone": "+12025550120",
+        "status": "needs_review",
+        "reason": "approval_required",
+        "payload": {
+          "requestText": "సరేనండి, అర్థమైంది. నా పేరు కిరణ్, email kiran.audit@example.invalid. రేపు ఉదయం team review కోసం request pending లో ఉంచండి, నేను wait చేస్తాను. ఇంకేమీ అవసరం లేదు, thank you.",
+          "requestedWhen": "రేపు ఉదయం",
+          "recentTurns": [
+            {
+              "role": "user",
+              "text": "నమస్తే Madhavi గారు, నేను కిరణ్ ని మాట్లాడుతున్నాను. నాకు Python ఇంకా data training గురించి తెలుసుకోవాలి. రేపు ఉదయం ఒక callback arrange చేస్తారా? ఒక 10 AM India time కి అయితే బాగుంటుంది. నా details note చేసుకోండి, team review కోసం request pending లో ఉంచండి.",
+              "at": "2026-10-29T15:43:24.333652Z"
+            },
+            {
+              "role": "assistant",
+              "text": "కొంచెం నెమ్మదిగా చెప్తారా? ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇంకేమైనా details కావాలా?",
+              "at": "2026-10-29T15:43:26.086325Z"
+            },
+            {
+              "role": "user",
+              "text": "సరేనండి, అర్థమైంది. నా పేరు కిరణ్, నా email kiran.audit@example.invalid. రేపు ఉదయం team review కోసం request pending లో ఉంచండి, నేను wait చేస్తాను.",
+              "at": "2026-10-29T15:43:26.776968Z"
+            },
+            {
+              "role": "assistant",
+              "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇంకేమైనా వివరాలు కావాలా?",
+              "at": "2026-10-29T15:43:28.268198Z"
+            },
+            {
+              "role": "user",
+              "text": "సరేనండి, అర్థమైంది. నా పేరు కిరణ్, email kiran.audit@example.invalid. రేపు ఉదయం team review కోసం request pending లో ఉంచండి, నేను wait చేస్తాను. ఇంకేమీ అవసరం లేదు, thank you.",
+              "at": "2026-10-29T15:43:29.131213Z"
+            }
+          ],
+          "callbackId": "2025d165-0c68-4d9e-9bf4-f8d6b850b041",
+          "timezone": "Asia/Kolkata",
+          "llm": {
+            "provider": "openai",
+            "model": "gpt-5.6-luna",
+            "options": {},
+            "purpose": "configured_post_call_analysis"
+          },
+          "requestedAt": "2026-10-29T15:43:30.757949+00:00"
+        },
+        "due_at": null,
+        "expires_at": "2026-11-05 15:43:30.757949+00:00",
+        "attempts": 0,
+        "lease_token": null,
+        "lease_until": null,
+        "control_id": null,
+        "authorized_by": "77b8a5cc-673a-4043-88b6-648e7d5f1b45",
+        "billing_tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "created_at": "2026-10-29 15:43:30.767249+00:00",
+        "updated_at": "2026-10-29 15:43:30.767249+00:00"
+      }
+    ],
+    "dnd": [],
+    "leads": [
+      {
+        "lead_id": "0713313e-d45f-49b0-bd97-a504fac4e702",
+        "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09",
+        "name": "Kiran",
+        "phone": "+12025550120",
+        "email": "kiran.audit@example.invalid",
+        "stage": "contacted",
+        "notes": "[Call reference: 1df75626-4728-4a87-ad6f-02b7632c2226]\nKiran called to learn about Python and data training while working a job, preferring evening or weekend attendance. The agent explained that the weekday batch runs from 8:00 PM to 9:00 PM, the weekend batch runs Saturday and Sunday from 10:00 AM to 1:00 PM, and the total fee is ₹8,999. Kiran felt the fee was somewhat high and requested a callback tomorrow morning after the team reviews the details. The agent recorded the request and ended the call politely.\n\nNext step: Arrange a callback to Kiran tomorrow morning after team review.\n\nObjections: The fee of ₹8,999 seemed somewhat high.\n\nCall outcome: callback required (98% confidence)\n\n---\n[Call reference: d4c57d8f-d38a-485b-87b4-edd1e84a53f4]\nKiran called to learn about Python and data training and requested a callback tomorrow morning at 10:00 AM India time for a team review. He provided his name and email address and repeatedly asked that the request remain pending while he waited. The agent initially explained that it could remember the information but could not send it to the team or guarantee follow-up. At the end, the agent stated that Kiran’s details and request for a return call had been recorded, but the transcript does not confirm that a callback was actually scheduled or that the team review request was submitted. The call ended with thanks and a goodbye.\n\nNext step: Review Kiran’s request for Python and data training and arrange a callback for tomorrow at 10:00 AM India time if possible.\n\nObjections: The agent stated that it could not send the request to the team or guarantee fol\n\nCall outcome: callback required (93% confidence)",
+        "created_at": "2026-10-29 11:09:07.976255+00:00",
+        "updated_at": "2026-10-29 15:43:36.791442+00:00"
+      },
+      {
+        "lead_id": "f86ba955-04a3-5bef-a009-b90ae3e188df",
+        "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09",
+        "name": "కిరణ్",
+        "phone": "+12025550120",
+        "email": null,
+        "stage": "contacted",
+        "notes": "Caller enquiry — call d4c57d8f-d38a-485b-87b4-edd1e84a53f4\n{\"customer_name\": \"Kiran\", \"request\": \"Callback requested for tomorrow 10 AM India time for Python with Data Analytics course enquiry. Details to be reviewed by team.\"}\n\nEnquiry update:\n{\"customer_name\": \"కిరణ్\", \"request\": \"Callback request for tomorrow 10 AM India time for team review. Name: Kiran, Email: kiran.audit@example.invalid. Interested in Python with Data Analytics course.\"}\n\nEnquiry update:\n{\"customer_name\": \"కిరణ్\", \"request\": \"Team review request for Python with Data Analytics course. Callback requested tomorrow at 10 AM India time. Email: kiran.audit@example.invalid\"}",
+        "created_at": "2026-10-29 15:43:25.387345+00:00",
+        "updated_at": "2026-10-29 15:43:30.134278+00:00"
+      }
+    ],
+    "tools": [],
+    "assessments": [
+      {
+        "id": "3aaa66be-a6f4-4e9b-8cf6-361035754a4d",
+        "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "lead_id": "0713313e-d45f-49b0-bd97-a504fac4e702",
+        "source_call_id": "d4c57d8f-d38a-485b-87b4-edd1e84a53f4",
+        "assessment": {
+          "score": 50,
+          "band": "warm",
+          "disposition": "callback_required",
+          "confidence": 0.93,
+          "components": [
+            {
+              "signal": "interest",
+              "points": 40,
+              "max": 40,
+              "evidence": "callback_required"
+            },
+            {
+              "signal": "requirements",
+              "points": 0,
+              "max": 25,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "timing",
+              "points": 0,
+              "max": 25,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "contact",
+              "points": 10,
+              "max": 10,
+              "evidence": "phone"
+            }
+          ],
+          "version": 1,
+          "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+          "reason": "recorded_signals"
+        },
+        "updated_at": "2026-10-29 15:43:31.851053+00:00"
+      }
+    ]
+  },
+  "metadata": {
+    "call_id": "d4c57d8f-d38a-485b-87b4-edd1e84a53f4",
+    "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+    "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09",
+    "session_id": "adaptive-f19db3cb301e414a8f8355be55310635",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_fef6bbf1152f",
+    "started_at": "2026-10-29T15:43:23.540549+00:00",
+    "status": "active",
+    "storage_path": "data/calls/d4c57d8f-d38a-485b-87b4-edd1e84a53f4/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550120",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 38040,
+        "output_tokens": 1117,
+        "cached_tokens": 30592
+      }
+    },
+    "callback_request": {
+      "id": "2025d165-0c68-4d9e-9bf4-f8d6b850b041",
+      "status": "requested",
+      "requestedWhen": "రేపు ఉదయం",
+      "requestText": "సరేనండి, అర్థమైంది. నా పేరు కిరణ్, email kiran.audit@example.invalid. రేపు ఉదయం team review కోసం request pending లో ఉంచండి, నేను wait చేస్తాను. ఇంకేమీ అవసరం లేదు, thank you."
+    },
+    "contact_preference": "callback",
+    "hangup_reason": "goal_complete",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 47,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": true,
+    "callback_close_phase": "semantic_pending",
+    "disconnected_at": "2026-10-29T15:43:31.851053+00:00",
+    "ended_at": "2026-10-29T15:43:31.851053+00:00",
+    "end_reason": "goal_complete",
+    "duration_sec": 8.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 8.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.0016666666666666666,
+      "telephony_inr": 0.1587833333333333,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.0016666666666666666,
+      "telnyx_inr": 0.1587833333333333,
+      "telnyx_voice_api_usd": 0.0002666666666666667,
+      "telnyx_sip_usd": 0.0006666666666666666,
+      "telnyx_media_stream_usd": 0.00046666666666666666,
+      "telnyx_call_recording_usd": 0.0002666666666666667,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.27,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-29",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.012499999999999999,
+      "telephony_inr_per_min": 1.190875,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.012499999999999999,
+      "telnyx_inr_per_min": 1.190875,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_0e66ab3580658ef8016ae369a4ae4887d1b7b76f71ac6a42dd": {
+          "input_tokens": 1522,
+          "output_tokens": 341,
+          "cached_tokens": 0,
+          "cache_write_tokens": 1519,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.00078955
+        }
+      },
+      "post_call_analysis_usd": 0.00078955,
+      "post_call_analysis_inr": 0.07522042849999999
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నమస్తే Madhavi గారు, నేను కిరణ్ ని మాట్లాడుతున్నాను. నాకు Python ఇంకా data training గురించి తెలుసుకోవాలి. రేపు ఉదయం ఒక callback arrange చేస్తారా? ఒక 10 AM India time కి అయితే బాగుంటుంది. నా details note చేసుకోండి, team review కోసం request pending లో ఉంచండి.",
+      "ts": "2026-10-29T15:43:24.333652Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "కొంచెం నెమ్మదిగా చెప్తారా? ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇంకేమైనా details కావాలా?",
+      "ts": "2026-10-29T15:43:26.086325Z"
+    },
+    {
+      "seq": 3,
+      "role": "user",
+      "text": "సరేనండి, అర్థమైంది. నా పేరు కిరణ్, నా email kiran.audit@example.invalid. రేపు ఉదయం team review కోసం request pending లో ఉంచండి, నేను wait చేస్తాను.",
+      "ts": "2026-10-29T15:43:26.776968Z",
+      "partial": false
+    },
+    {
+      "seq": 4,
+      "role": "assistant",
+      "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇంకేమైనా వివరాలు కావాలా?",
+      "ts": "2026-10-29T15:43:28.268198Z"
+    },
+    {
+      "seq": 5,
+      "role": "user",
+      "text": "సరేనండి, అర్థమైంది. నా పేరు కిరణ్, email kiran.audit@example.invalid. రేపు ఉదయం team review కోసం request pending లో ఉంచండి, నేను wait చేస్తాను. ఇంకేమీ అవసరం లేదు, thank you.",
+      "ts": "2026-10-29T15:43:29.131213Z",
+      "partial": false
+    },
+    {
+      "seq": 6,
+      "role": "assistant",
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T15:43:30.793047Z"
+    }
+  ],
+  "wall_elapsed_s": 13.343,
+  "simulated_exchange_timeline_s": 60,
+  "request_count": 12
+}

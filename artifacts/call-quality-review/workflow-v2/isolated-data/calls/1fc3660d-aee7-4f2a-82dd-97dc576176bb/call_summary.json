@@ -1,0 +1,45 @@
+{
+  "call_id": "1fc3660d-aee7-4f2a-82dd-97dc576176bb",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, initiated the call to inquire about the course fee and the availability of a weekend batch. The agent provided the fee as ₹8,999 with no installments and specified that the weekend batch runs from 10:00 AM to 1:00 PM. Kiran shared his name, requested that his inquiry be noted, and expressed interest. The agent confirmed the details and asked whether a weekday or weekend batch would be more convenient for him. Kiran declined to provide further information at that moment, thanked the agent, and ended the call.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_name": "Kiran",
+    "name": "Kiran",
+    "phone": "+919876500017"
+  },
+  "facts": {
+    "caller_name": "Kiran",
+    "name": "Kiran",
+    "phone": "+919876500017"
+  },
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:course-fee",
+    "custom:weekend-batch",
+    "followup:send_info",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "signal:objection",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:weekend-batch",
+    "custom:course-fee"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:34:09.715056Z",
+  "generation_ok": true
+}

@@ -1,0 +1,855 @@
+{
+  "scenario": {
+    "id": "A_rejected_product_memory",
+    "business": "A",
+    "kind": "memory_probe",
+    "integration": "none",
+    "policy": "review",
+    "max_turns": 3,
+    "goal": "Preserve the positively selected cards and reject negated mugs as a chosen product.",
+    "fixed_turns": [
+      "నాకు వంద విజిటింగ్ కార్డులు కావాలి. వాటి ధర చెప్పండి.",
+      "నాకు మగ్స్ వద్దు, విజిటింగ్ కార్డులే కావాలి. నా ఎంపిక ఏదని నమోదు చేసుకున్నారు?",
+      "అంతే, నా ప్రశ్నలకు సమాధానాలు వచ్చాయి. ధన్యవాదాలు, కాల్ ముగించండి."
+    ]
+  },
+  "agent": {
+    "id": "A",
+    "key": "printing",
+    "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+    "name": "Sri Krishna Digital Prints",
+    "agent_name": "Kavitha",
+    "role": "sales",
+    "industry": "printing",
+    "brief": "Agent name Kavitha. Company name Sri Krishna Digital Prints.\nOutbound and inbound customer inquiries in Telugu.\nWe print visiting cards: normal paper visiting cards cost 200 rupees for 100 cards,\nmatte finish cards cost 350 rupees for 100 cards. Minimum order quantity 100 cards.\nWedding invitation cards are customized: pricing depends on design, paper sample and quantity, no fixed price over the phone.\nFlex banners: normal flex 15 rupees per square foot, star flex 20 rupees per square foot.\nDelivery in Vijayawada takes 3 working days after design artwork approval; urgent 24-hour delivery is extra 150 rupees.\nPayment: Cash on delivery accepted for orders up to 1000 rupees; 50% advance payment required for orders above 1000 rupees.\nNo online payment or credit card processing on phone call.\nOffice hours Monday to Saturday 9:30 AM to 8:00 PM, Sunday closed.\nGoal: answer customer questions on cards, banners and pricing; understand their requirement.\nIf interested, take preferred name, quantity and delivery locality for a quote or order request.\nDo not force details before answering questions.\nCustomer refusing visiting cards may still want flex banners or wedding cards.\nNever claim an order is paid or dispatched without artwork approval and design confirmation.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Kavitha",
+      "company_name": "Sri Krishna Digital Prints",
+      "role": "Sales and customer enquiries",
+      "permitted_next_steps": "Collect customer name, item type, quantity and delivery locality in Vijayawada to submit an internal quote/order request. Explain that artwork approval is required before printing.",
+      "payment_rules": "Cash on delivery for orders up to 1000 rupees; 50% advance for orders above 1000 rupees. No online payment collection on call.",
+      "delivery_details": "Local delivery in Vijayawada takes 3 working days after artwork approval. Urgent 24-hour delivery is extra 150 rupees.",
+      "wedding_cards": "Customized quotation only based on design and paper sample. No fixed price on phone.",
+      "visiting_cards": "Standard 200 rupees for 100 cards; Matte finish 350 rupees for 100 cards. Minimum order 100 cards.",
+      "forbidden_actions": "Never confirm external courier shipment or take card payment on phone. Never guarantee delivery without artwork approval."
+    },
+    "user_id": "c0afb80f-ba42-4f85-ad75-ac1c23a9873f",
+    "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408"
+  },
+  "call_id": "726fbea3-c88f-45bc-a1ee-a7be8f8c323e",
+  "session_id": "adaptive-e41c8b86c6ce4af7b21bb4a2dbd4e24e",
+  "phone": "+12025550128",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_ce356842dc55",
+  "turn_index": 3,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నాకు వంద విజిటింగ్ కార్డులు కావాలి. వాటి ధర చెప్పండి.",
+        "intends_end": false,
+        "intent": "Focused reproducible stimulus; actual business response remains live",
+        "elapsed_s": 0
+      },
+      "spoken": "Normal paper విజిటింగ్ కార్డులు one hundred కార్డులకు two hundred rupees అవుతుంది. Matte finish కార్డులు one hundred కార్డులకు three hundred fifty rupees అవుతుంది. Minimum order one hundred కార్డులు ఉండాలి. మీకు ఏ రకం కావాలో చెప్పండి.",
+      "elapsed_s": 3.156,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "విజిటింగ్ కార్డులు"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        1166,
+        1167,
+        1168,
+        1169,
+        1170,
+        1171
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "Normal paper విజిటింగ్ కార్డులు one hundred కార్డులకు two hundred rupees అవుతుంది. Matte finish కార్డులు one hundred కార్డులకు three hundred fifty rupees అవుతుంది. Minimum order one hundred కార్డులు ఉండాలి. మీకు ఏ రకం కావాలో చెప్పండి.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4587,
+            "output_tokens": 35,
+            "cached_tokens": 3296,
+            "total_tokens": 4622
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 2,
+      "caller": {
+        "utterance": "నాకు మగ్స్ వద్దు, విజిటింగ్ కార్డులే కావాలి. నా ఎంపిక ఏదని నమోదు చేసుకున్నారు?",
+        "intends_end": false,
+        "intent": "Focused reproducible stimulus; actual business response remains live",
+        "elapsed_s": 0
+      },
+      "spoken": "మీ ఎంపిక విజిటింగ్ కార్డులుగా నమోదు చేసుకున్నాను. మీకు normal paper కావాలా లేక matte finish కావాలా?",
+      "elapsed_s": 2.828,
+      "memory_before": {
+        "facts": {
+          "product": "విజిటింగ్ కార్డులు"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "విజిటింగ్ కార్డులు"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        1172,
+        1173,
+        1174,
+        1175,
+        1176,
+        1177
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "మీ ఎంపిక విజిటింగ్ కార్డులుగా నమోదు చేసుకున్నాను. మీకు normal paper కావాలా లేక matte finish కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4656,
+            "output_tokens": 25,
+            "cached_tokens": 3232,
+            "total_tokens": 4681
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 3,
+      "caller": {
+        "utterance": "అంతే, నా ప్రశ్నలకు సమాధానాలు వచ్చాయి. ధన్యవాదాలు, కాల్ ముగించండి.",
+        "intends_end": true,
+        "intent": "Focused reproducible stimulus; actual business response remains live",
+        "elapsed_s": 0
+      },
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 2.203,
+      "memory_before": {
+        "facts": {
+          "product": "విజిటింగ్ కార్డులు"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "విజిటింగ్ కార్డులు"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "assistant: Normal paper విజిటింగ్ కార్డులు one hundred కార్డులకు two hundred rupees అవుతుంది. Matte finish కార్డులు one hundred కార్డులకు three hundred fifty rupees అవుతుంది. Minimum order one hundred కార్డులు ఉండాలి. మీకు ఏ రకం కావాలో చెప్పండి.\nuser: నాకు మగ్స్ వద్దు, విజిటింగ్ కార్డులే కావాలి. నా ఎంపిక ఏదని నమోదు చేసుకున్నారు?\nassistant: మీ ఎంపిక విజిటింగ్ కార్డులుగా నమోదు చేసుకున్నాను. మీకు normal paper కావాలా లేక matte finish కావాలా?\nuser: అంతే, నా ప్రశ్నలకు సమాధానాలు వచ్చాయి. ధన్యవాదాలు, కాల్ ముగించండి.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        1178,
+        1179
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "response_contract": "speech_text",
+          "finish_reason": "stop",
+          "server_owned_close": true,
+          "end_call": {
+            "should_end": true,
+            "reason": "goodbye",
+            "contact_preference": "end_call",
+            "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "Normal paper విజిటింగ్ కార్డులు one hundred కార్డులకు two hundred rupees అవుతుంది. Matte finish కార్డులు one hundred కార్డులకు three hundred fifty rupees అవుతుంది. Minimum order one hundred కార్డులు ఉండాలి. మీకు ఏ రకం కావాలో చెప్పండి.",
+      "at": 127968.531
+    },
+    {
+      "turn": 2,
+      "text": "మీ ఎంపిక విజిటింగ్ కార్డులుగా నమోదు చేసుకున్నాను. మీకు normal paper కావాలా లేక matte finish కావాలా?",
+      "at": 127971.406
+    },
+    {
+      "turn": 3,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 127972.546
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "Normal paper విజిటింగ్ కార్డులు one hundred కార్డులకు two hundred rupees అవుతుంది. Matte finish కార్డులు one hundred కార్డులకు three hundred fifty rupees అవుతుంది. Minimum order one hundred కార్డులు ఉండాలి. మీకు ఏ రకం కావాలో చెప్పండి.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4587,
+        "output_tokens": 35,
+        "cached_tokens": 3296,
+        "total_tokens": 4622
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "మీ ఎంపిక విజిటింగ్ కార్డులుగా నమోదు చేసుకున్నాను. మీకు normal paper కావాలా లేక matte finish కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4656,
+        "output_tokens": 25,
+        "cached_tokens": 3232,
+        "total_tokens": 4681
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "response_contract": "speech_text",
+      "finish_reason": "stop",
+      "server_owned_close": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "goodbye",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "వాటి ధర చెప్పండి",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "product",
+            "value": "విజిటింగ్ కార్డులు"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నాకు వంద విజిటింగ్ కార్డులు కావాలి. వాటి ధర చెప్పండి.",
+      "at": 127968.0
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "నా ఎంపిక ఏదని నమోదు చేసుకున్నారు?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "product",
+            "value": "విజిటింగ్ కార్డులు"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నాకు మగ్స్ వద్దు, విజిటింగ్ కార్డులే కావాలి. నా ఎంపిక ఏదని నమోదు చేసుకున్నారు?",
+      "at": 127970.968
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "decision": "close",
+        "reason": "goodbye",
+        "evidence": "అంతే, నా ప్రశ్నలకు సమాధానాలు వచ్చాయి. ధన్యవాదాలు, కాల్ ముగించండి.",
+        "remaining_request": "",
+        "contact_intent": "end_this_call",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": true,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "transcript": "అంతే, నా ప్రశ్నలకు సమాధానాలు వచ్చాయి. ధన్యవాదాలు, కాల్ ముగించండి.",
+      "at": 127972.531
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 3,
+      "at": 127972.546
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 127973.609,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 127968.562
+    },
+    {
+      "turn_seq": 3,
+      "at": 127971.421
+    },
+    {
+      "turn_seq": 5,
+      "at": 127972.593
+    }
+  ],
+  "started_at": "2026-10-29T17:54:02.629527+00:00",
+  "errors": [],
+  "brain_checksum": "4377fd6de8acabd850cc23fbb31aa8545a4aaa4741b52def0dc4f5ac243e68ae",
+  "runtime_checksum": "da1755a8f3855edf24bba3433068099b8f7bd1d8ad3adc23a2b077c7631cc482",
+  "available_tools": [
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 127967.5,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 2,
+      "start_s": 127970.5,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 51,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 3,
+      "start_s": 127972.531,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 51,
+      "rolling_chars": 0
+    }
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "interested",
+    "disposition_confidence": 0.98,
+    "summary_te": "",
+    "summary_en": "The caller asked for pricing for 100 visiting cards. The agent explained that 100 normal-paper cards cost ₹200, matte-finish cards cost ₹350, and the minimum order is 100 cards. The caller clarified that they wanted visiting cards rather than mugs and asked what preference had been recorded; the agent recorded visiting cards and asked them to choose between normal paper and matte finish. The caller said their questions had been answered and ended the call without selecting a finish or placing an order.",
+    "next_action": null,
+    "extracted_fields": {
+      "matte_finish_price": "₹350 per 100 cards",
+      "minimum_order": "100 cards",
+      "normal_paper_price": "₹200 per 100 cards",
+      "phone": "+12025550128",
+      "product": "Visiting cards",
+      "quantity": "100 cards"
+    },
+    "objections": [],
+    "notes": "Pricing information was provided, but no finish was selected and no order was placed.",
+    "tags": [
+      "intent:pricing",
+      "intent:purchase",
+      "sentiment:positive"
+    ],
+    "custom_tags": [
+      "custom:visiting-cards",
+      "custom:100-card-order"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T17:54:13.958075Z",
+    "generation_ok": true,
+    "facts": {
+      "matte_finish_price": "₹350 per 100 cards",
+      "minimum_order": "100 cards",
+      "normal_paper_price": "₹200 per 100 cards",
+      "phone": "+12025550128",
+      "product": "Visiting cards",
+      "quantity": "100 cards"
+    },
+    "disclosure_status": null,
+    "contact_preference": "end_call",
+    "status_tags": [
+      "contact:phone_known",
+      "custom:100-card-order",
+      "custom:visiting-cards",
+      "intent:pricing",
+      "intent:purchase",
+      "outcome:interested",
+      "sentiment:positive"
+    ],
+    "lead": {
+      "leadId": "a3b63c23-0092-4395-86d0-ae75be74d320",
+      "agentId": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+      "stage": "contacted",
+      "action": "created"
+    },
+    "lead_assessment": {
+      "score": 75,
+      "band": "hot",
+      "disposition": "interested",
+      "confidence": 0.98,
+      "components": [
+        {
+          "signal": "interest",
+          "points": 40,
+          "max": 40,
+          "evidence": "interested"
+        },
+        {
+          "signal": "requirements",
+          "points": 25,
+          "max": 25,
+          "evidence": "product"
+        },
+        {
+          "signal": "timing",
+          "points": 0,
+          "max": 25,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "contact",
+          "points": 10,
+          "max": 10,
+          "evidence": "phone"
+        }
+      ],
+      "version": 1,
+      "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+      "reason": "recorded_signals"
+    },
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "726fbea3-c88f-45bc-a1ee-a7be8f8c323e",
+        "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+        "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+        "session_id": "adaptive-e41c8b86c6ce4af7b21bb4a2dbd4e24e",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_ce356842dc55",
+        "started_at": "2026-10-29 17:54:02.615239+00:00",
+        "ended_at": "2026-10-29 17:54:10.807281+00:00",
+        "duration_sec": 8,
+        "disposition": "interested",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/726fbea3-c88f-45bc-a1ee-a7be8f8c323e/",
+        "end_reason": "goodbye",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "contact:phone_known",
+          "custom:100-card-order",
+          "custom:visiting-cards",
+          "intent:pricing",
+          "intent:purchase",
+          "outcome:interested",
+          "sentiment:positive"
+        ],
+        "last_heartbeat_at": "2026-10-29 17:54:02.615239+00:00",
+        "created_at": "2026-10-29 17:54:02.616252+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [],
+    "dnd": [],
+    "leads": [
+      {
+        "lead_id": "a3b63c23-0092-4395-86d0-ae75be74d320",
+        "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+        "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+        "name": "New lead",
+        "phone": "+12025550128",
+        "email": null,
+        "stage": "contacted",
+        "notes": "[Call reference: 726fbea3-c88f-45bc-a1ee-a7be8f8c323e]\nThe caller asked for pricing for 100 visiting cards. The agent explained that 100 normal-paper cards cost ₹200, matte-finish cards cost ₹350, and the minimum order is 100 cards. The caller clarified that they wanted visiting cards rather than mugs and asked what preference had been recorded; the agent recorded visiting cards and asked them to choose between normal paper and matte finish. The caller said their questions had been answered and ended the call without selecting a finish or placing an order.\n\nCall outcome: interested (98% confidence)",
+        "created_at": "2026-10-29 17:54:13.979465+00:00",
+        "updated_at": "2026-10-29 17:54:13.979465+00:00"
+      }
+    ],
+    "tools": [],
+    "assessments": [
+      {
+        "id": "90ee224c-ab9f-4c60-be47-7988c65606b7",
+        "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+        "lead_id": "a3b63c23-0092-4395-86d0-ae75be74d320",
+        "source_call_id": "726fbea3-c88f-45bc-a1ee-a7be8f8c323e",
+        "assessment": {
+          "score": 75,
+          "band": "hot",
+          "disposition": "interested",
+          "confidence": 0.98,
+          "components": [
+            {
+              "signal": "interest",
+              "points": 40,
+              "max": 40,
+              "evidence": "interested"
+            },
+            {
+              "signal": "requirements",
+              "points": 25,
+              "max": 25,
+              "evidence": "product"
+            },
+            {
+              "signal": "timing",
+              "points": 0,
+              "max": 25,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "contact",
+              "points": 10,
+              "max": 10,
+              "evidence": "phone"
+            }
+          ],
+          "version": 1,
+          "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+          "reason": "recorded_signals"
+        },
+        "updated_at": "2026-10-29 17:54:10.807281+00:00"
+      }
+    ]
+  },
+  "metadata": {
+    "call_id": "726fbea3-c88f-45bc-a1ee-a7be8f8c323e",
+    "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+    "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+    "session_id": "adaptive-e41c8b86c6ce4af7b21bb4a2dbd4e24e",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_ce356842dc55",
+    "started_at": "2026-10-29T17:54:02.615239+00:00",
+    "status": "active",
+    "storage_path": "data/calls/726fbea3-c88f-45bc-a1ee-a7be8f8c323e/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550128",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 21364,
+        "output_tokens": 1234,
+        "cached_tokens": 13312
+      }
+    },
+    "contact_preference": "end_call",
+    "hangup_reason": "goodbye",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 62,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": true,
+    "callback_close_phase": "idle",
+    "disconnected_at": "2026-10-29T17:54:10.807281+00:00",
+    "ended_at": "2026-10-29T17:54:10.807281+00:00",
+    "end_reason": "goodbye",
+    "duration_sec": 8.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 8.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.0016666666666666666,
+      "telephony_inr": 0.1587833333333333,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.0016666666666666666,
+      "telnyx_inr": 0.1587833333333333,
+      "telnyx_voice_api_usd": 0.0002666666666666667,
+      "telnyx_sip_usd": 0.0006666666666666666,
+      "telnyx_media_stream_usd": 0.00046666666666666666,
+      "telnyx_call_recording_usd": 0.0002666666666666667,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.27,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-29",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.012499999999999999,
+      "telephony_inr_per_min": 1.190875,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.012499999999999999,
+      "telnyx_inr_per_min": 1.190875,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_029aace530813017016ae388439e2087d1b46168a92f18275b": {
+          "input_tokens": 1318,
+          "output_tokens": 252,
+          "cached_tokens": 0,
+          "cache_write_tokens": 1315,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.0006317499999999999
+        }
+      },
+      "post_call_analysis_usd": 0.0006317499999999999,
+      "post_call_analysis_inr": 0.060186822499999994
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నాకు వంద విజిటింగ్ కార్డులు కావాలి. వాటి ధర చెప్పండి.",
+      "ts": "2026-10-29T17:54:02.651634Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "Normal paper విజిటింగ్ కార్డులు one hundred కార్డులకు two hundred rupees అవుతుంది. Matte finish కార్డులు one hundred కార్డులకు three hundred fifty rupees అవుతుంది. Minimum order one hundred కార్డులు ఉండాలి. మీకు ఏ రకం కావాలో చెప్పండి.",
+      "ts": "2026-10-29T17:54:05.730982Z"
+    },
+    {
+      "seq": 3,
+      "role": "user",
+      "text": "నాకు మగ్స్ వద్దు, విజిటింగ్ కార్డులే కావాలి. నా ఎంపిక ఏదని నమోదు చేసుకున్నారు?",
+      "ts": "2026-10-29T17:54:05.818173Z",
+      "partial": false
+    },
+    {
+      "seq": 4,
+      "role": "assistant",
+      "text": "మీ ఎంపిక విజిటింగ్ కార్డులుగా నమోదు చేసుకున్నాను. మీకు normal paper కావాలా లేక matte finish కావాలా?",
+      "ts": "2026-10-29T17:54:08.611119Z"
+    },
+    {
+      "seq": 5,
+      "role": "user",
+      "text": "అంతే, నా ప్రశ్నలకు సమాధానాలు వచ్చాయి. ధన్యవాదాలు, కాల్ ముగించండి.",
+      "ts": "2026-10-29T17:54:08.663564Z",
+      "partial": false
+    },
+    {
+      "seq": 6,
+      "role": "assistant",
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T17:54:09.737239Z"
+    }
+  ],
+  "wall_elapsed_s": 11.578,
+  "simulated_exchange_timeline_s": 60,
+  "request_count": 14
+}

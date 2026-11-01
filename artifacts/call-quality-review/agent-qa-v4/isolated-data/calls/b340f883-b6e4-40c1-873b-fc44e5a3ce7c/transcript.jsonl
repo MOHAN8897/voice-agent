@@ -1,0 +1,16 @@
+{"seq": 1, "role": "user", "text": "నమస్తేండి, చెప్పండి, మీ products గురించి ఏంటి విశేషాలు?", "ts": "2026-10-31T15:06:13.724367Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "మా దగ్గర కొన్ని herbal products ఉన్నాయి. Herbal Hair Oil ₹499 కి 200 ml వస్తుంది, ఇందులో Amla, Bhringraj, Hibiscus, Coconut Oil ఉంటాయి. వీటిలో మీకు ఏ product గురించి తెలుసుకోవాలని ఉంది?", "ts": "2026-10-31T15:06:15.073735Z"}
+{"seq": 3, "role": "user", "text": "ఆయిల్ అయితే విన్నాను, అలాగే మీ face cream గురించి కూడా చెప్పండి, అందులో ఏ ingredients వాడతారు, ఎలా యూజ్ చేయాలి?", "ts": "2026-10-31T15:06:36.257142Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "NatureVeda Herbal Face Cream ₹599 కి 50 g వస్తుంది. ఇందులో Neem, Turmeric, మరియు Aloe Vera ఉంటాయి. దీని usage గురించి specific గా ఏమైనా వివరాలు కావాలా?", "ts": "2026-10-31T15:06:37.615249Z"}
+{"seq": 5, "role": "user", "text": "అలాగేండి, అయితే నేను టూ బాటిల్స్ hair oil మరియు ఒకొక్క face cream ఆర్డర్ చేద్దాం అనుకుంటున్నాను. వీటన్నింటికీ కలిపి టోటల్ price ఎంత అవుతుంది?", "ts": "2026-10-31T15:06:59.004924Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "రెండు బాటిల్స్ hair oil కి ₹998, ఒక face cream కి ₹599 అవుతుంది. మొత్తం కలిపి ₹1597 అవుతుంది. మీరు order place చేయాలనుకుంటున్నారా?", "ts": "2026-10-31T15:07:01.215415Z"}
+{"seq": 7, "role": "user", "text": "అవును, తీసుకోవాలని ఉంది. అయితే డెలివరీకి ఎన్ని రోజులు పడుతుంది మరియు దీనిపై ఏదైనా discount ఉందా?", "ts": "2026-10-31T15:07:17.608446Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "డెలివరీకి ఎన్ని రోజులు పడుతుంది మరియు దీనిపై ఏదైనా discount ఉందా అనే వివరాలు ప్రస్తుతం నా system లో లేవు. నేను ఈ request ని మా team కి note చేస్తాను, వాళ్ళు confirm చేస్తారు. మీరు order place చేయాలనుకుంటే చెప్పండి.", "ts": "2026-10-31T15:07:19.735263Z"}
+{"seq": 9, "role": "user", "text": "సరేండి, డిస్కౌంట్ లేకపోయినా పర్వాలేదు, నేను ఆర్డర్ కన్ఫర్మ్ చేద్దాం అనుకుంటున్నాను, నెక్స్ట్ ఏం చేయాలి?", "ts": "2026-10-31T15:07:40.965592Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "order place చేయడానికి మీ పేరు మరియు delivery address చెప్పండి.", "ts": "2026-10-31T15:07:42.467599Z"}
+{"seq": 11, "role": "user", "text": "నా పేరు Lakshmi Reddy, అడ్రస్ వచ్చి Flat 302, Sai Residency, Kukatpally, Hyderabad 500072.", "ts": "2026-10-31T15:07:54.187470Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "సరే Lakshmi Reddy గారు, ఒకసారి confirm చేస్తున్నాను. మీరు 2 x Herbal Hair Oil మరియు 1 x Herbal Face Cream order చేస్తున్నారు కదా? ఇదంతా correct ఏనా?", "ts": "2026-10-31T15:07:56.758716Z"}
+{"seq": 13, "role": "user", "text": "అవును, అదంతా కరెక్టేండి.", "ts": "2026-10-31T15:08:10.539670Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "సరేనండి, దీన్ని confirm చేస్తున్నాను. Herbal Hair Oil 2 మరియు Herbal Face Cream 1 ఆర్డర్ చేయాలనుకుంటున్నారు, అంతే కదా?", "ts": "2026-10-31T15:08:12.343755Z"}
+{"seq": 15, "role": "user", "text": "అవును, కరెక్టేండి, ఆర్డర్ ప్లేస్ అయిపోయినట్టేనా?", "ts": "2026-10-31T15:08:24.894656Z", "partial": false}
+{"seq": 16, "role": "assistant", "text": "మీ order confirm అయిపోయింది Lakshmi Reddy గారు. మా team త్వరలోనే delivery details తో మిమ్మల్ని సంప్రదిస్తారు.", "ts": "2026-10-31T15:08:27.377159Z"}

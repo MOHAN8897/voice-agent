@@ -1,0 +1,67 @@
+{
+  "call_id": "762bab8e-a47c-4e71-8d0a-86af1d28c6df",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Shravani from Madhapur requested general servicing for her split AC and asked for a technician visit tomorrow at 10:00 AM. She provided her email address and accepted the quoted service price of ₹599. She repeatedly requested that the appointment be created in her calendar and confirmed, but the agent explained that it could not check or confirm the slot, create a calendar appointment, record the technician request, or send a confirmation message because the required permissions and capabilities were unavailable. No appointment or follow-up message was completed. The caller understood the limitation and ended the call without requesting anything further.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "location": "Madhapur",
+    "phone": "+12025550101",
+    "price": "₹599",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు ఉదయం 10 AM",
+    "service": "Split AC general service"
+  },
+  "facts": {
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "location": "Madhapur",
+    "phone": "+12025550101",
+    "price": "₹599",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు ఉదయం 10 AM",
+    "service": "Split AC general service"
+  },
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:split-ac-service",
+    "custom:technician-visit",
+    "custom:tomorrow-10am",
+    "intent:booking",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:booking",
+    "intent:purchase",
+    "signal:price_sensitive",
+    "signal:objection",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:split-ac-service",
+    "custom:tomorrow-10am",
+    "custom:technician-visit"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Appointment could not be created or confirmed due to lack of calendar permission.",
+    "Technician visit request could not be recorded and no confirmation message could be sent."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T16:36:35.516631Z",
+  "generation_ok": true
+}

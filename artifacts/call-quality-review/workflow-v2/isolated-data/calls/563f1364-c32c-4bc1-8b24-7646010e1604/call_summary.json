@@ -1,0 +1,45 @@
+{
+  "call_id": "563f1364-c32c-4bc1-8b24-7646010e1604",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller requested an immediate booking confirmation for tomorrow at 11 AM and asked for a booking number. The agent explained that they could not confirm the booking or provide a number on the spot, and requested the caller's name, appliance details, issue, and locality to forward to the team for confirmation. The caller initially pressed for immediate confirmation but ultimately accepted the explanation by saying 'Okay, thanks.' The agent reiterated that confirmation and the booking number would only be issued after the team processes the shared details, and asked if any further assistance was needed, to which the caller did not respond before the call ended.",
+  "next_action": "Collect caller details and submit for team confirmation.",
+  "extracted_fields": {
+    "phone": "+919876500007",
+    "requested_time": "రేపు ఉదయం 11",
+    "slot": "Tomorrow 11 AM"
+  },
+  "facts": {
+    "phone": "+919876500007",
+    "requested_time": "రేపు ఉదయం 11",
+    "slot": "Tomorrow 11 AM"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:appointment-booking",
+    "followup:callback",
+    "intent:booking",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "action:required",
+    "followup:callback",
+    "intent:booking",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:appointment-booking"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Caller requested immediate confirmation and a booking number, which the agent could not provide."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:32:51.998112Z",
+  "generation_ok": true
+}

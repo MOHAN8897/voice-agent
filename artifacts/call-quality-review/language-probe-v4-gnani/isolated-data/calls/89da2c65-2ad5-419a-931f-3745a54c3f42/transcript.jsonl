@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "मेरा fridge cooling नहीं कर रहा। क्या technician कल morning 10:30 पर आ सकता है?", "ts": "2026-10-29T19:39:23.216984Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Fridge की inspection का charge ₹250 है, लेकिन अगर आप repair करवाते हैं तो ये charge waive हो जाएगा। कल सुबह दस बजकर तीस मिनट का slot note कर लेता हूँ, पर same-day visit guaranteed नहीं होती। आप किस area में रहते हैं, Madhapur, Gachibowli, Kondapur या Kukatpally?", "ts": "2026-10-29T19:39:23.949635Z", "brain_latency_ms": 734}

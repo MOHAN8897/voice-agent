@@ -1,0 +1,3 @@
+{"turn_seq": 1, "ts": "2026-10-29T15:39:22.845589Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T15:39:25.086902Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-29T15:39:27.248162Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nemail: ramesh.audit@example.invalid | caller_email: ramesh.audit@example.invalid\n[Preferences]\nproduct: matte finish visiting cards\n[Context]\nCaller provided contact details in this call."}

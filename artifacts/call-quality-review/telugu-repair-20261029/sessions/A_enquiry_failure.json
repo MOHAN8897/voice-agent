@@ -1,0 +1,377 @@
+{
+  "scenario": {
+    "id": "A_enquiry_failure",
+    "business": "A",
+    "kind": "enquiry",
+    "integration": "failure",
+    "policy": "review",
+    "max_turns": 12,
+    "goal": "Learn standard versus matte visiting-card pricing, minimum quantity, design approval, delivery, rush surcharge and advance-payment conditions. Start with 100 cards, later correct to 200. Ask about wedding-card price once as an unknown fact. Try to submit a quote/internal order request with your final details. Ask what quantity they recorded after intervening conversation. Stay curious for roughly 10 caller turns if the conversation remains useful. Around the middle, thank them and ask another relevant question in the SAME turn, without ending the call. At the end, clearly say all your questions are answered and thank them."
+  },
+  "agent": {
+    "id": "A",
+    "key": "printing",
+    "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+    "name": "Sri Krishna Digital Prints",
+    "agent_name": "Kavitha",
+    "role": "sales",
+    "industry": "printing",
+    "brief": "Agent name Kavitha. Company name Sri Krishna Digital Prints.\nOutbound and inbound customer inquiries in Telugu.\nWe print visiting cards: normal paper visiting cards cost 200 rupees for 100 cards,\nmatte finish cards cost 350 rupees for 100 cards. Minimum order quantity 100 cards.\nWedding invitation cards are customized: pricing depends on design, paper sample and quantity, no fixed price over the phone.\nFlex banners: normal flex 15 rupees per square foot, star flex 20 rupees per square foot.\nDelivery in Vijayawada takes 3 working days after design artwork approval; urgent 24-hour delivery is extra 150 rupees.\nPayment: Cash on delivery accepted for orders up to 1000 rupees; 50% advance payment required for orders above 1000 rupees.\nNo online payment or credit card processing on phone call.\nOffice hours Monday to Saturday 9:30 AM to 8:00 PM, Sunday closed.\nGoal: answer customer questions on cards, banners and pricing; understand their requirement.\nIf interested, take preferred name, quantity and delivery locality for a quote or order request.\nDo not force details before answering questions.\nCustomer refusing visiting cards may still want flex banners or wedding cards.\nNever claim an order is paid or dispatched without artwork approval and design confirmation.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Kavitha",
+      "company_name": "Sri Krishna Digital Prints",
+      "role": "Sales and customer enquiries",
+      "permitted_next_steps": "Collect customer name, item type, quantity and delivery locality in Vijayawada to submit an internal quote/order request. Explain that artwork approval is required before printing.",
+      "payment_rules": "Cash on delivery for orders up to 1000 rupees; 50% advance for orders above 1000 rupees. No online payment collection on call.",
+      "delivery_details": "Local delivery in Vijayawada takes 3 working days after artwork approval. Urgent 24-hour delivery is extra 150 rupees.",
+      "wedding_cards": "Customized quotation only based on design and paper sample. No fixed price on phone.",
+      "visiting_cards": "Standard 200 rupees for 100 cards; Matte finish 350 rupees for 100 cards. Minimum order 100 cards.",
+      "forbidden_actions": "Never confirm external courier shipment or take card payment on phone. Never guarantee delivery without artwork approval."
+    },
+    "user_id": "c0afb80f-ba42-4f85-ad75-ac1c23a9873f",
+    "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408"
+  },
+  "call_id": "2c39d6cd-2fd9-400c-ac25-af69ae6832bd",
+  "session_id": "adaptive-512829f440d74273ae8eb61b2a8d2190",
+  "phone": "+12025550108",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_ce356842dc55",
+  "turn_index": 1,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నమస్తే Kavitha. నాకు visiting cards కావాలి. standard finish కంటే matte finish price ఎంత ఉంటుందో చెప్తారా? అలాగే minimum quantity ఎంత ఉండాలి?",
+        "intends_end": false,
+        "intent": "Inquire about matte versus standard visiting card pricing and minimum order quantity",
+        "elapsed_s": 12.891
+      },
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 23.609,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        19,
+        20
+      ],
+      "done": [],
+      "context_status": "complete",
+      "voice_phase": "ended",
+      "armed": false
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 126758.89
+    }
+  ],
+  "done_events": [],
+  "gates": [],
+  "external_actions": [],
+  "farewell_events": [],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 126759.953,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [],
+  "started_at": "2026-10-29T17:33:23.721842+00:00",
+  "errors": [],
+  "brain_checksum": "f1701af0d53369e603869a1bafee427e6d3493490cec35765d0b259410b7068c",
+  "runtime_checksum": "24e02fd7087c832858e2d6db4bca57f7f79a5e3617429d149011e26fa44a6d19",
+  "available_tools": [
+    "HUBSPOT_CREATE_CONTACT",
+    "GOOGLECALENDAR_CREATE_EVENT",
+    "GOOGLECALENDAR_FIND_FREE_SLOTS",
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 126743.453,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    }
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "no_outcome",
+    "disposition_confidence": 0.99,
+    "summary_te": "",
+    "summary_en": "The caller asked about visiting cards, specifically the price difference for a matte finish compared with a standard finish and the minimum order quantity. The agent only thanked the caller and ended the call without providing pricing, quantity details, or a follow-up arrangement.",
+    "next_action": null,
+    "extracted_fields": {
+      "phone": "+12025550108"
+    },
+    "objections": [],
+    "notes": null,
+    "tags": [
+      "intent:information",
+      "intent:pricing",
+      "sentiment:neutral"
+    ],
+    "custom_tags": [
+      "custom:visiting-cards",
+      "custom:matte-finish"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T17:34:00.067932Z",
+    "generation_ok": true,
+    "facts": {
+      "phone": "+12025550108"
+    },
+    "disclosure_status": null,
+    "contact_preference": "none",
+    "status_tags": [
+      "contact:phone_known",
+      "custom:matte-finish",
+      "custom:visiting-cards",
+      "intent:information",
+      "intent:pricing",
+      "outcome:no_outcome",
+      "quality:inconclusive",
+      "sentiment:neutral"
+    ],
+    "lead": null,
+    "lead_assessment": null,
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "2c39d6cd-2fd9-400c-ac25-af69ae6832bd",
+        "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+        "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+        "session_id": "adaptive-512829f440d74273ae8eb61b2a8d2190",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_ce356842dc55",
+        "started_at": "2026-10-29 17:33:23.705329+00:00",
+        "ended_at": "2026-10-29 17:33:57.150768+00:00",
+        "duration_sec": 33,
+        "disposition": "no_outcome",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/2c39d6cd-2fd9-400c-ac25-af69ae6832bd/",
+        "end_reason": "agent_hangup",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "contact:phone_known",
+          "custom:matte-finish",
+          "custom:visiting-cards",
+          "intent:information",
+          "intent:pricing",
+          "outcome:no_outcome",
+          "quality:inconclusive",
+          "sentiment:neutral"
+        ],
+        "last_heartbeat_at": "2026-10-29 17:33:23.706329+00:00",
+        "created_at": "2026-10-29 17:33:23.707330+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [],
+    "dnd": [],
+    "leads": [
+      {
+        "lead_id": "e3a6fbf4-c1ca-4eac-a3f7-2202b74756c3",
+        "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+        "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+        "name": "New lead",
+        "phone": "+12025550108",
+        "email": "ramesh.audit@example.invalid",
+        "stage": "contacted",
+        "notes": "[Call reference: 3e06c957-171b-40e6-9354-4ead78b66e6f]\nThe caller inquired about matte-finish visiting cards, initially considering 100 cards and later confirming a final quantity of 200. The agent quoted ₹350 for 100 cards, stated that the minimum order is 100 cards, and confirmed the quantity can be increased. The caller asked about design approval, delivery time, advance payment, rush-order charges, and wedding invitation card pricing. The agent explained that delivery in Vijayawada takes three working days after artwork approval, while wedding card pricing depends on the design, paper sample, and quantity. The agent stated that orders above ₹1,000 require 50% advance payment and that rush orders incur an additional ₹150 charge. The caller accepted the quoted pricing and charges and asked for a quote to be sent to ramesh.audit@example.invalid. The agent confirmed the final quantity of 200 cards but stated that sending the quote by email was not currently possible and that no alternative was available by phone. The caller said all questions were clear, thanked the agent, and the call ended politely. No order completion or quote delivery was confirmed.\n\nObjections: Quote could not be sent by email, and no alternative was available by phone.\n\nCall outcome: interested (98% confidence)",
+        "created_at": "2026-10-29 17:24:49.517682+00:00",
+        "updated_at": "2026-10-29 17:24:49.517682+00:00"
+      }
+    ],
+    "tools": [],
+    "assessments": []
+  },
+  "metadata": {
+    "call_id": "2c39d6cd-2fd9-400c-ac25-af69ae6832bd",
+    "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+    "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+    "session_id": "adaptive-512829f440d74273ae8eb61b2a8d2190",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_ce356842dc55",
+    "started_at": "2026-10-29T17:33:23.705329+00:00",
+    "status": "active",
+    "storage_path": "data/calls/2c39d6cd-2fd9-400c-ac25-af69ae6832bd/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550108",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "hangup_reason": "agent_hangup",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 62,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": true,
+    "callback_close_phase": "idle",
+    "contact_preference": "none",
+    "disconnected_at": "2026-10-29T17:33:57.150768+00:00",
+    "ended_at": "2026-10-29T17:33:57.150768+00:00",
+    "end_reason": "agent_hangup",
+    "duration_sec": 33.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 33.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.006875000000000001,
+      "telephony_inr": 0.6549812500000001,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.006875000000000001,
+      "telnyx_inr": 0.6549812500000001,
+      "telnyx_voice_api_usd": 0.0011,
+      "telnyx_sip_usd": 0.0027500000000000003,
+      "telnyx_media_stream_usd": 0.0019250000000000003,
+      "telnyx_call_recording_usd": 0.0011,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.27,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-29",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.0125,
+      "telephony_inr_per_min": 1.1908750000000001,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.0125,
+      "telnyx_inr_per_min": 1.1908750000000001,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_0c4169c37a16d716016ae38385f41487d1a22d21927c4439ec": {
+          "input_tokens": 997,
+          "output_tokens": 129,
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.0003542
+        }
+      },
+      "post_call_analysis_usd": 0.0003542,
+      "post_call_analysis_inr": 0.033744633999999996
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నమస్తే Kavitha. నాకు visiting cards కావాలి. standard finish కంటే matte finish price ఎంత ఉంటుందో చెప్తారా? అలాగే minimum quantity ఎంత ఉండాలి?",
+      "ts": "2026-10-29T17:33:36.650524Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T17:33:56.084847Z"
+    }
+  ],
+  "wall_elapsed_s": 36.516,
+  "simulated_exchange_timeline_s": 20,
+  "request_count": 3
+}

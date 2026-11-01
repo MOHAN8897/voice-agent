@@ -1,0 +1,55 @@
+{
+  "call_id": "49500754-f0f6-430c-80d3-de8719688361",
+  "language_callback": null,
+  "disposition": "converted",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to purchase 200 matte visiting cards. The agent provided a quote of ₹700 for the quantity. The caller, Ravi Kumar, shared his delivery address as 12 MG Road in Vijayawada. After the agent confirmed the order, the caller agreed to proceed, and the agent confirmed the order placement, stating that delivery would occur within three working days in Vijayawada upon artwork approval. The caller thanked the agent and ended the call.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_name": "Ravi Kumar",
+    "delivery_address": "12 MG Road, Vijayawada",
+    "phone": "+919876500010",
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "total_cost": "₹700"
+  },
+  "facts": {
+    "caller_name": "Ravi Kumar",
+    "delivery_address": "12 MG Road, Vijayawada",
+    "phone": "+919876500010",
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "total_cost": "₹700"
+  },
+  "status_tags": [
+    "action:required",
+    "action:urgent",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:vijayawada-delivery",
+    "custom:visiting-cards",
+    "followup:send_quote",
+    "intent:purchase",
+    "outcome:converted",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:purchase",
+    "sentiment:positive",
+    "signal:ready_to_buy",
+    "action:required",
+    "followup:send_quote",
+    "action:urgent"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:vijayawada-delivery"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:43:52.007412Z",
+  "generation_ok": true
+}

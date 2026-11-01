@@ -1,0 +1,7 @@
+{"seq": 1, "role": "user", "text": "नमस्ते प्रिया जी। हाँ, बताइए आप लोग कौन-कौन से प्रोडक्ट्स बेचते हैं और aloe vera juice का price क्या है?", "ts": "2026-10-31T13:42:28.001047Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "हमारे पास चार products हैं — Herbal Hair Oil 200 ml के लिए ₹499 का, Aloe Vera Juice 500 ml की bottle के लिए ₹399 का, Herbal Face Cream 599 रुपये का, और Ashwagandha Capsules 60 capsules के लिए ₹699 के। Aloe Vera Juice में सिर्फ Aloe Vera है।", "ts": "2026-10-31T13:42:30.360571Z"}
+{"seq": 3, "role": "user", "text": "अच्छा, यह aloe vera juice delivery के बाद कितने दिनों तक fresh रहता है?", "ts": "2026-10-31T13:42:52.221998Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "माफ़ कीजिए, delivery के बाद aloe vera juice कितने दिनों तक fresh रहेगा, यह जानकारी मेरे पास अभी उपलब्ध नहीं है।", "ts": "2026-10-31T13:42:53.944309Z"}
+{"seq": 5, "role": "user", "text": "कोई बात नहीं जी, आप मुझे इसके बारे में बाद में बता देना।", "ts": "2026-10-31T13:43:08.771843Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ठीक है, मैं आपकी callback request note कर लेती हूँ। आपको किस समय call करना सही रहेगा?", "ts": "2026-10-31T13:43:10.316022Z"}
+{"seq": 7, "role": "user", "text": "Actually, mujhe thoda confusion ho raha hai. Mai Telugu me jyada comfortable hu, toh kya aap mujhe kal subah 11 baje ke aas-paas call back kar sakti hain?", "ts": "2026-10-31T13:43:29.471573Z", "partial": false}

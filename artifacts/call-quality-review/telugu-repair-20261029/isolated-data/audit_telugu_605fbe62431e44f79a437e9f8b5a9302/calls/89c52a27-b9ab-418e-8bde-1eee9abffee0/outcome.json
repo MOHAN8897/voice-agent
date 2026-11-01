@@ -1,0 +1,40 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller clearly requested that no one call their number again and stated they did not want any further calls. The agent acknowledged the request, thanked the caller, and ended the conversation. No other details or follow-up were discussed.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+12025550108"
+  },
+  "objections": [
+    "The caller does not want any further calls."
+  ],
+  "notes": "The caller explicitly requested no further contact.",
+  "tags": [
+    "signal:do_not_call",
+    "sentiment:negative"
+  ],
+  "custom_tags": [],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:37:57.506741Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+12025550108"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:phone_known",
+    "outcome:not_interested",
+    "sentiment:negative",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,888 @@
+{
+  "scenario": {
+    "id": "C_callback_withdrawn_after_question",
+    "business": "C",
+    "kind": "withdrawal_probe",
+    "integration": "none",
+    "policy": "automatic",
+    "max_turns": 3,
+    "goal": "Answer a question accompanying a callback; cancel callback when explicitly withdrawn, then close without saving it.",
+    "fixed_turns": [
+      "రేపు ఉదయం పది గంటలకు నాకు కాల్ చేయండి. కానీ ముందుగా Python కోర్సు ఫీజు ఎంత చెప్పండి?",
+      "నేనే తర్వాత మీకు కాల్ చేస్తాను. మీరు నాకు callback చేయవద్దు. SQL కోర్సు ఫీజు ఎంత?",
+      "అంతే, నాకు కావాల్సిన వివరాలు వచ్చాయి. ధన్యవాదాలు, కాల్ ముగించండి."
+    ]
+  },
+  "agent": {
+    "id": "C",
+    "key": "academy",
+    "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+    "name": "Teja Data Academy",
+    "agent_name": "Madhavi",
+    "role": "counsellor",
+    "industry": "education",
+    "brief": "Agent name Madhavi, company Teja Data Academy.\nPhone counselling and course admissions in Telugu.\nWe offer practical Python with Data Analytics certification course.\nDuration: 8 weeks online live classes with hands-on projects.\nBatches: Weekday batch 8:00 PM to 9:00 PM (Mon-Fri); Weekend batch 10:00 AM to 1:00 PM (Sat-Sun).\nFee: Final fee is 8,999 rupees total. An old leaflet mentions 12000/15000 rupees, discard that old fee. Current fee 8,999 rupees only.\nNo installment discounts.\nEligibility: Any graduate (BTech, BSc, BCom) or final year college student. Basic computer knowledge needed, prior coding not required.\nPlacement policy: 100% placement assistance provided (resume building, interview preparation, job referrals); strictly NO job guarantee or salary promise.\nGoal: answer course curriculum, fees, batches and timing questions.\nIf interested in free demo session or admission counselling, collect preferred name, email, qualification and preferred batch.\nNo payment collected over the phone.\nRefund policy: No refund once classes start after the first week.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Madhavi",
+      "company_name": "Teja Data Academy",
+      "role": "Course counselling and demo registration",
+      "permitted_next_steps": "Collect student name, email, educational qualification and batch preference (weekday/weekend) to book a free demo class or counsellor callback.",
+      "fee_terms": "Final course fee is 8,999 rupees total. Disregard any old fees. No installment discounts.",
+      "placement_policy": "Placement assistance provided (interview prep, resume building, referrals); strictly no job guarantee.",
+      "eligibility_rules": "Any graduate or final year student; no prior coding experience required.",
+      "forbidden_actions": "Never guarantee a job, salary package or placement. Never collect fees or credit card numbers on call."
+    },
+    "user_id": "903ba6dd-ad2a-47cf-a44a-36ef191127f3",
+    "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601"
+  },
+  "call_id": "4857c66f-85ec-4a3e-9460-d51c1e261771",
+  "session_id": "adaptive-ef9a95f08ecb4a45a8d866c7a4351f4d",
+  "phone": "+12025550153",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_3f4f01b76299",
+  "turn_index": 3,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "రేపు ఉదయం పది గంటలకు నాకు కాల్ చేయండి. కానీ ముందుగా Python కోర్సు ఫీజు ఎంత చెప్పండి?",
+        "intends_end": false,
+        "intent": "Focused reproducible stimulus; actual business response remains live",
+        "elapsed_s": 0
+      },
+      "spoken": "Python with Data Analytics course మొత్తం fee eight thousand nine hundred ninety nine rupees అవుతుంది. రేపు ఉదయం పది గంటలకు call చేయమని note చేసుకున్నాను. మీకు demo session గురించి ఏమైనా details కావాలా?",
+      "elapsed_s": 3.578,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {},
+        "preferences": {
+          "callback_time": "రేపు ఉదయం పది గంటలకు"
+        },
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        135,
+        136,
+        137,
+        138,
+        139,
+        140
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "Python with Data Analytics course మొత్తం fee eight thousand nine hundred ninety nine rupees అవుతుంది. రేపు ఉదయం పది గంటలకు call చేయమని note చేసుకున్నాను. మీకు demo session గురించి ఏమైనా details కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4742,
+            "output_tokens": 42,
+            "cached_tokens": 3552,
+            "total_tokens": 4784
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 2,
+      "caller": {
+        "utterance": "నేనే తర్వాత మీకు కాల్ చేస్తాను. మీరు నాకు callback చేయవద్దు. SQL కోర్సు ఫీజు ఎంత?",
+        "intends_end": false,
+        "intent": "Focused reproducible stimulus; actual business response remains live",
+        "elapsed_s": 0
+      },
+      "spoken": "SQL కోర్సు వివరాలు మాకు తెలియవు. మాది Python with Data Analytics కోర్సు, దీని ఫీజు eight thousand nine hundred ninety nine rupees మాత్రమే. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+      "elapsed_s": 3.469,
+      "memory_before": {
+        "facts": {},
+        "preferences": {
+          "callback_time": "రేపు ఉదయం పది గంటలకు"
+        },
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {},
+        "preferences": {
+          "callback_time": "రేపు ఉదయం పది గంటలకు"
+        },
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        141,
+        142,
+        143,
+        144,
+        145,
+        146
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "SQL కోర్సు వివరాలు మాకు తెలియవు. మాది Python with Data Analytics కోర్సు, దీని ఫీజు eight thousand nine hundred ninety nine rupees మాత్రమే. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4829,
+            "output_tokens": 36,
+            "cached_tokens": 3488,
+            "total_tokens": 4865
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 3,
+      "caller": {
+        "utterance": "అంతే, నాకు కావాల్సిన వివరాలు వచ్చాయి. ధన్యవాదాలు, కాల్ ముగించండి.",
+        "intends_end": true,
+        "intent": "Focused reproducible stimulus; actual business response remains live",
+        "elapsed_s": 0
+      },
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 3.407,
+      "memory_before": {
+        "facts": {},
+        "preferences": {
+          "callback_time": "రేపు ఉదయం పది గంటలకు"
+        },
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {},
+        "preferences": {
+          "callback_time": "రేపు ఉదయం పది గంటలకు"
+        },
+        "important_context": "",
+        "summary": "user: నేనే తర్వాత మీకు కాల్ చేస్తాను. మీరు నాకు callback చేయవద్దు. SQL కోర్సు ఫీజు ఎంత?\nassistant: SQL కోర్సు వివరాలు మాకు తెలియవు. మాది Python with Data Analytics కోర్సు, దీని ఫీజు eight thousand nine hundred ninety nine rupees మాత్రమే. మీకు ఇంకేమైనా వివరాలు కావాలా?\nuser: అంతే, నాకు కావాల్సిన వివరాలు వచ్చాయి. ధన్యవాదాలు, కాల్ ముగించండి.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        147,
+        148,
+        149,
+        150
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4897,
+            "output_tokens": 15,
+            "cached_tokens": 3456,
+            "total_tokens": 4912
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": true,
+            "reason": "goodbye",
+            "contact_preference": "end_call",
+            "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "Python with Data Analytics course మొత్తం fee eight thousand nine hundred ninety nine rupees అవుతుంది. రేపు ఉదయం పది గంటలకు call చేయమని note చేసుకున్నాను. మీకు demo session గురించి ఏమైనా details కావాలా?",
+      "at": 123022.609
+    },
+    {
+      "turn": 2,
+      "text": "SQL కోర్సు వివరాలు మాకు తెలియవు. మాది Python with Data Analytics కోర్సు, దీని ఫీజు eight thousand nine hundred ninety nine rupees మాత్రమే. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+      "at": 123026.093
+    },
+    {
+      "turn": 3,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 123028.453
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "Python with Data Analytics course మొత్తం fee eight thousand nine hundred ninety nine rupees అవుతుంది. రేపు ఉదయం పది గంటలకు call చేయమని note చేసుకున్నాను. మీకు demo session గురించి ఏమైనా details కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4742,
+        "output_tokens": 42,
+        "cached_tokens": 3552,
+        "total_tokens": 4784
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "SQL కోర్సు వివరాలు మాకు తెలియవు. మాది Python with Data Analytics కోర్సు, దీని ఫీజు eight thousand nine hundred ninety nine rupees మాత్రమే. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4829,
+        "output_tokens": 36,
+        "cached_tokens": 3488,
+        "total_tokens": 4865
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4897,
+        "output_tokens": 15,
+        "cached_tokens": 3456,
+        "total_tokens": 4912
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": true,
+        "reason": "goodbye",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "continue",
+        "reason": "goal_complete",
+        "evidence": "",
+        "remaining_request": "Python కోర్సు ఫీజు ఎంత",
+        "contact_intent": "callback",
+        "contact_evidence": "రేపు ఉదయం పది గంటలకు నాకు కాల్ చేయండి",
+        "callback_time": "రేపు ఉదయం పది గంటలకు",
+        "contact_verified": true,
+        "close_verified": false,
+        "memory_operations": [
+          {
+            "op": "set_preference",
+            "key": "callback_time",
+            "value": "రేపు ఉదయం పది గంటలకు"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "రేపు ఉదయం పది గంటలకు నాకు కాల్ చేయండి. కానీ ముందుగా Python కోర్సు ఫీజు ఎంత చెప్పండి?",
+      "at": 123021.984
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "decision": "continue",
+        "reason": "goodbye",
+        "evidence": "",
+        "remaining_request": "SQL కోర్సు ఫీజు ఎంత?",
+        "contact_intent": "self_callback",
+        "contact_evidence": "నేనే తర్వాత మీకు కాల్ చేస్తాను. మీరు నాకు callback చేయవద్దు.",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నేనే తర్వాత మీకు కాల్ చేస్తాను. మీరు నాకు callback చేయవద్దు. SQL కోర్సు ఫీజు ఎంత?",
+      "at": 123025.468
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "decision": "close",
+        "reason": "goodbye",
+        "evidence": "అంతే, నాకు కావాల్సిన వివరాలు వచ్చాయి. ధన్యవాదాలు, కాల్ ముగించండి.",
+        "remaining_request": "",
+        "contact_intent": "end_this_call",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": true,
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "transcript": "అంతే, నాకు కావాల్సిన వివరాలు వచ్చాయి. ధన్యవాదాలు, కాల్ ముగించండి.",
+      "at": 123028.437
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 3,
+      "at": 123028.453
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 123029.515,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 123022.64
+    },
+    {
+      "turn_seq": 3,
+      "at": 123026.125
+    },
+    {
+      "turn_seq": 5,
+      "at": 123028.484
+    }
+  ],
+  "started_at": "2026-10-29T16:31:36.267208+00:00",
+  "errors": [],
+  "brain_checksum": "f7f827191e14416d57b05be8a72701fe4f9ff4f115b567e2ea0b09457adf6838",
+  "runtime_checksum": "738c222d85859bc415c8474b1c6d6b4e3f9ed1c3928f71e90829c4aee81556e4",
+  "available_tools": [
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 123020.546,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 2,
+      "start_s": 123024.328,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 49,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 3,
+      "start_s": 123027.312,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 49,
+      "rolling_chars": 0
+    }
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "interested",
+    "disposition_confidence": 0.96,
+    "summary_te": "",
+    "summary_en": "The caller first asked for a call tomorrow at 10:00 AM and requested the Python with Data Analytics course fee. The agent stated that the fee is ₹8,999 and said the requested call had been noted. The caller then clarified that they would call later themselves and explicitly asked not to receive a callback. They asked about the SQL course fee; the agent said SQL course details were unavailable and reiterated that the available Python with Data Analytics course costs ₹8,999. The caller confirmed they had received the needed information and ended the call politely. No callback should be made.",
+    "next_action": null,
+    "extracted_fields": {
+      "course_fee": "₹8,999",
+      "course_interest": "Python with Data Analytics",
+      "phone": "+12025550153",
+      "requested_call_time": "Tomorrow at 10:00 AM",
+      "sql_course_fee": "Not provided"
+    },
+    "objections": [
+      "The caller declined a callback and said they would call themselves.",
+      "SQL course fee/details were unavailable."
+    ],
+    "notes": "Caller received the requested Python course pricing information and ended the call. Do not initiate a callback.",
+    "tags": [
+      "intent:information",
+      "intent:pricing",
+      "signal:do_not_call",
+      "sentiment:neutral"
+    ],
+    "custom_tags": [
+      "custom:python-data-analytics",
+      "custom:sql-course",
+      "custom:course-fee"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T16:31:51.167307Z",
+    "generation_ok": true,
+    "facts": {
+      "course_fee": "₹8,999",
+      "course_interest": "Python with Data Analytics",
+      "phone": "+12025550153",
+      "requested_call_time": "Tomorrow at 10:00 AM",
+      "sql_course_fee": "Not provided"
+    },
+    "disclosure_status": null,
+    "contact_preference": "end_call",
+    "status_tags": [
+      "contact:phone_known",
+      "custom:course-fee",
+      "custom:python-data-analytics",
+      "custom:sql-course",
+      "intent:information",
+      "intent:pricing",
+      "outcome:interested",
+      "sentiment:neutral",
+      "signal:objection"
+    ],
+    "lead": {
+      "leadId": "1f0825b5-4a5b-4fc4-892f-ba931cd1641d",
+      "agentId": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+      "stage": "contacted",
+      "action": "created"
+    },
+    "lead_assessment": {
+      "score": 50,
+      "band": "warm",
+      "disposition": "interested",
+      "confidence": 0.96,
+      "components": [
+        {
+          "signal": "interest",
+          "points": 40,
+          "max": 40,
+          "evidence": "interested"
+        },
+        {
+          "signal": "requirements",
+          "points": 0,
+          "max": 25,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "timing",
+          "points": 0,
+          "max": 25,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "contact",
+          "points": 10,
+          "max": 10,
+          "evidence": "phone"
+        }
+      ],
+      "version": 1,
+      "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+      "reason": "recorded_signals"
+    },
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "4857c66f-85ec-4a3e-9460-d51c1e261771",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+        "session_id": "adaptive-ef9a95f08ecb4a45a8d866c7a4351f4d",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_3f4f01b76299",
+        "started_at": "2026-10-29 16:31:36.254812+00:00",
+        "ended_at": "2026-10-29 16:31:46.719442+00:00",
+        "duration_sec": 10,
+        "disposition": "interested",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/4857c66f-85ec-4a3e-9460-d51c1e261771/",
+        "end_reason": "goodbye",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "contact:phone_known",
+          "custom:course-fee",
+          "custom:python-data-analytics",
+          "custom:sql-course",
+          "intent:information",
+          "intent:pricing",
+          "outcome:interested",
+          "sentiment:neutral",
+          "signal:objection"
+        ],
+        "last_heartbeat_at": "2026-10-29 16:31:36.254812+00:00",
+        "created_at": "2026-10-29 16:31:36.255824+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [],
+    "dnd": [],
+    "leads": [
+      {
+        "lead_id": "1f0825b5-4a5b-4fc4-892f-ba931cd1641d",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+        "name": "New lead",
+        "phone": "+12025550153",
+        "email": null,
+        "stage": "contacted",
+        "notes": "[Call reference: 4857c66f-85ec-4a3e-9460-d51c1e261771]\nThe caller first asked for a call tomorrow at 10:00 AM and requested the Python with Data Analytics course fee. The agent stated that the fee is ₹8,999 and said the requested call had been noted. The caller then clarified that they would call later themselves and explicitly asked not to receive a callback. They asked about the SQL course fee; the agent said SQL course details were unavailable and reiterated that the available Python with Data Analytics course costs ₹8,999. The caller confirmed they had received the needed information and ended the call politely. No callback should be made.\n\nObjections: The caller declined a callback and said they would call themselves., SQL course fee/details were unavailable.\n\nCall outcome: interested (96% confidence)",
+        "created_at": "2026-10-29 16:31:51.183912+00:00",
+        "updated_at": "2026-10-29 16:31:51.183912+00:00"
+      }
+    ],
+    "tools": [],
+    "assessments": [
+      {
+        "id": "4f51405d-3394-4b5e-8d04-f8df6e11812e",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "lead_id": "1f0825b5-4a5b-4fc4-892f-ba931cd1641d",
+        "source_call_id": "4857c66f-85ec-4a3e-9460-d51c1e261771",
+        "assessment": {
+          "score": 50,
+          "band": "warm",
+          "disposition": "interested",
+          "confidence": 0.96,
+          "components": [
+            {
+              "signal": "interest",
+              "points": 40,
+              "max": 40,
+              "evidence": "interested"
+            },
+            {
+              "signal": "requirements",
+              "points": 0,
+              "max": 25,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "timing",
+              "points": 0,
+              "max": 25,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "contact",
+              "points": 10,
+              "max": 10,
+              "evidence": "phone"
+            }
+          ],
+          "version": 1,
+          "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+          "reason": "recorded_signals"
+        },
+        "updated_at": "2026-10-29 16:31:46.719442+00:00"
+      }
+    ]
+  },
+  "metadata": {
+    "call_id": "4857c66f-85ec-4a3e-9460-d51c1e261771",
+    "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+    "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+    "session_id": "adaptive-ef9a95f08ecb4a45a8d866c7a4351f4d",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_3f4f01b76299",
+    "started_at": "2026-10-29T16:31:36.254812+00:00",
+    "status": "active",
+    "storage_path": "data/calls/4857c66f-85ec-4a3e-9460-d51c1e261771/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550153",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 41542,
+        "output_tokens": 1096,
+        "cached_tokens": 26624
+      }
+    },
+    "contact_preference": "end_call",
+    "hangup_reason": "goodbye",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 47,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": true,
+    "callback_close_phase": "idle",
+    "disconnected_at": "2026-10-29T16:31:46.719442+00:00",
+    "ended_at": "2026-10-29T16:31:46.719442+00:00",
+    "end_reason": "goodbye",
+    "duration_sec": 10.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 10.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.0020833333333333333,
+      "telephony_inr": 0.19847916666666665,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.0020833333333333333,
+      "telnyx_inr": 0.19847916666666665,
+      "telnyx_voice_api_usd": 0.0003333333333333333,
+      "telnyx_sip_usd": 0.0008333333333333333,
+      "telnyx_media_stream_usd": 0.0005833333333333333,
+      "telnyx_call_recording_usd": 0.0003333333333333333,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.27,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-29",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.0125,
+      "telephony_inr_per_min": 1.190875,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.0125,
+      "telnyx_inr_per_min": 1.190875,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_0ead5af69584fe86016ae374f3920487d18130f5bc6be30e3c": {
+          "input_tokens": 1297,
+          "output_tokens": 291,
+          "cached_tokens": 0,
+          "cache_write_tokens": 1294,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.0006732999999999999
+        }
+      },
+      "post_call_analysis_usd": 0.0006732999999999999,
+      "post_call_analysis_inr": 0.064145291
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "రేపు ఉదయం పది గంటలకు నాకు కాల్ చేయండి. కానీ ముందుగా Python కోర్సు ఫీజు ఎంత చెప్పండి?",
+      "ts": "2026-10-29T16:31:36.288471Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "Python with Data Analytics course మొత్తం fee eight thousand nine hundred ninety nine rupees అవుతుంది. రేపు ఉదయం పది గంటలకు call చేయమని note చేసుకున్నాను. మీకు demo session గురించి ఏమైనా details కావాలా?",
+      "ts": "2026-10-29T16:31:39.811502Z"
+    },
+    {
+      "seq": 3,
+      "role": "user",
+      "text": "నేనే తర్వాత మీకు కాల్ చేస్తాను. మీరు నాకు callback చేయవద్దు. SQL కోర్సు ఫీజు ఎంత?",
+      "ts": "2026-10-29T16:31:39.867507Z",
+      "partial": false
+    },
+    {
+      "seq": 4,
+      "role": "assistant",
+      "text": "SQL కోర్సు వివరాలు మాకు తెలియవు. మాది Python with Data Analytics కోర్సు, దీని ఫీజు eight thousand nine hundred ninety nine rupees మాత్రమే. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+      "ts": "2026-10-29T16:31:43.293517Z"
+    },
+    {
+      "seq": 5,
+      "role": "user",
+      "text": "అంతే, నాకు కావాల్సిన వివరాలు వచ్చాయి. ధన్యవాదాలు, కాల్ ముగించండి.",
+      "ts": "2026-10-29T16:31:43.362728Z",
+      "partial": false
+    },
+    {
+      "seq": 6,
+      "role": "assistant",
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T16:31:45.641371Z"
+    }
+  ],
+  "wall_elapsed_s": 15.14,
+  "simulated_exchange_timeline_s": 60,
+  "request_count": 16
+}

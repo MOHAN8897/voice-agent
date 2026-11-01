@@ -1,0 +1,14 @@
+{"seq": 1, "role": "user", "text": "నమస్తేండి, మీ అలోవెరా జ్యూస్ ధర ఎంత, బాటిల్ సైజ్ ఎంత, అదీ ఎలా వాడాలి?", "ts": "2026-10-31T14:28:59.952827Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "NatureVeda Aloe Vera Juice 500 ml బాటిల్ ధర 399 రూపాయలు. ఇది సాధారణ వెల్నెస్ పానీయంగా వాడతారు. మీరు తరచుగా అలోవెరా ఉత్పత్తులను ఉపయోగిస్తారా?", "ts": "2026-10-31T14:29:01.782863Z"}
+{"seq": 3, "role": "user", "text": "అలాగా, నేనైతే రెగ్యులర్ గా వాడనుండి, కానీ ట్రై చేద్దామని.", "ts": "2026-10-31T14:29:16.742172Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "సరే, ఇది general wellness కోసం వాడతారు. మీకు ఇంకేదైనా product గురించి details కావాలా?", "ts": "2026-10-31T14:29:17.970224Z"}
+{"seq": 5, "role": "user", "text": "అదండీ, మన కాల్ ఇప్పుడు 45 సెకన్లు దాటింది కదా, నేను కొంచెం ఇంగ్లీష్ లో కంటిన్యూ చేయొచ్చా?", "ts": "2026-10-31T14:29:31.677070Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "తప్పకుండా, మీరు English లో కంటిన్యూ చేయొచ్చు.", "ts": "2026-10-31T14:29:33.110252Z"}
+{"seq": 7, "role": "user", "text": "Sure, could you please repeat the price of the aloe vera juice that you told me earlier?", "ts": "2026-10-31T14:29:45.164459Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "NatureVeda Aloe Vera Juice 500 ml బాటిల్ ధర 399 రూపాయలు.", "ts": "2026-10-31T14:29:46.990852Z"}
+{"seq": 9, "role": "user", "text": "Could you also tell me what ingredients are there in your hair oil?", "ts": "2026-10-31T14:29:58.232030Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "Our Herbal Hair Oil for 200 ml contains Amla, Bhringraj, Hibiscus, and Coconut Oil. It is meant for routine hair and scalp care. Would you like to know about any other product?", "ts": "2026-10-31T14:30:00.073178Z"}
+{"seq": 11, "role": "user", "text": "Could you tell me how much the total would come to if I take one juice and one hair oil?", "ts": "2026-10-31T14:30:21.926971Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "One Aloe Vera Juice at 399 rupees and one Herbal Hair Oil at 499 rupees would come to 898 rupees in total. Would you like to place an order?", "ts": "2026-10-31T14:30:24.130131Z"}
+{"seq": 13, "role": "user", "text": "That sounds fine, but I am not ready to place an order right now. Thank you for the information, bye.", "ts": "2026-10-31T14:30:42.611084Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-31T14:30:43.395063Z"}

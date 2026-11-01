@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_name": "Kiran"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: How much is the consultation fee and when are you open?\nassistant: Consultation fee ₹300 છે અને અમે Monday થી Saturday, સવારે 10 થી સાંજે 8 સુધી open રહીએ છીએ. બીજું કઈ જાણવું છે?\nuser: Okay, please note my enquiry. My name is Kiran and I am interested.\nassistant: ઠીક છે, કિરણ. મેં તમારી enquiry નોંધી લીધી છે. તમે શેના વિશે વધુ માહિતી મેળવવા માંગો છો?\nuser: That's all for now, thank you.\nassistant: તમારા સમય માટે આભાર. આવજો."
+}

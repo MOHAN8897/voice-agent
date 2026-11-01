@@ -1,0 +1,105 @@
+{
+  "disposition": "site_visit_planned",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call expressing that the proposed system was too expensive. The agent responded by explaining the upfront cost of ₹1,95,000 for a 3 kW system, the government subsidy reducing the cost to ₹1,17,000, and the monthly EMI starting at ₹2,999 over 48 months. After the caller objected to the price, the agent offered a free site survey. The caller then requested the EMI details, which the agent provided. Ultimately, the caller agreed to the free site survey, providing their name as Kiran, their area as Velachery, and their preferred day as Saturday. The agent noted down these details and stated that the team would contact the caller to confirm the survey. The call ended with the caller thanking the agent.",
+  "next_action": "Team to contact the caller to confirm the Saturday site survey in Velachery.",
+  "extracted_fields": {
+    "area": "Velachery",
+    "caller_name": "किरण",
+    "delivery_locality": "Velachery",
+    "name": "Kiran",
+    "phone": "+919876500506",
+    "requested_time": "शनिवार",
+    "slot": "Saturday"
+  },
+  "objections": [
+    "The caller found the system too expensive."
+  ],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "followup:site_visit",
+    "signal:price_sensitive",
+    "signal:objection",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:site-survey",
+    "custom:velachery"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T11:22:32.565909Z",
+  "generation_ok": true,
+  "facts": {
+    "area": "Velachery",
+    "caller_name": "किरण",
+    "delivery_locality": "Velachery",
+    "name": "Kiran",
+    "phone": "+919876500506",
+    "requested_time": "शनिवार",
+    "slot": "Saturday"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:site-survey",
+    "custom:velachery",
+    "followup:site_visit",
+    "intent:information",
+    "outcome:site_visit_planned",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "5387a0ae-24a5-5645-82e9-cd525ab62fa4",
+    "agentId": "822d4718-6a4f-4792-89ec-a356f9b49842",
+    "stage": "qualified",
+    "action": "advanced"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "site_visit_planned",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "site_visit_planned"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "slot"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

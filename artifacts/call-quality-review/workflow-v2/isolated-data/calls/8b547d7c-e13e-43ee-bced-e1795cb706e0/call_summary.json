@@ -1,0 +1,45 @@
+{
+  "call_id": "8b547d7c-e13e-43ee-bced-e1795cb706e0",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the pricing for Split AC servicing. The agent stated that the service cost is ₹599. The caller then requested that their enquiry be noted, providing their name as Kiran and expressing interest in the service. The agent confirmed that the enquiry was recorded and mentioned that the team would review it. The caller concluded the call by stating that was all for now and thanking the agent. The call ended with the agent thanking the caller and saying goodbye.",
+  "next_action": "followup:callback",
+  "extracted_fields": {
+    "caller_name": "Kiran",
+    "name": "Kiran",
+    "phone": "+919876500001"
+  },
+  "facts": {
+    "caller_name": "Kiran",
+    "name": "Kiran",
+    "phone": "+919876500001"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:split-ac-servicing",
+    "followup:callback",
+    "intent:pricing",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:pricing",
+    "sentiment:positive",
+    "followup:callback",
+    "action:required",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:split-ac-servicing"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:32:10.587004Z",
+  "generation_ok": true
+}

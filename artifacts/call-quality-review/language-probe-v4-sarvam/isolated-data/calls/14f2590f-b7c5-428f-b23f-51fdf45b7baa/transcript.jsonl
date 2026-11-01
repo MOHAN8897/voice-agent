@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "મારા ફ્રિજના નવા કમ્પ્રેસરનો એક્ઝેક્ટ પ્રાઇસ કેટલો", "ts": "2026-10-29T19:38:13.814181Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "જુઓ, અત્યારે phone પર spare parts ના ભાવ આપવાનું શક્ય નથી. Technician જ્યારે inspection કરશે, ત્યારે actual MRP પ્રમાણે તમને ભાવ જણાવશે.", "ts": "2026-10-29T19:38:14.527745Z", "brain_latency_ms": 713}

@@ -1,0 +1,16 @@
+{
+  "facts": {
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "product": "split AC general service",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "email_id": "sravani.audit@example.invalid",
+    "caller_email": "sravani.audit@example.invalid",
+    "phone_number": "9876543210",
+    "callback_phone": "9876543210",
+    "phone": "9876543210"
+  },
+  "preferences": {},
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "assistant: సరే, శ్రావణి గారు. మీరు రేపు ఉదయం 10 గంటలకి చెప్పారు కదా. ఈ appointment ని calendar లో create చేయడానికి దయచేసి మీ phone number చెప్తారా?\nuser: నా phone number 9876543210. దయచేసి రేపు ఉదయం 10 గంటలకి నా calendar లో appointment create చేసి, అది confirm అయిందో లేదో నాకు చెప్పండి.\nassistant: సరే. ఈ appointment క్రియేట్ చేయడానికి మీరు ఇంకేమైనా వివరాలు చెప్పాలనుకుంటున్నారా? లేదంటే రేపు ఉదయం 10 గంటలకి కాల్ చేయమంటారా?"
+}

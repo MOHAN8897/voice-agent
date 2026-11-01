@@ -1,0 +1,15 @@
+{
+  "facts": {
+    "caller_name": "రమేష్",
+    "product": "విజిటింగ్ కార్డ్స్",
+    "quantity": "200",
+    "email": "ramesh.audit@example.invalid",
+    "delivery_locality": "విజయవాడ",
+    "caller_email": "ramesh.audit@example.invalid"
+  },
+  "preferences": {
+    "finish": "మ్యాట్ ఫినిష్"
+  },
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "user: నా పేరు రమేష్. ముందుగా design approval ఎలా ఉంటుందో చెప్పండి, అలాగే advance payment ఎంత కట్టాలి? అలాగే wedding cards price ఎంత ఉంటుందో కూడా తెలుసుకోవాలి.\nassistant: రమేష్ గారు, design artwork approval తర్వాత 3 working days లో delivery అవుతుంది. one thousand rupees పైన orders కి 50% advance payment కట్టాలి. Wedding invitation cards కి fixed price ఉండదు, design, paper sample మరియు quantity మీద depend అవుతుంది."
+}

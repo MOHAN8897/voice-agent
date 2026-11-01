@@ -1,0 +1,16 @@
+{
+  "facts": {
+    "product": "visiting cards",
+    "quantity": "200",
+    "budget": "900 rupees",
+    "latest_caller_correction": "Actually, నాకు 200 matte visiting cards కావాలి, నా budget 900 rupees వరకు ఉంటుంది. మీరు విన్నవి ఒకసారి మళ్ళీ చెప్తారా?",
+    "caller_name": "రమేష్",
+    "payment_method": "payment authorize చేయలేను",
+    "caller_email": "ramesh.audit@example.invalid"
+  },
+  "preferences": {
+    "payment_method": "cash on delivery"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "assistant: Matte finish cards one hundred కి three hundred and fifty rupees అవుతుంది, సో two hundred cards కి seven hundred rupees అవుతుంది. ఇది మీ nine hundred rupees budget లో సరిపోతుంది. మరి order proceed చేద్దామా?\nuser: సరే, మీరు విన్నవి ఒకసారి మళ్ళీ confirm చేయండి. మీరు ఏ product, ఎన్ని quantity, ఇంకా ఎంత budget note చేసుకున్నారో చెప్పండి.\nassistant: మీరు two hundred matte finish visiting cards అడిగారు, మీ budget nine hundred rupees వరకు ఉంది. దీనిపై ముందుకు వెళ్దామా? మీ పేరు చెప్తారా?"
+}

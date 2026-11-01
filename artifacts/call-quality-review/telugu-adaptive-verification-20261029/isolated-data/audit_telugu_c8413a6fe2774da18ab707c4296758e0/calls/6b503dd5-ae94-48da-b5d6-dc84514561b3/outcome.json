@@ -1,0 +1,55 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller asked about ordering 100 visiting cards and requested the price. The agent explained that 100 normal-paper cards cost ₹200, matte-finish cards cost ₹350, and the minimum order is 100 cards. The caller clarified that they wanted visiting cards rather than mugs and asked what preference had been recorded. The agent confirmed the visiting-card product but noted that the finish—normal paper or matte—was still undecided. The caller said their questions had been answered, thanked the agent, and asked to end the call. No order was placed and no finish was selected.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "matte_finish_price": "₹350 per 100 cards",
+    "minimum_order": "100 cards",
+    "normal_paper_price": "₹200 per 100 cards",
+    "phone": "+12025550152",
+    "product": "Visiting cards",
+    "quantity": "100 cards"
+  },
+  "objections": [],
+  "notes": "The caller was interested in purchasing but did not finalize the finish or place an order.",
+  "tags": [
+    "intent:pricing",
+    "intent:purchase",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:100-cards"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:53:15.711343Z",
+  "generation_ok": true,
+  "facts": {
+    "matte_finish_price": "₹350 per 100 cards",
+    "minimum_order": "100 cards",
+    "normal_paper_price": "₹200 per 100 cards",
+    "phone": "+12025550152",
+    "product": "Visiting cards",
+    "quantity": "100 cards"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:100-cards",
+    "custom:visiting-cards",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:not_interested",
+    "sentiment:positive",
+    "signal:do_not_call"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

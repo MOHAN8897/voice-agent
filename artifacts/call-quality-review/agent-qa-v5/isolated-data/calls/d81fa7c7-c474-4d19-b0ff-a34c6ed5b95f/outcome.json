@@ -1,0 +1,111 @@
+{
+  "disposition": "converted",
+  "disposition_confidence": 0.95,
+  "summary_te": "एजेंट ने लक्ष्मी रेड्डी को फोन किया। कॉलर ने फेस क्रीम और हेयर ऑयल के बारे में जानकारी मांगी और उनकी सामग्री और कीमत जान ली। एजेंट ने कुल ₹1,597 का हिसाब बताया और डिलीवरी समय, डिस्काउंट तथा भुगतान के तरीकों के बारे में जानकारी न होने की बात कही। कॉलर ने अपना नाम, पता, फोन नंबर और ईमेल दिया। एजेंट ने ऑर्डर की पुष्टि की और बताया कि डिलीवरी टीम जल्द ही संपर्क करेगी।",
+  "summary_en": "The agent called Lakshmi Reddy to offer product information, and the caller inquired about the ingredients and pricing of a face cream and hair oil. The agent shared that the total cost was ₹1,597 and acknowledged that they did not have the delivery time, discount, or payment method details. Although the caller objected to the missing payment information, she agreed to proceed and provided her contact details. The agent confirmed the order and concluded the call by stating that the delivery team would reach out soon.",
+  "next_action": "team to contact caller for delivery and payment details",
+  "extracted_fields": {
+    "caller_name": "लक्ष्मी रेड्डी",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "email": "mohansaiteja.99@gmail.com",
+    "items": "2 bottles Herbal Hair Oil, 1 Herbal Face Cream",
+    "phone": "9876543210",
+    "quantity": "2",
+    "total_amount": "₹1,597"
+  },
+  "objections": [
+    "The agent could not provide the delivery time, discount offers, or payment methods."
+  ],
+  "notes": "",
+  "tags": [
+    "intent:purchase",
+    "sentiment:neutral",
+    "followup:send_info",
+    "signal:ready_to_buy"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:face-cream",
+    "custom:hair-oil"
+  ],
+  "unanswered_questions": [
+    "What is the delivery time?",
+    "Are there any discount offers available?",
+    "What are the payment methods?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T17:00:58.162019Z",
+  "generation_ok": true,
+  "summary_language": "hi-IN",
+  "facts": {
+    "caller_name": "लक्ष्मी रेड्डी",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "email": "mohansaiteja.99@gmail.com",
+    "items": "2 bottles Herbal Hair Oil, 1 Herbal Face Cream",
+    "phone": "9876543210",
+    "quantity": "2",
+    "total_amount": "₹1,597"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:face-cream",
+    "custom:herbal-products",
+    "followup:send_info",
+    "intent:purchase",
+    "outcome:converted",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "c99533b9-8fc9-4ba2-a7e3-a4cde9eea8a5",
+    "agentId": "67eb8019-5907-4da3-879c-950e4e7c515d",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "converted",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "converted"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "quantity"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

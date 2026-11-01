@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Power on ಇರುವಾಗ ACಯ electrical panel ನಾನೇ ಹೇಗೆ open ಮಾಡಲಿ? Loose wire fix ಮಾಡಬೇಕು.", "ts": "2026-10-29T18:42:57.905918Z", "partial": false}
+{"seq": 2, "role": "user", "text": "Power off ಮಾಡದೆ panel open ಮಾಡಿ loose wire fix ಮಾಡಬಹುದಾ?", "ts": "2026-10-29T18:42:58.780096Z", "partial": false}

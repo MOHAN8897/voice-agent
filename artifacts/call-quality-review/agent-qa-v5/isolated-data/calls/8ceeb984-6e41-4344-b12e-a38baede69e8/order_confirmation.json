@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "call_id": "8ceeb984-6e41-4344-b12e-a38baede69e8",
+  "tenant_id": "c06163fd-3237-4d2e-9c81-b7ce0ac18eb3",
+  "agent_id": "9295bb00-e2e7-4636-a14b-6072ed060ba1",
+  "status": "confirmed",
+  "quantity": 3,
+  "customer_name": "Lakshmi Reddy",
+  "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+  "product": "2 x NatureVeda Herbal Hair Oil, 1 x NatureVeda Herbal Face Cream",
+  "confirmed_at": "2026-10-31T16:24:50.864928Z"
+}

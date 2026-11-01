@@ -1,0 +1,118 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "The caller, Shravani, requested general servicing for a split AC in Madhapur and asked whether a technician could arrive tomorrow at 10:00 AM. The agent quoted a service price of ₹599 and initially said the team could visit between 10:00 AM and 6:00 PM, then stated that a 10:00 AM slot could be booked. The caller clarified that there was no major issue and expressed repeated concerns that the price was high and that the service might be poor or delayed. The caller requested confirmation, but the agent later acknowledged that they could not send the request to the team, guarantee follow-up, or confirm that the technician would automatically arrive. The caller provided an email address for an update, but the transcript does not confirm that any email was sent. The call ended with the caller saying they were disconnecting, without a reliably confirmed appointment.",
+  "next_action": "Contact the caller to confirm whether the technician visit can be scheduled for tomorrow at 10:00 AM and provide an update at the supplied email address.",
+  "extracted_fields": {
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "locality": "Madhapur",
+    "name": "Shravani",
+    "phone": "+12025550124",
+    "product": "split AC",
+    "quoted_price": "₹599",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "service": "General service for a split AC"
+  },
+  "objections": [
+    "Concern that the ₹599 service charge is too high",
+    "Concern that the service may be delayed or poorly performed",
+    "Frustration that follow-up and appointment confirmation were not guaranteed"
+  ],
+  "notes": "The caller expected a confirmed 10:00 AM appointment and an email update, but neither was confirmed as completed. The caller ended the call frustrated.",
+  "tags": [
+    "action:required",
+    "followup:callback",
+    "followup:schedule_pending",
+    "intent:booking",
+    "intent:support",
+    "sentiment:frustrated"
+  ],
+  "custom_tags": [
+    "custom:split-ac-service",
+    "custom:madhapur",
+    "custom:10am-technician"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:10:29.327709Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "locality": "Madhapur",
+    "name": "Shravani",
+    "phone": "+12025550124",
+    "product": "split AC",
+    "quoted_price": "₹599",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "service": "General service for a split AC"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:split-ac-service",
+    "followup:callback",
+    "followup:schedule_pending",
+    "intent:booking",
+    "intent:support",
+    "outcome:callback_required",
+    "sentiment:frustrated",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "cd19c84d-7138-5b49-95ec-cd24441a09aa",
+    "agentId": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.96,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

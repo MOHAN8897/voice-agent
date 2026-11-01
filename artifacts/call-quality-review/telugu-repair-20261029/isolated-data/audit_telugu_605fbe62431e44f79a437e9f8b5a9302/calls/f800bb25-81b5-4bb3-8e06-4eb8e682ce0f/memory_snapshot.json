@@ -1,0 +1,13 @@
+{
+  "facts": {
+    "product": "split AC",
+    "email": "sravani.audit@example.invalid",
+    "delivery_locality": "మాదాపూర్",
+    "requested_time": "30 October 2026 ఉదయం 10 AM"
+  },
+  "preferences": {
+    "service_type": "general service"
+  },
+  "important_context": "",
+  "summary": "assistant: మీ appointment confirm అయింది. 30 October ఉదయం ten AM నుంచి ten thirty AM వరకు మీ split AC general service కి calendar event క్రియేట్ చేశాను. అయితే confirmation email పంపలేదు. ఇంకేమైనా help కావాలా?\nuser: నాకు email confirmation కూడా కావాలి. దయచేసి ఆ confirmation పంపించి, నాకు చెక్ చేసుకోమని చెప్పండి.\nassistant: క్షమించండి, confirmation email పంపే option నా దగ్గర ఇప్పుడు లేదు. మీ appointment మాత్రం క్రియేట్ అయిందని నేను confirm చేయగలను. ఇంకేమైనా వివరాలు కావాలా?"
+}

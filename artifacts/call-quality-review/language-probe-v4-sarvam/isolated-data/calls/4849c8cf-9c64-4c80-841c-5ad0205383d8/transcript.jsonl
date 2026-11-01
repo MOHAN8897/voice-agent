@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Window AC service-ന് എത്ര price ആണ്? Kondapur-ൽ നിങ്ങൾ cover ചെയ്യുമോ?", "ts": "2026-10-29T19:38:18.602391Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Window AC servicing-ന് ₹499 ആണ് വരുന്നത്. അതെ, ഞങ്ങൾ Madhapur, Gachibowli, Kondapur, Kukatpally എന്നിവിടങ്ങളിൽ service ചെയ്യുന്നുണ്ട്.", "ts": "2026-10-29T19:38:19.590076Z", "brain_latency_ms": 1000}

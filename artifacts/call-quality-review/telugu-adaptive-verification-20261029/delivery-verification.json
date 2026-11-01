@@ -1,0 +1,13 @@
+{
+  "checked_turns": 231,
+  "differences": [
+    {
+      "case": "B_farewell_resume",
+      "turn": 3,
+      "final": "Fridge inspection charge two hundred fifty rupees ఉంటుంది. ఒకవేళ మా technician repair చేస్తే ఆ inspection charge పూర్తిగా waive చేస్తాము. Split AC కి inspection charge ఉండదు. మరి appointment confirm చేయమంటారా?",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం. Fridge inspection charge two hundred fifty rupees ఉంటుంది. ఒకవేళ మా technician repair చేస్తే ఆ inspection charge పూర్తిగా waive చేస్తాము. Split AC కి inspection charge ఉండదు. మరి appointment confirm చేయమంటారా?",
+      "expected_resumption": true
+    }
+  ],
+  "unexplained_differences": 0
+}

@@ -1,0 +1,12 @@
+{
+  "language": "en-IN",
+  "tenant_id": "68ac7baf-5adf-4121-b3b0-0b4716fdb6a9",
+  "agent_id": "8fbc9848-05fa-4d72-b6be-57c2ae899e1c",
+  "user_id": "ba1275e7-b5ec-455e-948b-35aee076e305",
+  "brain_version": "cb_qa_a55413ea11ea4709",
+  "brain_chars": 20658,
+  "brain_source": "pipeline:artifacts\\call-quality-review\\agent-qa-v2\\agents\\en-IN-brain.txt",
+  "direction": "outbound",
+  "name": "Priya",
+  "brain_path": "artifacts\\call-quality-review\\agent-qa-v5\\agents\\en-IN-brain.txt"
+}

@@ -1,0 +1,39 @@
+{
+  "call_id": "96b6127e-d89e-4875-bb48-aae42846b3ec",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, expressed interest in the service while driving and explicitly requested not to block their number. They asked to be called back next Monday morning on the same number. The agent acknowledged and confirmed the callback details. The call ended with the agreement that the agent would reach out to Kiran next Monday morning.",
+  "next_action": "Call the caller next Monday morning on the same number.",
+  "extracted_fields": {
+    "callback_time": "next Monday morning",
+    "name": "Kiran",
+    "phone": "+919876500037"
+  },
+  "facts": {
+    "callback_time": "next Monday morning",
+    "name": "Kiran",
+    "phone": "+919876500037"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:positive"
+  ],
+  "tags": [
+    "followup:callback",
+    "sentiment:positive",
+    "intent:information"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:20:51.727975Z",
+  "generation_ok": true
+}

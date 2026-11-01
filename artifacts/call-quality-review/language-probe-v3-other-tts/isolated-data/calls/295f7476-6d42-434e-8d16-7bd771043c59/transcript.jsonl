@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Cooling இல்லாத fridge-க்கு நாளைக்கு morning 10:30-க்கு technician வர முடியுமா?", "ts": "2026-10-29T19:31:42.256684Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Sorry, நம்ம service Madhapur, Gachibowli, Kondapur அப்புறம் Kukatpally-ல மட்டும் தான் இருக்கு. Fridge inspection charge ₹250 வரும், ஆனா நீங்க repair பண்ணிக்கிறீங்கன்னா அந்த charge waive ஆயிடும். நீங்க எந்த area-ல இருக்கீங்க?", "ts": "2026-10-29T19:31:42.937205Z", "brain_latency_ms": 689}

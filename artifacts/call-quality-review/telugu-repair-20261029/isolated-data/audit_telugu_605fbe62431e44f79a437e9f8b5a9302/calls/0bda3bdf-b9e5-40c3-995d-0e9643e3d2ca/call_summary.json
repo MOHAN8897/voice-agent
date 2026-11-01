@@ -1,0 +1,59 @@
+{
+  "call_id": "0bda3bdf-b9e5-40c3-995d-0e9643e3d2ca",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "The caller asked about visiting cards, specifically the price difference between standard and matte finishes and the minimum order quantity. The agent quoted ₹200 per 100 cards for standard finish, ₹350 per 100 cards for matte finish, and a minimum order of 100 cards. The caller preferred matte finish, accepted the 100-card minimum, and said they would later order 200 cards. The caller also asked about the design approval process, and the agent said delivery to Vijayawada would take three working days after artwork approval. The caller accepted the delivery timeline, then asked whether delivery charges were extra and how much advance payment was required. The agent did not answer these questions and ended the call with thanks. No order was confirmed.",
+  "next_action": "Provide the delivery charge and advance payment details, then confirm the design submission and order quantity.",
+  "extracted_fields": {
+    "delivery_location": "Vijayawada",
+    "delivery_timeline": "3 working days after artwork approval",
+    "finish": "Matte finish",
+    "matte_price": "₹350 per 100 cards",
+    "minimum_order_quantity": "100 cards",
+    "phone": "+12025550102",
+    "product": "Visiting cards",
+    "quantity_discussed": "200 cards",
+    "standard_price": "₹200 per 100 cards"
+  },
+  "facts": {
+    "delivery_location": "Vijayawada",
+    "delivery_timeline": "3 working days after artwork approval",
+    "finish": "Matte finish",
+    "matte_price": "₹350 per 100 cards",
+    "minimum_order_quantity": "100 cards",
+    "phone": "+12025550102",
+    "product": "Visiting cards",
+    "quantity_discussed": "200 cards",
+    "standard_price": "₹200 per 100 cards"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:matte-finish",
+    "custom:vijayawada-delivery",
+    "custom:visiting-cards",
+    "followup:send_info",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive"
+  ],
+  "tags": [
+    "intent:purchase",
+    "intent:pricing",
+    "followup:send_info",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:matte-finish",
+    "custom:vijayawada-delivery"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:33:07.462486Z",
+  "generation_ok": true
+}

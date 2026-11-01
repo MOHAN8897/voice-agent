@@ -1,0 +1,31 @@
+{
+  "call_id": "77539113-4e9f-4dd8-97e9-f4493bd2ecb8",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller said they would call the business themselves tomorrow and explicitly requested not to be called. They stated they do not need anything now and ended the call. The agent acknowledged this and politely thanked them; no follow-up action was agreed from the business side.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+12025550116"
+  },
+  "facts": {
+    "phone": "+12025550116"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call"
+  ],
+  "tags": [
+    "signal:do_not_call",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:47:58.193142Z",
+  "generation_ok": true
+}

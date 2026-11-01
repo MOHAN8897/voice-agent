@@ -1,0 +1,72 @@
+{
+  "call_id": "eb04d6c5-c8c2-45e4-9341-4ad8af205057",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller, Ramesh from Vijayawada, asked about matte-finish visiting cards and pricing. The agent quoted ₹350 for 100 cards and stated that the minimum order is 100 cards. Ramesh considered the price high and then asked for the price of 500 cards, but the agent could not provide that pricing during the call. Ramesh requested confirmation of the 100-card price and asked for the details to be sent to ramesh.audit@example.invalid. The agent confirmed ₹350 for 100 matte-finish cards, explained that email could not be sent directly, and said the team would call with a quote. Ramesh asked that the team provide the details to his email when they call. The call ended politely with a follow-up from the team required.",
+  "next_action": "Have the team call Ramesh and provide the 500-card quote and confirmed pricing details, with the caller's request to send the information to ramesh.audit@example.invalid.",
+  "extracted_fields": {
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "రమేష్",
+    "confirmed_price": "₹350 for 100 cards",
+    "delivery_locality": "విజయవాడ",
+    "email": "ramesh.audit@example.invalid",
+    "location": "Vijayawada",
+    "minimum_order": "100 cards",
+    "name": "Ramesh",
+    "phone": "+12025550140",
+    "product": "Matte-finish visiting cards",
+    "quantity": "100 cards",
+    "requested_quantity": "500 cards"
+  },
+  "facts": {
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "రమేష్",
+    "confirmed_price": "₹350 for 100 cards",
+    "delivery_locality": "విజయవాడ",
+    "email": "ramesh.audit@example.invalid",
+    "location": "Vijayawada",
+    "minimum_order": "100 cards",
+    "name": "Ramesh",
+    "phone": "+12025550140",
+    "product": "Matte-finish visiting cards",
+    "quantity": "100 cards",
+    "requested_quantity": "500 cards"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "followup:callback",
+    "followup:send_quote",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "followup:callback",
+    "followup:send_quote",
+    "intent:pricing",
+    "intent:purchase",
+    "sentiment:neutral",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:matte-finish",
+    "custom:500-card-quote"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Caller considered ₹350 for 100 cards too expensive.",
+    "Pricing for 500 cards was not available during the call."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T15:49:26.232666Z",
+  "generation_ok": true
+}

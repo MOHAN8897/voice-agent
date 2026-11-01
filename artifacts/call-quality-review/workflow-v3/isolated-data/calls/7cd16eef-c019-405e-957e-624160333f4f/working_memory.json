@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "caller_name": "Ravi Kumar"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: મારે 200 matte visiting cards જોઈએ છે.\nassistant: સારું, 200 matte visiting cards માટે per 100 cards ના ₹350 થશે, એટલે total ₹700 થશે. Order confirm કરવા માટે તમારું નામ અને delivery address કહેશો?\nuser: મારું નામ Ravi Kumar છે. Vijayawada માં 12 MG Road પર delivery કરી દેજો.\nassistant: સમજાયું, રવિ કુમાર. Vijayawada માં 12 MG Road પર delivery થઈ જશે. તમારી પાસે 200 matte visiting cards નો order છે, બરાબર ને?\nuser: હા, order confirm કરી દો.\nassistant: તમારો order confirm થઈ ગયો છે. Artwork approve થયા પછી Vijayawada માં delivery થવામાં 3 working days લાગશે.\nuser: આભાર, બસ આટલું જ."
+}

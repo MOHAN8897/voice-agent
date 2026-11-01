@@ -1,0 +1,92 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the consultation fee and the clinic's operating hours. The agent responded by stating that the consultation fee is 300 rupees and that the clinic is open from Monday to Saturday, between 10 AM and 8 PM. The caller did not raise any objections, and no further steps or agreements were made before the call concluded.",
+  "next_action": null,
+  "extracted_fields": {
+    "budget": "300 rupees",
+    "phone": "+919876500534",
+    "slot": "Monday to Saturday, 10 AM to 8 PM"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "signal:price_sensitive",
+    "action:required",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:consultation-fee",
+    "custom:clinic-hours"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:43:23.901655Z",
+  "generation_ok": true,
+  "facts": {
+    "budget": "300 rupees",
+    "phone": "+919876500534",
+    "slot": "Monday to Saturday, 10 AM to 8 PM"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:clinic-hours",
+    "custom:consultation-fee",
+    "followup:send_info",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "615bcd81-a3c3-46b7-b79f-d77db961c63b",
+    "agentId": "a6c9765d-cdd2-41b0-90bf-aa7baf7d21e1",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 100,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.9,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "budget"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "slot"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

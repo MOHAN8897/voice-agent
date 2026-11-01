@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "इसमें कितना खर्चा आएगा और कोई subsidy मिलेगी क्या?", "ts": "2026-10-30T10:38:50.328020Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "देखिए, 3 kW rooftop system की cost ₹1,95,000 है, और ₹78,000 की government subsidy मिलने के बाद आपको सिर्फ ₹1,17,000 देने पड़ते हैं। EMI option भी available है ₹2,999 per month से 48 months के लिए। Subsidy और EMI के अलावा और कोई details चाहिए?", "ts": "2026-10-30T10:38:53.755818Z"}
+{"seq": 3, "role": "user", "text": "ठीक है, ये सही लग रहा है।", "ts": "2026-10-30T10:38:53.757828Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ठीक है। तो क्या हम आपके लिए एक free site survey book कर दें? इसके लिए बस अपना नाम, area और preferred day बता दीजिए।", "ts": "2026-10-30T10:38:56.213766Z"}
+{"seq": 5, "role": "user", "text": "हम्म, ठीक है।", "ts": "2026-10-30T10:38:56.214362Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "Survey book करने के लिए अपना नाम, area और preferred day बता दीजिए।", "ts": "2026-10-30T10:38:59.258984Z"}

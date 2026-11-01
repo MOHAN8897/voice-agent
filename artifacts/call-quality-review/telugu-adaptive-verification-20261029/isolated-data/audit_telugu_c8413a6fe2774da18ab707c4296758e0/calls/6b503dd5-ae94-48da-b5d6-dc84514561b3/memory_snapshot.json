@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "product": "విజిటింగ్ కార్డులు"
+  },
+  "preferences": {
+    "product": "విజిటింగ్ కార్డులు",
+    "finish_call": "కాల్ ముగించండి"
+  },
+  "important_context": "",
+  "summary": "user: నాకు వంద విజిటింగ్ కార్డులు కావాలి. వాటి ధర చెప్పండి.\nassistant: Normal paper విజిటింగ్ cards one hundred cards కి two hundred rupees అవుతుంది. Matte finish అయితే three hundred fifty rupees అవుతుంది. Minimum order one hundred cards ఉంటుంది. మీకు ఏది కావాలో చెప్తారా?\nuser: నాకు మగ్స్ వద్దు, విజిటింగ్ కార్డులే కావాలి. నా ఎంపిక ఏదని నమోదు చేసుకున్నారు?\nassistant: సరే, విజిటింగ్ కార్డులే నమోదు చేసుకున్నాను. మీకు normal paper కావాలా లేక matte finish కావాలా?\nuser: అంతే, నా ప్రశ్నలకు సమాధానాలు వచ్చాయి. ధన్యవాదాలు, కాల్ ముగించండి.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+}

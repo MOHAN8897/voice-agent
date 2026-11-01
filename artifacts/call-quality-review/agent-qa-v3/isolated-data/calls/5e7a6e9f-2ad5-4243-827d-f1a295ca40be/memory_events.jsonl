@@ -1,0 +1,7 @@
+{"turn_seq": 1, "ts": "2026-10-31T14:21:20.060394Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T14:21:42.777352Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T14:21:59.566723Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T14:21:59.579379Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: అలోవెరా జ్యూస్ లో ఎలాంటి ingredients వాడతారు? డెలివరీ చార్జెస్ ఏమైనా ఉంటాయా?\nassistant: అలోవెరా జ్యూస్ లో కేవలం Aloe Vera మాత్రమే ఉంటుంది, ఇది general wellness beverage గా వాడతాం. డెలివరీ చార్జెస్ వివరాలు ప్రస్తుతం నాకు తెలియవు.\nuser: సరేండి, దీనికి ఏమైనా special discount లేదా offers ఉన్నాయా?\nassistant: ప్రస్తుతం మా దగ్గర ఎలాంటి special discounts లేదా offers లేవు. మీకు తెలియని ఇతర charges ఉండవచ్చా లేదా అనేది నేను నిర్ధారించలేను. ఈ అలోవెరా జ్యూస్ కొనడానికి మీకు ఆసక్తి ఉందా?"}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T14:22:18.052264Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T14:22:32.690066Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-31T14:22:50.753612Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

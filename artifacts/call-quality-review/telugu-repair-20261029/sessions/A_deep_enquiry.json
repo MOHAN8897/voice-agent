@@ -1,0 +1,2454 @@
+{
+  "scenario": {
+    "id": "A_deep_enquiry",
+    "business": "A",
+    "kind": "deep",
+    "integration": "success",
+    "policy": "review",
+    "max_turns": 13,
+    "goal": "Learn standard versus matte visiting-card pricing, minimum quantity, design approval, delivery, rush surcharge and advance-payment conditions. Start with 100 cards, later correct to 200. Ask about wedding-card price once as an unknown fact. Try to submit a quote/internal order request with your final details. Ask what quantity they recorded after intervening conversation. This is an extended information enquiry: do not stop merely because a booking or email is unavailable. Continue with meaningful related questions for at least TEN customer turns, using the actual answers to select the next question. Explore alternatives, conditions, hidden costs, corrections and practical examples. Answer the representative's questions when relevant. You are still deciding, not ready to order or schedule a callback, so do not accept a next-step callback as a substitute for answers. If the representative tries to wrap up before your questions are served, politely state that you still have a relevant question. At turn 12 or 13, end clearly."
+  },
+  "agent": {
+    "id": "A",
+    "key": "printing",
+    "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+    "name": "Sri Krishna Digital Prints",
+    "agent_name": "Kavitha",
+    "role": "sales",
+    "industry": "printing",
+    "brief": "Agent name Kavitha. Company name Sri Krishna Digital Prints.\nOutbound and inbound customer inquiries in Telugu.\nWe print visiting cards: normal paper visiting cards cost 200 rupees for 100 cards,\nmatte finish cards cost 350 rupees for 100 cards. Minimum order quantity 100 cards.\nWedding invitation cards are customized: pricing depends on design, paper sample and quantity, no fixed price over the phone.\nFlex banners: normal flex 15 rupees per square foot, star flex 20 rupees per square foot.\nDelivery in Vijayawada takes 3 working days after design artwork approval; urgent 24-hour delivery is extra 150 rupees.\nPayment: Cash on delivery accepted for orders up to 1000 rupees; 50% advance payment required for orders above 1000 rupees.\nNo online payment or credit card processing on phone call.\nOffice hours Monday to Saturday 9:30 AM to 8:00 PM, Sunday closed.\nGoal: answer customer questions on cards, banners and pricing; understand their requirement.\nIf interested, take preferred name, quantity and delivery locality for a quote or order request.\nDo not force details before answering questions.\nCustomer refusing visiting cards may still want flex banners or wedding cards.\nNever claim an order is paid or dispatched without artwork approval and design confirmation.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Kavitha",
+      "company_name": "Sri Krishna Digital Prints",
+      "role": "Sales and customer enquiries",
+      "permitted_next_steps": "Collect customer name, item type, quantity and delivery locality in Vijayawada to submit an internal quote/order request. Explain that artwork approval is required before printing.",
+      "payment_rules": "Cash on delivery for orders up to 1000 rupees; 50% advance for orders above 1000 rupees. No online payment collection on call.",
+      "delivery_details": "Local delivery in Vijayawada takes 3 working days after artwork approval. Urgent 24-hour delivery is extra 150 rupees.",
+      "wedding_cards": "Customized quotation only based on design and paper sample. No fixed price on phone.",
+      "visiting_cards": "Standard 200 rupees for 100 cards; Matte finish 350 rupees for 100 cards. Minimum order 100 cards.",
+      "forbidden_actions": "Never confirm external courier shipment or take card payment on phone. Never guarantee delivery without artwork approval."
+    },
+    "user_id": "c0afb80f-ba42-4f85-ad75-ac1c23a9873f",
+    "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408"
+  },
+  "call_id": "941b7544-97b7-4244-b6f0-4c2703d60c45",
+  "session_id": "adaptive-8c638dd0d3f64df0a3821ec60b0fc620",
+  "phone": "+12025550120",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_ce356842dc55",
+  "turn_index": 13,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నమస్తే Kavitha. నాకు visiting cards కావాలి. standard finish కంటే matte finish price ఎలా ఉంటుంది? కనీసం ఎన్ని cards order చేయాలో కూడా చెప్పండి.",
+        "intends_end": false,
+        "intent": "Inquire about matte versus standard visiting card pricing and minimum order quantity",
+        "elapsed_s": 0.703
+      },
+      "spoken": "Matte finish visiting cards one hundred cards కి three hundred fifty rupees అవుతుంది. Minimum order quantity one hundred cards మాత్రమే. మీకు ఇంకా వేరే details ఏమైనా కావాలా?",
+      "elapsed_s": 3.75,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "visiting cards"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        530,
+        531,
+        532,
+        533,
+        534,
+        535
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "Matte finish visiting cards one hundred cards కి three hundred fifty rupees అవుతుంది. Minimum order quantity one hundred cards మాత్రమే. మీకు ఇంకా వేరే details ఏమైనా కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4558,
+            "output_tokens": 38,
+            "cached_tokens": 2080,
+            "total_tokens": 4596
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 2,
+      "caller": {
+        "utterance": "సరే, 100 cards కి 350 rupees అంటే కొంచెం ఎక్కువే అనిపిస్తోంది. నేను తర్వాత 200 cards ఆర్డర్ చేద్దామనుకుంటున్నాను, అప్పుడు per card price తగ్గుతుందా? అలాగే design approval process ఎలా ఉంటుంది?",
+        "intends_end": false,
+        "intent": "Inquire about bulk pricing for 200 cards and design approval process",
+        "elapsed_s": 0.766
+      },
+      "spoken": "రెండు వందల కార్డులకు మొత్తం ధర ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత విజయవాడలో డెలివరీకి మూడు వర్కింగ్ డేస్ పడుతుంది.",
+      "elapsed_s": 3.828,
+      "memory_before": {
+        "facts": {
+          "product": "visiting cards"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        537,
+        538,
+        539,
+        540,
+        541,
+        542
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "రెండు వందల కార్డులకు మొత్తం ధర ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత విజయవాడలో డెలివరీకి మూడు వర్కింగ్ డేస్ పడుతుంది.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4836,
+            "output_tokens": 41,
+            "cached_tokens": 3264,
+            "total_tokens": 4877
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 3,
+      "caller": {
+        "utterance": "సరే, 200 cards కి exact price ఎంత తగ్గుతుందో చెప్పగలరా? అలాగే delivery కి ఏమైనా rush charges ఉంటాయా? నేను wedding cards price కూడా తెలుసుకోవాలి, అది కూడా చెప్పగలరా?",
+        "intends_end": false,
+        "intent": "Inquire about bulk pricing, rush charges, and wedding card rates",
+        "elapsed_s": 1.156
+      },
+      "spoken": "రెండు వందల కార్డులకు కచ్చితమైన ధర ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. అత్యవసరమైన 24 గంటల డెలివరీకి అదనంగా one hundred fifty rupees ఛార్జ్ ఉంటుంది. వెడ్డింగ్ ఇన్విటేషన్ కార్డుల ధర డిజైన్, పేపర్ శాంపిల్ మరియు క్వాంటిటీ మీద ఆధారపడి ఉంటుంది కాబట్టి ఫోన్లో కచ్చితమైన ధర చెప్పలేము.",
+      "elapsed_s": 4.031,
+      "memory_before": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, 200 cards కి exact price ఎంత తగ్గుతుందో చెప్పగలరా? అలాగే delivery కి ఏమైనా rush charges ఉంటాయా? నేను wedding cards price కూడా తెలుసుకోవాలి, అది కూడా చెప్పగలరా?\nassistant: రెండు వందల కార్డులకు కచ్చితమైన ధర ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. అత్యవసరమైన 24 గంటల డెలివరీకి అదనంగా one hundred fifty rupees ఛార్జ్ ఉంటుంది. వెడ్డింగ్ ఇన్విటేషన్ కార్డుల ధర డిజైన్, పేపర్ శాంపిల్ మరియు క్వాంటిటీ మీద ఆధారపడి ఉంటుంది కాబట్టి ఫోన్లో కచ్చితమైన ధర చెప్పలేము."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        544,
+        545,
+        546,
+        547,
+        548,
+        549
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "రెండు వందల కార్డులకు కచ్చితమైన ధర ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. అత్యవసరమైన 24 గంటల డెలివరీకి అదనంగా one hundred fifty rupees ఛార్జ్ ఉంటుంది. వెడ్డింగ్ ఇన్విటేషన్ కార్డుల ధర డిజైన్, పేపర్ శాంపిల్ మరియు క్వాంటిటీ మీద ఆధారపడి ఉంటుంది కాబట్టి ఫోన్లో కచ్చితమైన ధర చెప్పలేము.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4964,
+            "output_tokens": 66,
+            "cached_tokens": 3264,
+            "total_tokens": 5030
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 4,
+      "caller": {
+        "utterance": "సరే, 24 గంటల rush delivery కి 150 rupees extra అవుతుంది కదా. మరి standard finish 100 cards కి ఎంతవుతుందో, అలాగే 200 cards కి exact price ఎంత తగ్గుతుందో ఒకసారి చెక్ చేసి చెప్పగలరా? అలాగే advance payment ఏమైనా చేయాలా, లేక delivery తర్వాత ఇస్తే సరిపోతుందా?",
+        "intends_end": false,
+        "intent": "Ask for exact bulk pricing, rush charges confirmation, and payment conditions",
+        "elapsed_s": 0.781
+      },
+      "spoken": "one hundred cards standard finish కి two hundred rupees అవుతుంది. two hundred cards కి exact price ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. one thousand rupees పైన orders ఉంటే 50% advance payment చేయాలి, అంతకంటే తక్కువ ఉంటే delivery తర్వాత cash on delivery ఇస్తే సరిపోతుంది.",
+      "elapsed_s": 4.11,
+      "memory_before": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, 200 cards కి exact price ఎంత తగ్గుతుందో చెప్పగలరా? అలాగే delivery కి ఏమైనా rush charges ఉంటాయా? నేను wedding cards price కూడా తెలుసుకోవాలి, అది కూడా చెప్పగలరా?\nassistant: రెండు వందల కార్డులకు కచ్చితమైన ధర ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. అత్యవసరమైన 24 గంటల డెలివరీకి అదనంగా one hundred fifty rupees ఛార్జ్ ఉంటుంది. వెడ్డింగ్ ఇన్విటేషన్ కార్డుల ధర డిజైన్, పేపర్ శాంపిల్ మరియు క్వాంటిటీ మీద ఆధారపడి ఉంటుంది కాబట్టి ఫోన్లో కచ్చితమైన ధర చెప్పలేము."
+      },
+      "memory_after": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, 200 cards కి exact price ఎంత తగ్గుతుందో చెప్పగలరా? అలాగే delivery కి ఏమైనా rush charges ఉంటాయా? నేను wedding cards price కూడా తెలుసుకోవాలి, అది కూడా చెప్పగలరా?\nassistant: రెండు వందల కార్డులకు కచ్చితమైన ధర ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. అత్యవసరమైన 24 గంటల డెలివరీకి అదనంగా one hundred fifty rupees ఛార్జ్ ఉంటుంది. వెడ్డింగ్ ఇన్విటేషన్ కార్డుల ధర డిజైన్, పేపర్ శాంపిల్ మరియు క్వాంటిటీ మీద ఆధారపడి ఉంటుంది కాబట్టి ఫోన్లో కచ్చితమైన ధర చెప్పలేము."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        551,
+        552,
+        553,
+        554,
+        555,
+        556
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "one hundred cards standard finish కి two hundred rupees అవుతుంది. two hundred cards కి exact price ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. one thousand rupees పైన orders ఉంటే 50% advance payment చేయాలి, అంతకంటే తక్కువ ఉంటే delivery తర్వాత cash on delivery ఇస్తే సరిపోతుంది.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5217,
+            "output_tokens": 73,
+            "cached_tokens": 3264,
+            "total_tokens": 5290
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 5,
+      "caller": {
+        "utterance": "సరే, 100 standard కి 200 rupees, 100 matte కి 350 rupees అవుతోంది. 200 matte కి exact price reduction ఎంత ఉంటుందో ఇప్పుడు చెప్పలేకపోతే, నా details తో ఒక quote లేదా internal order request note చేసి ఉంచగలరా? నా email ramesh.audit@example.invalid. అలాగే, మీరు నా quantity 200 cards అని record చేసుకున్నారా?",
+        "intends_end": false,
+        "intent": "Submit an internal order request with final details and confirm recorded quantity",
+        "elapsed_s": 0.813
+      },
+      "spoken": "two hundred matte cards కి exact price reduction ఎంత ఉంటుందో ప్రస్తుతం మాకు తెలియదు. మీ details తో enquiry save చేశాను, మీ email ramesh. audit@example. invalid కూడా note చేసుకున్నాను. అవును, మీ quantity two hundred cards అని record చేసుకున్నాను.",
+      "elapsed_s": 4.453,
+      "memory_before": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, 200 cards కి exact price ఎంత తగ్గుతుందో చెప్పగలరా? అలాగే delivery కి ఏమైనా rush charges ఉంటాయా? నేను wedding cards price కూడా తెలుసుకోవాలి, అది కూడా చెప్పగలరా?\nassistant: రెండు వందల కార్డులకు కచ్చితమైన ధర ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. అత్యవసరమైన 24 గంటల డెలివరీకి అదనంగా one hundred fifty rupees ఛార్జ్ ఉంటుంది. వెడ్డింగ్ ఇన్విటేషన్ కార్డుల ధర డిజైన్, పేపర్ శాంపిల్ మరియు క్వాంటిటీ మీద ఆధారపడి ఉంటుంది కాబట్టి ఫోన్లో కచ్చితమైన ధర చెప్పలేము."
+      },
+      "memory_after": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, 200 cards కి exact price ఎంత తగ్గుతుందో చెప్పగలరా? అలాగే delivery కి ఏమైనా rush charges ఉంటాయా? నేను wedding cards price కూడా తెలుసుకోవాలి, అది కూడా చెప్పగలరా?\nassistant: రెండు వందల కార్డులకు కచ్చితమైన ధర ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. అత్యవసరమైన 24 గంటల డెలివరీకి అదనంగా one hundred fifty rupees ఛార్జ్ ఉంటుంది. వెడ్డింగ్ ఇన్విటేషన్ కార్డుల ధర డిజైన్, పేపర్ శాంపిల్ మరియు క్వాంటిటీ మీద ఆధారపడి ఉంటుంది కాబట్టి ఫోన్లో కచ్చితమైన ధర చెప్పలేము."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        558,
+        559,
+        560,
+        561,
+        562,
+        563,
+        564
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "two hundred matte cards కి exact price reduction ఎంత ఉంటుందో ప్రస్తుతం మాకు తెలియదు. మీ details తో enquiry save చేశాను, మీ email ramesh. audit@example. invalid కూడా note చేసుకున్నాను. అవును, మీ quantity two hundred cards అని record చేసుకున్నాను.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 6169,
+            "output_tokens": 28,
+            "cached_tokens": 4640,
+            "total_tokens": 6197
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [
+            "enquiry_saved"
+          ],
+          "order_proof": false,
+          "action_outcome_unconfirmed": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 6,
+      "caller": {
+        "utterance": "సరే, 200 cards quantity record చేసుకున్నందుకు thanks. మరి matte finish కోసం ఏదైనా sample చూసే chance ఉంటుందా? అలాగే ఈ order confirm అవ్వడానికి ఎంత time పడుతుంది?",
+        "intends_end": false,
+        "intent": "Inquire about sample availability and order confirmation timeline",
+        "elapsed_s": 0.75
+      },
+      "spoken": "ప్రస్తుతం sample చూసే అవకాశం ఉందా అనేది మాకు తెలియదు. ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి మూడు వర్కింగ్ డేస్ పడుతుంది.",
+      "elapsed_s": 3.688,
+      "memory_before": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, 200 cards కి exact price ఎంత తగ్గుతుందో చెప్పగలరా? అలాగే delivery కి ఏమైనా rush charges ఉంటాయా? నేను wedding cards price కూడా తెలుసుకోవాలి, అది కూడా చెప్పగలరా?\nassistant: రెండు వందల కార్డులకు కచ్చితమైన ధర ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. అత్యవసరమైన 24 గంటల డెలివరీకి అదనంగా one hundred fifty rupees ఛార్జ్ ఉంటుంది. వెడ్డింగ్ ఇన్విటేషన్ కార్డుల ధర డిజైన్, పేపర్ శాంపిల్ మరియు క్వాంటిటీ మీద ఆధారపడి ఉంటుంది కాబట్టి ఫోన్లో కచ్చితమైన ధర చెప్పలేము."
+      },
+      "memory_after": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, 200 cards కి exact price ఎంత తగ్గుతుందో చెప్పగలరా? అలాగే delivery కి ఏమైనా rush charges ఉంటాయా? నేను wedding cards price కూడా తెలుసుకోవాలి, అది కూడా చెప్పగలరా?\nassistant: రెండు వందల కార్డులకు కచ్చితమైన ధర ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. అత్యవసరమైన 24 గంటల డెలివరీకి అదనంగా one hundred fifty rupees ఛార్జ్ ఉంటుంది. వెడ్డింగ్ ఇన్విటేషన్ కార్డుల ధర డిజైన్, పేపర్ శాంపిల్ మరియు క్వాంటిటీ మీద ఆధారపడి ఉంటుంది కాబట్టి ఫోన్లో కచ్చితమైన ధర చెప్పలేము."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        566,
+        567,
+        568,
+        569,
+        570,
+        571
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "ప్రస్తుతం sample చూసే అవకాశం ఉందా అనేది మాకు తెలియదు. ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి మూడు వర్కింగ్ డేస్ పడుతుంది.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5403,
+            "output_tokens": 56,
+            "cached_tokens": 3264,
+            "total_tokens": 5459
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 7,
+      "caller": {
+        "utterance": "సరే, sample availability గురించి ఇప్పుడే తెలియదు అన్నారు కదా, మరి నా design పంపించాక approval కి ఎంత time పడుతుంది? అలాగే ఈ order confirm అవ్వడానికి ఎన్ని days పడుతుంది? నేను ఇంకా decide అవ్వలేదు కాబట్టి ఇప్పుడే payment చేయను.",
+        "intends_end": false,
+        "intent": "Ask about artwork approval timeline and confirm no advance payment",
+        "elapsed_s": 0.781
+      },
+      "spoken": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి మూడు వర్కింగ్ డేస్ పడుతుంది. ఈ order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీరు ఇంకా decide అవ్వలేదు కాబట్టి payment ఇప్పుడే చేయాల్సిన అవసరం లేదు.",
+      "elapsed_s": 3.813,
+      "memory_before": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, 200 cards కి exact price ఎంత తగ్గుతుందో చెప్పగలరా? అలాగే delivery కి ఏమైనా rush charges ఉంటాయా? నేను wedding cards price కూడా తెలుసుకోవాలి, అది కూడా చెప్పగలరా?\nassistant: రెండు వందల కార్డులకు కచ్చితమైన ధర ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. అత్యవసరమైన 24 గంటల డెలివరీకి అదనంగా one hundred fifty rupees ఛార్జ్ ఉంటుంది. వెడ్డింగ్ ఇన్విటేషన్ కార్డుల ధర డిజైన్, పేపర్ శాంపిల్ మరియు క్వాంటిటీ మీద ఆధారపడి ఉంటుంది కాబట్టి ఫోన్లో కచ్చితమైన ధర చెప్పలేము."
+      },
+      "memory_after": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, 200 cards కి exact price ఎంత తగ్గుతుందో చెప్పగలరా? అలాగే delivery కి ఏమైనా rush charges ఉంటాయా? నేను wedding cards price కూడా తెలుసుకోవాలి, అది కూడా చెప్పగలరా?\nassistant: రెండు వందల కార్డులకు కచ్చితమైన ధర ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. అత్యవసరమైన 24 గంటల డెలివరీకి అదనంగా one hundred fifty rupees ఛార్జ్ ఉంటుంది. వెడ్డింగ్ ఇన్విటేషన్ కార్డుల ధర డిజైన్, పేపర్ శాంపిల్ మరియు క్వాంటిటీ మీద ఆధారపడి ఉంటుంది కాబట్టి ఫోన్లో కచ్చితమైన ధర చెప్పలేము."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        573,
+        574,
+        575,
+        576,
+        577,
+        578
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి మూడు వర్కింగ్ డేస్ పడుతుంది. ఈ order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీరు ఇంకా decide అవ్వలేదు కాబట్టి payment ఇప్పుడే చేయాల్సిన అవసరం లేదు.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5573,
+            "output_tokens": 68,
+            "cached_tokens": 3264,
+            "total_tokens": 5641
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 8,
+      "caller": {
+        "utterance": "సరే, delivery కి 3 days పడుతుంది. కానీ order confirm అవ్వడానికి ఎన్ని days పడుతుందో మీకు తెలియదు అన్నారు కదా, అది కొంచెం ఇబ్బంది. మరి నా design పంపించాక approval కి ఎంత time పడుతుంది? ఈ details అన్నీ clear గా ఉంటేనే నేను final గా order place చేస్తాను.",
+        "intends_end": false,
+        "intent": "Ask about design approval timeline and seek clarity before placing the order",
+        "elapsed_s": 0.734
+      },
+      "spoken": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఈ order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీకు ఇంకా ఏమైనా వివరాలు కావాలా?",
+      "elapsed_s": 3.656,
+      "memory_before": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, 200 cards కి exact price ఎంత తగ్గుతుందో చెప్పగలరా? అలాగే delivery కి ఏమైనా rush charges ఉంటాయా? నేను wedding cards price కూడా తెలుసుకోవాలి, అది కూడా చెప్పగలరా?\nassistant: రెండు వందల కార్డులకు కచ్చితమైన ధర ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. అత్యవసరమైన 24 గంటల డెలివరీకి అదనంగా one hundred fifty rupees ఛార్జ్ ఉంటుంది. వెడ్డింగ్ ఇన్విటేషన్ కార్డుల ధర డిజైన్, పేపర్ శాంపిల్ మరియు క్వాంటిటీ మీద ఆధారపడి ఉంటుంది కాబట్టి ఫోన్లో కచ్చితమైన ధర చెప్పలేము."
+      },
+      "memory_after": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, delivery కి 3 days పడుతుంది. కానీ order confirm అవ్వడానికి ఎన్ని days పడుతుందో మీకు తెలియదు అన్నారు కదా, అది కొంచెం ఇబ్బంది. మరి నా design పంపించాక approval కి ఎంత time పడుతుంది? ఈ details అన్నీ clear గా ఉంటేనే నేను final గా order place చేస్తాను.\nassistant: డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఈ order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీకు ఇంకా ఏమైనా వివరాలు కావాలా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        580,
+        581,
+        582,
+        583,
+        584,
+        585
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఈ order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీకు ఇంకా ఏమైనా వివరాలు కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5729,
+            "output_tokens": 52,
+            "cached_tokens": 3264,
+            "total_tokens": 5781
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 9,
+      "caller": {
+        "utterance": "Order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో మీకు తెలియదు అన్నారు కదా, అది కొంచెం ఇబ్బంది. design approval కి ఎంత time పడుతుందో ఒకసారి చెక్ చేసి చెప్పగలరా? నాకు ఈ details అన్నీ clear గా ఉంటేనే నేను final గా order place చేస్తాను.",
+        "intends_end": false,
+        "intent": "Ask for design approval turnaround time before finalizing the order",
+        "elapsed_s": 0.656
+      },
+      "spoken": "డిజైన్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీ వివరాలతో enquiry save చేశాము. ఈ వివరాలు తెలిశాక మీరు final గా order place చేసుకోవచ్చు.",
+      "elapsed_s": 4.438,
+      "memory_before": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, delivery కి 3 days పడుతుంది. కానీ order confirm అవ్వడానికి ఎన్ని days పడుతుందో మీకు తెలియదు అన్నారు కదా, అది కొంచెం ఇబ్బంది. మరి నా design పంపించాక approval కి ఎంత time పడుతుంది? ఈ details అన్నీ clear గా ఉంటేనే నేను final గా order place చేస్తాను.\nassistant: డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఈ order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీకు ఇంకా ఏమైనా వివరాలు కావాలా?"
+      },
+      "memory_after": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, delivery కి 3 days పడుతుంది. కానీ order confirm అవ్వడానికి ఎన్ని days పడుతుందో మీకు తెలియదు అన్నారు కదా, అది కొంచెం ఇబ్బంది. మరి నా design పంపించాక approval కి ఎంత time పడుతుంది? ఈ details అన్నీ clear గా ఉంటేనే నేను final గా order place చేస్తాను.\nassistant: డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఈ order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీకు ఇంకా ఏమైనా వివరాలు కావాలా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        587,
+        588,
+        589,
+        590,
+        591,
+        592,
+        593
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "డిజైన్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీ వివరాలతో enquiry save చేశాము. ఈ వివరాలు తెలిశాక మీరు final గా order place చేసుకోవచ్చు.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5810,
+            "output_tokens": 49,
+            "cached_tokens": 3296,
+            "total_tokens": 5859
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 10,
+      "caller": {
+        "utterance": "Order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో మీకు తెలియదు అన్నారు కదా, అది కొంచెం ఇబ్బంది. design approval కి ఎంత time పడుతుందో ఒకసారి చెక్ చేసి చెప్పగలరా? నాకు ఈ details అన్నీ clear గా ఉంటేనే నేను final గా order place చేస్తాను.",
+        "intends_end": false,
+        "intent": "Press for design approval time and express that final order depends on clear details",
+        "elapsed_s": 0.672
+      },
+      "spoken": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ప్రస్తుతం మాకు తెలియదు. ఈ వివరాలు తెలిశాక మీరు final గా order place చేసుకోవచ్చు.",
+      "elapsed_s": 4.219,
+      "memory_before": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, delivery కి 3 days పడుతుంది. కానీ order confirm అవ్వడానికి ఎన్ని days పడుతుందో మీకు తెలియదు అన్నారు కదా, అది కొంచెం ఇబ్బంది. మరి నా design పంపించాక approval కి ఎంత time పడుతుంది? ఈ details అన్నీ clear గా ఉంటేనే నేను final గా order place చేస్తాను.\nassistant: డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఈ order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీకు ఇంకా ఏమైనా వివరాలు కావాలా?"
+      },
+      "memory_after": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, delivery కి 3 days పడుతుంది. కానీ order confirm అవ్వడానికి ఎన్ని days పడుతుందో మీకు తెలియదు అన్నారు కదా, అది కొంచెం ఇబ్బంది. మరి నా design పంపించాక approval కి ఎంత time పడుతుంది? ఈ details అన్నీ clear గా ఉంటేనే నేను final గా order place చేస్తాను.\nassistant: డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఈ order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీకు ఇంకా ఏమైనా వివరాలు కావాలా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        595,
+        596,
+        597,
+        598,
+        599,
+        600,
+        601
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ప్రస్తుతం మాకు తెలియదు. ఈ వివరాలు తెలిశాక మీరు final గా order place చేసుకోవచ్చు.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5957,
+            "output_tokens": 51,
+            "cached_tokens": 3264,
+            "total_tokens": 6008
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 11,
+      "caller": {
+        "utterance": "Order confirm అవ్వడానికి time తెలియదు అన్నారు కదా, ఇది కొంచెం ఇబ్బందిగానే ఉంది. నా design పంపించాక approval కి కచ్చితంగా ఎంత time పడుతుందో ఒకసారి చెక్ చేసి చెప్పగలరా? అప్పుడే నేను final గా order place చేస్తాను.",
+        "intends_end": false,
+        "intent": "Ask for design approval turnaround time",
+        "elapsed_s": 0.766
+      },
+      "spoken": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ప్రస్తుతం మాకు తెలియదు.",
+      "elapsed_s": 3.937,
+      "memory_before": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, delivery కి 3 days పడుతుంది. కానీ order confirm అవ్వడానికి ఎన్ని days పడుతుందో మీకు తెలియదు అన్నారు కదా, అది కొంచెం ఇబ్బంది. మరి నా design పంపించాక approval కి ఎంత time పడుతుంది? ఈ details అన్నీ clear గా ఉంటేనే నేను final గా order place చేస్తాను.\nassistant: డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఈ order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీకు ఇంకా ఏమైనా వివరాలు కావాలా?"
+      },
+      "memory_after": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, delivery కి 3 days పడుతుంది. కానీ order confirm అవ్వడానికి ఎన్ని days పడుతుందో మీకు తెలియదు అన్నారు కదా, అది కొంచెం ఇబ్బంది. మరి నా design పంపించాక approval కి ఎంత time పడుతుంది? ఈ details అన్నీ clear గా ఉంటేనే నేను final గా order place చేస్తాను.\nassistant: డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఈ order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీకు ఇంకా ఏమైనా వివరాలు కావాలా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        603,
+        604,
+        605,
+        606,
+        607,
+        608
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ప్రస్తుతం మాకు తెలియదు.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 6006,
+            "output_tokens": 61,
+            "cached_tokens": 3296,
+            "total_tokens": 6067
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 12,
+      "caller": {
+        "utterance": "Order confirm అవ్వడానికి ఎంత time పడుతుందో మీకు తెలియదు అన్నారు కదా, ఇది కొంచెం ఇబ్బందిగానే ఉంది. నా design పంపించాక approval కి కచ్చితంగా ఎంత time పడుతుందో ఒకసారి చెక్ చేసి చెప్పగలరా? అప్పుడే నేను final గా order place చేస్తాను.",
+        "intends_end": false,
+        "intent": "Press for exact design approval duration and order confirmation time",
+        "elapsed_s": 0.687
+      },
+      "spoken": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ప్రస్తుతం మాకు తెలియదు.",
+      "elapsed_s": 4.157,
+      "memory_before": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, delivery కి 3 days పడుతుంది. కానీ order confirm అవ్వడానికి ఎన్ని days పడుతుందో మీకు తెలియదు అన్నారు కదా, అది కొంచెం ఇబ్బంది. మరి నా design పంపించాక approval కి ఎంత time పడుతుంది? ఈ details అన్నీ clear గా ఉంటేనే నేను final గా order place చేస్తాను.\nassistant: డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఈ order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీకు ఇంకా ఏమైనా వివరాలు కావాలా?"
+      },
+      "memory_after": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, delivery కి 3 days పడుతుంది. కానీ order confirm అవ్వడానికి ఎన్ని days పడుతుందో మీకు తెలియదు అన్నారు కదా, అది కొంచెం ఇబ్బంది. మరి నా design పంపించాక approval కి ఎంత time పడుతుంది? ఈ details అన్నీ clear గా ఉంటేనే నేను final గా order place చేస్తాను.\nassistant: డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఈ order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీకు ఇంకా ఏమైనా వివరాలు కావాలా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        610,
+        611,
+        612,
+        613,
+        614,
+        615,
+        616
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ప్రస్తుతం మాకు తెలియదు.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 6107,
+            "output_tokens": 55,
+            "cached_tokens": 3264,
+            "total_tokens": 6162
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 13,
+      "caller": {
+        "utterance": "Order confirm time మీకు తెలియదు అని రెండు సార్లు చెప్పారు కదా, ఇకపై దీని గురించి అడగడం waste. నా details అన్నీ note చేసుకున్నందుకు thanks. నేను ఇప్పుడు order place చేయడం లేదు, తర్వాత ఆలోచిస్తాను. ఈ call close చేస్తున్నాను.",
+        "intends_end": true,
+        "intent": "Explicitly ending the call after repeated unanswered questions",
+        "elapsed_s": 0.828
+      },
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 3.234,
+      "memory_before": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, delivery కి 3 days పడుతుంది. కానీ order confirm అవ్వడానికి ఎన్ని days పడుతుందో మీకు తెలియదు అన్నారు కదా, అది కొంచెం ఇబ్బంది. మరి నా design పంపించాక approval కి ఎంత time పడుతుంది? ఈ details అన్నీ clear గా ఉంటేనే నేను final గా order place చేస్తాను.\nassistant: డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఈ order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీకు ఇంకా ఏమైనా వివరాలు కావాలా?"
+      },
+      "memory_after": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "assistant: డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ప్రస్తుతం మాకు తెలియదు.\nuser: Order confirm time మీకు తెలియదు అని రెండు సార్లు చెప్పారు కదా, ఇకపై దీని గురించి అడగడం waste. నా details అన్నీ note చేసుకున్నందుకు thanks. నేను ఇప్పుడు order place చేయడం లేదు, తర్వాత ఆలోచిస్తాను. ఈ call close చేస్తున్నాను.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        618,
+        619,
+        620
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "response_contract": "speech_text",
+          "finish_reason": "stop",
+          "server_owned_close": true,
+          "end_call": {
+            "should_end": true,
+            "reason": "goal_complete",
+            "contact_preference": "end_call",
+            "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "Matte finish visiting cards one hundred cards కి three hundred fifty rupees అవుతుంది. Minimum order quantity one hundred cards మాత్రమే. మీకు ఇంకా వేరే details ఏమైనా కావాలా?",
+      "at": 127397.359
+    },
+    {
+      "turn": 2,
+      "text": "రెండు వందల కార్డులకు మొత్తం ధర ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత విజయవాడలో డెలివరీకి మూడు వర్కింగ్ డేస్ పడుతుంది.",
+      "at": 127401.984
+    },
+    {
+      "turn": 3,
+      "text": "రెండు వందల కార్డులకు కచ్చితమైన ధర ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. అత్యవసరమైన 24 గంటల డెలివరీకి అదనంగా one hundred fifty rupees ఛార్జ్ ఉంటుంది. వెడ్డింగ్ ఇన్విటేషన్ కార్డుల ధర డిజైన్, పేపర్ శాంపిల్ మరియు క్వాంటిటీ మీద ఆధారపడి ఉంటుంది కాబట్టి ఫోన్లో కచ్చితమైన ధర చెప్పలేము.",
+      "at": 127407.187
+    },
+    {
+      "turn": 4,
+      "text": "one hundred cards standard finish కి two hundred rupees అవుతుంది. two hundred cards కి exact price ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. one thousand rupees పైన orders ఉంటే 50% advance payment చేయాలి, అంతకంటే తక్కువ ఉంటే delivery తర్వాత cash on delivery ఇస్తే సరిపోతుంది.",
+      "at": 127412.093
+    },
+    {
+      "turn": 5,
+      "text": "two hundred matte cards కి exact price reduction ఎంత ఉంటుందో ప్రస్తుతం మాకు తెలియదు. మీ details తో enquiry save చేశాను, మీ email ramesh. audit@example. invalid కూడా note చేసుకున్నాను. అవును, మీ quantity two hundred cards అని record చేసుకున్నాను.",
+      "at": 127417.375
+    },
+    {
+      "turn": 6,
+      "text": "ప్రస్తుతం sample చూసే అవకాశం ఉందా అనేది మాకు తెలియదు. ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి మూడు వర్కింగ్ డేస్ పడుతుంది.",
+      "at": 127421.843
+    },
+    {
+      "turn": 7,
+      "text": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి మూడు వర్కింగ్ డేస్ పడుతుంది. ఈ order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీరు ఇంకా decide అవ్వలేదు కాబట్టి payment ఇప్పుడే చేయాల్సిన అవసరం లేదు.",
+      "at": 127426.468
+    },
+    {
+      "turn": 8,
+      "text": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఈ order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీకు ఇంకా ఏమైనా వివరాలు కావాలా?",
+      "at": 127430.843
+    },
+    {
+      "turn": 9,
+      "text": "డిజైన్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీ వివరాలతో enquiry save చేశాము. ఈ వివరాలు తెలిశాక మీరు final గా order place చేసుకోవచ్చు.",
+      "at": 127435.953
+    },
+    {
+      "turn": 10,
+      "text": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ప్రస్తుతం మాకు తెలియదు. ఈ వివరాలు తెలిశాక మీరు final గా order place చేసుకోవచ్చు.",
+      "at": 127440.859
+    },
+    {
+      "turn": 11,
+      "text": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ప్రస్తుతం మాకు తెలియదు.",
+      "at": 127445.609
+    },
+    {
+      "turn": 12,
+      "text": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ప్రస్తుతం మాకు తెలియదు.",
+      "at": 127450.453
+    },
+    {
+      "turn": 13,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 127453.406
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "Matte finish visiting cards one hundred cards కి three hundred fifty rupees అవుతుంది. Minimum order quantity one hundred cards మాత్రమే. మీకు ఇంకా వేరే details ఏమైనా కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4558,
+        "output_tokens": 38,
+        "cached_tokens": 2080,
+        "total_tokens": 4596
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "రెండు వందల కార్డులకు మొత్తం ధర ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత విజయవాడలో డెలివరీకి మూడు వర్కింగ్ డేస్ పడుతుంది.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4836,
+        "output_tokens": 41,
+        "cached_tokens": 3264,
+        "total_tokens": 4877
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "రెండు వందల కార్డులకు కచ్చితమైన ధర ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. అత్యవసరమైన 24 గంటల డెలివరీకి అదనంగా one hundred fifty rupees ఛార్జ్ ఉంటుంది. వెడ్డింగ్ ఇన్విటేషన్ కార్డుల ధర డిజైన్, పేపర్ శాంపిల్ మరియు క్వాంటిటీ మీద ఆధారపడి ఉంటుంది కాబట్టి ఫోన్లో కచ్చితమైన ధర చెప్పలేము.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4964,
+        "output_tokens": 66,
+        "cached_tokens": 3264,
+        "total_tokens": 5030
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "one hundred cards standard finish కి two hundred rupees అవుతుంది. two hundred cards కి exact price ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. one thousand rupees పైన orders ఉంటే 50% advance payment చేయాలి, అంతకంటే తక్కువ ఉంటే delivery తర్వాత cash on delivery ఇస్తే సరిపోతుంది.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5217,
+        "output_tokens": 73,
+        "cached_tokens": 3264,
+        "total_tokens": 5290
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "two hundred matte cards కి exact price reduction ఎంత ఉంటుందో ప్రస్తుతం మాకు తెలియదు. మీ details తో enquiry save చేశాను, మీ email ramesh. audit@example. invalid కూడా note చేసుకున్నాను. అవును, మీ quantity two hundred cards అని record చేసుకున్నాను.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 6169,
+        "output_tokens": 28,
+        "cached_tokens": 4640,
+        "total_tokens": 6197
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [
+        "enquiry_saved"
+      ],
+      "order_proof": false,
+      "action_outcome_unconfirmed": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "ప్రస్తుతం sample చూసే అవకాశం ఉందా అనేది మాకు తెలియదు. ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి మూడు వర్కింగ్ డేస్ పడుతుంది.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5403,
+        "output_tokens": 56,
+        "cached_tokens": 3264,
+        "total_tokens": 5459
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి మూడు వర్కింగ్ డేస్ పడుతుంది. ఈ order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీరు ఇంకా decide అవ్వలేదు కాబట్టి payment ఇప్పుడే చేయాల్సిన అవసరం లేదు.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5573,
+        "output_tokens": 68,
+        "cached_tokens": 3264,
+        "total_tokens": 5641
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఈ order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీకు ఇంకా ఏమైనా వివరాలు కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5729,
+        "output_tokens": 52,
+        "cached_tokens": 3264,
+        "total_tokens": 5781
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "డిజైన్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీ వివరాలతో enquiry save చేశాము. ఈ వివరాలు తెలిశాక మీరు final గా order place చేసుకోవచ్చు.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5810,
+        "output_tokens": 49,
+        "cached_tokens": 3296,
+        "total_tokens": 5859
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ప్రస్తుతం మాకు తెలియదు. ఈ వివరాలు తెలిశాక మీరు final గా order place చేసుకోవచ్చు.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5957,
+        "output_tokens": 51,
+        "cached_tokens": 3264,
+        "total_tokens": 6008
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ప్రస్తుతం మాకు తెలియదు.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 6006,
+        "output_tokens": 61,
+        "cached_tokens": 3296,
+        "total_tokens": 6067
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ప్రస్తుతం మాకు తెలియదు.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 6107,
+        "output_tokens": 55,
+        "cached_tokens": 3264,
+        "total_tokens": 6162
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "response_contract": "speech_text",
+      "finish_reason": "stop",
+      "server_owned_close": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "standard finish కంటే matte finish price ఎలా ఉంటుంది? కనీసం ఎన్ని cards order చేయాలో కూడా చెప్పండి.",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "product",
+            "value": "visiting cards"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నమస్తే Kavitha. నాకు visiting cards కావాలి. standard finish కంటే matte finish price ఎలా ఉంటుంది? కనీసం ఎన్ని cards order చేయాలో కూడా చెప్పండి.",
+      "at": 127396.765
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "నేను తర్వాత 200 cards ఆర్డర్ చేద్దామనుకుంటున్నాను, అప్పుడు per card price తగ్గుతుందా? అలాగే design approval process ఎలా ఉంటుంది?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "200"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, 100 cards కి 350 rupees అంటే కొంచెం ఎక్కువే అనిపిస్తోంది. నేను తర్వాత 200 cards ఆర్డర్ చేద్దామనుకుంటున్నాను, అప్పుడు per card price తగ్గుతుందా? అలాగే design approval process ఎలా ఉంటుంది?",
+      "at": 127401.375
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "200 cards కి exact price ఎంత తగ్గుతుందో చెప్పగలరా? అలాగే delivery కి ఏమైనా rush charges ఉంటాయా? నేను wedding cards price కూడా తెలుసుకోవాలి, అది కూడా చెప్పగలరా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, 200 cards కి exact price ఎంత తగ్గుతుందో చెప్పగలరా? అలాగే delivery కి ఏమైనా rush charges ఉంటాయా? నేను wedding cards price కూడా తెలుసుకోవాలి, అది కూడా చెప్పగలరా?",
+      "at": 127406.562
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "100 cards కి standard finish ధర ఎంత, 200 cards కి exact price ఎంత తగ్గుతుంది, మరియు advance payment చేయాలా లేదా delivery తర్వాత ఇస్తే సరిపోతుందా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "read",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, 24 గంటల rush delivery కి 150 rupees extra అవుతుంది కదా. మరి standard finish 100 cards కి ఎంతవుతుందో, అలాగే 200 cards కి exact price ఎంత తగ్గుతుందో ఒకసారి చెక్ చేసి చెప్పగలరా? అలాగే advance payment ఏమైనా చేయాలా, లేక delivery తర్వాత ఇస్తే సరిపోతుందా?",
+      "at": 127411.531
+    },
+    {
+      "turn": 5,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "200 matte cards కి exact price reduction ఎంత ఉంటుందో చెప్పగలరా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "write",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "email",
+            "value": "ramesh.audit@example.invalid"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, 100 standard కి 200 rupees, 100 matte కి 350 rupees అవుతోంది. 200 matte కి exact price reduction ఎంత ఉంటుందో ఇప్పుడు చెప్పలేకపోతే, నా details తో ఒక quote లేదా internal order request note చేసి ఉంచగలరా? నా email ramesh.audit@example.invalid. అలాగే, మీరు నా quantity 200 cards అని record చేసుకున్నారా?",
+      "at": 127416.75
+    },
+    {
+      "turn": 6,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "matte finish sample చూసే chance ఉంటుందా? order confirm అవ్వడానికి ఎంత time పడుతుంది?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, 200 cards quantity record చేసుకున్నందుకు thanks. మరి matte finish కోసం ఏదైనా sample చూసే chance ఉంటుందా? అలాగే ఈ order confirm అవ్వడానికి ఎంత time పడుతుంది?",
+      "at": 127421.265
+    },
+    {
+      "turn": 7,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "sample availability గురించి, design approval కి ఎంత time పడుతుంది, మరియు order confirm అవ్వడానికి ఎన్ని days పడుతుంది?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, sample availability గురించి ఇప్పుడే తెలియదు అన్నారు కదా, మరి నా design పంపించాక approval కి ఎంత time పడుతుంది? అలాగే ఈ order confirm అవ్వడానికి ఎన్ని days పడుతుంది? నేను ఇంకా decide అవ్వలేదు కాబట్టి ఇప్పుడే payment చేయను.",
+      "at": 127425.687
+    },
+    {
+      "turn": 8,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "order confirm అవ్వడానికి ఎన్ని days పడుతుంది, design పంపించాక approval కి ఎంత time పడుతుంది?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, delivery కి 3 days పడుతుంది. కానీ order confirm అవ్వడానికి ఎన్ని days పడుతుందో మీకు తెలియదు అన్నారు కదా, అది కొంచెం ఇబ్బంది. మరి నా design పంపించాక approval కి ఎంత time పడుతుంది? ఈ details అన్నీ clear గా ఉంటేనే నేను final గా order place చేస్తాను.",
+      "at": 127430.171
+    },
+    {
+      "turn": 9,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "design approval కి ఎంత time పడుతుందో ఒకసారి చెక్ చేసి చెప్పగలరా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "read",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "Order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో మీకు తెలియదు అన్నారు కదా, అది కొంచెం ఇబ్బంది. design approval కి ఎంత time పడుతుందో ఒకసారి చెక్ చేసి చెప్పగలరా? నాకు ఈ details అన్నీ clear గా ఉంటేనే నేను final గా order place చేస్తాను.",
+      "at": 127435.265
+    },
+    {
+      "turn": 10,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "design approval కి ఎంత time పడుతుందో ఒకసారి చెక్ చేసి చెప్పగలరా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "read",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "Order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో మీకు తెలియదు అన్నారు కదా, అది కొంచెం ఇబ్బంది. design approval కి ఎంత time పడుతుందో ఒకసారి చెక్ చేసి చెప్పగలరా? నాకు ఈ details అన్నీ clear గా ఉంటేనే నేను final గా order place చేస్తాను.",
+      "at": 127440.312
+    },
+    {
+      "turn": 11,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ఒకసారి చెక్ చేసి చెప్పగలరా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "read",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "Order confirm అవ్వడానికి time తెలియదు అన్నారు కదా, ఇది కొంచెం ఇబ్బందిగానే ఉంది. నా design పంపించాక approval కి కచ్చితంగా ఎంత time పడుతుందో ఒకసారి చెక్ చేసి చెప్పగలరా? అప్పుడే నేను final గా order place చేస్తాను.",
+      "at": 127445.078
+    },
+    {
+      "turn": 12,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి కచ్చితంగా ఎంత time పడుతుందో ఒకసారి చెక్ చేసి చెప్పగలరా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "read",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "Order confirm అవ్వడానికి ఎంత time పడుతుందో మీకు తెలియదు అన్నారు కదా, ఇది కొంచెం ఇబ్బందిగానే ఉంది. నా design పంపించాక approval కి కచ్చితంగా ఎంత time పడుతుందో ఒకసారి చెక్ చేసి చెప్పగలరా? అప్పుడే నేను final గా order place చేస్తాను.",
+      "at": 127449.89
+    },
+    {
+      "turn": 13,
+      "proposal": {
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "ఈ call close చేస్తున్నాను.",
+        "remaining_request": "",
+        "contact_intent": "end_this_call",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": true,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "transcript": "Order confirm time మీకు తెలియదు అని రెండు సార్లు చెప్పారు కదా, ఇకపై దీని గురించి అడగడం waste. నా details అన్నీ note చేసుకున్నందుకు thanks. నేను ఇప్పుడు order place చేయడం లేదు, తర్వాత ఆలోచిస్తాను. ఈ call close చేస్తున్నాను.",
+      "at": 127453.39
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 13,
+      "at": 127453.406
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 13,
+      "at": 127454.468,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 127397.375
+    },
+    {
+      "turn_seq": 3,
+      "at": 127402.015
+    },
+    {
+      "turn_seq": 5,
+      "at": 127407.218
+    },
+    {
+      "turn_seq": 7,
+      "at": 127412.109
+    },
+    {
+      "turn_seq": 9,
+      "at": 127417.406
+    },
+    {
+      "turn_seq": 11,
+      "at": 127421.859
+    },
+    {
+      "turn_seq": 13,
+      "at": 127426.484
+    },
+    {
+      "turn_seq": 15,
+      "at": 127430.875
+    },
+    {
+      "turn_seq": 17,
+      "at": 127435.984
+    },
+    {
+      "turn_seq": 19,
+      "at": 127440.875
+    },
+    {
+      "turn_seq": 21,
+      "at": 127445.625
+    },
+    {
+      "turn_seq": 23,
+      "at": 127450.484
+    },
+    {
+      "turn_seq": 25,
+      "at": 127453.437
+    }
+  ],
+  "started_at": "2026-10-29T17:44:30.107016+00:00",
+  "errors": [],
+  "brain_checksum": "f1701af0d53369e603869a1bafee427e6d3493490cec35765d0b259410b7068c",
+  "runtime_checksum": "24e02fd7087c832858e2d6db4bca57f7f79a5e3617429d149011e26fa44a6d19",
+  "available_tools": [
+    "HUBSPOT_CREATE_CONTACT",
+    "GOOGLECALENDAR_CREATE_EVENT",
+    "GOOGLECALENDAR_FIND_FREE_SLOTS",
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 127396.093,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 2,
+      "start_s": 127400.75,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 47,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 3,
+      "start_s": 127405.906,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 63,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 4,
+      "start_s": 127410.171,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 63,
+      "rolling_chars": 460
+    },
+    {
+      "turn": 5,
+      "start_s": 127415.562,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 63,
+      "rolling_chars": 460
+    },
+    {
+      "turn": 6,
+      "start_s": 127420.64,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 101,
+      "rolling_chars": 460
+    },
+    {
+      "turn": 7,
+      "start_s": 127425.062,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 101,
+      "rolling_chars": 460
+    },
+    {
+      "turn": 8,
+      "start_s": 127429.625,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 101,
+      "rolling_chars": 460
+    },
+    {
+      "turn": 9,
+      "start_s": 127434.0,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 101,
+      "rolling_chars": 444
+    },
+    {
+      "turn": 10,
+      "start_s": 127439.031,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 101,
+      "rolling_chars": 444
+    },
+    {
+      "turn": 11,
+      "start_s": 127443.687,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 101,
+      "rolling_chars": 444
+    },
+    {
+      "turn": 12,
+      "start_s": 127448.468,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 101,
+      "rolling_chars": 444
+    },
+    {
+      "turn": 13,
+      "start_s": 127453.39,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 101,
+      "rolling_chars": 444
+    }
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "interested",
+    "disposition_confidence": 0.98,
+    "summary_te": "",
+    "summary_en": "The caller inquired about matte-finish visiting cards, initially asking for the minimum quantity and price. The agent stated that 100 matte cards cost ₹350 and the minimum order is 100 cards. The caller considered ordering 200 cards and asked whether the per-card price would decrease, how design approval works, and about delivery charges. The agent could not provide the exact 200-card matte price reduction, stated that delivery takes three working days after artwork approval, and quoted a ₹150 charge for 24-hour rush delivery. The caller also asked about wedding invitation card pricing, for which the agent said pricing depends on design, paper sample, and quantity. Standard-finish cards were quoted at ₹200 for 100 cards. Payment terms were explained: orders above ₹1,000 require 50% advance, while lower orders can be paid cash on delivery. The caller provided the email ramesh.audit@example.invalid and requested that an enquiry or quote be recorded for 200 matte cards; the agent confirmed that the enquiry and quantity were recorded. The caller repeatedly requested the exact order-confirmation and design-approval timelines, explaining that these details were needed before placing the order. The agent only reiterated the three-working-day delivery period after artwork approval and could not provide the confirmation or approval timeline. The caller viewed this lack of clarity as an inconvenience, stated that no payment would be made yet, and ended the call saying they would think about ordering later. No order was placed.",
+    "next_action": "Provide the exact 200-card matte price and confirm the design-approval and order-confirmation timelines before the caller decides whether to place the order.",
+    "extracted_fields": {
+      "delivery_time_after_artwork_approval": "3 working days",
+      "email": "ramesh.audit@example.invalid",
+      "finish_options": "Matte and standard",
+      "matte_price_100_cards": "₹350",
+      "minimum_order_quantity": "100 cards",
+      "payment_terms": "50% advance for orders above ₹1,000; cash on delivery for lower orders",
+      "phone": "+12025550120",
+      "product": "Visiting cards",
+      "quantity": "200 cards",
+      "rush_delivery_charge": "₹150 for 24-hour delivery",
+      "standard_price_100_cards": "₹200",
+      "wedding_card_pricing": "Depends on design, paper sample, and quantity"
+    },
+    "objections": [
+      "The caller considered ₹350 for 100 matte cards somewhat expensive.",
+      "The exact price reduction for 200 matte cards was unavailable.",
+      "The design-approval and order-confirmation timelines were not provided, which prevented the caller from finalizing the order."
+    ],
+    "notes": "The enquiry was recorded, but the caller explicitly said they were not placing an order now and would consider it later.",
+    "tags": [
+      "intent:pricing",
+      "intent:purchase",
+      "followup:send_quote",
+      "signal:price_sensitive",
+      "signal:objection",
+      "sentiment:frustrated"
+    ],
+    "custom_tags": [
+      "custom:visiting-cards",
+      "custom:matte-finish",
+      "custom:wedding-cards"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T17:45:39.658598Z",
+    "generation_ok": true,
+    "facts": {
+      "delivery_time_after_artwork_approval": "3 working days",
+      "email": "ramesh.audit@example.invalid",
+      "finish_options": "Matte and standard",
+      "matte_price_100_cards": "₹350",
+      "minimum_order_quantity": "100 cards",
+      "payment_terms": "50% advance for orders above ₹1,000; cash on delivery for lower orders",
+      "phone": "+12025550120",
+      "product": "Visiting cards",
+      "quantity": "200 cards",
+      "rush_delivery_charge": "₹150 for 24-hour delivery",
+      "standard_price_100_cards": "₹200",
+      "wedding_card_pricing": "Depends on design, paper sample, and quantity"
+    },
+    "disclosure_status": null,
+    "contact_preference": "end_call",
+    "status_tags": [
+      "action:required",
+      "contact:email_known",
+      "contact:phone_known",
+      "custom:matte-finish",
+      "custom:visiting-cards",
+      "followup:send_quote",
+      "intent:pricing",
+      "intent:purchase",
+      "outcome:interested",
+      "sentiment:frustrated",
+      "signal:objection",
+      "signal:price_sensitive"
+    ],
+    "lead": {
+      "leadId": "54583290-48ba-51ad-9dec-6789bbf7551d",
+      "agentId": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+      "stage": "contacted",
+      "action": "unchanged"
+    },
+    "lead_assessment": {
+      "score": 75,
+      "band": "hot",
+      "disposition": "interested",
+      "confidence": 0.98,
+      "components": [
+        {
+          "signal": "interest",
+          "points": 40,
+          "max": 40,
+          "evidence": "interested"
+        },
+        {
+          "signal": "requirements",
+          "points": 25,
+          "max": 25,
+          "evidence": "product"
+        },
+        {
+          "signal": "timing",
+          "points": 0,
+          "max": 25,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "contact",
+          "points": 10,
+          "max": 10,
+          "evidence": "phone"
+        }
+      ],
+      "version": 1,
+      "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+      "reason": "recorded_signals"
+    },
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "941b7544-97b7-4244-b6f0-4c2703d60c45",
+        "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+        "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+        "session_id": "adaptive-8c638dd0d3f64df0a3821ec60b0fc620",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_ce356842dc55",
+        "started_at": "2026-10-29 17:44:30.079389+00:00",
+        "ended_at": "2026-10-29 17:45:31.683127+00:00",
+        "duration_sec": 61,
+        "disposition": "interested",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/941b7544-97b7-4244-b6f0-4c2703d60c45/",
+        "end_reason": "goal_complete",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "action:required",
+          "contact:email_known",
+          "contact:phone_known",
+          "custom:matte-finish",
+          "custom:visiting-cards",
+          "followup:send_quote",
+          "intent:pricing",
+          "intent:purchase",
+          "outcome:interested",
+          "sentiment:frustrated",
+          "signal:objection",
+          "signal:price_sensitive"
+        ],
+        "last_heartbeat_at": "2026-10-29 17:44:30.079389+00:00",
+        "created_at": "2026-10-29 17:44:30.079389+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [],
+    "dnd": [],
+    "leads": [
+      {
+        "lead_id": "54583290-48ba-51ad-9dec-6789bbf7551d",
+        "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+        "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+        "name": "Ramesh",
+        "phone": "+12025550120",
+        "email": "ramesh.audit@example.invalid",
+        "stage": "contacted",
+        "notes": "Caller enquiry — call 941b7544-97b7-4244-b6f0-4c2703d60c45\n{\"request\": \"Customer wants a quote for 200 matte finish visiting cards. Email: ramesh.audit@example.invalid. Standard finish 100 cards is 200 rupees. Exact price reduction for 200 matte is unknown.\", \"customer_name\": \"Ramesh\", \"product\": \"visiting cards\", \"quantity\": \"200\", \"payment_method\": \"unknown\"}\n\n---\n[Call reference: 941b7544-97b7-4244-b6f0-4c2703d60c45]\nThe caller inquired about matte-finish visiting cards, initially asking for the minimum quantity and price. The agent stated that 100 matte cards cost ₹350 and the minimum order is 100 cards. The caller considered ordering 200 cards and asked whether the per-card price would decrease, how design approval works, and about delivery charges. The agent could not provide the exact 200-card matte price reduction, stated that delivery takes three working days after artwork approval, and quoted a ₹150 charge for 24-hour rush delivery. The caller also asked about wedding invitation card pricing, for which the agent said pricing depends on design, paper sample, and quantity. Standard-finish cards were quoted at ₹200 for 100 cards. Payment terms were explained: orders above ₹1,000 require 50% advance, while lower orders can be paid cash on delivery. The caller provided the email ramesh.audit@example.invalid and requested that an enquiry or quote be recorded for 200 matte cards; the agent confirmed that the enquiry and quantity were recorded. The caller repeatedly requested the exact order-confirmation and design-approval timelines, explaining that these details were needed before placing the \n\nNext step: Provide the exact 200-card matte price and confirm the design-approval and order-confirmation timelines before the caller decides whether to place the order.\n\nObjections: The caller considered ₹350 for 100 matte cards somewhat expensive., The exact price reduction for 200 matte cards was unavailable., The design-approval and order-confirmation timelines were not provided, which pr\n\nCall outcome: interested (98% confidence)",
+        "created_at": "2026-10-29 17:44:53.457206+00:00",
+        "updated_at": "2026-10-29 17:45:39.677063+00:00"
+      }
+    ],
+    "tools": [],
+    "assessments": [
+      {
+        "id": "aeb71e91-82de-45b3-9ceb-f05c68574340",
+        "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+        "lead_id": "54583290-48ba-51ad-9dec-6789bbf7551d",
+        "source_call_id": "941b7544-97b7-4244-b6f0-4c2703d60c45",
+        "assessment": {
+          "score": 75,
+          "band": "hot",
+          "disposition": "interested",
+          "confidence": 0.98,
+          "components": [
+            {
+              "signal": "interest",
+              "points": 40,
+              "max": 40,
+              "evidence": "interested"
+            },
+            {
+              "signal": "requirements",
+              "points": 25,
+              "max": 25,
+              "evidence": "product"
+            },
+            {
+              "signal": "timing",
+              "points": 0,
+              "max": 25,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "contact",
+              "points": 10,
+              "max": 10,
+              "evidence": "phone"
+            }
+          ],
+          "version": 1,
+          "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+          "reason": "recorded_signals"
+        },
+        "updated_at": "2026-10-29 17:45:31.683127+00:00"
+      }
+    ]
+  },
+  "metadata": {
+    "call_id": "941b7544-97b7-4244-b6f0-4c2703d60c45",
+    "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+    "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+    "session_id": "adaptive-8c638dd0d3f64df0a3821ec60b0fc620",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_ce356842dc55",
+    "started_at": "2026-10-29T17:44:30.079389+00:00",
+    "status": "active",
+    "storage_path": "data/calls/941b7544-97b7-4244-b6f0-4c2703d60c45/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550120",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 179398,
+        "output_tokens": 8472,
+        "cached_tokens": 89792
+      }
+    },
+    "contact_preference": "end_call",
+    "hangup_reason": "goal_complete",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 61,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": true,
+    "callback_close_phase": "idle",
+    "disconnected_at": "2026-10-29T17:45:31.683127+00:00",
+    "ended_at": "2026-10-29T17:45:31.683127+00:00",
+    "end_reason": "goal_complete",
+    "duration_sec": 61.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 61.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.012708333333333332,
+      "telephony_inr": 1.2107229166666664,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.012708333333333332,
+      "telnyx_inr": 1.2107229166666664,
+      "telnyx_voice_api_usd": 0.002033333333333333,
+      "telnyx_sip_usd": 0.005083333333333333,
+      "telnyx_media_stream_usd": 0.003558333333333333,
+      "telnyx_call_recording_usd": 0.002033333333333333,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.27,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-29",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.012499999999999999,
+      "telephony_inr_per_min": 1.190875,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.012499999999999999,
+      "telnyx_inr_per_min": 1.190875,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_07a384fca20f41ca016ae3863d0c8887d19bfb9f9bd10d49fe": {
+          "input_tokens": 2737,
+          "output_tokens": 653,
+          "cached_tokens": 0,
+          "cache_write_tokens": 2734,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.0014677000000000002
+        }
+      },
+      "post_call_analysis_usd": 0.0014677000000000002,
+      "post_call_analysis_inr": 0.139827779
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నమస్తే Kavitha. నాకు visiting cards కావాలి. standard finish కంటే matte finish price ఎలా ఉంటుంది? కనీసం ఎన్ని cards order చేయాలో కూడా చెప్పండి.",
+      "ts": "2026-10-29T17:44:30.847587Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "Matte finish visiting cards one hundred cards కి three hundred fifty rupees అవుతుంది. Minimum order quantity one hundred cards మాత్రమే. మీకు ఇంకా వేరే details ఏమైనా కావాలా?",
+      "ts": "2026-10-29T17:44:34.547629Z"
+    },
+    {
+      "seq": 3,
+      "role": "user",
+      "text": "సరే, 100 cards కి 350 rupees అంటే కొంచెం ఎక్కువే అనిపిస్తోంది. నేను తర్వాత 200 cards ఆర్డర్ చేద్దామనుకుంటున్నాను, అప్పుడు per card price తగ్గుతుందా? అలాగే design approval process ఎలా ఉంటుంది?",
+      "ts": "2026-10-29T17:44:35.377476Z",
+      "partial": false
+    },
+    {
+      "seq": 4,
+      "role": "assistant",
+      "text": "రెండు వందల కార్డులకు మొత్తం ధర ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత విజయవాడలో డెలివరీకి మూడు వర్కింగ్ డేస్ పడుతుంది.",
+      "ts": "2026-10-29T17:44:39.173851Z"
+    },
+    {
+      "seq": 5,
+      "role": "user",
+      "text": "సరే, 200 cards కి exact price ఎంత తగ్గుతుందో చెప్పగలరా? అలాగే delivery కి ఏమైనా rush charges ఉంటాయా? నేను wedding cards price కూడా తెలుసుకోవాలి, అది కూడా చెప్పగలరా?",
+      "ts": "2026-10-29T17:44:40.380157Z",
+      "partial": false
+    },
+    {
+      "seq": 6,
+      "role": "assistant",
+      "text": "రెండు వందల కార్డులకు కచ్చితమైన ధర ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. అత్యవసరమైన 24 గంటల డెలివరీకి అదనంగా one hundred fifty rupees ఛార్జ్ ఉంటుంది. వెడ్డింగ్ ఇన్విటేషన్ కార్డుల ధర డిజైన్, పేపర్ శాంపిల్ మరియు క్వాంటిటీ మీద ఆధారపడి ఉంటుంది కాబట్టి ఫోన్లో కచ్చితమైన ధర చెప్పలేము.",
+      "ts": "2026-10-29T17:44:44.372169Z"
+    },
+    {
+      "seq": 7,
+      "role": "user",
+      "text": "సరే, 24 గంటల rush delivery కి 150 rupees extra అవుతుంది కదా. మరి standard finish 100 cards కి ఎంతవుతుందో, అలాగే 200 cards కి exact price ఎంత తగ్గుతుందో ఒకసారి చెక్ చేసి చెప్పగలరా? అలాగే advance payment ఏమైనా చేయాలా, లేక delivery తర్వాత ఇస్తే సరిపోతుందా?",
+      "ts": "2026-10-29T17:44:45.205878Z",
+      "partial": false
+    },
+    {
+      "seq": 8,
+      "role": "assistant",
+      "text": "one hundred cards standard finish కి two hundred rupees అవుతుంది. two hundred cards కి exact price ఎంత తగ్గుతుందో ప్రస్తుతం మాకు తెలియదు. one thousand rupees పైన orders ఉంటే 50% advance payment చేయాలి, అంతకంటే తక్కువ ఉంటే delivery తర్వాత cash on delivery ఇస్తే సరిపోతుంది.",
+      "ts": "2026-10-29T17:44:49.283714Z"
+    },
+    {
+      "seq": 9,
+      "role": "user",
+      "text": "సరే, 100 standard కి 200 rupees, 100 matte కి 350 rupees అవుతోంది. 200 matte కి exact price reduction ఎంత ఉంటుందో ఇప్పుడు చెప్పలేకపోతే, నా details తో ఒక quote లేదా internal order request note చేసి ఉంచగలరా? నా email ramesh.audit@example.invalid. అలాగే, మీరు నా quantity 200 cards అని record చేసుకున్నారా?",
+      "ts": "2026-10-29T17:44:50.144437Z",
+      "partial": false
+    },
+    {
+      "seq": 10,
+      "role": "assistant",
+      "text": "two hundred matte cards కి exact price reduction ఎంత ఉంటుందో ప్రస్తుతం మాకు తెలియదు. మీ details తో enquiry save చేశాను, మీ email ramesh. audit@example. invalid కూడా note చేసుకున్నాను. అవును, మీ quantity two hundred cards అని record చేసుకున్నాను.",
+      "ts": "2026-10-29T17:44:54.571121Z"
+    },
+    {
+      "seq": 11,
+      "role": "user",
+      "text": "సరే, 200 cards quantity record చేసుకున్నందుకు thanks. మరి matte finish కోసం ఏదైనా sample చూసే chance ఉంటుందా? అలాగే ఈ order confirm అవ్వడానికి ఎంత time పడుతుంది?",
+      "ts": "2026-10-29T17:44:55.385798Z",
+      "partial": false
+    },
+    {
+      "seq": 12,
+      "role": "assistant",
+      "text": "ప్రస్తుతం sample చూసే అవకాశం ఉందా అనేది మాకు తెలియదు. ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి మూడు వర్కింగ్ డేస్ పడుతుంది.",
+      "ts": "2026-10-29T17:44:59.032225Z"
+    },
+    {
+      "seq": 13,
+      "role": "user",
+      "text": "సరే, sample availability గురించి ఇప్పుడే తెలియదు అన్నారు కదా, మరి నా design పంపించాక approval కి ఎంత time పడుతుంది? అలాగే ఈ order confirm అవ్వడానికి ఎన్ని days పడుతుంది? నేను ఇంకా decide అవ్వలేదు కాబట్టి ఇప్పుడే payment చేయను.",
+      "ts": "2026-10-29T17:44:59.866315Z",
+      "partial": false
+    },
+    {
+      "seq": 14,
+      "role": "assistant",
+      "text": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి మూడు వర్కింగ్ డేస్ పడుతుంది. ఈ order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీరు ఇంకా decide అవ్వలేదు కాబట్టి payment ఇప్పుడే చేయాల్సిన అవసరం లేదు.",
+      "ts": "2026-10-29T17:45:03.661484Z"
+    },
+    {
+      "seq": 15,
+      "role": "user",
+      "text": "సరే, delivery కి 3 days పడుతుంది. కానీ order confirm అవ్వడానికి ఎన్ని days పడుతుందో మీకు తెలియదు అన్నారు కదా, అది కొంచెం ఇబ్బంది. మరి నా design పంపించాక approval కి ఎంత time పడుతుంది? ఈ details అన్నీ clear గా ఉంటేనే నేను final గా order place చేస్తాను.",
+      "ts": "2026-10-29T17:45:04.419116Z",
+      "partial": false
+    },
+    {
+      "seq": 16,
+      "role": "assistant",
+      "text": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఈ order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీకు ఇంకా ఏమైనా వివరాలు కావాలా?",
+      "ts": "2026-10-29T17:45:08.037315Z"
+    },
+    {
+      "seq": 17,
+      "role": "user",
+      "text": "Order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో మీకు తెలియదు అన్నారు కదా, అది కొంచెం ఇబ్బంది. design approval కి ఎంత time పడుతుందో ఒకసారి చెక్ చేసి చెప్పగలరా? నాకు ఈ details అన్నీ clear గా ఉంటేనే నేను final గా order place చేస్తాను.",
+      "ts": "2026-10-29T17:45:08.744260Z",
+      "partial": false
+    },
+    {
+      "seq": 18,
+      "role": "assistant",
+      "text": "డిజైన్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ప్రస్తుతం మాకు తెలియదు. మీ వివరాలతో enquiry save చేశాము. ఈ వివరాలు తెలిశాక మీరు final గా order place చేసుకోవచ్చు.",
+      "ts": "2026-10-29T17:45:13.150951Z"
+    },
+    {
+      "seq": 19,
+      "role": "user",
+      "text": "Order confirm అవ్వడానికి ఎన్ని రోజులు పడుతుందో మీకు తెలియదు అన్నారు కదా, అది కొంచెం ఇబ్బంది. design approval కి ఎంత time పడుతుందో ఒకసారి చెక్ చేసి చెప్పగలరా? నాకు ఈ details అన్నీ clear గా ఉంటేనే నేను final గా order place చేస్తాను.",
+      "ts": "2026-10-29T17:45:13.881436Z",
+      "partial": false
+    },
+    {
+      "seq": 20,
+      "role": "assistant",
+      "text": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ప్రస్తుతం మాకు తెలియదు. ఈ వివరాలు తెలిశాక మీరు final గా order place చేసుకోవచ్చు.",
+      "ts": "2026-10-29T17:45:18.056794Z"
+    },
+    {
+      "seq": 21,
+      "role": "user",
+      "text": "Order confirm అవ్వడానికి time తెలియదు అన్నారు కదా, ఇది కొంచెం ఇబ్బందిగానే ఉంది. నా design పంపించాక approval కి కచ్చితంగా ఎంత time పడుతుందో ఒకసారి చెక్ చేసి చెప్పగలరా? అప్పుడే నేను final గా order place చేస్తాను.",
+      "ts": "2026-10-29T17:45:18.896649Z",
+      "partial": false
+    },
+    {
+      "seq": 22,
+      "role": "assistant",
+      "text": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ప్రస్తుతం మాకు తెలియదు.",
+      "ts": "2026-10-29T17:45:22.795978Z"
+    },
+    {
+      "seq": 23,
+      "role": "user",
+      "text": "Order confirm అవ్వడానికి ఎంత time పడుతుందో మీకు తెలియదు అన్నారు కదా, ఇది కొంచెం ఇబ్బందిగానే ఉంది. నా design పంపించాక approval కి కచ్చితంగా ఎంత time పడుతుందో ఒకసారి చెక్ చేసి చెప్పగలరా? అప్పుడే నేను final గా order place చేస్తాను.",
+      "ts": "2026-10-29T17:45:23.537349Z",
+      "partial": false
+    },
+    {
+      "seq": 24,
+      "role": "assistant",
+      "text": "డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ప్రస్తుతం మాకు తెలియదు.",
+      "ts": "2026-10-29T17:45:27.651074Z"
+    },
+    {
+      "seq": 25,
+      "role": "user",
+      "text": "Order confirm time మీకు తెలియదు అని రెండు సార్లు చెప్పారు కదా, ఇకపై దీని గురించి అడగడం waste. నా details అన్నీ note చేసుకున్నందుకు thanks. నేను ఇప్పుడు order place చేయడం లేదు, తర్వాత ఆలోచిస్తాను. ఈ call close చేస్తున్నాను.",
+      "ts": "2026-10-29T17:45:28.545173Z",
+      "partial": false
+    },
+    {
+      "seq": 26,
+      "role": "assistant",
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T17:45:30.598542Z"
+    }
+  ],
+  "wall_elapsed_s": 69.672,
+  "simulated_exchange_timeline_s": 260,
+  "request_count": 92
+}

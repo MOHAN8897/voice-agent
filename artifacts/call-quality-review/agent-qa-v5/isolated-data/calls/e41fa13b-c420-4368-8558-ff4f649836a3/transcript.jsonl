@@ -1,0 +1,14 @@
+{"seq": 1, "role": "user", "text": "ನಮಸ್ಕಾರ, ಹೇಳಿ. ಯಾರು ಮಾತಾಡ್ತಿದ್ದೀರಾ, ಏನು ಸೇಲ್ ಮಾಡ್ತೀರಾ?", "ts": "2026-10-31T16:29:43.326120Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ನಾನು NatureVeda Herbals ಇಂದ Priya ಮಾತಾಡ್ತಿದ್ದೀನಿ. ನಮ್ಮ ಹತ್ರ herbal products ಇದೆ — like hair oil, aloe vera juice, face cream, ಮತ್ತೆ ashwagandha capsules. ಇದರ ಬಗ್ಗೆ details ತಿಳ್ಕೊಬೇಕಾ?", "ts": "2026-10-31T16:29:44.647119Z"}
+{"seq": 3, "role": "user", "text": "ಆ hair oil price ಎಷ್ಟಿದೆ ಅಂತ ಹೇಳ್ತೀರಾ?", "ts": "2026-10-31T16:30:01.623782Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "NatureVeda Herbal Hair Oil price ₹499 ಇದೆ, 200 ml bottle ಗೆ. ಇದರಲ್ಲಿ Amla, Bhringraj, Hibiscus, ಮತ್ತೆ Coconut Oil ಇರುತ್ತೆ, routine hair ಮತ್ತೆ scalp care ಗೆ ಒಳ್ಳೇದು. ಇದರ ಬಗ್ಗೆ ಇನ್ನು ಏನಾದ್ರೂ ತಿಳ್ಕೊಬೇಕಾ?", "ts": "2026-10-31T16:30:03.322449Z"}
+{"seq": 5, "role": "user", "text": "₹499 ಅಂದ್ರೆ ಸ್ವಲ್ಪ ಜಾಸ್ತಿ ಆಯ್ತು. ಆ ಮುಖದ ಕ್ರೀಮ್ ಬಗ್ಗೆ ಏನು ಹೇಳ್ತೀರಾ?", "ts": "2026-10-31T16:30:22.252440Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ಖಂಡಿತ, ಅರ್ಥ ಆಗುತ್ತೆ. NatureVeda Herbal Face Cream ಬೆಲೆ ₹599 ಇದೆ, 50 g ಗೆ. ಇದರ ಬಗ್ಗೆ ಇನ್ನು details ಬೇಕಾ?", "ts": "2026-10-31T16:30:23.575650Z"}
+{"seq": 7, "role": "user", "text": "ಮುಖದ ಕ್ರೀಮ್ ಬೆಲೆ ₹599 ಅಂದ್ರೆ ತುಂಬಾನೇ ಜಾಸ್ತಿ ಆಯ್ತು ನೋಡಿ. ಇದರಲ್ಲಿ ಏನೇನು ingredients ಇದೆ ಅಂತ ಹೇಳ್ತೀರಾ?", "ts": "2026-10-31T16:30:37.803520Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "ಹೌದು, ಇದು ಸ್ವಲ್ಪ ಜಾಸ್ತಿ ಅನ್ಸಬಹುದು. ಈ face cream ನಲ್ಲಿ Neem, Turmeric, ಮತ್ತೆ Aloe Vera ಇರುತ್ತೆ. ಇದರ ಬಗ್ಗೆ ಇನ್ನು ಏನಾದ್ರೂ ತಿಳ್ಕೊಬೇಕಾ?", "ts": "2026-10-31T16:30:39.811914Z"}
+{"seq": 9, "role": "user", "text": "Neem ಮತ್ತೆ Turmeric ಇದ್ರೆ ಸರಿ, ಆದ್ರೆ ಈ price ಸ್ವಲ್ಪ ಜಾಸ್ತಿ ಅನ್ಸುತ್ತೆ. Ashwagandha capsules ಬಗ್ಗೆ ಏನಾದ್ರೂ ಹೇಳ್ತೀರಾ?", "ts": "2026-10-31T16:30:55.982679Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "NatureVeda Ashwagandha Capsules ಬೆಲೆ ₹699 ಇದೆ, 60 capsules ಗೆ.", "ts": "2026-10-31T16:30:57.374684Z"}
+{"seq": 11, "role": "user", "text": "₹699 ಅಂದ್ರೆ ತುಂಬಾನೇ ಜಾಸ್ತಿ ಆಯ್ತು. ಈ ಬೆಲೆಗೆ ನಾನು ತಗೊಳಲ್ಲ.", "ts": "2026-10-31T16:31:06.365807Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "ಸರಿ, ಅರ್ಥ ಆಯ್ತು. ನಿಮಗೆ interest ಇಲ್ಲ ಅಂದ್ರೆ ಪರವಾಗಿಲ್ಲ, ಸಮಯ ಕೊಟ್ಟಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು.", "ts": "2026-10-31T16:31:07.541272Z"}
+{"seq": 13, "role": "user", "text": "ನೋಡಿ, ನಂಗೆ ಈ ತರಹದ ತುಂಬಾ calls ಬರ್ತಾ ಇದೆ. ದಯವಿಟ್ಟು ಈ number-ಗೆ ಮತ್ತೆ ಯಾವತ್ತೂ call ಮಾಡ್ಬೇಡಿ, ನನ್ನ number-ನ ತಕ್ಷಣ remove ಮಾಡಿ.", "ts": "2026-10-31T16:31:22.192039Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "ಸರಿ, ಈ ನಂಬರ್‌ಗೆ ಮತ್ತೆ ಕಾಲ್ ಮಾಡಲ್ಲ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.", "ts": "2026-10-31T16:31:24.176299Z"}

@@ -1,0 +1,31 @@
+{
+  "call_id": "a477dc29-eeec-4f45-a513-9029141cebf9",
+  "language_callback": null,
+  "disposition": "new_lead",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call with hesitation and unclear speech. The agent asked for clarification, and after the caller repeated their greeting, the agent introduced herself as Anjali from Sunrise Dental Clinic in Hyderabad and asked how she could assist. The caller did not state a specific request or provide any details during the brief exchange. Because the interaction was very short and inconclusive, no further action was agreed upon, and the call ended after the agent's opening greeting.",
+  "next_action": "",
+  "extracted_fields": {
+    "phone": "+919876500513"
+  },
+  "facts": {
+    "phone": "+919876500513"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:new_lead",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:01:09.824241Z",
+  "generation_ok": true
+}

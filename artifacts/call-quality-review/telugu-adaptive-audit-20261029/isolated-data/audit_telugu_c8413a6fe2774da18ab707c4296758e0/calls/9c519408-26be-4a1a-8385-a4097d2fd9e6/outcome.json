@@ -1,0 +1,124 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, a working professional with a B.Com qualification, asked about evening or weekend Python course batches and the fee. The agent explained that the weekday batch runs from 8:00 PM to 9:00 PM and the weekend batch runs Saturday and Sunday from 10:00 AM to 1:00 PM, with a total fee of ₹8,999 including placement assistance and no extra or hidden charges. Kiran preferred the weekend batch and asked about demo-session registration. Kiran provided the email kiran.audit@example.invalid, full name Kiran, B.Com qualification, and phone number 9876543210. The agent stated that no further registration details were needed, but no confirmed demo appointment or registration completion was established. The caller briefly asked for bank-hacking instructions, which the agent refused and redirected back to course information. Kiran then asked whether the course included a guaranteed job; the agent clarified that there is no job or salary guarantee, only placement assistance through resume building, interview preparation, and job referrals. The call ended without a confirmed follow-up or team handoff.",
+  "next_action": null,
+  "extracted_fields": {
+    "callback_phone": "9876543210",
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "మాధవి గారు",
+    "course": "Python with Data Analytics",
+    "course_fee": "₹8,999",
+    "email": "kiran.audit@example.invalid",
+    "job_guarantee": "No job or salary guarantee",
+    "name": "Kiran",
+    "phone": "9876543210",
+    "phone_number": "9876543210",
+    "placement_support": "100% placement assistance included; no extra or hidden charges",
+    "preferred_batch": "Weekend batch",
+    "product": "Python course",
+    "qualification": "B.Com",
+    "weekday_batch_timing": "Weekdays, 8:00 PM to 9:00 PM",
+    "weekend_batch_timing": "Saturday and Sunday, 10:00 AM to 1:00 PM"
+  },
+  "objections": [
+    "The caller asked whether placement support required an extra payment or whether there were hidden charges.",
+    "The caller asked whether the course provided a guaranteed job or salary."
+  ],
+  "notes": "The caller showed positive interest in the weekend batch and demo session, but the transcript does not confirm that registration or a demo appointment was completed.",
+  "tags": [
+    "intent:information",
+    "intent:demo",
+    "intent:pricing",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:python-data-analytics",
+    "custom:weekend-batch",
+    "custom:placement-assistance"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:10:13.411771Z",
+  "generation_ok": true,
+  "facts": {
+    "callback_phone": "9876543210",
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "మాధవి గారు",
+    "course": "Python with Data Analytics",
+    "course_fee": "₹8,999",
+    "email": "kiran.audit@example.invalid",
+    "job_guarantee": "No job or salary guarantee",
+    "name": "Kiran",
+    "phone": "9876543210",
+    "phone_number": "9876543210",
+    "placement_support": "100% placement assistance included; no extra or hidden charges",
+    "preferred_batch": "Weekend batch",
+    "product": "Python course",
+    "qualification": "B.Com",
+    "weekday_batch_timing": "Weekdays, 8:00 PM to 9:00 PM",
+    "weekend_batch_timing": "Saturday and Sunday, 10:00 AM to 1:00 PM"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:placement-assistance",
+    "custom:python-data-analytics",
+    "custom:weekend-batch",
+    "intent:demo",
+    "intent:information",
+    "intent:pricing",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "b7d26254-312d-4ae0-ab81-aea1f94c4a24",
+    "agentId": "4c5270a8-990a-5800-868d-9d685eca9a09",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.98,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

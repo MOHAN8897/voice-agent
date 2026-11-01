@@ -1,0 +1,60 @@
+{
+  "call_id": "d19a7a37-464c-479f-b1d3-51c5ab5f853e",
+  "language_callback": null,
+  "disposition": "new_lead",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్ కు కాల్ చేశారు. కస్టమర్ ఫేస్ క్రీమ్ మరియు హెయిర్ ఆయిల్ ధరల గురించి అడిగారు. ఏజెంట్ ధరలను పంచుకున్నారు కానీ ఇమెయిల్ ద్వారా వివరాలను పంపలేరు లేదా స్టాక్ మరియు డెలివరీ వివరాలను నిర్ధారించలేరు అని తెలిపారు. కస్టమర్ రేపు ఉదయం 11 గంటలకు కాల్ షెడ్యూల్ చేయమని అడిగారు, కానీ ఏజెంట్ కు అది సాధ్యం కాలేదని చెప్పారు. చివరగా కస్టమర్ తర్వాత చూస్తానని చెప్పి కాల్ ముగించారు.",
+  "summary_language": "te-IN",
+  "summary_en": "The business agent called the customer to provide product information. The customer asked for the prices of the face cream and hair oil, and the agent shared them as 599 and 499 respectively. The customer requested an emailed price list to mohansaiteja.99@gmail.com, which the agent could not send, and also asked about stock and delivery to Kukatpally, which the agent could not confirm. When the customer requested a follow-up call tomorrow at 11 AM, the agent stated they were unable to schedule it. The customer accepted this and ended the call to check the details later.",
+  "next_action": "[]",
+  "extracted_fields": {
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919700000008",
+    "requested_time": "రేపు ఉదయం 11 గంటలకు"
+  },
+  "facts": {
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919700000008",
+    "requested_time": "రేపు ఉదయం 11 గంటలకు"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:phone_known",
+    "custom:delivery-inquiry",
+    "custom:face-cream",
+    "custom:hair-oil",
+    "followup:callback",
+    "intent:information",
+    "outcome:new_lead",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "followup:callback",
+    "action:required",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:delivery-inquiry"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Agent could not send the price list via email.",
+    "Agent could not confirm product stock availability.",
+    "Agent could not verify delivery timelines.",
+    "Agent could not schedule a follow-up call."
+  ],
+  "unanswered_questions": [
+    "Is the face cream currently in stock?",
+    "When will delivery arrive in Kukatpally?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T13:21:09.148491Z",
+  "generation_ok": true
+}

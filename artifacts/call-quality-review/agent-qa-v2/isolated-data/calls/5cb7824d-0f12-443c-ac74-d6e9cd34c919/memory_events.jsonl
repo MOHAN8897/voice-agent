@@ -1,0 +1,7 @@
+{"turn_seq": 1, "ts": "2026-10-31T13:50:33.419699Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T13:50:50.117520Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T13:51:07.016811Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T13:51:07.029343Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "assistant: एलोवेरा जूस ₹399 का है और इसकी bottle size 500 ml है। इसे general wellness beverage के तौर पर लिया जाता है। इसे कैसे लेना है, इसकी जानकारी मेरे पास अभी उपलब्ध नहीं है।\nuser: अच्छा, ठीक है जी।\nassistant: इसे पीने का सही तरीका मेरे पास अभी उपलब्ध नहीं है।\nuser: अच्छा छोड़िए, वैसे अब मैं ना हिंदी में बात करना चाहूँगी। मुझे वो जूस का price फिर से बता दीजिए जो आपने पहले बताया था?\nassistant: NatureVeda Aloe Vera Juice का price ₹399 है और इसकी size 500 ml है। क्या आप इसका order place करना चाहेंगे?"}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T13:51:25.226193Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T13:51:42.845453Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-31T13:52:02.698310Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

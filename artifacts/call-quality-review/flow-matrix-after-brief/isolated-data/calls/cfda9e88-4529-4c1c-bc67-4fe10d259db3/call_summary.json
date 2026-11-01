@@ -1,0 +1,79 @@
+{
+  "call_id": "cfda9e88-4529-4c1c-bc67-4fe10d259db3",
+  "language_callback": null,
+  "disposition": "site_visit_planned",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call expressing that the quoted 3 kW solar system was too expensive. The agent explained the cost breakdown, noting a pre-subsidy price of 1,95,000 rupees with a government subsidy of 78,000 rupees, resulting in a net payment of 1,17,000 rupees. The caller rejected this price as still being too high. The agent then proposed an EMI option of 2,999 rupees per month for 48 months. After confirming the EMI amount, the caller agreed to proceed and requested to book a free survey. The caller provided their name as Kiran, stated they live in Velachery, and requested the survey on a Saturday. The agent confirmed that the enquiry was saved and that the team would reach out to confirm the Saturday survey in Velachery. The caller thanked the agent, and the call concluded.",
+  "next_action": "Team to contact Kiran to confirm the free survey in Velachery on Saturday.",
+  "extracted_fields": {
+    "budget": "Too expensive",
+    "caller_name": "Kiran",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "name": "Kiran",
+    "phone": "+919876500501",
+    "requested_time": "Saturday",
+    "slot": "Saturday"
+  },
+  "facts": {
+    "budget": "Too expensive",
+    "caller_name": "Kiran",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "name": "Kiran",
+    "phone": "+919876500501",
+    "requested_time": "Saturday",
+    "slot": "Saturday"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "followup:schedule_pending",
+    "followup:site_visit",
+    "intent:information",
+    "intent:purchase",
+    "outcome:site_visit_planned",
+    "signal:budget_confirmed",
+    "signal:objection",
+    "signal:price_sensitive",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "action:required",
+    "followup:site_visit",
+    "sentiment:neutral",
+    "signal:price_sensitive",
+    "signal:objection",
+    "followup:schedule_pending",
+    "intent:information",
+    "intent:purchase",
+    "signal:ready_to_buy",
+    "signal:budget_confirmed",
+    "signal:decision_maker",
+    "signal:repeat_customer",
+    "signal:urgent",
+    "action:urgent",
+    "followup:callback",
+    "followup:send_quote",
+    "signal:needs_approval",
+    "intent:booking",
+    "sentiment:positive",
+    "signal:do_not_call",
+    "signal:competitor_mentioned",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:free-survey",
+    "custom:velachery-locality",
+    "custom:emi-plan"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Price sensitivity"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:48:01.281860Z",
+  "generation_ok": true
+}

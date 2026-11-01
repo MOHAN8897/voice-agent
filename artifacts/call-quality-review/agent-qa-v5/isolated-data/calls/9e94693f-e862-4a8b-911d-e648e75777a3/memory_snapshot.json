@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "quantity": "1",
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "email": "mohansaiteja.99@gmail.com"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: जी, phone number mohansaiteja.99@gmail.com है।\nassistant: email note कर लिया है।\nuser: जी, phone number mohansaiteja.99@gmail.com है।\nassistant: ठीक है।\nuser: ठीक है, phone number mohansaiteja.99@gmail.com है।\nassistant: क्या मैं order proceed कर दूँ?\nuser: हाँ, order proceed कर दीजिए। आगे क्या होगा मुझे बता दीजिए।\nassistant: आपका order confirm हो गया है। आगे की details आपको email पर मिल जाएंगी।\nuser: अच्छा, email पर details मिल जाएंगी? ठीक है, कोई और जानकारी चाहिए क्या?\nassistant: हाँ, आपकी details email पर आ जाएंगी।"
+}

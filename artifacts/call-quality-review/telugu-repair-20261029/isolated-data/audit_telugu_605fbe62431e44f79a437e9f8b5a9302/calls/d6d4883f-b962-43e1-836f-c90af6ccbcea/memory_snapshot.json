@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_name": "కిరణ్",
+    "requested_time": "రేపు ఉదయం"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: ఆగండి, నా ప్రశ్నకి జవాబు కావాలి. ఈ course కి eligibility ఏంటి?\nassistant: కిరణ్ గారు, ఈ course కి eligibility ఏంటంటే, BTech, BSc లేదా BCom లాంటి ఏ graduate అయినా చేరవచ్చు. Final year student అయినా పర్వాలేదు, కాకపోతే basic computer knowledge ఉండాలి. Prior coding అవసరం లేదు. మీకు ఇంకా ఏమైనా details కావాలా?\nuser: సరే, ఇంతే చాలు. ధన్యవాదాలు.\nassistant: మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+}

@@ -1,0 +1,40 @@
+{
+  "disposition": "no_outcome",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The call began with the user making an indistinct sound, after which the agent asked them to repeat themselves because the final statement was unclear. The user then said 'hello hello,' but the conversation did not progress further, and the call ended without any meaningful discussion or exchange of information.",
+  "next_action": "No next step was agreed upon.",
+  "extracted_fields": {
+    "phone": "+919876500530"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "sentiment:neutral",
+    "intent:information"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T11:04:53.278286Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500530"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "intent:information",
+    "outcome:no_outcome",
+    "quality:inconclusive",
+    "sentiment:neutral"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

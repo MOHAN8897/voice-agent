@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "टेक्नीशियन कल मॉर्निंग दस तीस पर आ सकता है फ्रिज कूलिंग नहीं कर रहा", "ts": "2026-10-29T19:11:01.456015Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ठीक है, समझ गया। कल सुबह दस तीस बजे का slot note कर लिया है। बस एक बात confirm कर दीजिए, आप Madhapur, Gachibowli, Kondapur या Kukatpally में से किस area में रहते हैं?", "ts": "2026-10-29T19:11:02.419337Z", "brain_latency_ms": 989}

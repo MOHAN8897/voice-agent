@@ -1,0 +1,45 @@
+{
+  "call_id": "99447bdc-1071-484c-9132-af84e16c2a96",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Kiran expressed interest in the Python course and said he would call the business himself tomorrow; this is not a request for the business to call him back. He also stated that future calls about new offers are welcome and asked not to have his number blocked. The agent thanked him, and the call ended politely without enrollment or purchase.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_name": "కిరణ్",
+    "name": "Kiran",
+    "phone": "+12025550118",
+    "product": "Python course",
+    "self_follow_up": "Caller will call tomorrow"
+  },
+  "facts": {
+    "caller_name": "కిరణ్",
+    "name": "Kiran",
+    "phone": "+12025550118",
+    "product": "Python course",
+    "self_follow_up": "Caller will call tomorrow"
+  },
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:python-course",
+    "intent:demo",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:positive"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:demo",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:python-course"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:49:01.877553Z",
+  "generation_ok": true
+}

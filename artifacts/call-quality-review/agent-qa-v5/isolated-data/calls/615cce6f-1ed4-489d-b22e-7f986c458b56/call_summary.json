@@ -1,0 +1,57 @@
+{
+  "call_id": "615cce6f-1ed4-489d-b22e-7f986c458b56",
+  "language_callback": null,
+  "disposition": "converted",
+  "disposition_confidence": 0.95,
+  "summary_te": "ಏಜೆಂಟ್ ಗ್ರಾಹಕರನ್ನು ಸಂಪರ್ಕಿಸಿ, ಹರ್ಬಲ್ ಹೇರ್ ಆಯಿಲ್ ಮತ್ತು ಫೇಸ್ ಕ್ರೀಮ್‌ನ ಬೆಲೆ ಹಾಗೂ ವಿವರಗಳನ್ನು ತಿಳಿಸಿದರು. ಗ್ರಾಹಕರು ಒಂದು ಫೇಸ್ ಕ್ರೀಮ್ ಮತ್ತು ಎರಡು ಹೇರ್ ಆಯಿಲ್ ಬಾಟಲಿಗಳನ್ನು ಖರೀದಿಸಲು ಒಪ್ಪಿಕೊಂಡರು ಮತ್ತು ತಮ್ಮ ಹೆಸರು ಹಾಗೂ ವಿಳಾಸವನ್ನು ನೀಡಿದರು. ಡೆಲಿವರಿ ಸಮಯ ಮತ್ತು ಡಿಸ್ಕೌಂಟ್ ಬಗ್ಗೆ ಏಜೆಂಟ್ ಬಳಿ ಮಾಹಿತಿ ಇರಲಿಲ್ಲ, ಆದರೂ ಗ್ರಾಹಕರು ಆರ್ಡರ್ ಮುಂದುವರಿಸಲು ಒಪ್ಪಿದರು. ಅಂತಿಮವಾಗಿ, ಏಜೆಂಟ್ ಆರ್ಡರ್ ಅನ್ನು ಖಚಿತಪಡಿಸಿದರು ಮತ್ತು ಗ್ರಾಹಕರಿಗೆ ಶೀಘ್ರದಲ್ಲೇ ಕನ್ಫರ್ಮೇಷನ್ ವಿವರಗಳು ಸಿಗುತ್ತವೆ ಎಂದು ತಿಳಿಸಿದರು, ಆನಂತರ ಕರೆ ಮುಕ್ತಾಯವಾಯಿತು.",
+  "summary_language": "kn-IN",
+  "summary_en": "The agent called the customer to share details about herbal hair oil and face cream products. The customer expressed interest in purchasing one face cream and two bottles of hair oil, and provided their name and delivery address. When the customer asked about delivery time and discounts, the agent stated that this information was currently unavailable. Despite this, the customer agreed to proceed with the order, and the agent confirmed the purchase before ending the call.",
+  "next_action": "",
+  "extracted_fields": {
+    "budget": "₹1497",
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "items": "1 Herbal Face Cream, 2 Herbal Hair Oil bottles",
+    "phone": "+919712155511"
+  },
+  "facts": {
+    "budget": "₹1497",
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "items": "1 Herbal Face Cream, 2 Herbal Hair Oil bottles",
+    "phone": "+919712155511"
+  },
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:herbal-skincare",
+    "custom:order-confirmed",
+    "followup:send_info",
+    "intent:purchase",
+    "outcome:converted",
+    "sentiment:positive",
+    "signal:objection",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:purchase",
+    "sentiment:positive",
+    "signal:ready_to_buy",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:herbal-skincare",
+    "custom:order-confirmed"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Delivery time and discount information were not provided by the agent."
+  ],
+  "unanswered_questions": [
+    "How many days will delivery take?",
+    "Is there any discount available?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T17:25:58.982005Z",
+  "generation_ok": true
+}

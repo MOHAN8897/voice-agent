@@ -1,0 +1,60 @@
+{
+  "call_id": "f36118bc-8e59-41db-aaf4-725ddc1b3988",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "வணக்கம், பிரியா அழைத்தார். அலோ வேரா ஜூஸ் மற்றும் ஹேர் ஆயில் ஆகியவற்றின் விலை மற்றும் விவரங்களை அவர் கேட்டார். ஏஜென்ட் விலைகளை (₹399 மற்றும் ₹499) மற்றும் மொத்த தொகையை (₹898) தெரிவித்தார், ஆனால் தினசரி பயன்பாட்டு விவரங்கள் இல்லை என்று கூறினார். வாடிக்கையாளர் விலையை சற்று அதிகம் என்று நினைத்தாலும், ஆர்டர் செய்வதாக பின்னர் தெரிவிக்க ஒப்புக்கொண்டார். வாடிக்கையாளர் ஆங்கிலத்தில் பேச வசதியாக இருப்பதாகக் கூறியதால், ஏஜென்ட் ஆங்கிலத்தில் உரையாட ஒப்புக்கொண்டார், அதன் பிறகு அழைப்பு முடிந்தது.",
+  "summary_language": "ta-IN",
+  "summary_en": "The agent called the customer to provide details about aloe vera juice. The agent shared that the 500 ml aloe vera juice costs ₹399 and the 200 ml hair oil costs ₹499, totaling ₹898. The customer noted the price was somewhat high and asked for daily usage instructions, which the agent could not provide. The customer agreed to think it over and call back later, and the agent accepted this before ending the call.",
+  "next_action": "Callback required",
+  "extracted_fields": {
+    "phone": "+919700000012",
+    "price_product_1": "₹399",
+    "price_product_2": "₹499",
+    "product": "aloe vera juice",
+    "product_1": "aloe vera juice",
+    "product_2": "herbal hair oil",
+    "total_amount": "₹898"
+  },
+  "facts": {
+    "phone": "+919700000012",
+    "price_product_1": "₹399",
+    "price_product_2": "₹499",
+    "product": "aloe vera juice",
+    "product_1": "aloe vera juice",
+    "product_2": "herbal hair oil",
+    "total_amount": "₹898"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:aloe-vera",
+    "custom:herbal-hair-oil",
+    "followup:callback",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:aloe-vera",
+    "custom:herbal-hair-oil"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "The customer found the price of ₹399 for the aloe vera juice to be a bit high."
+  ],
+  "unanswered_questions": [
+    "What is the exact daily usage for the aloe vera juice?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T16:29:32.649879Z",
+  "generation_ok": true
+}

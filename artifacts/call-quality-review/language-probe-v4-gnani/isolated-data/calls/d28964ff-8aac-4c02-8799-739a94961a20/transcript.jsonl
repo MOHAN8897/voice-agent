@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "For two split ACs and one window AC, what will the total come to?", "ts": "2026-10-29T19:39:49.906418Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "For one split AC servicing it is five hundred ninety nine rupees, so two will be one thousand one hundred ninety eight rupees. A window AC is four hundred ninety nine rupees. The total comes to one thousand six hundred ninety seven rupees.", "ts": "2026-10-29T19:39:50.542755Z", "brain_latency_ms": 639}

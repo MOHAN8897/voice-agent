@@ -1,0 +1,60 @@
+{
+  "call_id": "83ed7701-b688-4951-b831-55d77e96aaba",
+  "language_callback": null,
+  "disposition": "converted",
+  "disposition_confidence": 0.95,
+  "summary_te": "એજન્ટે ગ્રાહક લક્ષ્મીને ફોન કરીને હર્બલ પ્રોડક્ટ્સ વિશે પૂછપરછ કરી. લક્ષ્મીએ 2 બોટલ હેર ઓઇલ અને 1 ફેસ ક્રીમનો ઓર્ડર આપવા માટે ભાવ પૂછ્યા, અને એજન્ટે કુલ ₹1,597 નો ભાવ જણાવ્યો. લક્ષ્મીએ ડિસ્કાઉન્ટ વિશે પૂછ્યું, પરંતુ એજન્ટ પાસે તે માહિતી ન હતી, અને ડિલિવરીના સમયની માહિતી ન હોવા છતાં લક્ષ્મીએ ઓર્ડર કન્ફર્મ કર્યો. એજન્ટે ઓર્ડર કન્ફર્મ કરીને જણાવ્યું કે ટીમ તરફથી આગળની વિગતો મળશે.",
+  "summary_language": "gu-IN",
+  "summary_en": "The agent called Lakshmi to inquire about herbal products. Lakshmi expressed interest in 2 bottles of hair oil and 1 face cream, and after the agent quoted a total of ₹1,597, Lakshmi asked about available discounts. When the agent stated they did not have discount information, Lakshmi agreed to proceed without it. Although the agent could not provide an estimated delivery time, Lakshmi still requested to place the order. The agent confirmed the order and informed Lakshmi that the team would send further details.",
+  "next_action": "no_action_required",
+  "extracted_fields": {
+    "caller_name": "Lakshmi",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "phone": "+919700000018",
+    "products": "2 x Hair Oil, 1 x Face Cream",
+    "quantity": "1",
+    "total_price": "₹1,597"
+  },
+  "facts": {
+    "caller_name": "Lakshmi",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "phone": "+919700000018",
+    "products": "2 x Hair Oil, 1 x Face Cream",
+    "quantity": "1",
+    "total_price": "₹1,597"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:herbal-products",
+    "custom:order-placed",
+    "followup:send_info",
+    "intent:purchase",
+    "outcome:converted",
+    "sentiment:positive",
+    "signal:objection",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:purchase",
+    "sentiment:positive",
+    "signal:ready_to_buy",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:order-placed"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Discount availability"
+  ],
+  "unanswered_questions": [
+    "How to use the face cream?",
+    "How long will the delivery take?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T16:44:19.420413Z",
+  "generation_ok": true
+}

@@ -1,0 +1,41 @@
+{
+  "call_id": "b794d0d5-db3b-4470-a1cd-067d4cea2ea6",
+  "language_callback": null,
+  "disposition": "new_lead",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the status of their order, providing the order ID FC10234 and their name as Kiran. The agent explained that live order status checks cannot be performed over the phone and requested that the caller's details be passed to the support team to investigate and call back. The caller did not object but simply thanked the agent and ended the call when asked if they were busy. No concrete next steps, callbacks, or appointments were agreed upon.",
+  "next_action": null,
+  "extracted_fields": {
+    "name": "Kiran",
+    "order_id": "FC10234",
+    "phone": "+919876500507"
+  },
+  "facts": {
+    "name": "Kiran",
+    "order_id": "FC10234",
+    "phone": "+919876500507"
+  },
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:order-status",
+    "followup:callback",
+    "intent:information",
+    "outcome:new_lead",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "followup:callback"
+  ],
+  "custom_tags": [
+    "custom:order-status"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:03:17.617152Z",
+  "generation_ok": true
+}

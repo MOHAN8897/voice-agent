@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "product": "visiting cards",
+    "quantity": "200",
+    "budget": "900 rupees"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "assistant: సరే, matte finish cards one hundred కి three hundred fifty rupees అవుతుంది. కాబట్టి two hundred cards కి seven hundred rupees అవుతుంది. మీ nine hundred rupees budget లో ఇది సరిపోతుంది. Vijayawada లో design approval తర్వాత 3 working days లో delivery అవుతుంది.\nuser: నేను 200 matte visiting cards, 900 rupees budget అనుకున్నాను కదా. మీరు విన్నవి ఒకసారి మళ్ళీ చెప్తారా?\nassistant: అవును, మీరు రెండు వందల matte finish visiting cards అడుగుతున్నారు, మీ budget తొమ్మిది వందల రూపాయలు. రెండు వందల cards కి మొత్తం ఏడు వందల రూపాయలు అవుతుంది. ఇది మీ budget లోనే సరిపోతుంది."
+}

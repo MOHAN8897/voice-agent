@@ -1,0 +1,100 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్‌కు కాల్ చేశారు. కస్టమర్ 2 హెయిర్ ఆయిల్ బాటిల్స్ మరియు 1 ఫేస్ క్రీమ్ ఆర్డర్ చేయాలనుకున్నారు, అలాగే వారి డెలివరీ చిరునామాను పంచుకున్నారు. ఏజెంట్ ధరలను మరియు మొత్తం మొత్తాన్ని ధృవీకరించారు. డెలివరీ సమయం మరియు డిస్కౌంట్ల గురించి ఏజెంట్ వద్ద సమాచారం లేదు. కస్టమర్ ఆర్డర్ నిర్ధారించడానికి సిద్ధంగా ఉన్నారు, కానీ చెల్లింపు పద్ధతిని పేర్కొనలేదు, కాబట్టి ఆర్డర్‌ను ఖరారు చేయడానికి తదుపరి కాల్ అవసరం అయింది.",
+  "summary_en": "The agent called the customer to discuss product details. The customer expressed intent to purchase two herbal hair oil bottles and one face cream, and provided their delivery address in Kukatpally, Hyderabad. The agent confirmed the pricing, totaling 1,597 rupees. When asked about delivery timelines and discounts, the agent stated they did not have that information. The customer agreed to confirm the order, but the call ended without the customer specifying a payment method, requiring a callback to finalize the transaction.",
+  "next_action": "Call customer back to collect payment details and confirm the order.",
+  "extracted_fields": {
+    "address": "Flat 302, Sai Residency, Kukatpally, Hyderabad, 500072",
+    "phone": "+919700000004",
+    "product": "2 Herbal Hair Oil (200ml), 1 NatureVeda Herbal Face Cream (50g)",
+    "quantity": "1",
+    "total_amount": "1597"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "intent:purchase",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:face-cream",
+    "custom:hair-oil"
+  ],
+  "unanswered_questions": [
+    "How many days will the delivery take?",
+    "Is there any discount available?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T14:24:56.752892Z",
+  "generation_ok": true,
+  "summary_language": "te-IN",
+  "facts": {
+    "address": "Flat 302, Sai Residency, Kukatpally, Hyderabad, 500072",
+    "phone": "+919700000004",
+    "product": "2 Herbal Hair Oil (200ml), 1 NatureVeda Herbal Face Cream (50g)",
+    "quantity": "1",
+    "total_amount": "1597"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:herbal-products",
+    "followup:callback",
+    "intent:purchase",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "14ddecb9-8664-4517-ada7-988f5523aed5",
+    "agentId": "58700315-0379-50ee-81b1-70ec18f28407",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

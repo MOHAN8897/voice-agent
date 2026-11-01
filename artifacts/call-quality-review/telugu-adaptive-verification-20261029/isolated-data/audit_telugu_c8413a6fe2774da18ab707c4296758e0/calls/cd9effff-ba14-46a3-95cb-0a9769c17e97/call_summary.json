@@ -1,0 +1,47 @@
+{
+  "call_id": "cd9effff-ba14-46a3-95cb-0a9769c17e97",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller requested visiting cards with a matte finish and said they would share the designs later. They asked for a callback after six hours to discuss the order. The agent recorded the details and callback request, thanked the caller, and ended the call. No callback completion or order confirmation was stated.",
+  "next_action": "Arrange a callback after six hours to discuss the visiting cards and receive the designs.",
+  "extracted_fields": {
+    "callback_time": "After six hours",
+    "designs": "Caller will send designs later",
+    "finish": "matte finish",
+    "phone": "+12025550119",
+    "product": "visiting cards"
+  },
+  "facts": {
+    "callback_time": "After six hours",
+    "designs": "Caller will send designs later",
+    "finish": "matte finish",
+    "phone": "+12025550119",
+    "product": "visiting cards"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:matte-finish",
+    "custom:visiting-cards",
+    "followup:callback",
+    "intent:purchase",
+    "outcome:callback_required",
+    "sentiment:positive"
+  ],
+  "tags": [
+    "intent:purchase",
+    "followup:callback",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:matte-finish"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T15:43:23.241751Z",
+  "generation_ok": true
+}

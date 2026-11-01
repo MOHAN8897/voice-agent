@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "मैं सिकंदराबाद में रहता हूँ। क्या आपका technician यहाँ आ सकता है?", "ts": "2026-10-29T19:09:56.987299Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "सिकंदराबाद में हमारी service अभी available नहीं है। हम सिर्फ Madhapur, Gachibowli, Kondapur और Kukatpally में ही service देते हैं। क्या आपका घर इनमें से किसी area में आता है?", "ts": "2026-10-29T19:09:57.737356Z", "brain_latency_ms": 756}

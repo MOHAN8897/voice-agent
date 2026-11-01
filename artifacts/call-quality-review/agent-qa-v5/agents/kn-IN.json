@@ -1,0 +1,12 @@
+{
+  "language": "kn-IN",
+  "tenant_id": "5c1f677d-8e90-44ad-a716-4a8cadfd1682",
+  "agent_id": "80b7a84a-5580-4938-a8be-046c62acb6cf",
+  "user_id": "7f51f973-ce1f-4f9f-ab2a-c50e6ffa57f8",
+  "brain_version": "cb_qa_524641c243074ff1",
+  "brain_chars": 20161,
+  "brain_source": "pipeline:artifacts\\call-quality-review\\agent-qa-smoke\\agents\\kn-IN-brain.txt",
+  "direction": "outbound",
+  "name": "Priya",
+  "brain_path": "artifacts\\call-quality-review\\agent-qa-v5\\agents\\kn-IN-brain.txt"
+}

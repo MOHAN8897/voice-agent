@@ -1,0 +1,91 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, initiated the call to inquire about the course fee and the availability of a weekend batch. The agent provided the fee as ₹8,999 with no installments and specified that the weekend batch runs from 10:00 AM to 1:00 PM. Kiran shared his name, requested that his inquiry be noted, and expressed interest. The agent confirmed the details and asked whether a weekday or weekend batch would be more convenient for him. Kiran declined to provide further information at that moment, thanked the agent, and ended the call.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_name": "Kiran",
+    "name": "Kiran",
+    "phone": "+919876500017"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "signal:objection",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:weekend-batch",
+    "custom:course-fee"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T20:34:09.715056Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_name": "Kiran",
+    "name": "Kiran",
+    "phone": "+919876500017"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:course-fee",
+    "custom:weekend-batch",
+    "followup:send_info",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "0c3fed24-1719-4069-ac6e-b1d802b63285",
+    "agentId": "3c1dcb99-b6fb-44c2-8625-003afc95ed98",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 50,
+    "band": "warm",
+    "disposition": "interested",
+    "confidence": 0.85,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

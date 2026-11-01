@@ -1,0 +1,94 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the course fee and the availability of a weekend batch. The agent responded by stating that the fee is ₹8,999 with no installments and confirmed that a weekend batch runs from 10 AM to 1 PM. The agent then requested the caller's name, qualification, and preferred batch to book a free demo class. The caller indicated they had all the information they needed and politely ended the call.",
+  "next_action": "No further action was agreed upon as the caller concluded the call immediately after receiving the requested details.",
+  "extracted_fields": {
+    "budget": "₹8,999",
+    "phone": "+919876500044",
+    "slot": "Weekend (10 AM to 1 PM)"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "followup:send_info",
+    "action:required",
+    "signal:price_sensitive",
+    "signal:ready_to_buy"
+  ],
+  "custom_tags": [
+    "custom:course-fee",
+    "custom:weekend-batch"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T20:21:53.470462Z",
+  "generation_ok": true,
+  "facts": {
+    "budget": "₹8,999",
+    "phone": "+919876500044",
+    "slot": "Weekend (10 AM to 1 PM)"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:course-fee",
+    "custom:weekend-batch",
+    "followup:send_info",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:price_sensitive",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "1111e554-20c2-4768-a67b-762ae9c119d0",
+    "agentId": "e7018be5-9a60-4044-a91d-88120268b9e5",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 100,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.85,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "budget"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "slot"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

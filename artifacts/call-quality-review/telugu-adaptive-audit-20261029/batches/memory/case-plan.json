@@ -1,0 +1,11 @@
+[
+  {
+    "id": "A_memory_latency_probe",
+    "business": "A",
+    "kind": "memory_latency",
+    "integration": "none",
+    "policy": "review",
+    "max_turns": 10,
+    "goal": "Ask about 200 matte visiting cards, give name Ramana and Vijayawada locality once. Continue meaningful information questions about artwork, delivery, flex banners, office hours and payment; do not order or request callbacks. Around turns 4 and 8 ask what name, product and quantity they remember, without re-stating those values. Correct any error, thank them mid-conversation with a new question, then clearly end on turn ten."
+  }
+]

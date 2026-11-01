@@ -1,0 +1,111 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "The caller asked for Python training fees and explained that they have a B.Com qualification and can attend on weekends. The agent quoted a total fee of ₹8,999 and described a Saturday-Sunday batch from 10:00 AM to 1:00 PM. The caller accepted the fee, requested that their details be saved, and provided the name Kiran, email kiran.audit@example.invalid, B.Com qualification, and weekend preference. The agent stated twice that the details could not be saved. The caller ended the call without requesting anything further, and no enrollment or data-saving action was confirmed.",
+  "next_action": "Follow up to capture the caller's details and assist with enrollment in the weekend Python with Data Analytics batch.",
+  "extracted_fields": {
+    "availability": "Weekends",
+    "batch_schedule": "Saturday and Sunday, 10:00 AM-1:00 PM",
+    "caller_name": "కిరణ్",
+    "course": "Python with Data Analytics",
+    "education": "B.Com",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550121",
+    "qualification": "B.Com"
+  },
+  "objections": [
+    "Caller requested their details to be saved, but the system failed to save them twice."
+  ],
+  "notes": "The caller accepted the quoted fee but enrollment was not completed because the details could not be saved.",
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "signal:ready_to_buy",
+    "action:required",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:python-training",
+    "custom:data-analytics",
+    "custom:weekend-batch"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:52:50.461227Z",
+  "generation_ok": true,
+  "facts": {
+    "availability": "Weekends",
+    "batch_schedule": "Saturday and Sunday, 10:00 AM-1:00 PM",
+    "caller_name": "కిరణ్",
+    "course": "Python with Data Analytics",
+    "education": "B.Com",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550121",
+    "qualification": "B.Com"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:data-analytics",
+    "custom:python-training",
+    "followup:send_info",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "signal:objection",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "f140b838-689a-4539-85dc-85615bd4f902",
+    "agentId": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 50,
+    "band": "warm",
+    "disposition": "interested",
+    "confidence": 0.97,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

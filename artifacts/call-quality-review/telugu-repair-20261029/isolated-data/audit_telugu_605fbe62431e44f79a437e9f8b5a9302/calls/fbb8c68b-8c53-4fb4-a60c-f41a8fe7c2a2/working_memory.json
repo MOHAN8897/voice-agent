@@ -1,0 +1,14 @@
+{
+  "facts": {
+    "product": "split AC",
+    "requested_time": "రేపు ఉదయం 10 గంటల ప్రాంతంలో",
+    "delivery_locality": "మాదాపూర్",
+    "caller_name": "శ్రావణి",
+    "email": "sravani.audit@example.invalid",
+    "caller_email": "sravani.audit@example.invalid",
+    "delivery_address": "మాదాపూర్ లోని నా ఇల్లు"
+  },
+  "preferences": {},
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "assistant: రేపు ఉదయం 10 గంటలకి technician visit ఖచ్చితంగా confirm అయిందో లేదో ఇప్పుడే నేను చెప్పలేను. అలాగే ఈ request status ఎలా check చేయాలో కూడా నా దగ్గర సమాచారం లేదు. మీరు ఇంకా finalize చేయలేదు కాబట్టి, మీకు కావాలంటే ఈ request ని save చేయడానికి నేను note చేసుకుంటాను.\nuser: సరే సురేష్, status ఎలా check చేయాలో కూడా మీకు తెలియదు కదా. నేను ఇంకా finalize చేయలేదు కాబట్టి, ప్రస్తుతానికి ఈ request save చేయకండి. నాకు కావాల్సిన details అన్నీ తెలిశాయి, ఇకపై నేను వేరే వాళ్ళతో మాట్లాడి చూసుకుంటాను. Thank you.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+}

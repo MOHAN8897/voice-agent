@@ -1,0 +1,40 @@
+{
+  "call_id": "f079543c-7fde-4213-b625-8cd2c356af9d",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller requested to book a slot for tomorrow at 11 AM and demanded immediate confirmation and a booking number. The agent explained that the booking could not be confirmed without the caller's name and details regarding their dental issue. The caller inquired again if the booking was confirmed and asked for the booking number. The agent clarified that the booking was not yet confirmed and reiterated the need for the caller's name and dental problem to proceed. The caller then accepted this and ended the call.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500023"
+  },
+  "facts": {
+    "phone": "+919876500023"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:dental-appointment",
+    "custom:morning-slot",
+    "intent:booking",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:booking",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:dental-appointment",
+    "custom:morning-slot"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Agent requested personal details and dental issue before confirming booking."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:45:45.560194Z",
+  "generation_ok": true
+}

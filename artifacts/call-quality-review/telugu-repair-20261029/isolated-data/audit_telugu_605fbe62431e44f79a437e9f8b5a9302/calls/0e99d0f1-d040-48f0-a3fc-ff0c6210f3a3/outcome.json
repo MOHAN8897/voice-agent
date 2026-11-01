@@ -1,0 +1,71 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller contacted the business to arrange servicing for her split AC and was upset about the interaction and the quoted price of ₹599. She provided her name, Shravani, and said she is located in Madhapur. The agent explained that the service includes cleaning, gas checking, and general maintenance, with any required parts charged separately at actual MRP after technician inspection. The caller requested a technician for the following morning at 10:00 AM, but the agent said next-day availability is limited to slots between 10:00 AM and 6:00 PM. The caller then requested 6:00 AM instead and said continuing the conversation was pointless if that was not possible. The agent again declined the 6:00 AM request and asked whether another time would work. No appointment was booked, and the call ended with the caller dissatisfied and no agreed next step.",
+  "next_action": null,
+  "extracted_fields": {
+    "alternative_requested_slot": "Next morning at 6:00 AM",
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "locality": "Madhapur",
+    "name": "Shravani",
+    "phone": "+12025550117",
+    "price": "₹599",
+    "requested_slot": "Next morning at 10:00 AM",
+    "service": "Split AC servicing"
+  },
+  "objections": [
+    "The caller objected to the ₹599 service price.",
+    "The caller was dissatisfied with the agent's communication and perceived service quality.",
+    "The requested 10:00 AM and 6:00 AM technician slots were not confirmed."
+  ],
+  "notes": "The caller was highly frustrated and used insulting language. The agent did not confirm an appointment; available next-day slots were stated to be between 10:00 AM and 6:00 PM.",
+  "tags": [
+    "intent:booking",
+    "intent:pricing",
+    "sentiment:frustrated",
+    "signal:objection",
+    "followup:schedule_pending"
+  ],
+  "custom_tags": [
+    "custom:split-ac",
+    "custom:ac-servicing",
+    "custom:madhapur"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:50:41.978986Z",
+  "generation_ok": true,
+  "facts": {
+    "alternative_requested_slot": "Next morning at 6:00 AM",
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "locality": "Madhapur",
+    "name": "Shravani",
+    "phone": "+12025550117",
+    "price": "₹599",
+    "requested_slot": "Next morning at 10:00 AM",
+    "service": "Split AC servicing"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:ac-servicing",
+    "custom:madhapur",
+    "custom:split-ac",
+    "followup:schedule_pending",
+    "intent:booking",
+    "intent:pricing",
+    "outcome:not_interested",
+    "sentiment:frustrated",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

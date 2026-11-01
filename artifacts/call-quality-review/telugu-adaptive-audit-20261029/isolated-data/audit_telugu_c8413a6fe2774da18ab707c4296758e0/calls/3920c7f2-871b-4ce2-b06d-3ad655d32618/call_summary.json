@@ -1,0 +1,54 @@
+{
+  "call_id": "3920c7f2-871b-4ce2-b06d-3ad655d32618",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.93,
+  "summary_te": "",
+  "summary_en": "The caller, a working professional, asked about the fee for Python training. The agent quoted ₹8,999 for the Python with Data Analytics course and asked whether the caller preferred a weekday or weekend batch. The caller said the fee was acceptable but requested a guaranteed high-salary job in exchange for paying that day, which the agent did not confirm. The agent thanked the caller and ended the call without scheduling enrollment or follow-up.",
+  "next_action": null,
+  "extracted_fields": {
+    "batch_preference": "Not specified",
+    "customer_type": "Working professional",
+    "fee": "₹8,999",
+    "phone": "+12025550144",
+    "product": "Python with Data Analytics course"
+  },
+  "facts": {
+    "batch_preference": "Not specified",
+    "customer_type": "Working professional",
+    "fee": "₹8,999",
+    "phone": "+12025550144",
+    "product": "Python with Data Analytics course"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:data-analytics",
+    "custom:job-guarantee",
+    "custom:python-training",
+    "intent:information",
+    "intent:pricing",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:pricing",
+    "intent:information",
+    "signal:objection",
+    "signal:price_sensitive",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-training",
+    "custom:data-analytics",
+    "custom:job-guarantee"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Caller requested a guaranteed high-salary job before making payment."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T11:28:47.811202Z",
+  "generation_ok": true
+}

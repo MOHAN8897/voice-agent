@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "call_id": "fce4c60f-a0f6-4207-b41f-bed81feea587",
+  "tenant_id": "b504974d-f3bc-4afc-b87a-9181c56fc54e",
+  "agent_id": "3e614939-d21e-5874-909c-bda138e75b9f",
+  "status": "confirmed",
+  "quantity": 3,
+  "customer_name": "लक्ष्मी रेड्डी",
+  "delivery_address": "फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072",
+  "product": "2 x NatureVeda Herbal Hair Oil, 1 x NatureVeda Herbal Face Cream",
+  "confirmed_at": "2026-10-31T14:57:28.808828Z"
+}

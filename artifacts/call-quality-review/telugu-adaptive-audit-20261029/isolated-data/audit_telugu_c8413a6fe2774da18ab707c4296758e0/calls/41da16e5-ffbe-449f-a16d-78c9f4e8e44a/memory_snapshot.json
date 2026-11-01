@@ -1,0 +1,14 @@
+{
+  "facts": {
+    "product": "split AC",
+    "service_type": "general service",
+    "delivery_locality": "మాదాపూర్",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "caller_name": "శ్రావణి",
+    "email": "sravani.audit@example.invalid",
+    "caller_email": "sravani.audit@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "user: సరే శ్రావణి గారు, అర్థమైంది. Inspection fee ఉండదు, parts MRP ప్రకారమే ఉంటాయి అని చెప్పారు కదా. సరే, రేపు ఉదయం 10 గంటలకి technician visit పూర్తిగా confirm అయిందా, లేక ఇంకా ఏదైనా pending ఉందా? అలాగే నా email sravani.audit@example.invalid కి confirmation message పంపించగలరా?\nassistant: ఇది ఇంకా request stage లోనే ఉంది శ్రావణి గారు, మా side నుంచి pending ఏమీ లేదు. ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మీరు proceed అవ్వమంటే, మీ పేరు, address ఒకసారి చెప్తారా?"
+}

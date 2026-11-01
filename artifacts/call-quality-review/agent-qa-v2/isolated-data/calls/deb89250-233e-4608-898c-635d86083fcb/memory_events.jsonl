@@ -1,0 +1,8 @@
+{"turn_seq": 1, "ts": "2026-10-31T14:07:51.697120Z", "source": "model", "operations": [{"op": "set_fact", "key": "product", "value": "aloe vera juice"}], "applied": true, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T14:08:13.971971Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T14:08:29.215460Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T14:08:29.240165Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: Acha, 399 rupees for 500 ml is fine, but I am still thinking about it.\nassistant: No problem at all. Take your time to decide. Just let me know if you'd like to place an order later.\nuser: Abhi is call ko hum thoda Hindi mein continue karein kya?\nassistant: Ji bilkul, hum Hindi mein baat kar sakte hain. Abhi ke liye hum English mein hi baat karte hain. Kya aap Aloe Vera Juice ke baare mein kuch aur jaanna chahenge?"}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T14:08:50.898851Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T14:09:02.465483Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-31T14:09:23.159454Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 13, "ts": "2026-10-31T14:09:40.985487Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

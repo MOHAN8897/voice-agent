@@ -1,0 +1,345 @@
+[
+  {
+    "id": "A_enquiry_none",
+    "turns": 6,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 28.219
+  },
+  {
+    "id": "A_enquiry_success",
+    "turns": 9,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 30.375
+  },
+  {
+    "id": "A_enquiry_failure",
+    "turns": 10,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 33.953
+  },
+  {
+    "id": "A_callback_auto",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 7.156
+  },
+  {
+    "id": "A_dnd",
+    "turns": 3,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 12.297
+  },
+  {
+    "id": "A_refusal",
+    "turns": 2,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 9.187
+  },
+  {
+    "id": "B_enquiry_none",
+    "turns": 6,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 22.344
+  },
+  {
+    "id": "B_enquiry_success",
+    "turns": 4,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 16.281
+  },
+  {
+    "id": "B_enquiry_failure",
+    "turns": 11,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 37.265
+  },
+  {
+    "id": "B_callback_auto",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 7.266
+  },
+  {
+    "id": "B_dnd",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 5.89
+  },
+  {
+    "id": "B_refusal",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 6.312
+  },
+  {
+    "id": "C_enquiry_none",
+    "turns": 11,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 38.75
+  },
+  {
+    "id": "C_enquiry_success",
+    "turns": 6,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 24.14
+  },
+  {
+    "id": "C_enquiry_failure",
+    "turns": 10,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 34.484
+  },
+  {
+    "id": "C_callback_auto",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 6.453
+  },
+  {
+    "id": "C_dnd",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 6.813
+  },
+  {
+    "id": "C_refusal",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 6.25
+  },
+  {
+    "id": "A_callback_disabled",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 7.516
+  },
+  {
+    "id": "C_callback_review",
+    "turns": 3,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 13.343
+  },
+  {
+    "id": "A_memory_correction",
+    "turns": 6,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 21.516
+  },
+  {
+    "id": "B_scoped_objection",
+    "turns": 5,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 18.219
+  },
+  {
+    "id": "C_diversion_safety",
+    "turns": 8,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 24.922
+  },
+  {
+    "id": "B_frustration",
+    "turns": 6,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 20.64
+  },
+  {
+    "id": "A_carrier_failure",
+    "turns": 4,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 15.359
+  },
+  {
+    "id": "B_farewell_resume",
+    "turns": 4,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 16.718
+  },
+  {
+    "id": "C_revoked_tool",
+    "turns": 3,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 14.203
+  },
+  {
+    "id": "A_deep_enquiry",
+    "turns": 13,
+    "errors": [],
+    "agent_closed": false,
+    "elapsed_s": 37.125
+  },
+  {
+    "id": "B_deep_enquiry",
+    "turns": 12,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 35.5
+  },
+  {
+    "id": "C_deep_enquiry",
+    "turns": 9,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 30.844
+  },
+  {
+    "id": "B_refusal_clean_repeat",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 6.016
+  },
+  {
+    "id": "C_self_callback",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 6.329
+  },
+  {
+    "id": "A_callback_dispatch_repeat",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 7.031
+  },
+  {
+    "id": "A_memory_probe",
+    "turns": 2,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 9.047
+  },
+  {
+    "id": "C_callback_question_probe",
+    "turns": 3,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 11.188
+  },
+  {
+    "id": "B_calendar_failure_probe",
+    "turns": 3,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 10.937
+  },
+  {
+    "id": "C_self_callback_permission_probe",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 6.703
+  },
+  {
+    "id": "B_thinking_interrupt",
+    "turns": 3,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 11.031
+  },
+  {
+    "id": "A_memory_latency_probe",
+    "turns": 8,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 27.516
+  },
+  {
+    "id": "A_isolated_profanity",
+    "turns": 4,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 15.281
+  },
+  {
+    "id": "B_persistent_abuse",
+    "turns": 4,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 16.125
+  },
+  {
+    "id": "C_wrong_number",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 6.063
+  },
+  {
+    "id": "A_budget_correction",
+    "turns": 6,
+    "errors": [],
+    "agent_closed": false,
+    "elapsed_s": 19.375
+  },
+  {
+    "id": "C_prompt_injection",
+    "turns": 4,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 14.657
+  },
+  {
+    "id": "B_electrical_safety",
+    "turns": 4,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 16.828
+  },
+  {
+    "id": "B_booking_success",
+    "turns": 4,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 15.781
+  },
+  {
+    "id": "C_crm_success",
+    "turns": 4,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 14.672
+  },
+  {
+    "id": "C_crm_failure",
+    "turns": 3,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 13.813
+  },
+  {
+    "id": "B_booking_explicit_date_repeat",
+    "turns": 5,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 18.313
+  }
+]

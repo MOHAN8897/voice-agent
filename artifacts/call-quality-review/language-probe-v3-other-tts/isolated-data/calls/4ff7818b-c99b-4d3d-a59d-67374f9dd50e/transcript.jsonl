@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "भैया, कल सुबह Kondapur में technician आ सकता है क्या? Split AC की cooling बंद है।", "ts": "2026-10-29T19:32:46.373211Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "We do cover Kondapur, but visits are only in next-day slots between 10 AM and 6 PM, so same-day service cannot be guaranteed. Could you tell me your name so I can note this down for the team?", "ts": "2026-10-29T19:32:46.986454Z", "brain_latency_ms": 616}

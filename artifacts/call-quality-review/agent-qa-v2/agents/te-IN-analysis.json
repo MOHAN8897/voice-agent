@@ -1,0 +1,8 @@
+{
+  "status": 200,
+  "body": {
+    "ok": true,
+    "status": "ready",
+    "questions": []
+  }
+}

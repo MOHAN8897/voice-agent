@@ -1,0 +1,7 @@
+{"turn_seq": 1, "ts": "2026-10-31T14:13:36.084896Z", "source": "model", "operations": [{"op": "set_fact", "key": "caller_name", "value": "லட்சுமி"}], "applied": true, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T14:13:52.896871Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T14:14:14.626949Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T14:14:14.655332Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: ஆமாங்க, உங்ககிட்ட ஹேர் ஆயில் இருக்குனு கேள்விப்பட்டேன். அதோட விலை என்னனு சொல்லுங்களேன்.\nassistant: நேச்சர்வேதா ஹெர்பல் ஹேர் ஆயில் 200 மில்லி விலை 499 ரூபாய். இதில் ஆம்லா, பிரிங்கராஜ், செம்பருத்தி மற்றும் தேங்காய் எண்ணெய் உள்ளன, இது வழக்கமான முடி மற்றும் தோல் பராமரிப்புக்காக தயாரிக்கப்பட்டது. உங்களுக்கு இது வேணுமா?\nuser: ஓகே 499 ரூபாயா, இதுல டெலிவரி சார்ஜ் எதாவது இருக்கா?\nassistant: டெலிவரி சார்ஜ் பற்றிய விவரம் எங்களுக்கு இப்போதைக்கு தெரியவில்லை. எங்க team அதை உறுதி செய்வாங்க."}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T14:14:30.478466Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T14:14:43.346513Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-31T14:14:53.951727Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

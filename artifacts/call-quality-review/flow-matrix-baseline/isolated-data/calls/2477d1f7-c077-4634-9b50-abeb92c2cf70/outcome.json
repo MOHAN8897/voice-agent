@@ -1,0 +1,43 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call with severe hostility, directly insulting the agent and labeling the business a fraud company. The agent apologized for the inconvenience, requested the caller to speak politely, and offered assistance regarding dental services. The caller responded with further verbal abuse and refused to engage constructively. Due to the aggressive and dismissive nature of the conversation, the call was terminated without reaching any resolution or next steps.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500546"
+  },
+  "objections": [
+    "Called the business a fraud company",
+    "Expressed severe anger and hostility"
+  ],
+  "notes": null,
+  "tags": [
+    "sentiment:negative",
+    "sentiment:frustrated",
+    "signal:objection",
+    "intent:information"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:46:54.449064Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500546"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:not_interested",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

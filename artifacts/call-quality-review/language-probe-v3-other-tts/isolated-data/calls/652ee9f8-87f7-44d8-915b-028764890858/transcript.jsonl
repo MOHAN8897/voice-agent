@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "મારું fridge cooling નથી કરતું. Technician કાલે morningમાં 10:30 વાગ્યે આવી શકે?", "ts": "2026-10-29T19:33:07.112396Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Fridge cooling નથી કરતું એ સાંભળીને અફસોસ થયો. હા, અમે કાલે સવારે 10:30 વાગ્યાનો next-day slot આપી શકીએ છીએ. તમારી locality કઈ છે, Madhapur, Gachibowli, Kondapur કે Kukatpally?", "ts": "2026-10-29T19:33:07.778991Z", "brain_latency_ms": 664}

@@ -1,0 +1,18 @@
+[
+  {
+    "input": "Orders 1000 rupees కంటే తక్కువ అయితే cash on delivery.",
+    "output": "Orderupees one thousand rupees కంటే తక్కువ అయితే cash on delivery."
+  },
+  {
+    "input": "మా office రాత్రి 8:00 వరకు తెరిచి ఉంటుంది.",
+    "output": "మా office రాత్రి eight AMవరకు తెరిచి ఉంటుంది."
+  },
+  {
+    "input": "మా office రాత్రి 8:00 PMవరకు తెరిచి ఉంటుంది.",
+    "output": "మా office రాత్రి eight AMPMవరకు తెరిచి ఉంటుంది."
+  },
+  {
+    "input": "మా office రాత్రి 8:00 PM వరకు తెరిచి ఉంటుంది.",
+    "output": "మా office రాత్రి eight PM వరకు తెరిచి ఉంటుంది."
+  }
+]

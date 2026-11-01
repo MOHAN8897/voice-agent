@@ -1,0 +1,38 @@
+{
+  "call_id": "556d84d6-7aaf-4423-a9d7-8e7aab507e38",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller expressed interest in the service but stated they were currently driving. They requested not to have their number blocked and asked for a callback next Monday morning. The agent acknowledged the request and ended the call.",
+  "next_action": "",
+  "extracted_fields": {
+    "callback_time": "next monday morning",
+    "interest": "interest છે",
+    "phone": "+919876500012"
+  },
+  "facts": {
+    "callback_time": "next monday morning",
+    "interest": "interest છે",
+    "phone": "+919876500012"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:callback-requested",
+    "followup:callback",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:callback-requested"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:51:41.454688Z",
+  "generation_ok": true
+}

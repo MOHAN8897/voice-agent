@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "સ્પ્લિટ એસી સર્વિસનો ભાવ કેટલો છે?", "ts": "2026-10-29T19:11:22.283305Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "સ્પ્લિટ AC servicingનો ખર્ચ 599 rupees છે. તમારે visit schedule કરાવવી છે?", "ts": "2026-10-29T19:11:23.146551Z", "brain_latency_ms": 866}
+{"seq": 3, "role": "user", "text": "અરે, ખરેખર તો એ વિન્ડો એસી છે, સ્પ્લિટ નહીં. એની સર્વિસનો ભાવ કેટલો છે?", "ts": "2026-10-29T19:11:23.176866Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Window AC servicingનો ખર્ચ 499 rupees છે. તમારે visit schedule કરાવવી છે?", "ts": "2026-10-29T19:11:23.846958Z", "brain_latency_ms": 673}

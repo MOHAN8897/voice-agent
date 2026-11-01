@@ -1,0 +1,90 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "నేచర్‌వేదా హెర్బల్స్ నుండి ఏజెంట్ కస్టమర్‌కు కాల్ చేశారు. కస్టమర్ అశ్వగంధ క్యాప్సూల్స్ గురించి అడిగారు, దానికి ఏజెంట్ అవి హెర్బల్ వెల్నెస్ సప్లిమెంట్ అని, డాక్టర్ సలహా తీసుకోవాలని చెప్పారు. కస్టమర్ ప్రస్తుతం ఆర్డర్ చేయనని, ముందుగా డాక్టర్‌ను సంప్రదించి ఆలోచిస్తానని చెప్పారు. ఏజెంట్ దీనిని అంగీకరించి, నిర్ణయం తీసుకున్న తర్వాత కాల్ చేయమని కోరారు. చివరగా కస్టమర్ కాల్ ముగించారు.",
+  "summary_en": "The agent from the business called the customer to introduce available wellness products. The customer inquired about ashwagandha capsules, and the agent explained that they are herbal supplements requiring professional medical consultation. The customer objected to placing an order immediately, stating they needed to consult their doctor first. The agent accepted this and suggested the customer reach out after making a decision. The call ended with the customer thanking the agent and hanging up.",
+  "next_action": "await_customer_call",
+  "extracted_fields": {
+    "phone": "+919700000006"
+  },
+  "objections": [
+    "Customer stated they are not placing an order at the moment."
+  ],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:ashwagandha-capsules",
+    "custom:health-consultation"
+  ],
+  "unanswered_questions": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T13:34:21.346462Z",
+  "generation_ok": true,
+  "summary_language": "te-IN",
+  "facts": {
+    "phone": "+919700000006"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:ashwagandha-capsules",
+    "custom:health-consultation",
+    "followup:callback",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "8c93139b-4579-4ace-9d8b-1b74258e886f",
+    "agentId": "10390077-097c-599b-8c78-0f10f417867d",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 50,
+    "band": "warm",
+    "disposition": "interested",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

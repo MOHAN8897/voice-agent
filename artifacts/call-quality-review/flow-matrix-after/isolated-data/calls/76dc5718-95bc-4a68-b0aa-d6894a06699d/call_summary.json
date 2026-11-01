@@ -1,0 +1,35 @@
+{
+  "call_id": "76dc5718-95bc-4a68-b0aa-d6894a06699d",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call by aggressively insulting the agent and labeling the business as a fraudulent company. The agent attempted to de-escalate the situation by acknowledging the caller's anger and offering to look into a specific issue, requesting the caller's name and order ID for a support callback. The caller responded with further verbal abuse and refused to provide any details. Due to the caller's hostile rejection of assistance and refusal to engage, the call ended abruptly.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500528"
+  },
+  "facts": {
+    "phone": "+919876500528"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "intent:support",
+    "outcome:not_interested",
+    "sentiment:negative",
+    "signal:objection"
+  ],
+  "tags": [
+    "sentiment:negative",
+    "intent:support",
+    "signal:objection"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [
+    "Called the company a fraud and refused to cooperate"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:04:38.083684Z",
+  "generation_ok": true
+}

@@ -1,0 +1,6 @@
+{"turn_seq": 1, "ts": "2026-10-29T17:20:57.577555Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T17:21:03.119240Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: విజిటింగ్ కార్డ్స్"}
+{"turn_seq": 5, "ts": "2026-10-29T17:21:07.287949Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: విజిటింగ్ కార్డ్స్"}
+{"turn_seq": 7, "ts": "2026-10-29T17:21:12.690339Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: విజిటింగ్ కార్డ్స్ | email: ramesh.audit@example.invalid"}
+{"turn_seq": 9, "ts": "2026-10-29T17:21:18.712587Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: విజిటింగ్ కార్డ్స్ | email: ramesh.audit@example.invalid | quantity: 200"}
+{"turn_seq": 11, "ts": "2026-10-29T17:21:21.771924Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: విజిటింగ్ కార్డ్స్ | email: ramesh.audit@example.invalid | quantity: 200 | caller_name: రమేష్ | delivery_locality: విజయవాడ"}

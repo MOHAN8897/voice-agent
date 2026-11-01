@@ -1,0 +1,46 @@
+{
+  "call_id": "ca80b653-2722-47d7-9a8b-b398999c157a",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "வணிகர் வாடிக்கையாளரைத் தொடர்பு கொண்டு தயாரிப்பு விவரங்களை வழங்கினார். வாடிக்கையாளர் தயாரிப்புகளின் உற்பத்தி இடம் மற்றும் டெலிவரி நேரம் குறித்துக் கேட்டார், ஆனால் முகவருக்கு அந்தத் தகவல்கள் தெரியவில்லை. தயாரிப்புகளில் உள்ள இயற்கை மூலப்பொருட்கள் பற்றி முகவர் விளக்கினார். வாடிக்கையாளர் தற்போது வேறு தயாரிப்புகளைப் பயன்படுத்துவதால், தற்போது எதையும் வாங்க விருப்பமில்லை என்று கூறி அழைப்பை முடித்துக்கொண்டார்.",
+  "summary_language": "ta-IN",
+  "summary_en": "The agent called the customer to present product options. The customer inquired about the manufacturing location and delivery timelines, but the agent stated that the team would need to confirm those details. The agent did share the natural ingredients in the hair oil. Ultimately, the customer declined to purchase anything because they were already using different products, and the call ended politely.",
+  "next_action": "No further action required.",
+  "extracted_fields": {
+    "phone": "+919700000020"
+  },
+  "facts": {
+    "phone": "+919700000020"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:delivery-query",
+    "custom:herbal-products",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "sentiment:neutral",
+    "intent:information",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:delivery-query"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "The customer stated they already use different products and have no interest in purchasing at this time."
+  ],
+  "unanswered_questions": [
+    "What is the manufacturing location of the products?",
+    "How long does delivery take?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T17:04:45.402578Z",
+  "generation_ok": true
+}

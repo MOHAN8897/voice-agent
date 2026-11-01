@@ -1,0 +1,14 @@
+{"seq": 1, "role": "user", "text": "Hello Priya, yeah, this is a good time to talk.", "ts": "2026-10-31T14:00:32.786082Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Great. Which herbal product or category would you like to explore today?", "ts": "2026-10-31T14:00:33.977253Z"}
+{"seq": 3, "role": "user", "text": "I was actually curious about your face cream, can you tell me what ingredients are in it and how to use it?", "ts": "2026-10-31T14:00:52.520109Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "The Herbal Face Cream contains Neem, Turmeric, and Aloe Vera, and it is intended for moisturizing and routine skin care. I don't have the usage instructions right now, so the information is currently unavailable.", "ts": "2026-10-31T14:00:54.475019Z"}
+{"seq": 5, "role": "user", "text": "Ah, okay, no problem about the usage instructions. Actually, I think I would like to order two bottles of your hair oil and one face cream instead.", "ts": "2026-10-31T14:01:24.945505Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "The Herbal Hair Oil is 499 rupees for 200 ml, and the Herbal Face Cream is 599 rupees for 50 g. I can help you place an order for two bottles of hair oil and one face cream. Would you like to proceed?", "ts": "2026-10-31T14:01:27.658333Z"}
+{"seq": 7, "role": "user", "text": "Yes, I would like to proceed. Could you tell me what the total price for these three items comes to?", "ts": "2026-10-31T14:01:53.213556Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "The total for two bottles of Herbal Hair Oil at 499 rupees each and one Herbal Face Cream at 599 rupees is 1,597 rupees. Would you like to place this order?", "ts": "2026-10-31T14:01:58.731582Z"}
+{"seq": 9, "role": "user", "text": "That calculation is correct. Could you please tell me how long the delivery will take?", "ts": "2026-10-31T14:02:21.311392Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "The delivery timeline information is currently unavailable. Would you like to place the order today?", "ts": "2026-10-31T14:02:30.894405Z"}
+{"seq": 11, "role": "user", "text": "Ah, okay. Before I finalize it, is there any discount available on this total?", "ts": "2026-10-31T14:02:49.044639Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "I don't have any discount information for this order right now. The delivery timeline is also currently unavailable. Would you like to proceed with placing the order?", "ts": "2026-10-31T14:02:57.094029Z"}
+{"seq": 13, "role": "user", "text": "Okay no problem, I will go ahead with the order. What happens next?", "ts": "2026-10-31T14:03:18.096927Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "I couldn't confirm that your request went through. Please don't treat it as done.", "ts": "2026-10-31T14:03:24.713532Z"}

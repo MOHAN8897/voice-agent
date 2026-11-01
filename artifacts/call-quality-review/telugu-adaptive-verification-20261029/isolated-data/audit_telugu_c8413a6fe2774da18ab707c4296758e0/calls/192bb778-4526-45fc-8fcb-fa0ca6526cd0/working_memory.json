@@ -1,0 +1,12 @@
+{
+  "facts": {
+    "caller_name": "Ramesh",
+    "email": "ramesh.audit@example.invalid",
+    "caller_email": "ramesh.audit@example.invalid"
+  },
+  "preferences": {
+    "contact_method": "ఈ నంబర్‌కే కాల్ చేయాలి"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": ""
+}

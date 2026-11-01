@@ -1,0 +1,61 @@
+{
+  "call_id": "4076e77f-7ddb-467f-894e-59ca050a133d",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "प्रिया ने ग्राहक को NatureVeda Aloe Vera Juice (₹399, 500 ml) और Herbal Hair Oil (₹499, 200 ml) की कीमत और उपयोग के बारे में बताया। ग्राहक ने Kukatpally, Hyderabad में डिलीवरी के समय के बारे में पूछा, जिसका एजेंट के पास जवाब नहीं था। ग्राहक ने कुल ₹898 का हिसाब सुनकर जानकारी को उचित माना और धन्यवाद दिया, जबकि एजेंट ने ऑर्डर प्लेस करने के लिए कहा। कॉल सकारात्मक रूप से समाप्त हुई।",
+  "summary_language": "hi-IN",
+  "summary_en": "The agent called the customer to provide product details. The agent shared that the NatureVeda Aloe Vera Juice is ₹399 for 500 ml and the Herbal Hair Oil is ₹499 for 200 ml, totaling ₹898. The customer inquired about delivery timelines in Kukatpally, Hyderabad, but the agent stated this information was unavailable. The customer found the pricing reasonable and thanked the agent, who offered to place the order. The call ended with the customer expressing satisfaction but no order being placed.",
+  "next_action": "callback_required",
+  "extracted_fields": {
+    "location": "Kukatpally, Hyderabad",
+    "phone": "+919700000003",
+    "price_product_1": "₹399",
+    "price_product_2": "₹499",
+    "product_1": "NatureVeda Aloe Vera Juice",
+    "product_2": "NatureVeda Herbal Hair Oil",
+    "quantity": "500",
+    "size_product_1": "500 ml",
+    "size_product_2": "200 ml",
+    "total_amount": "₹898"
+  },
+  "facts": {
+    "location": "Kukatpally, Hyderabad",
+    "phone": "+919700000003",
+    "price_product_1": "₹399",
+    "price_product_2": "₹499",
+    "product_1": "NatureVeda Aloe Vera Juice",
+    "product_2": "NatureVeda Herbal Hair Oil",
+    "quantity": "500",
+    "size_product_1": "500 ml",
+    "size_product_2": "200 ml",
+    "total_amount": "₹898"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:aloe-vera-juice",
+    "custom:herbal-hair-oil",
+    "followup:callback",
+    "intent:information",
+    "outcome:interested",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:aloe-vera-juice",
+    "custom:herbal-hair-oil"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [
+    "How many days will it take to deliver to Kukatpally, Hyderabad?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T16:06:59.211781Z",
+  "generation_ok": true
+}

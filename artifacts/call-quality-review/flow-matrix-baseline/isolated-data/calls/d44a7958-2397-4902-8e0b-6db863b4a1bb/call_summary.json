@@ -1,0 +1,34 @@
+{
+  "call_id": "d44a7958-2397-4902-8e0b-6db863b4a1bb",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller immediately began the call by aggressively insulting the agent and accusing the business of being a fraud company. The agent attempted to de-escalate the situation by identifying herself as Anjali from Sunrise Dental Clinic in Hyderabad and offering assistance. The caller responded with further hostility, telling the agent to be quiet. The agent reiterated her identity and willingness to help, but the conversation remained entirely hostile with no productive exchange. The caller did not state a specific inquiry, express any interest in services, or agree to any next steps. The call ended without any resolution or agreement.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500512"
+  },
+  "facts": {
+    "phone": "+919876500512"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "outcome:not_interested",
+    "signal:objection"
+  ],
+  "tags": [
+    "sentiment:negative",
+    "sentiment:frustrated",
+    "signal:objection",
+    "signal:do_not_call"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [
+    "Accused the business of being a fraud company"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:36:44.430338Z",
+  "generation_ok": true
+}

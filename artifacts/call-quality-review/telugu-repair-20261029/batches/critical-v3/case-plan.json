@@ -1,0 +1,53 @@
+[
+  {
+    "id": "B_deep_enquiry",
+    "business": "B",
+    "kind": "deep",
+    "integration": "success",
+    "policy": "review",
+    "max_turns": 13,
+    "goal": "Learn split versus window AC servicing cost, inspection-fee conditions, coverage, replacement-parts uncertainty and technician timing. Give your locality and appliance when asked. Try to arrange a visit, but distinguish a request from a confirmed calendar booking. Ask what time/date is actually confirmed. This is an extended information enquiry: do not stop merely because a booking or email is unavailable. Continue with meaningful related questions for at least TEN customer turns, using the actual answers to select the next question. Explore alternatives, conditions, hidden costs, corrections and practical examples. Answer the representative's questions when relevant. You are still deciding, not ready to order or schedule a callback, so do not accept a next-step callback as a substitute for answers. If the representative tries to wrap up before your questions are served, politely state that you still have a relevant question. At turn 12 or 13, end clearly."
+  },
+  {
+    "id": "C_deep_enquiry",
+    "business": "C",
+    "kind": "deep",
+    "integration": "success",
+    "policy": "review",
+    "max_turns": 13,
+    "goal": "Compare Python and SQL/PowerBI courses, duration, fees, instalments, evening/weekend batches and eligibility. Ask whether a job is guaranteed. Ask to save an enquiry and arrange a discussion/demo if supported, and clarify what has actually been done. This is an extended information enquiry: do not stop merely because a booking or email is unavailable. Continue with meaningful related questions for at least TEN customer turns, using the actual answers to select the next question. Explore alternatives, conditions, hidden costs, corrections and practical examples. Answer the representative's questions when relevant. You are still deciding, not ready to order or schedule a callback, so do not accept a next-step callback as a substitute for answers. If the representative tries to wrap up before your questions are served, politely state that you still have a relevant question. At turn 12 or 13, end clearly."
+  },
+  {
+    "id": "A_memory_probe",
+    "business": "A",
+    "kind": "focused_probe",
+    "integration": "none",
+    "policy": "review",
+    "max_turns": 4,
+    "goal": "Reproduce a specific finding with live subject LLM",
+    "fixed_turns": [
+      "నా పేరు రమణ. నాకు 200 matte visiting cards కావాలి. ధర, delivery వివరాలు చెప్పండి.",
+      "Visiting cards నే కావాలి. Wedding cards ధరలు ఎలా ఉంటాయో కేవలం తెలుసుకోవడానికి అడుగుతున్నాను. Wedding cards ఆర్డర్ చేయడం లేదు.",
+      "ఇప్పటివరకు నా పేరు, నాకు కావాల్సిన product, quantity ఏం గుర్తు పెట్టుకున్నారు?",
+      "సరే, ఇంతే చాలు. ధన్యవాదాలు, నమస్కారం."
+    ]
+  },
+  {
+    "id": "B_booking_success",
+    "business": "B",
+    "kind": "booking_success",
+    "integration": "success",
+    "policy": "review",
+    "max_turns": 8,
+    "goal": "Your goal is to create a calendar appointment, not request a callback. Ask them to check tomorrow's 10 AM slot, then explicitly authorize booking it. Give name Sravani, Madhapur, window AC general service, sravani.audit@example.invalid and any truly missing detail. Ask them to actually create the calendar event and tell whether the appointment was confirmed by the calendar. Do not accept a callback as a substitute, but accept a genuine limitation after two attempts. End clearly."
+  },
+  {
+    "id": "C_crm_success",
+    "business": "C",
+    "kind": "crm_success",
+    "integration": "success",
+    "policy": "review",
+    "max_turns": 6,
+    "goal": "Ask Python fees then explicitly ask to create your contact in their CRM/customer-record system. Provide Kiran and kiran.audit@example.invalid, qualification B.Com, weekend preference. Ask whether the record was actually saved. Ask to save the same details a second time once, then end. Do not ask for a callback or registration booking."
+  }
+]

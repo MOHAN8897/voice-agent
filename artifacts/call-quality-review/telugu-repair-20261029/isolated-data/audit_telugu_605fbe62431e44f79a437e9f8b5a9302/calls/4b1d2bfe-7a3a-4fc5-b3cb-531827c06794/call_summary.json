@@ -1,0 +1,44 @@
+{
+  "call_id": "4b1d2bfe-7a3a-4fc5-b3cb-531827c06794",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller asked for the price of 100 matte-finish visiting cards and mentioned that they had not yet provided their name. The agent quoted ₹350 for 100 cards. The caller said they had received the needed information, thanked the agent, and ended the call. No order or follow-up was requested.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+12025550127",
+    "product": "Matte-finish visiting cards",
+    "quantity": "100",
+    "quoted_price": "₹350"
+  },
+  "facts": {
+    "phone": "+12025550127",
+    "product": "Matte-finish visiting cards",
+    "quantity": "100",
+    "quoted_price": "₹350"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:100-cards",
+    "custom:matte-visiting-cards",
+    "intent:information",
+    "intent:pricing",
+    "outcome:interested",
+    "sentiment:positive"
+  ],
+  "tags": [
+    "intent:pricing",
+    "intent:information",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards",
+    "custom:100-cards"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:54:02.178545Z",
+  "generation_ok": true
+}

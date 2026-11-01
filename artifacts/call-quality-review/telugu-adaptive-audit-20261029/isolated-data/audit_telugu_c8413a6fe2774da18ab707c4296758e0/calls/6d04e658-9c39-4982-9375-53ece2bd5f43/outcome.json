@@ -1,0 +1,115 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "Ramesh from Vijayawada called to ask about matte-finish visiting cards. The agent quoted ₹350 for 100 cards and confirmed the minimum order quantity is 100. Ramesh provided his email address and said the price for 100 cards was acceptable, then asked about a possible discount for 200 cards and wedding invitation card pricing. The agent could not provide the 200-card discount and explained that wedding card pricing depends on the design, paper sample, and quantity. Ramesh said he would call later to ask about wedding card pricing, and then asked about delivery time and rush-order charges for the 100 matte cards. The agent acknowledged the details and callback request, but did not provide delivery or rush-charge information. The call ended with thanks and a goodbye.",
+  "next_action": "Follow up with Ramesh regarding delivery time and rush-order charges for 100 matte-finish cards, and provide wedding card pricing when he calls back.",
+  "extracted_fields": {
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "రమేష్",
+    "delivery_locality": "విజయవాడ",
+    "email": "ramesh.audit@example.invalid",
+    "location": "Vijayawada",
+    "minimum_order_quantity": "100 cards",
+    "name": "Ramesh",
+    "phone": "+12025550128",
+    "product": "Matte-finish visiting cards",
+    "quantity": "100 cards",
+    "quoted_price": "₹350 for 100 cards"
+  },
+  "objections": [
+    "Discount details for 200 cards were unavailable.",
+    "Delivery time and rush-order charges were not provided.",
+    "Wedding card pricing could not be fixed without design, paper sample, and quantity."
+  ],
+  "notes": "The working memory listed quantity as 200, but the caller’s stated visiting-card quantity and final question were for 100 cards. No order was confirmed.",
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "intent:pricing",
+    "signal:price_sensitive",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards",
+    "custom:wedding-cards",
+    "custom:rush-order"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:14:34.261059Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "రమేష్",
+    "delivery_locality": "విజయవాడ",
+    "email": "ramesh.audit@example.invalid",
+    "location": "Vijayawada",
+    "minimum_order_quantity": "100 cards",
+    "name": "Ramesh",
+    "phone": "+12025550128",
+    "product": "Matte-finish visiting cards",
+    "quantity": "100 cards",
+    "quoted_price": "₹350 for 100 cards"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:matte-visiting-cards",
+    "followup:callback",
+    "intent:information",
+    "intent:pricing",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "d1235792-fd5c-42d8-a885-739ee077a828",
+    "agentId": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.96,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

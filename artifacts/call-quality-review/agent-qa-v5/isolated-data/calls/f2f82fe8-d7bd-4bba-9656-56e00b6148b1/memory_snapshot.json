@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "product": "Aloe Vera Juice",
+    "budget": "399"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: देखिए, अगर basic details ही नहीं हैं तो कैसे भरोसा करूँ? मैं अभी कोई order नहीं करूँगी।\nassistant: मैं आपकी बात समझ रही हूँ। जब भी आप order करने का मन बनाएँ तो बता दीजिएगा।\nuser: देखिए, इतनी basic details भी नहीं पता तो कैसे भरोसा करूँ? मैं अभी कोई order नहीं करूँगी।\nassistant: जब भी आपको order करना हो तो बता दीजिएगा।\nuser: देखिए, जब basic details ही नहीं पता हों तो कैसे भरोसा करूँ? मैं अभी कोई order नहीं करूँगी।\nassistant: मैं आपकी बात समझ रही हूँ।\nuser: देखिए, आपको कुछ basic details भी नहीं पता तो मैं अभी कोई order नहीं करूँगी।\nassistant: ठीक है।"
+}

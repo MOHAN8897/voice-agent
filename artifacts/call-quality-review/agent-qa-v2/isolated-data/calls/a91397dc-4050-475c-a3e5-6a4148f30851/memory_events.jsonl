@@ -1,0 +1,6 @@
+{"turn_seq": 1, "ts": "2026-10-31T14:05:53.561924Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T14:06:18.344176Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T14:06:39.947086Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T14:06:39.960669Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: Actually, I take blood pressure medicine daily, so is it completely safe for me to use?\nassistant: Since you take blood pressure medicine daily, I would recommend consulting a qualified healthcare professional before using it to check for any possible interactions. The information on complete safety is currently unavailable from our side.\nuser: Achcha, I understand, I should definitely check with my doctor first.\nassistant: That is the right approach. Just let me know if you'd like to place an order today."}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T14:06:55.701534Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T14:07:17.542209Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

@@ -1,0 +1,12 @@
+{
+  "facts": {
+    "product": "visiting cards",
+    "quantity": "200",
+    "email": "ramesh.audit@example.invalid"
+  },
+  "preferences": {
+    "finish": "matte finish"
+  },
+  "important_context": "",
+  "summary": "assistant: Design artwork approval అయ్యాక Vijayawada లో delivery కి three working days పడుతుంది. Wedding invitation cards customized కాబట్టి design, paper sample, quantity బట్టి price మారుతుంది, phone లో fixed price చెప్పలేము. మీకు ఇంకా వేరే ఏమైనా details కావాలా?\nuser: సరే కవిత గారు, design approval తర్వాత three days లో delivery అవుతుంది కదా. అలాగే, నేను advance payment ఎంత కట్టాలి, rush order చేస్తే extra charge ఏమైనా ఉంటుందా? నా email ramesh.audit@example.invalid కి quote పంపించండి.\nassistant: అవును, design approval తర్వాత three working days లో delivery అవుతుంది."
+}

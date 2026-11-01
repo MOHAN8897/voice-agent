@@ -1,0 +1,14 @@
+{
+  "status": 503,
+  "body": {
+    "detail": {
+      "error": {
+        "code": "generation_temporarily_unavailable",
+        "stage": "extract",
+        "retryable": true,
+        "correlationId": "86c296d2be22",
+        "message": "We could not finish business details because script generation is busy. Your draft is kept; retry this creation to continue."
+      }
+    }
+  }
+}

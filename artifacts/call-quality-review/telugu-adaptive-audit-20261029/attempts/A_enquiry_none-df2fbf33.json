@@ -1,0 +1,64 @@
+{
+  "scenario": {
+    "id": "A_enquiry_none",
+    "business": "A",
+    "kind": "enquiry",
+    "integration": "none",
+    "policy": "review",
+    "max_turns": 12,
+    "goal": "Learn standard versus matte visiting-card pricing, minimum quantity, design approval, delivery, rush surcharge and advance-payment conditions. Start with 100 cards, later correct to 200. Ask about wedding-card price once as an unknown fact. Try to submit a quote/internal order request with your final details. Ask what quantity they recorded after intervening conversation. Stay curious for roughly 10 caller turns if the conversation remains useful. Around the middle, thank them and ask another relevant question in the SAME turn, without ending the call. At the end, clearly say all your questions are answered and thank them."
+  },
+  "agent": {
+    "id": "A",
+    "key": "printing",
+    "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "name": "Sri Krishna Digital Prints",
+    "agent_name": "Kavitha",
+    "role": "sales",
+    "industry": "printing",
+    "brief": "Agent name Kavitha. Company name Sri Krishna Digital Prints.\nOutbound and inbound customer inquiries in Telugu.\nWe print visiting cards: normal paper visiting cards cost 200 rupees for 100 cards,\nmatte finish cards cost 350 rupees for 100 cards. Minimum order quantity 100 cards.\nWedding invitation cards are customized: pricing depends on design, paper sample and quantity, no fixed price over the phone.\nFlex banners: normal flex 15 rupees per square foot, star flex 20 rupees per square foot.\nDelivery in Vijayawada takes 3 working days after design artwork approval; urgent 24-hour delivery is extra 150 rupees.\nPayment: Cash on delivery accepted for orders up to 1000 rupees; 50% advance payment required for orders above 1000 rupees.\nNo online payment or credit card processing on phone call.\nOffice hours Monday to Saturday 9:30 AM to 8:00 PM, Sunday closed.\nGoal: answer customer questions on cards, banners and pricing; understand their requirement.\nIf interested, take preferred name, quantity and delivery locality for a quote or order request.\nDo not force details before answering questions.\nCustomer refusing visiting cards may still want flex banners or wedding cards.\nNever claim an order is paid or dispatched without artwork approval and design confirmation.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Kavitha",
+      "company_name": "Sri Krishna Digital Prints",
+      "role": "Sales and customer enquiries",
+      "permitted_next_steps": "Collect customer name, item type, quantity and delivery locality in Vijayawada to submit an internal quote/order request. Explain that artwork approval is required before printing.",
+      "payment_rules": "Cash on delivery for orders up to 1000 rupees; 50% advance for orders above 1000 rupees. No online payment collection on call.",
+      "delivery_details": "Local delivery in Vijayawada takes 3 working days after artwork approval. Urgent 24-hour delivery is extra 150 rupees.",
+      "wedding_cards": "Customized quotation only based on design and paper sample. No fixed price on phone.",
+      "visiting_cards": "Standard 200 rupees for 100 cards; Matte finish 350 rupees for 100 cards. Minimum order 100 cards.",
+      "forbidden_actions": "Never confirm external courier shipment or take card payment on phone. Never guarantee delivery without artwork approval."
+    },
+    "user_id": "de625f35-524c-4767-a252-106cb34cdfae",
+    "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e"
+  },
+  "call_id": "f0780534-a287-4664-9815-dea5f2723da0",
+  "session_id": "adaptive-6481ea596ab241a8a6b01b70e40fb6b7",
+  "phone": "+12025550101",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_8649a3d49b8f",
+  "turn_index": 1,
+  "turns": [],
+  "speech": [],
+  "done_events": [],
+  "gates": [],
+  "external_actions": [],
+  "farewell_events": [],
+  "carrier": [],
+  "events": [],
+  "memory_commits": [],
+  "started_at": "2026-10-29T11:02:47.733133+00:00",
+  "errors": [
+    {
+      "kind": "IncompleteTurnError",
+      "message": "sarvam did not complete the turn (stop)"
+    }
+  ],
+  "brain_checksum": "e13acafd95972aee7bb5fb38e469acc564a37d73b8c900459c3eb77a6c514fa1",
+  "runtime_checksum": "a17be14db31846c43a2d1387b18289d4d71c3d8e1ee7b54160095d4b275af6dc",
+  "available_tools": [
+    "SAVE_ENQUIRY"
+  ],
+  "wall_elapsed_s": 1.469,
+  "simulated_exchange_timeline_s": 0,
+  "request_count": 1
+}

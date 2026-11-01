@@ -1,0 +1,2 @@
+{"turn_seq": 1, "ts": "2026-10-29T11:28:14.797483Z", "source": "model", "operations": [{"op": "set_fact", "key": "caller_name", "value": "కిరణ్"}], "applied": true, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-29T11:28:17.039282Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

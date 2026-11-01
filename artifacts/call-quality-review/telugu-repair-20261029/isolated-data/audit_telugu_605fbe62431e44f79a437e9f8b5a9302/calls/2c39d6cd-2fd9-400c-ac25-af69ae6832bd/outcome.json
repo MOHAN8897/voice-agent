@@ -1,0 +1,45 @@
+{
+  "disposition": "no_outcome",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller asked about visiting cards, specifically the price difference for a matte finish compared with a standard finish and the minimum order quantity. The agent only thanked the caller and ended the call without providing pricing, quantity details, or a follow-up arrangement.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+12025550108"
+  },
+  "objections": [],
+  "notes": null,
+  "tags": [
+    "intent:information",
+    "intent:pricing",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:matte-finish"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:34:00.067932Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+12025550108"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:matte-finish",
+    "custom:visiting-cards",
+    "intent:information",
+    "intent:pricing",
+    "outcome:no_outcome",
+    "quality:inconclusive",
+    "sentiment:neutral"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

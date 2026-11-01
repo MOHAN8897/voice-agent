@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "How much does it cost and is there any subsidy?", "ts": "2026-10-30T10:59:07.984124Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "A 3 kW system costs 1,95,000 rupees before the government subsidy, so after the 78,000 rupees subsidy, you pay 1,17,000 rupees. EMI is also available from 2,999 rupees per month for 48 months. Would you like to book your free site survey?", "ts": "2026-10-30T10:59:10.799472Z"}
+{"seq": 3, "role": "user", "text": "Okay, that sounds reasonable.", "ts": "2026-10-30T10:59:10.799472Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Glad to hear that. To book your free site survey, I will need your name, area, and preferred day. When would you like us to schedule it?", "ts": "2026-10-30T10:59:14.332561Z"}
+{"seq": 5, "role": "user", "text": "Hmm, okay.", "ts": "2026-10-30T10:59:14.332561Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "Sure. Just let me know your name, area, and which day works best for you, and I will note that down.", "ts": "2026-10-30T10:59:18.179614Z"}

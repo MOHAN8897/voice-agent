@@ -1,0 +1,104 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.92,
+  "summary_te": "",
+  "summary_en": "The agent called the customer to discuss Ashwagandha capsules for stress and sleep. The customer inquired about the price, which the agent stated was 699 rupees for 60 capsules. The customer raised safety concerns due to existing blood pressure medication and asked for a guarantee of curing stress and any available discounts. The agent advised consulting a healthcare professional and confirmed no discounts were available. The customer said they would think about it and speak to their doctor first, and the call ended with no immediate order placed.",
+  "next_action": "No immediate next step was agreed upon beyond the customer considering the purchase.",
+  "extracted_fields": {
+    "phone": "+919700000008",
+    "price": "699 rupees",
+    "product": "Ashwagandha capsules",
+    "quantity": "60 capsules"
+  },
+  "objections": [
+    "Safety concerns due to existing blood pressure medication.",
+    "Lack of a complete cure guarantee.",
+    "No discount available."
+  ],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "signal:price_sensitive",
+    "signal:objection",
+    "followup:send_quote"
+  ],
+  "custom_tags": [
+    "custom:stress-sleep",
+    "custom:blood-pressure"
+  ],
+  "unanswered_questions": [
+    "Is it guaranteed to cure stress completely?",
+    "Are there any side effects?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T16:21:02.689539Z",
+  "generation_ok": true,
+  "summary_language": "en-IN",
+  "facts": {
+    "phone": "+919700000008",
+    "price": "699 rupees",
+    "product": "Ashwagandha capsules",
+    "quantity": "60 capsules"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:blood-pressure",
+    "custom:stress-sleep",
+    "followup:send_quote",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "d4668045-b293-4fa2-9633-bea005f42c97",
+    "agentId": "8fbc9848-05fa-4d72-b6be-57c2ae899e1c",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.92,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072."
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: ಸರಿ, discount ಏನಾದ್ರೂ ಇದ್ಯಾ? ಇದಿದ್ರೆ ಹೇಳಿ, ಆಮೇಲೆ order ಮಾಡೋಣ.\nassistant: ಸದ್ಯಕ್ಕೆ discount ಬಗ್ಗೆ ಮಾಹಿತಿ ಇಲ್ಲ.\nuser: ಸರಿ, discount ಇಲ್ಲ ಅಂದ್ರೆ ತೊಂದರೆ ಇಲ್ಲ. ಆದ್ರೆ order place ಮಾಡಿದ ಮೇಲೆ ಮುಂದೆ ಏನಾಗುತ್ತೆ ಅಂತ ಹೇಳ್ತೀರಾ?\nassistant: Order place ಮಾಡಿದ ಮೇಲೆ ಏನಾಗುತ್ತೆ ಅನ್ನೋ ಬಗ್ಗೆ ಸದ್ಯಕ್ಕೆ ನನ್ನ ಬಳಿ details ಇಲ್ಲ. Order place ಮಾಡೋಕೆ ನಾನು ನಿಮಗೆ guide ಮಾಡ್ತೀನಿ, proceed ಮಾಡೋಣವಾ?\nuser: ನನಗಂತೂ order ಮಾಡೋಕೆ ಇಷ್ಟ ಇದೆ, ಆದ್ರೆ ನಿಮ್ಮ ಹತ್ರ details ಇಲ್ವಾ? ಮುಂದೆ ಏನಾಗುತ್ತೆ ಅಂತ ಒಂದು ಅಂದಾಜು ಹೇಳ್ತೀರಾ?\nassistant: ಸರಿ."
+}

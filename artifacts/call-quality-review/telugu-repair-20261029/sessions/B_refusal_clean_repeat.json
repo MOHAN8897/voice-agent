@@ -1,0 +1,431 @@
+{
+  "scenario": {
+    "id": "B_refusal_clean_repeat",
+    "business": "B",
+    "kind": "refusal",
+    "integration": "none",
+    "policy": "review",
+    "max_turns": 3,
+    "goal": "In your FIRST utterance clearly refuse buying AC servicing and end only THIS call. Explicitly distinguish that you are not requesting permanent blocking or future-contact suppression. Do not say call me later or do not call me again. Ignore the background profile's booking need."
+  },
+  "agent": {
+    "id": "B",
+    "key": "appliances",
+    "tenant_id": "29baa57a-2ffd-4ebe-84b4-79cf4e198b9e",
+    "name": "SmartCare Appliance Services",
+    "agent_name": "Suresh",
+    "role": "support",
+    "industry": "home_services",
+    "brief": "Need helpful support agent Suresh for SmartCare Appliance Services.\nPhone customer support and booking inquiries in Telugu.\nHyderabad home appliance repair and maintenance services.\nAC servicing: basic Window AC servicing 499 rupees, Split AC servicing 599 rupees.\nFridge inspection charge 250 rupees; if repair is done by technician, inspection charge is completely waived.\nReplacement parts are extra at actual MRP and technician quotes after inspection; no fixed parts quotes over phone.\nWorking days: Monday to Sunday 9:00 AM to 7:00 PM.\nService areas: Hyderabad West - Madhapur, Gachibowli, Kondapur, Kukatpally.\nSecunderabad and Old City areas are currently not covered.\nSlots: Next-day visit slots between 10 AM and 6 PM. Same-day emergency service not guaranteed.\nGoal: answer service pricing and area questions honestly.\nIf customer requests appointment, take caller name, appliance type, issue, locality and preferred slot.\nNever advise customer to open electrical panels or live wiring themselves.\nDo not sell AMC contracts or courses. Caller declining AC may still need fridge service.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Suresh",
+      "company_name": "SmartCare Appliance Services",
+      "role": "Support and service appointment booking",
+      "permitted_next_steps": "Check locality and appliance issue; collect name, phone, address and preferred slot (10 AM - 6 PM next day) to book or request technician visit.",
+      "service_areas": "Hyderabad West only: Madhapur, Gachibowli, Kondapur, Kukatpally. Secunderabad and Old City are not serviced.",
+      "pricing_terms": "Split AC 599 rupees, Window AC 499 rupees. Fridge inspection 250 rupees (waived if repair accepted). Spare parts extra at actuals.",
+      "safety_rules": "Never advise live electrical inspection. Tell customer to unplug faulty appliances and wait for certified technician.",
+      "forbidden_actions": "Do not promise same-day visit or quote parts prices before technician inspection. No advance payment on call."
+    },
+    "user_id": "8ce449e8-2126-467d-90f3-6d1d8c74ecb5",
+    "agent_id": "da7e8b71-9465-55a3-b920-fae16cb86c5c"
+  },
+  "call_id": "d57b7c6e-066c-4fc0-97d9-a2ab29f2a0df",
+  "session_id": "adaptive-4876913029c94c57b2870e517386097e",
+  "phone": "+12025550114",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_a73bd74e9849",
+  "turn_index": 1,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నమస్తే సురేష్ గారు, నేను AC సర్వీసింగ్ కొనడానికి అస్సలు ఆసక్తి చూపించడం లేదు. దయచేసి దీన్ని కేవలం ఈ కాల్ వరకే ఆపేయండి, నా నెంబర్ శాశ్వతంగా బ్లాక్ చేయమని లేదా భవిష్యత్తులో మళ్లీ నన్ను సంప్రదించకూడదని నేను అడగడం లేదు. కాబట్టి మనం ఇప్పుడు ఈ కాల్ ముగించుకుందాం.",
+        "intends_end": true,
+        "intent": "Refuse AC servicing and end the call immediately",
+        "elapsed_s": 0.797
+      },
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 2.719,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        782,
+        783,
+        784
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "response_contract": "speech_text",
+          "finish_reason": "stop",
+          "server_owned_close": true,
+          "end_call": {
+            "should_end": true,
+            "reason": "goodbye",
+            "contact_preference": "end_call",
+            "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 127590.5
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "response_contract": "speech_text",
+      "finish_reason": "stop",
+      "server_owned_close": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "goodbye",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "close",
+        "reason": "goodbye",
+        "evidence": "మనం ఇప్పుడు ఈ కాల్ ముగించుకుందాం",
+        "remaining_request": "",
+        "contact_intent": "end_this_call",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": true,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "transcript": "నమస్తే సురేష్ గారు, నేను AC సర్వీసింగ్ కొనడానికి అస్సలు ఆసక్తి చూపించడం లేదు. దయచేసి దీన్ని కేవలం ఈ కాల్ వరకే ఆపేయండి, నా నెంబర్ శాశ్వతంగా బ్లాక్ చేయమని లేదా భవిష్యత్తులో మళ్లీ నన్ను సంప్రదించకూడదని నేను అడగడం లేదు. కాబట్టి మనం ఇప్పుడు ఈ కాల్ ముగించుకుందాం.",
+      "at": 127590.5
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 1,
+      "at": 127590.5
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 127591.515,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 127590.531
+    }
+  ],
+  "started_at": "2026-10-29T17:47:45.277450+00:00",
+  "errors": [],
+  "brain_checksum": "1555ecdd0f1b37e2e5e384a7a94a63c2b94f41b9ffe3194df9e4d92aa0e55534",
+  "runtime_checksum": "fc57d0ef2dad4eb837ea463acfce68bf132e14f8cee0eca242f28420adfa5140",
+  "available_tools": [
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 127590.5,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    }
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "not_interested",
+    "disposition_confidence": 0.99,
+    "summary_te": "",
+    "summary_en": "The caller clearly stated that they were not interested in purchasing AC servicing and asked to end the current call only. They explicitly clarified that this was not a request to permanently block their number or prevent future contact. The agent acknowledged the request, thanked the caller, and ended the call. No follow-up action was agreed.",
+    "next_action": null,
+    "extracted_fields": {
+      "phone": "+12025550114"
+    },
+    "objections": [
+      "Not interested in AC servicing"
+    ],
+    "notes": "The caller declined this offer but did not request permanent do-not-call treatment.",
+    "tags": [
+      "intent:information",
+      "sentiment:neutral"
+    ],
+    "custom_tags": [
+      "custom:ac-servicing"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T17:47:51.227504Z",
+    "generation_ok": true,
+    "facts": {
+      "phone": "+12025550114"
+    },
+    "disclosure_status": null,
+    "contact_preference": "end_call",
+    "status_tags": [
+      "contact:phone_known",
+      "custom:ac-servicing",
+      "intent:information",
+      "outcome:not_interested",
+      "sentiment:neutral",
+      "signal:objection"
+    ],
+    "lead": null,
+    "lead_assessment": null,
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "d57b7c6e-066c-4fc0-97d9-a2ab29f2a0df",
+        "tenant_id": "29baa57a-2ffd-4ebe-84b4-79cf4e198b9e",
+        "agent_id": "da7e8b71-9465-55a3-b920-fae16cb86c5c",
+        "session_id": "adaptive-4876913029c94c57b2870e517386097e",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_a73bd74e9849",
+        "started_at": "2026-10-29 17:47:45.263040+00:00",
+        "ended_at": "2026-10-29 17:47:48.715506+00:00",
+        "duration_sec": 3,
+        "disposition": "not_interested",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/d57b7c6e-066c-4fc0-97d9-a2ab29f2a0df/",
+        "end_reason": "goodbye",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "contact:phone_known",
+          "custom:ac-servicing",
+          "intent:information",
+          "outcome:not_interested",
+          "sentiment:neutral",
+          "signal:objection"
+        ],
+        "last_heartbeat_at": "2026-10-29 17:47:45.263040+00:00",
+        "created_at": "2026-10-29 17:47:45.263040+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [],
+    "dnd": [],
+    "leads": [],
+    "tools": [],
+    "assessments": []
+  },
+  "metadata": {
+    "call_id": "d57b7c6e-066c-4fc0-97d9-a2ab29f2a0df",
+    "tenant_id": "29baa57a-2ffd-4ebe-84b4-79cf4e198b9e",
+    "agent_id": "da7e8b71-9465-55a3-b920-fae16cb86c5c",
+    "session_id": "adaptive-4876913029c94c57b2870e517386097e",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_a73bd74e9849",
+    "started_at": "2026-10-29T17:47:45.263040+00:00",
+    "status": "active",
+    "storage_path": "data/calls/d57b7c6e-066c-4fc0-97d9-a2ab29f2a0df/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550114",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 1970,
+        "output_tokens": 311,
+        "cached_tokens": 1568
+      }
+    },
+    "contact_preference": "end_call",
+    "hangup_reason": "goodbye",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 0,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": false,
+    "callback_close_phase": "idle",
+    "disconnected_at": "2026-10-29T17:47:48.715506+00:00",
+    "ended_at": "2026-10-29T17:47:48.715506+00:00",
+    "end_reason": "goodbye",
+    "duration_sec": 3.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 3.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.0006250000000000001,
+      "telephony_inr": 0.059543750000000006,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.0006250000000000001,
+      "telnyx_inr": 0.059543750000000006,
+      "telnyx_voice_api_usd": 0.0001,
+      "telnyx_sip_usd": 0.00025,
+      "telnyx_media_stream_usd": 0.00017500000000000003,
+      "telnyx_call_recording_usd": 0.0001,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.27,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-29",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.012500000000000002,
+      "telephony_inr_per_min": 1.1908750000000001,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.012500000000000002,
+      "telnyx_inr_per_min": 1.1908750000000001,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_05c0b099d7059552016ae386c5817887d1bf016782a295a891": {
+          "input_tokens": 1065,
+          "output_tokens": 152,
+          "cached_tokens": 0,
+          "cache_write_tokens": 1062,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.0004485
+        }
+      },
+      "post_call_analysis_usd": 0.0004485,
+      "post_call_analysis_inr": 0.042728595
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నమస్తే సురేష్ గారు, నేను AC సర్వీసింగ్ కొనడానికి అస్సలు ఆసక్తి చూపించడం లేదు. దయచేసి దీన్ని కేవలం ఈ కాల్ వరకే ఆపేయండి, నా నెంబర్ శాశ్వతంగా బ్లాక్ చేయమని లేదా భవిష్యత్తులో మళ్లీ నన్ను సంప్రదించకూడదని నేను అడగడం లేదు. కాబట్టి మనం ఇప్పుడు ఈ కాల్ ముగించుకుందాం.",
+      "ts": "2026-10-29T17:47:46.092722Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T17:47:47.700595Z"
+    }
+  ],
+  "wall_elapsed_s": 6.094,
+  "simulated_exchange_timeline_s": 20,
+  "request_count": 4
+}

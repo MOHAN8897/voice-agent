@@ -1,0 +1,53 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "ബിസിനസ്സിന്റെ ഏജന്റ് കസ്റ്റമറെ വിളിച്ചു. കസ്റ്റമർ NatureVeda Herbals വിൽക്കുന്ന ഉൽപ്പന്നങ്ങളെക്കുറിച്ച് അറിയാൻ ആഗ്രഹിച്ചു. ഏജന്റ് ഹെയർ കെയർ ഉൽപ്പന്നങ്ങളെക്കുറിച്ചും ഹെയർ ഓയിലിന്റെ ചേരുവകളെക്കുറിച്ചും വിലയെക്കുറിച്ചും (₹499) വിവരങ്ങൾ നൽകി. എന്നാൽ നിർമ്മാണ സ്ഥലത്തെക്കുറിച്ചും ഡെലിവറി വിവരങ്ങളെക്കുറിച്ചും ഏജന്റിന് അറിവില്ലായിരുന്നു. ഡെലിവറി വിവരങ്ങൾ ലഭ്യമല്ലാത്തതിനാൽ കസ്റ്റമർ താൽപ്പര്യം പ്രകടിപ്പിക്കാതെ, നിലവിൽ മറ്റ് ഉൽപ്പന്നങ്ങൾ ഉപയോഗിക്കുന്നതിനാൽ വാങ്ങാൻ കഴിയില്ലെന്ന് വ്യക്തമാക്കി, അങ്ങനെ കോൾ അവസാനിച്ചു.",
+  "summary_en": "The business's agent called the customer to share information about herbal products. The agent explained that the NatureVeda Herbal Hair Oil contains Amla, Bhringraj, Hibiscus, and Coconut Oil, priced at ₹499 for 200 ml. When asked about manufacturing locations and delivery details, the agent admitted they did not have that information. The customer objected to the lack of delivery details and stated they were not interested because they already use different products. The call ended after the customer clearly declined the offer.",
+  "next_action": "{}",
+  "extracted_fields": {
+    "phone": "+919700000023"
+  },
+  "objections": [
+    "Delivery details were unavailable"
+  ],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:hair-oil"
+  ],
+  "unanswered_questions": [
+    "Where are the products manufactured?",
+    "How is the delivery handled?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T17:15:23.984686Z",
+  "generation_ok": true,
+  "summary_language": "ml-IN",
+  "facts": {
+    "phone": "+919700000023"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:hair-oil",
+    "custom:herbal-products",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

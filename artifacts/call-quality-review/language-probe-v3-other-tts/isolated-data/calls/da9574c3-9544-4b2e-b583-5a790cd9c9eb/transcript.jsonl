@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "రెండు split ACలు, ఒక window AC service చేస్తే total ఎంత అవుతుంది?", "ts": "2026-10-29T19:30:37.198208Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Split AC service కి ₹599, window AC కి ₹499 అవుతుంది. సో, రెండు split ACలు, ఒక window AC కలిపి total ₹1,697 అవుతుంది. మీ area ఏది? Madhapur, Gachibowli, Kondapur లేదా Kukatpally లోనే service చేస్తాం.", "ts": "2026-10-29T19:30:37.833898Z", "brain_latency_ms": 637}

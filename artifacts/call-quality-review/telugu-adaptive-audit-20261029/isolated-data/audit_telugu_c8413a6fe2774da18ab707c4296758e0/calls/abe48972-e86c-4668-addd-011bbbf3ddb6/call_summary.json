@@ -1,0 +1,35 @@
+{
+  "call_id": "abe48972-e86c-4668-addd-011bbbf3ddb6",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller immediately expressed strong frustration and criticized the way the conversation was being handled, asking the agent to stop wasting time. The agent apologized briefly, thanked the caller, and ended the call. No customer need, facts, or follow-up action was identified.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+12025550141"
+  },
+  "facts": {
+    "phone": "+12025550141"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "intent:complaint",
+    "outcome:not_interested",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:complaint",
+    "sentiment:frustrated",
+    "sentiment:negative",
+    "signal:objection"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [
+    "Caller objected to the agent's communication style and perceived unhelpful or irrelevant talk."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T11:28:11.787526Z",
+  "generation_ok": true
+}

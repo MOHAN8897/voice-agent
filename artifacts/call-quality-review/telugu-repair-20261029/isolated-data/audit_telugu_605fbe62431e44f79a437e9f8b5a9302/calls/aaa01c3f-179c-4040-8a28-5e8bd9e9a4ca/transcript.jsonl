@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "నమస్తే, నాకు Python training fees ఎంతో చెప్పండి. నేను B.Com చదివాను, weekends లో attend అవ్వగలను.", "ts": "2026-10-29T17:52:29.212520Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Python with Data Analytics course మొత్తం fee eight thousand nine hundred ninety nine rupees అవుతుంది. మీరు B. Com చదివారు కాబట్టి, weekend batch శని, ఆదివారాలు ఉదయం ten AM నుంచి మధ్యాహ్నం one PM వరకు ఉంటుంది. మీకు ఈ batch లో చేరాలని ఉందా?", "ts": "2026-10-29T17:52:32.871215Z"}
+{"seq": 3, "role": "user", "text": "సరే, eight thousand nine hundred ninety nine rupees fees ఓకే. నా details ని మీ system లో save చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com, weekend preference. ఇది save చేశారా లేదా ఒకసారి చెప్పండి.", "ts": "2026-10-29T17:52:33.597150Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "క్షమించండి, మీ details save చేయడం కుదరలేదు.", "ts": "2026-10-29T17:52:38.062061Z"}
+{"seq": 5, "role": "user", "text": "అవునా, save అవ్వలేదా? సరే, మళ్ళీ ఒకసారి నా details save చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com, weekend preference. ఇది సరిగ్గా save అయిందో లేదో మళ్ళీ ఒకసారి confirm చేయండి.", "ts": "2026-10-29T17:52:38.847603Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "క్షమించండి, system లో మీ details save అవ్వలేదు.", "ts": "2026-10-29T17:52:42.871780Z"}
+{"seq": 7, "role": "user", "text": "రెండు సార్లు save అవ్వలేదా? సరే, ప్రస్తుతానికి అంతే. నాకు ఇంకేమీ అవసరం లేదు, call end చేస్తున్నాను.", "ts": "2026-10-29T17:52:43.602669Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-29T17:52:45.258518Z"}

@@ -1,0 +1,64 @@
+{
+  "call_id": "7c69fde0-c562-4e2a-843a-a80ba3628da0",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "ಏಜೆಂಟ್ ಗ್ರಾಹಕನಿಗೆ ಫೇಸ್ ಕ್ರೀಮ್ ಮತ್ತು ಹೇರ್ ಆಯಿಲ್ ಬೆಲೆಗಳನ್ನು ತಿಳಿಸಿದರು. ಗ್ರಾಹಕರು ತಮ್ಮ ಇಮೇಲ್ ಐಡಿಗೆ ವಿವರಗಳನ್ನು ಕಳುಹಿಸಲು ಮತ್ತು ನಾಳೆ ಬೆಳಿಗ್ಗೆ 11 ಗಂಟೆಗೆ ಆರ್ಡರ್ ಮಾಡಲು ಕರೆಬ್ಯಾಕ್ ಮಾಡಲು ವಿನಂತಿಸಿದರು. ಏಜೆಂಟ್ ಇಮೇಲ್ ಕಳುಹಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ ಮತ್ತು ಸ್ಟಾಕ್ ಹಾಗೂ ಡೆಲಿವರಿ ವಿವರಗಳು ಲಭ್ಯವಿಲ್ಲ ಎಂದು ಹೇಳಿದರು. ಗ್ರಾಹಕರು ಆಕ್ಷೇಪ ವ್ಯಕ್ತಪಡಿಸಿದರು, ಆದರೆ ಏಜೆಂಟ್ ತಂಡದವರು ಸ್ಟಾಕ್ ಮತ್ತು ಡೆಲಿವರಿ ಬಗ್ಗೆ ಖಚಿತಪಡಿಸುತ್ತಾರೆ ಮತ್ತು ನಾಳೆ ಬೆಳಿಗ್ಗೆ 11 ಗಂಟೆಗೆ ಕರೆಬ್ಯಾಕ್ ಅನ್ನು ನೋಟ್ ಮಾಡಿಕೊಳ್ಳುತ್ತಾರೆ ಎಂದು ಒಪ್ಪಿಕೊಂಡರು, ನಂತರ ಕರೆ ಮುಕ್ತಾಯವಾಯಿತು.",
+  "summary_language": "kn-IN",
+  "summary_en": "The agent called the customer to provide pricing for face cream and hair oil. The customer requested that the details and price list be emailed to mohansaiteja.99@gmail.com, and asked for a callback tomorrow at 11 AM to place an order. The agent explained that email delivery was currently unavailable due to a connection issue, and admitted that stock and Kukatpally delivery details were not on hand. Although the customer objected that this information was necessary before ordering, the agent agreed to have the team check and confirm those details. The call ended with the agent promising that the team would contact the customer regarding the callback and product availability.",
+  "next_action": "Team to email details and call customer back at 11 AM tomorrow; verify stock and Kukatpally delivery.",
+  "extracted_fields": {
+    "callback_time": "tomorrow at 11 AM",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919700000016",
+    "price_face_cream": "₹599",
+    "price_hair_oil": "₹499",
+    "products_discussed": "Herbal Hair Oil 200 ml, Herbal Face Cream 50 g",
+    "handoff_requested": "true"
+  },
+  "facts": {
+    "callback_time": "tomorrow at 11 AM",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919700000016",
+    "price_face_cream": "₹599",
+    "price_hair_oil": "₹499",
+    "products_discussed": "Herbal Hair Oil 200 ml, Herbal Face Cream 50 g",
+    "handoff_requested": "true"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:phone_known",
+    "custom:face-cream",
+    "custom:hair-oil",
+    "followup:callback",
+    "followup:handoff",
+    "followup:send_info",
+    "intent:purchase",
+    "outcome:callback_required",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "tags": [
+    "followup:callback",
+    "followup:send_info",
+    "intent:purchase",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:kukkatpally-delivery"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "The customer objected that stock and delivery details are necessary before placing an order."
+  ],
+  "unanswered_questions": [
+    "Is the face cream in stock?",
+    "When will delivery reach Kukatpally?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T16:39:28.573679Z",
+  "generation_ok": true
+}

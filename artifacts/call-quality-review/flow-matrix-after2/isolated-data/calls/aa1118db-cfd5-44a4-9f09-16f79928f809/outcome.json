@@ -1,0 +1,42 @@
+{
+  "disposition": "no_outcome",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the consultation fee and the clinic's operating hours. The agent attempted to respond but encountered a temporary technical issue. When the caller repeated the question in English, the agent apologized again, reported a persistent technical problem, and requested that the caller call back. The call concluded without resolving the caller's query.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500518"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "followup:callback"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T11:06:54.978234Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500518"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "contact:phone_known",
+    "followup:callback",
+    "intent:information",
+    "outcome:no_outcome",
+    "quality:agent_failure",
+    "quality:inconclusive",
+    "sentiment:neutral"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

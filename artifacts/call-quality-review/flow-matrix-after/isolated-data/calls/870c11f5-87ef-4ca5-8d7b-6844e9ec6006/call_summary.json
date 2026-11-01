@@ -1,0 +1,31 @@
+{
+  "call_id": "870c11f5-87ef-4ca5-8d7b-6844e9ec6006",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the consultation fee and the business's operating hours. The agent's response was not captured in the transcript. No further details were shared, and no objections or agreements were reached. The call ended after the initial question without a concrete next step.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500517"
+  },
+  "facts": {
+    "phone": "+919876500517"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:01:45.309677Z",
+  "generation_ok": true
+}

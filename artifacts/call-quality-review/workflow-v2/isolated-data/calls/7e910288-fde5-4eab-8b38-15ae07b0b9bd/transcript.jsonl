@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "Course fee કેટલી છે અને weekend batch છે ખરી?", "ts": "2026-10-29T20:37:33.322193Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Python with Data Analytics course ની fee ₹8,999 છે અને કોઈ instalments નથી. હા, weekend batch ઉપલબ્ધ છે, જે સવારે 10 થી 1 વાગ્યા સુધીનો રહેશે. શું તમે free demo class માટે તમારું નામ અને qualification જણાવશો?", "ts": "2026-10-29T20:37:36.255983Z"}
+{"seq": 3, "role": "user", "text": "ઠીક છે, મારે બસ આટલું જ જોઈતું હતું. આભાર, આવજો.", "ts": "2026-10-29T20:37:36.270936Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "તમારા સમય માટે આભાર. આવજો.", "ts": "2026-10-29T20:37:37.392677Z"}

@@ -1,0 +1,67 @@
+{
+  "call_id": "e8a965c4-6761-44cb-a8c0-2f2080331386",
+  "language_callback": null,
+  "disposition": "new_lead",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller asked about ordering matte-finish visiting cards, specifically the minimum order quantity and pricing. The agent explained that the minimum order is 100 cards at ₹350 and asked for the required quantity. The caller said they currently need 250 cards and asked whether extra charges would apply. The agent could not confirm extra charges and requested the caller’s name. The caller provided the name Ramesh and the email address ramesh.audit@example.invalid, stating that designs would be sent later and that nothing more was needed for now. The call ended politely without an order being placed or a follow-up appointment being scheduled.",
+  "next_action": "Confirm any extra charges for 250 matte-finish cards and follow up if appropriate; await the caller’s designs by email.",
+  "extracted_fields": {
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "రమేష్",
+    "email": "ramesh.audit@example.invalid",
+    "finish": "Matte",
+    "minimum_order": "100 cards",
+    "name": "Ramesh",
+    "phone": "+12025550125",
+    "price_for_minimum_order": "₹350",
+    "product": "Visiting cards",
+    "quantity": "250",
+    "quantity_requested": "250 cards"
+  },
+  "facts": {
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "రమేష్",
+    "email": "ramesh.audit@example.invalid",
+    "finish": "Matte",
+    "minimum_order": "100 cards",
+    "name": "Ramesh",
+    "phone": "+12025550125",
+    "price_for_minimum_order": "₹350",
+    "product": "Visiting cards",
+    "quantity": "250",
+    "quantity_requested": "250 cards"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:matte-finish",
+    "custom:visiting-cards",
+    "followup:send_info",
+    "intent:information",
+    "intent:pricing",
+    "outcome:new_lead",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:pricing",
+    "intent:information",
+    "followup:send_info",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:matte-finish",
+    "custom:visiting-cards",
+    "custom:250-cards"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Extra charges for 250 cards were unknown and not confirmed."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T11:10:40.331620Z",
+  "generation_ok": true
+}

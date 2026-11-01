@@ -1,0 +1,2 @@
+{"turn_seq": 1, "ts": "2026-10-30T11:22:47.427033Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-30T11:22:48.662242Z", "source": "model", "operations": [{"op": "set_preference", "key": "callback_timing", "value": "बाद में कभी"}], "applied": true, "validation_errors": []}

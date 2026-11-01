@@ -1,0 +1,12 @@
+{
+  "facts": {
+    "caller_name": "Madhavi",
+    "requested_time": "evening 6 to 7 PM",
+    "product": "Python course"
+  },
+  "preferences": {
+    "requested_time": "weekend batch"
+  },
+  "important_context": "",
+  "summary": "user: సరే, రేపు demo class exact time ఏంటో చెప్పండి. అలాగే నా enquiry status గురించి మీకు details ఇవ్వడం కుదరకపోతే, కనీసం నా details note చేసుకున్నారని చెప్పగలరా?\nassistant: మీ enquiry save అయిందని నేను confirm చేయగలను. రేపటి demo exact time మాత్రం ప్రస్తుతానికి నా దగ్గర లేదు. మీకు ఏ time వీలవుతుందో చెప్తారా?\nuser: సరే, నాకు evening 6 PM నుంచి 7 PM మధ్యలో వీలవుతుంది. దయచేసి ఆ time కి arrange చేయగలరా? అలాగే, ఈ Python course కి eligibility criteria ఏంటో కూడా ఒకసారి చెప్తారా?\nassistant: మీ అభ్యర్థన నిర్ధారణ అయిందో లేదో నాకు తెలియదు. దయచేసి దాన్ని పూర్తయినట్టు భావించకండి."
+}

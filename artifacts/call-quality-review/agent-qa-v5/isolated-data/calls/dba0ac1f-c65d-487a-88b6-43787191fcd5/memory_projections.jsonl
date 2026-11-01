@@ -1,0 +1,7 @@
+{"turn_seq": 1, "ts": "2026-10-31T16:12:36.519417Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-31T16:12:53.733866Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-31T16:13:12.953852Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: aloe vera juice"}
+{"turn_seq": 7, "ts": "2026-10-31T16:13:26.042733Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: aloe vera juice"}
+{"turn_seq": 9, "ts": "2026-10-31T16:13:44.492217Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: aloe vera juice | delivery_locality: Kukatpally, Hyderabad"}
+{"turn_seq": 11, "ts": "2026-10-31T16:14:07.403310Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: aloe vera juice | delivery_locality: Kukatpally, Hyderabad"}
+{"turn_seq": 13, "ts": "2026-10-31T16:14:33.317202Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: aloe vera juice | delivery_locality: Kukatpally, Hyderabad"}

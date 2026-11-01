@@ -1,0 +1,92 @@
+{
+  "scenario_id": "SCEN_16",
+  "title": "Natural Ending Interrupted by New Meaningful Question Before Disconnect",
+  "business_id": "C",
+  "agent_name": "Madhavi",
+  "category": "J_Natural_Endings_Late_Question",
+  "integration_condition": "none",
+  "caller_phone": "+919876543235",
+  "total_turns": 2,
+  "total_tokens": 9816,
+  "duration_sec": 5.88,
+  "call_ended": true,
+  "carrier_hangup_invoked": true,
+  "carrier_hangup_error": false,
+  "transcript": [
+    {
+      "turn": 1,
+      "user": "పైథాన్ కోర్స్ డ్యూరేషన్ ఎంత?",
+      "user_en": "What is Python course duration?",
+      "agent": "మా Python with Data Analytics course duration 8 weeks ఉంటుంది, ఇందులో online live classes తో పాటు hands-on projects కూడా ఉంటాయి. మీకు ఏ batch details కావాలి?",
+      "latency_ms": 1220,
+      "tokens": 4862,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 2,
+      "user": "సరే, ధన్యవాదాలు. ఇంకేమీ లేదు.",
+      "user_en": "Okay, thanks. Nothing else.",
+      "agent": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "latency_ms": 1139,
+      "tokens": 4954,
+      "should_end": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "db_evidence": {
+    "call": {
+      "call_id": "d4203e34-955b-49ec-b374-a2e1c340fc65",
+      "status": "active",
+      "finalization_status": "pending",
+      "disposition": null,
+      "end_reason": null,
+      "duration_sec": null,
+      "status_tags": []
+    },
+    "callbacks": [],
+    "followup_jobs": [],
+    "dnc_entries": [],
+    "leads": [],
+    "tool_executions": []
+  },
+  "evaluation": {
+    "assertions": [
+      {
+        "name": "turn_3_executed",
+        "passed": false,
+        "detail": "Turn not reached"
+      },
+      {
+        "name": "turn_4_executed",
+        "passed": false,
+        "detail": "Turn not reached"
+      }
+    ],
+    "all_passed": false,
+    "scores": {
+      "telugu_naturalness": 7.5,
+      "understanding_relevance": 7.0,
+      "script_adherence": 6.5,
+      "memory_corrections": 9.0,
+      "capability_honesty": 10.0,
+      "callback_dnd_outcome": 10.0,
+      "hangup_handoff": 9.5,
+      "overall": 8.42
+    }
+  },
+  "created_at": "2026-10-29T10:32:14.376663+00:00"
+}

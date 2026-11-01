@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "product": "visiting cards",
+    "quantity": "200",
+    "email": "ramesh.audit@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "assistant: డిజైన్ ఆర్ట్‌వర్క్ అప్రూవల్ తర్వాత డెలివరీకి 3 వర్కింగ్ డేస్ పడుతుంది. ఆర్డర్ కన్ఫర్మ్ అవ్వడానికి ఎంత సమయం పడుతుందో ప్రస్తుతం మాకు తెలియదు.\nuser: Order confirm time మీకు తెలియదు అని రెండు సార్లు చెప్పారు కదా, ఇకపై దీని గురించి అడగడం waste. నా details అన్నీ note చేసుకున్నందుకు thanks. నేను ఇప్పుడు order place చేయడం లేదు, తర్వాత ఆలోచిస్తాను. ఈ call close చేస్తున్నాను.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+}

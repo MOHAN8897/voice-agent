@@ -1,0 +1,6 @@
+{"turn_seq": 1, "ts": "2026-10-31T13:33:06.995811Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T13:33:29.192476Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T13:33:48.149572Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T13:33:48.160867Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: అవునా, నాకు అశ్వగంధ క్యాప్సూల్స్ గురించి కొంచెం చెప్పండి, అవి దేనికి వాడతారు?\nassistant: ఇవి ఒక హెర్బల్ వెల్నెస్ సప్లిమెంట్ అండి. వీటి ఉపయోగాలు మరియు జాగ్రత్తల గురించి మరింత తెలుసుకోవాలంటే దయచేసి అర్హత కలిగిన ఆరోగ్య సంరక్షణ నిపుణులను సంప్రదించండి.\nuser: అలాంటిదా, సరే డాక్టర్ని కనుక్కొని చూస్తాను. ప్రస్తుతానికి అయితే నేను ఏం ఆర్డర్ చేయట్లేదండి.\nassistant: పర్వాలేదు అండి, ప్రస్తుతానికి మీరు ఏమీ ఆర్డర్ చేయట్లేదంటే సరే. మీకు ఎప్పుడైనా మా ఉత్పత్తుల గురించి వివరాలు కావాలన్నా అడగవచ్చు."}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T13:34:04.666384Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T13:34:19.159074Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

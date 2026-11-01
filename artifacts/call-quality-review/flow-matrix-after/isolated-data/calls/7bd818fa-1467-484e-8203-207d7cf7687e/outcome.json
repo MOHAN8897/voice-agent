@@ -1,0 +1,92 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller inquired about the consultation fee and clinic operating hours. The agent provided the fee as 300 rupees and stated that the clinic is open Monday to Saturday from 10 AM to 8 PM. The caller requested the timings in English, which the agent repeated. The caller then mentioned having a toothache and asked if they could visit the next day. The agent confirmed that the clinic is open the next day from 10 AM to 8 PM and reiterated the consultation fee. The caller accepted this information by saying 'Okay, thanks.' The agent then stated that they had saved the caller's details and requested a follow-up call. The call concluded with the agent saying goodbye.",
+  "next_action": "Agent to follow up with the caller.",
+  "extracted_fields": {
+    "phone": "+919876500515",
+    "service": "Dental consultation",
+    "slot": "Tomorrow, 10 AM to 8 PM"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "followup:callback",
+    "signal:objection",
+    "sentiment:neutral",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:dental-consultation",
+    "custom:toothache"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T11:01:33.150205Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500515",
+    "service": "Dental consultation",
+    "slot": "Tomorrow, 10 AM to 8 PM"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:dental-consultation",
+    "custom:toothache",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "c4fc2f6b-fc69-4b02-ac33-4a4e5de7d22f",
+    "agentId": "9632fd4d-4e4f-4e57-86d9-9c9191d9c6a6",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 60,
+    "band": "warm",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "service"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "slot"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,39 @@
+{
+  "call_id": "e1640c67-3e22-46e7-9d61-e360d1f3be4e",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, stated they were busy and requested a callback for the following evening at 6 PM on the same number. The agent acknowledged the request, confirmed that the details and callback time were noted, and assured the caller that the team would contact them at the scheduled time. The caller agreed, thanked the agent, and the call was concluded.",
+  "next_action": "Callback team to contact Kiran at 6 PM tomorrow.",
+  "extracted_fields": {
+    "callback_time": "Tomorrow at 6 PM",
+    "caller_name": "Kiran",
+    "name": "Kiran",
+    "phone": "+919876500016"
+  },
+  "facts": {
+    "callback_time": "Tomorrow at 6 PM",
+    "caller_name": "Kiran",
+    "name": "Kiran",
+    "phone": "+919876500016"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "followup:callback",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:57:04.204953Z",
+  "generation_ok": true
+}

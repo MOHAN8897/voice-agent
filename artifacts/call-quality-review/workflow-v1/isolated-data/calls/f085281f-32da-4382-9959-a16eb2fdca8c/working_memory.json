@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_name": "Kiran"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: How much is split AC servicing?\nassistant: Split AC servicing costs 599 rupees.\nuser: Okay, please note my enquiry. My name is Kiran and I am interested.\nassistant: Noted, Kiran. I have your name and that you are interested. To save your enquiry, I also need to know which appliance you need help with and the issue you are facing.\nuser: That's all for now, thank you.\nassistant: Thank you for your time. Goodbye."
+}

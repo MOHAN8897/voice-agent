@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "quantity": "1",
+    "caller_name": "लक्ष्मी रेड्डी",
+    "delivery_address": "फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "assistant: हमारी NatureVeda Herbal Face Cream ₹599 की है 50 g के लिए, और इसमें Neem, Turmeric, और Aloe Vera होते हैं। यह moisturizing और routine skin care के लिए है। अगर आपको order करना हो तो बता दीजिए।\nuser: ठीक है, मैं 2 bottles hair oil और 1 face cream लेना चाहती हूँ, total price कितना हुआ?\nassistant: Hair oil ₹499 का है 200 ml के लिए, तो 2 bottles ₹998 की होंगी। Face cream ₹599 की है। क्या आप इसका order देना चाहेंगी?\nuser: ठीक है, फिर आप order confirm कर दीजिए, आगे क्या करना होगा?\nassistant: Order confirm करने के लिए मुझे आपका नाम और delivery address चाहिए होगा। वो बता दीजिए?"
+}

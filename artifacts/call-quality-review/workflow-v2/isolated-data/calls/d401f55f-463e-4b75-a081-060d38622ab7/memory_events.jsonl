@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-29T20:36:14.902989Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-29T20:36:22.743695Z", "source": "model", "operations": [{"op": "set_fact", "key": "caller_name", "value": "Kiran"}], "applied": true, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-29T20:36:24.680965Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-29T20:36:24.697493Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: How much is split AC servicing?\nassistant: Split AC servicing costs 599 rupees.\nuser: Okay, please note my enquiry. My name is Kiran and I am interested.\nassistant: Noted, Kiran. I have your enquiry. What appliance are you interested in?\nuser: That's all for now, thank you.\nassistant: Thank you for your time. Goodbye."}], "applied": true, "validation_errors": []}

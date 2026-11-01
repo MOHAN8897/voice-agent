@@ -1,0 +1,44 @@
+{
+  "call_id": "ffb3fbd2-0326-4656-b34f-ae98e379685c",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "నేచర్‌వేదా హెర్బల్స్ నుండి ఏజెంట్ కస్టమర్‌కు కాల్ చేశారు. కస్టమర్ అశ్వగంధ క్యాప్సూల్స్ గురించి అడిగారు, దానికి ఏజెంట్ అవి హెర్బల్ వెల్నెస్ సప్లిమెంట్ అని, డాక్టర్ సలహా తీసుకోవాలని చెప్పారు. కస్టమర్ ప్రస్తుతం ఆర్డర్ చేయనని, ముందుగా డాక్టర్‌ను సంప్రదించి ఆలోచిస్తానని చెప్పారు. ఏజెంట్ దీనిని అంగీకరించి, నిర్ణయం తీసుకున్న తర్వాత కాల్ చేయమని కోరారు. చివరగా కస్టమర్ కాల్ ముగించారు.",
+  "summary_language": "te-IN",
+  "summary_en": "The agent from the business called the customer to introduce available wellness products. The customer inquired about ashwagandha capsules, and the agent explained that they are herbal supplements requiring professional medical consultation. The customer objected to placing an order immediately, stating they needed to consult their doctor first. The agent accepted this and suggested the customer reach out after making a decision. The call ended with the customer thanking the agent and hanging up.",
+  "next_action": "await_customer_call",
+  "extracted_fields": {
+    "phone": "+919700000006"
+  },
+  "facts": {
+    "phone": "+919700000006"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:ashwagandha-capsules",
+    "custom:health-consultation",
+    "followup:callback",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:ashwagandha-capsules",
+    "custom:health-consultation"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Customer stated they are not placing an order at the moment."
+  ],
+  "unanswered_questions": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T13:34:21.346462Z",
+  "generation_ok": true
+}

@@ -1,0 +1,101 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి లక్ష్మి రెడ్డి గారికి కాల్ చేసి హెర్బల్ ఫేస్ క్రీమ్ లోని పదార్థాలు, ధరల గురించి వివరించారు. లక్ష్మి రెడ్డి గారు రెండు హెయిర్ ఆయిల్ బాటిల్స్, ఒక ఫేస్ క్రీమ్ ఆర్డర్ చేయాలనుకున్నారు, అలాగే తన పేరు, చిరునామా (Flat 302, Sai Residency, Kukatpally, Hyderabad 500072) అందించారు. డెలివరీ సమయం, డిస్కౌంట్ల గురించి అడిగిన ప్రశ్నలకు ఏజెంట్ వద్ద సమాచారం లేదు. లక్ష్మి రెడ్డి గారు ఆర్డర్ తో ముందుకు వెళ్లడానికి సిద్ధంగా ఉన్నారు, తదుపరి దశ కోసం ఏజెంట్ వివరాలను సేకరించి ఫాలో అప్ చేయాల్సి ఉంది.",
+  "summary_en": "The agent called Lakshmi Reddy to provide product information, sharing that the herbal face cream contains neem, turmeric, and aloe vera for 599 rupees. Lakshmi Reddy requested two bottles of hair oil and one face cream, and she provided her name and delivery address in Kukatpally, Hyderabad. When she asked about delivery time and discounts, the agent stated it did not have that information. Lakshmi Reddy expressed her willingness to proceed with the order, and the call ended with the agent needing to follow up to complete the booking.",
+  "next_action": "Call Lakshmi Reddy back to confirm the order and provide delivery details.",
+  "extracted_fields": {
+    "address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "caller_name": "లక్ష్మి రెడ్డి",
+    "order_items": "2 hair oil bottles, 1 face cream",
+    "order_total": "1497",
+    "phone": "+919700000004"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "intent:purchase",
+    "signal:ready_to_buy"
+  ],
+  "custom_tags": [
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:order-placement"
+  ],
+  "unanswered_questions": [
+    "How long does delivery take?",
+    "Are there any discounts available?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T13:14:12.121162Z",
+  "generation_ok": true,
+  "summary_language": "te-IN",
+  "facts": {
+    "address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "caller_name": "లక్ష్మి రెడ్డి",
+    "order_items": "2 hair oil bottles, 1 face cream",
+    "order_total": "1497",
+    "phone": "+919700000004"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:order-placement",
+    "followup:callback",
+    "intent:purchase",
+    "outcome:callback_required",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "d343dac6-8155-476e-878d-2070327ac7f4",
+    "agentId": "f6d309d7-5f8f-5de2-ac1e-f7ebefcf75f9",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 50,
+    "band": "warm",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "signal:ready_to_buy"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

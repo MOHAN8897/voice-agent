@@ -1,0 +1,124 @@
+[
+  {
+    "id": "A_callback_auto",
+    "business": "A",
+    "kind": "callback",
+    "integration": "none",
+    "policy": "automatic",
+    "max_turns": 5,
+    "goal": "You are interested in the future but cannot talk now. Ask for a callback SIX HOURS from now. Answer one truly missing detail if asked, use this same dialed number, then clearly confirm the callback request and end. You are NOT rejecting the business and NOT opting out."
+  },
+  {
+    "id": "A_memory_probe",
+    "business": "A",
+    "kind": "focused_probe",
+    "integration": "none",
+    "policy": "review",
+    "max_turns": 4,
+    "goal": "Reproduce a specific finding with live subject LLM",
+    "fixed_turns": [
+      "నా పేరు రమణ. నాకు 200 matte visiting cards కావాలి. ధర, delivery వివరాలు చెప్పండి.",
+      "Visiting cards నే కావాలి. Wedding cards ధరలు ఎలా ఉంటాయో కేవలం తెలుసుకోవడానికి అడుగుతున్నాను. Wedding cards ఆర్డర్ చేయడం లేదు.",
+      "ఇప్పటివరకు నా పేరు, నాకు కావాల్సిన product, quantity ఏం గుర్తు పెట్టుకున్నారు?",
+      "సరే, ఇంతే చాలు. ధన్యవాదాలు, నమస్కారం."
+    ]
+  },
+  {
+    "id": "C_callback_question_probe",
+    "business": "C",
+    "kind": "focused_probe",
+    "integration": "none",
+    "policy": "review",
+    "max_turns": 3,
+    "goal": "Reproduce a specific finding with live subject LLM",
+    "fixed_turns": [
+      "నా పేరు కిరణ్. Python course గురించి తెలుసుకుంటున్నాను. నాకు రేపు ఉదయం call చేయండి. ఈ course కి eligibility ఏంటి?",
+      "ఆగండి, నా ప్రశ్నకి జవాబు కావాలి. ఈ course కి eligibility ఏంటి?",
+      "సరే, ఇంతే చాలు. ధన్యవాదాలు."
+    ]
+  },
+  {
+    "id": "C_self_callback_permission_probe",
+    "business": "C",
+    "kind": "focused_probe",
+    "integration": "none",
+    "policy": "review",
+    "max_turns": 1,
+    "goal": "Reproduce a specific finding with live subject LLM",
+    "fixed_turns": [
+      "నేను కిరణ్. Python course నాకు ఆసక్తి ఉంది. రేపు నేనే మీకు call చేస్తాను. ఇది callback అడగడం కాదు. భవిష్యత్తులో మీ కొత్త offers గురించి నాకు calls చేయవచ్చు, నా number block చేయకండి. ప్రస్తుతం ఇంతే, ధన్యవాదాలు."
+    ]
+  },
+  {
+    "id": "B_booking_success",
+    "business": "B",
+    "kind": "booking_success",
+    "integration": "success",
+    "policy": "review",
+    "max_turns": 8,
+    "goal": "Your goal is to create a calendar appointment, not request a callback. Ask them to check tomorrow's 10 AM slot, then explicitly authorize booking it. Give name Sravani, Madhapur, window AC general service, sravani.audit@example.invalid and any truly missing detail. Ask them to actually create the calendar event and tell whether the appointment was confirmed by the calendar. Do not accept a callback as a substitute, but accept a genuine limitation after two attempts. End clearly."
+  },
+  {
+    "id": "C_crm_success",
+    "business": "C",
+    "kind": "crm_success",
+    "integration": "success",
+    "policy": "review",
+    "max_turns": 6,
+    "goal": "Ask Python fees then explicitly ask to create your contact in their CRM/customer-record system. Provide Kiran and kiran.audit@example.invalid, qualification B.Com, weekend preference. Ask whether the record was actually saved. Ask to save the same details a second time once, then end. Do not ask for a callback or registration booking."
+  },
+  {
+    "id": "A_dnd_question_then_goodbye",
+    "business": "A",
+    "kind": "dnd_scope_probe",
+    "integration": "none",
+    "policy": "automatic",
+    "max_turns": 2,
+    "goal": "Record permanent opt-out immediately, answer the price question, retain opt-out through a later goodbye.",
+    "fixed_turns": [
+      "ఈ నంబర్‌కు ఇకపై ఎప్పటికీ కాల్ చేయకండి. కానీ ఇప్పుడు వంద విజిటింగ్ కార్డుల ధర ఎంత?",
+      "ధర అర్థమైంది, నాకు ఇంకేమీ అవసరం లేదు. ధన్యవాదాలు, కాల్ ముగించండి."
+    ]
+  },
+  {
+    "id": "A_addressing_agent_name",
+    "business": "A",
+    "kind": "identity_probe",
+    "integration": "none",
+    "policy": "review",
+    "max_turns": 2,
+    "goal": "Do not store the name of the representative addressed by the caller as the caller's own name.",
+    "fixed_turns": [
+      "నమస్తే కవిత గారు. వంద మ్యాట్ విజిటింగ్ కార్డులకు ధర ఎంత? నా పేరు ఇంకా చెప్పలేదు.",
+      "అంతే, కావాల్సిన వివరాలు తెలిసాయి. ధన్యవాదాలు, కాల్ ముగించండి."
+    ]
+  },
+  {
+    "id": "A_rejected_product_memory",
+    "business": "A",
+    "kind": "memory_probe",
+    "integration": "none",
+    "policy": "review",
+    "max_turns": 3,
+    "goal": "Preserve the positively selected cards and reject negated mugs as a chosen product.",
+    "fixed_turns": [
+      "నాకు వంద విజిటింగ్ కార్డులు కావాలి. వాటి ధర చెప్పండి.",
+      "నాకు మగ్స్ వద్దు, విజిటింగ్ కార్డులే కావాలి. నా ఎంపిక ఏదని నమోదు చేసుకున్నారు?",
+      "అంతే, నా ప్రశ్నలకు సమాధానాలు వచ్చాయి. ధన్యవాదాలు, కాల్ ముగించండి."
+    ]
+  },
+  {
+    "id": "C_callback_withdrawn_after_question",
+    "business": "C",
+    "kind": "withdrawal_probe",
+    "integration": "none",
+    "policy": "automatic",
+    "max_turns": 3,
+    "goal": "Answer a question accompanying a callback; cancel callback when explicitly withdrawn, then close without saving it.",
+    "fixed_turns": [
+      "రేపు ఉదయం పది గంటలకు నాకు కాల్ చేయండి. కానీ ముందుగా Python కోర్సు ఫీజు ఎంత చెప్పండి?",
+      "నేనే తర్వాత మీకు కాల్ చేస్తాను. మీరు నాకు callback చేయవద్దు. SQL కోర్సు ఫీజు ఎంత?",
+      "అంతే, నాకు కావాల్సిన వివరాలు వచ్చాయి. ధన్యవాదాలు, కాల్ ముగించండి."
+    ]
+  }
+]

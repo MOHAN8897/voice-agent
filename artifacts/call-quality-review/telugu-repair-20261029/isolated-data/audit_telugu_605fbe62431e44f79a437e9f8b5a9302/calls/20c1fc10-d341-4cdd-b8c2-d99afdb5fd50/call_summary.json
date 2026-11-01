@@ -1,0 +1,71 @@
+{
+  "call_id": "20c1fc10-d341-4cdd-b8c2-d99afdb5fd50",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "The caller requested visiting cards and first asked about the price difference between standard and matte finishes and the minimum order quantity. The agent quoted ₹200 for 100 standard cards, ₹350 for 100 matte cards, and stated that the minimum order is 100 cards, with the same rate applying for 200 cards. The caller said the prices were acceptable and asked about design approval, delivery timing, and rush-order charges. The agent stated that delivery in Vijayawada takes three working days after artwork approval, and a rush order within 24 hours incurs an extra ₹150 charge; the caller provided the email ramesh.audit@example.invalid. The caller also asked about advance payment and wedding-card pricing. The agent said orders above ₹1,000 require 50% advance payment and that wedding-card pricing depends on design, paper sample, and quantity. The caller then identified himself as Ramesh from Vijayawada and requested that a quote or order request be noted for 200 matte visiting cards, asking how much quantity had been recorded. The agent did not confirm the quantity, record the quote/order request, or provide a clear next step before ending the call, so follow-up is required.",
+  "next_action": "Confirm and record the requested quote/order for 200 matte visiting cards, then contact Ramesh to confirm the quantity and provide the quote and design-approval process.",
+  "extracted_fields": {
+    "advance_payment": "50% for orders above ₹1,000",
+    "delivery_time": "3 working days in Vijayawada after artwork approval",
+    "email": "ramesh.audit@example.invalid",
+    "finish": "Matte",
+    "location": "Vijayawada",
+    "matte_price": "₹350 per 100 cards",
+    "minimum_order_quantity": "100 cards",
+    "name": "Ramesh",
+    "phone": "+12025550110",
+    "product": "Visiting cards",
+    "quantity": "200",
+    "rush_order_charge": "₹150 for delivery within 24 hours",
+    "standard_price": "₹200 per 100 cards"
+  },
+  "facts": {
+    "advance_payment": "50% for orders above ₹1,000",
+    "delivery_time": "3 working days in Vijayawada after artwork approval",
+    "email": "ramesh.audit@example.invalid",
+    "finish": "Matte",
+    "location": "Vijayawada",
+    "matte_price": "₹350 per 100 cards",
+    "minimum_order_quantity": "100 cards",
+    "name": "Ramesh",
+    "phone": "+12025550110",
+    "product": "Visiting cards",
+    "quantity": "200",
+    "rush_order_charge": "₹150 for delivery within 24 hours",
+    "standard_price": "₹200 per 100 cards"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:matte-finish",
+    "custom:visiting-cards",
+    "followup:callback",
+    "intent:purchase",
+    "intent:quote",
+    "outcome:callback_required",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:purchase",
+    "intent:quote",
+    "sentiment:positive",
+    "followup:callback",
+    "action:required",
+    "signal:ready_to_buy"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:matte-finish",
+    "custom:200-cards"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:26:28.989757Z",
+  "generation_ok": true
+}

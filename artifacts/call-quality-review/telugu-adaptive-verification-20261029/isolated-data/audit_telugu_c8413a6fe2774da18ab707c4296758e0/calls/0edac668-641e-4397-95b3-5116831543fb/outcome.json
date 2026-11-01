@@ -1,0 +1,79 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller, Shravani, urgently requested split AC servicing in Madhapur for tomorrow at 10:00 AM and asked for a technician to be sent. The caller was highly frustrated and used abusive language, expressing concern that the work must be done properly. The agent acknowledged the frustration and requested the caller's name and exact address, but the caller only provided her name and locality, not an exact address. The agent stated that the request could be remembered in the call but could not be sent to the team or followed up on, so the appointment was not confirmed. The call ended after the caller reiterated the request and the agent thanked her and said goodbye.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "location": "Madhapur",
+    "name": "Shravani",
+    "phone": "+12025550141",
+    "product": "split AC సర్వీస్",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు పొద్దున 10 గంటలకి",
+    "service": "Split AC servicing"
+  },
+  "objections": [
+    "Caller was frustrated by the interaction and demanded that the technician be sent without further delay.",
+    "Exact address was not provided.",
+    "Appointment could not be confirmed during the call because the agent lacked team dispatch or follow-up capability."
+  ],
+  "notes": "The caller requested an order/service appointment and should be treated as interested, but the appointment was not confirmed. Caller contact details were reportedly provided, though no phone number appears in the transcript.",
+  "tags": [
+    "action:urgent",
+    "followup:callback",
+    "intent:booking",
+    "intent:support",
+    "sentiment:frustrated",
+    "signal:urgent"
+  ],
+  "custom_tags": [
+    "custom:split-ac-service",
+    "custom:madhapur",
+    "custom:morning-appointment"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:49:42.473057Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "location": "Madhapur",
+    "name": "Shravani",
+    "phone": "+12025550141",
+    "product": "split AC సర్వీస్",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు పొద్దున 10 గంటలకి",
+    "service": "Split AC servicing"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "intent:booking",
+    "intent:support",
+    "outcome:not_interested",
+    "sentiment:frustrated",
+    "signal:do_not_call",
+    "signal:objection",
+    "signal:urgent"
+  ],
+  "lead": null,
+  "lead_assessment": {
+    "score": 0,
+    "band": "disqualified",
+    "disposition": "not_interested",
+    "confidence": 0.98,
+    "components": [],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "caller_opt_out"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

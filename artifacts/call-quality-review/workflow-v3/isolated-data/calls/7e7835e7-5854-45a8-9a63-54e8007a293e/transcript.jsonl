@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "എനിക്ക് 200 matte visiting cards വേണം.", "ts": "2026-10-29T20:45:52.386957Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ശരി. 200 matte visiting cards-ന് 100 എണ്ണത്തിന് ₹350 ആണ് rate. ഇനി order confirm ചെയ്യാൻ customer name-ഉം delivery address-ഉം ഒന്ന് പറയാമോ?", "ts": "2026-10-29T20:45:55.741474Z"}
+{"seq": 3, "role": "user", "text": "എന്റെ പേര് Ravi Kumar. Vijayawada-യിലെ 12 MG Road-ലേക്ക് ഡെലിവറി ചെയ്യണം.", "ts": "2026-10-29T20:45:55.741785Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ഡെലിവറി അഡ്രസ്സ് 12 MG Road, Vijayawada എന്ന് രേഖപ്പെടുത്തിയിട്ടുണ്ട്. ഓർഡർ confirm ചെയ്യാൻ നിങ്ങളുടെ പേര് Ravi Kumar എന്ന് പറഞ്ഞല്ലോ. ഓർഡർ ഇപ്പോൾ തന്നെ confirm ചെയ്യട്ടേ?", "ts": "2026-10-29T20:46:00.012139Z"}
+{"seq": 5, "role": "user", "text": "അതെ, order കൺഫോം ചെയ്യുക.", "ts": "2026-10-29T20:46:00.014150Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ഓർഡർ confirm ആയിട്ടുണ്ട്. artwork approve ആയിക്കഴിഞ്ഞാൽ 3 working days-നുള്ളിൽ delivery എത്തും.", "ts": "2026-10-29T20:46:02.985236Z"}
+{"seq": 7, "role": "user", "text": "Thanks, അത്രയേ ഉള്ളൂ.", "ts": "2026-10-29T20:46:02.986235Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "നിങ്ങളുടെ സമയത്തിന് നന്ദി. നമസ്കാരം.", "ts": "2026-10-29T20:46:04.234743Z"}

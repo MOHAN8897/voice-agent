@@ -1,0 +1,123 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller requested general servicing for a split AC located in Madhapur, with a technician visit requested for tomorrow at 10:00 AM. The agent quoted ₹599, stated that no inspection fee would apply if repair was performed, and explained that replacement parts would be charged at actual MRP after inspection. The caller provided the name Shravani and email address sravani.audit@example.invalid, and repeatedly asked whether the visit was confirmed and whether confirmation could be emailed. The agent clarified that the appointment remained only a request, not a confirmed booking, and that the agent could not send an email, forward the request to the team, or guarantee follow-up. The caller also asked about the price difference from window AC service; the agent said split AC service costs ₹599, ₹100 more than window AC service. No appointment was confirmed, and the call ended after the caller said her questions were clear and thanked the agent.",
+  "next_action": "Confirm whether the Madhapur split AC service request can be scheduled for tomorrow at 10:00 AM and notify the caller using the provided email if available.",
+  "extracted_fields": {
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "inspection_fee": "No inspection fee if repair is performed",
+    "location": "Madhapur",
+    "name": "Shravani",
+    "parts_pricing": "Actual MRP after inspection",
+    "phone": "+12025550107",
+    "product": "Split AC",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "service_price": "₹599",
+    "service_type": "General service",
+    "window_ac_price_difference": "Split AC service is ₹100 more than window AC service"
+  },
+  "objections": [
+    "Appointment confirmation was unavailable; the request remained unconfirmed.",
+    "Email confirmation and guaranteed team follow-up were unavailable."
+  ],
+  "notes": "The caller was interested in proceeding but did not receive a confirmed appointment. The request may need team follow-up.",
+  "tags": [
+    "intent:booking",
+    "intent:information",
+    "followup:callback",
+    "followup:schedule_pending",
+    "signal:objection",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:split-ac",
+    "custom:general-service",
+    "custom:madhapur"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:06:43.066693Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "inspection_fee": "No inspection fee if repair is performed",
+    "location": "Madhapur",
+    "name": "Shravani",
+    "parts_pricing": "Actual MRP after inspection",
+    "phone": "+12025550107",
+    "product": "Split AC",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "service_price": "₹599",
+    "service_type": "General service",
+    "window_ac_price_difference": "Split AC service is ₹100 more than window AC service"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:split-ac",
+    "followup:callback",
+    "followup:schedule_pending",
+    "intent:booking",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "9ec1a977-ea94-5c9d-be70-5babfa9a15ed",
+    "agentId": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.98,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

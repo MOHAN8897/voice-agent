@@ -1,0 +1,16 @@
+{"seq": 1, "role": "user", "text": "வணக்கம் பிரியா. எனக்கு கொஞ்சம் time இருக்கு. அந்த aloe vera juice பத்தி சொல்லுங்க, என்ன விலை, எந்த size-ல வர்றது, எப்படி குடிக்கணும்னு கொஞ்சம் details வேணும்.", "ts": "2026-10-31T16:27:12.296702Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "சரி, நேச்சர்வேதா அலோ வேரா ஜூஸ் 500 ml பாட்டில் விலை 399 ரூபாய். இதுல அலோ வேரா மட்டும் தான் இருக்கு, பொதுவான wellness beverage-ஆ குடிக்கலாம். உங்களுக்கு இந்த product வேணுமா?", "ts": "2026-10-31T16:27:14.143356Z"}
+{"seq": 3, "role": "user", "text": "சரி, 399 rupees-னா கொஞ்சம் அதிகம் தான். 500 ml size ஓகே, ஆனா தினமும் எப்படி குடிக்கணும்னு கொஞ்சம் சொல்லுங்க.", "ts": "2026-10-31T16:27:33.121816Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "புரியுது, விலை கொஞ்சம் அதிகம் தான். ஆனா இந்த அலோ வேரா ஜூஸ் எப்படி குடிக்கணும்ங்கிற exact daily usage details இப்போதைக்கு எங்ககிட்ட இல்லைங்க, எங்க team அதை confirm பண்ணுவாங்க.", "ts": "2026-10-31T16:27:34.942223Z"}
+{"seq": 5, "role": "user", "text": "Okay, I will think about that. Actually, from now on can we speak in plain English? I am more comfortable in that.", "ts": "2026-10-31T16:27:58.995805Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "Of course, we can continue in English. Just let me know whenever you decide if you would like to place an order for the Aloe Vera Juice.", "ts": "2026-10-31T16:28:00.462124Z"}
+{"seq": 7, "role": "user", "text": "Actually, since some time has passed, can we continue in plain English now? I am more comfortable with that.", "ts": "2026-10-31T16:28:18.112188Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Of course, we can continue in plain English.", "ts": "2026-10-31T16:28:19.333970Z"}
+{"seq": 9, "role": "user", "text": "Okay. Can you repeat the price of that aloe vera juice you told me earlier?", "ts": "2026-10-31T16:28:29.378527Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "The Aloe Vera Juice is ₹399 for 500 ml. Just let me know if you would like to place an order.", "ts": "2026-10-31T16:28:30.765266Z"}
+{"seq": 11, "role": "user", "text": "Right, 399 rupees. Tell me one thing, what are the ingredients in your hair oil?", "ts": "2026-10-31T16:28:44.063608Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "Our Herbal Hair Oil contains Amla, Bhringraj, Hibiscus, and Coconut Oil. It comes in 200 ml for ₹499. Would you like to place an order for that?", "ts": "2026-10-31T16:28:45.366821Z"}
+{"seq": 13, "role": "user", "text": "Okay, got it. If I take one aloe vera juice and one hair oil, what will be the total amount?", "ts": "2026-10-31T16:29:04.038722Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "One Aloe Vera Juice at ₹399 and one Herbal Hair Oil at ₹499 makes a total of ₹898. Just let me know if you would like to place an order.", "ts": "2026-10-31T16:29:06.223229Z"}
+{"seq": 15, "role": "user", "text": "898 rupees is okay. I will think about it and let you know later. Thank you for the information.", "ts": "2026-10-31T16:29:24.015762Z", "partial": false}
+{"seq": 16, "role": "assistant", "text": "You're welcome. Just let me know whenever you decide if you'd like to place the order.", "ts": "2026-10-31T16:29:25.139541Z"}

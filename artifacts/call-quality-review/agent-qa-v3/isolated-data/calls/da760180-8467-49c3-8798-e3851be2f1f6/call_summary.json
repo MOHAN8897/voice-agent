@@ -1,0 +1,52 @@
+{
+  "call_id": "da760180-8467-49c3-8798-e3851be2f1f6",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 1.0,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్ కు కాల్ చేశారు. కస్టమర్ హెర్బల్ హెయిర్ ఆయిల్ ధర ₹499 మరియు పదార్థాల గురించి అడిగారు. ఏజెంట్ ఉపయోగ సూచనల గురించి సమాచారం లేదని చెప్పారు. కస్టమర్ ఇప్పుడు బిజీగా ఉన్నానని, రేపు సాయంత్రం 6:30 కి కాల్ చేయమని కోరారు. ఏజెంట్ ఈ కాల్ బ్యాక్ సమయాన్ని నోట్ చేసుకుని కాల్ ముగించారు.",
+  "summary_language": "te-IN",
+  "summary_en": "The agent called the customer to share details about NatureVeda herbal hair oil. The agent shared the price of ₹499 and listed the ingredients, but could not provide usage instructions when asked. The customer stated they were busy with work and requested a callback for tomorrow evening at 6:30 PM. The agent noted this callback time and concluded the call.",
+  "next_action": "Call customer back tomorrow at 6:30 PM.",
+  "extracted_fields": {
+    "callback_time": "Tomorrow at 6:30 PM",
+    "phone": "+919700000002",
+    "price": "₹499",
+    "product": "NatureVeda herbal hair oil"
+  },
+  "facts": {
+    "callback_time": "Tomorrow at 6:30 PM",
+    "phone": "+919700000002",
+    "price": "₹499",
+    "product": "NatureVeda herbal hair oil"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:hair-oil",
+    "custom:usage-instructions",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:hair-oil",
+    "custom:usage-instructions"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Customer stated they were busy with work."
+  ],
+  "unanswered_questions": [
+    "How should this be applied?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T14:20:55.835681Z",
+  "generation_ok": true
+}

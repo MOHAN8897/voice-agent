@@ -1,0 +1,106 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Ramesh from Vijayawada initially asked for details and pricing for 100 matte-finish visiting cards, quoted at ₹350, with delivery taking 3 working days after artwork approval. He clarified that his name is Raman and increased the requirement to 200 cards, quoted at ₹700. He accepted the delivery timeline, verified that the recorded details were Raman, matte-finish visiting cards, and quantity 200, and asked to save the enquiry. The agent clarified that this was not a confirmed order, but an enquiry for team review, and stated that the order request was sent to the team. Raman acknowledged this and ended the call politely. No confirmed order or completed purchase was established.",
+  "next_action": "Team review of the enquiry and follow up regarding the order request.",
+  "extracted_fields": {
+    "caller_name": "రమణ",
+    "delivery_time": "3 working days after artwork approval",
+    "email": "ramesh.audit@example.invalid",
+    "location": "Vijayawada",
+    "phone": "+12025550118",
+    "price": "₹700",
+    "product": "matte-finish visiting cards",
+    "quantity": "200"
+  },
+  "objections": [
+    "The caller initially felt that 3 working days was somewhat late, but then accepted the delivery timeline."
+  ],
+  "notes": "The caller requested that the enquiry/order request be sent to the team; the call ended after the agent said it was sent. This was not a confirmed order.",
+  "tags": [
+    "intent:purchase",
+    "intent:information",
+    "followup:callback",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards",
+    "custom:200-cards",
+    "custom:artwork-approval"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:41:12.497051Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_name": "రమణ",
+    "delivery_time": "3 working days after artwork approval",
+    "email": "ramesh.audit@example.invalid",
+    "location": "Vijayawada",
+    "phone": "+12025550118",
+    "price": "₹700",
+    "product": "matte-finish visiting cards",
+    "quantity": "200"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:200-cards",
+    "custom:matte-visiting-cards",
+    "followup:callback",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "f8bb1a51-d5b9-5cfe-a9f6-456895b45c34",
+    "agentId": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.98,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

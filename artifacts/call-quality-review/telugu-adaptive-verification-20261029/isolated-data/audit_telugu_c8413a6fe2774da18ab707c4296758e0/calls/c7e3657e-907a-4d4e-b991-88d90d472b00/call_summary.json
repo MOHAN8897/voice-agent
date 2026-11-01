@@ -1,0 +1,31 @@
+{
+  "call_id": "c7e3657e-907a-4d4e-b991-88d90d472b00",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller clearly requested a permanent opt-out and instructed the business never to call this number again. The agent acknowledged the request, thanked the caller, and ended the call. No further follow-up should be made.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+12025550117"
+  },
+  "facts": {
+    "phone": "+12025550117"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "outcome:not_interested",
+    "sentiment:negative",
+    "signal:do_not_call"
+  ],
+  "tags": [
+    "signal:do_not_call",
+    "sentiment:negative"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T15:43:09.110570Z",
+  "generation_ok": true
+}

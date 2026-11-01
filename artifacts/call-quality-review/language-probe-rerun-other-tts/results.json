@@ -1,0 +1,3691 @@
+[
+  {
+    "case": "en-IN/gemini/price",
+    "language": "en-IN",
+    "tts": "gemini",
+    "probe": "price",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Split AC servicing का कितना charge है?",
+        "reply": "Split AC servicing का charge five hundred and ninety nine rupees है। क्या आपको visit book करवानी है?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.83,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [
+          "indic_script_in_english_call"
+        ],
+        "warn": []
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 3,
+        "human_naturalness": 3,
+        "register": 3,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "wrong_language",
+          "quote": "Split AC servicing का charge",
+          "fix": "The requested language is Indian English; say it fully in Indian English, e.g. “Split AC servicing is 599 rupees.”"
+        },
+        {
+          "category": "number_or_time_readout",
+          "quote": "five hundred and ninety nine rupees",
+          "fix": "For phone clarity in Indian English, “five ninety-nine rupees” or “599 rupees” sounds more natural."
+        },
+        {
+          "category": "wrong_language",
+          "quote": "क्या आपको visit book करवानी है?",
+          "fix": "Use Indian English, e.g. “Would you like to book a visit?”"
+        }
+      ],
+      "verdict_note": "The price is correct and the reply is brief, but it mixes Hindi despite the target being Indian English. The amount is also read out less naturally for a phone call."
+    },
+    "passed": false
+  },
+  {
+    "case": "hi-IN/cartesia/frustration",
+    "language": "hi-IN",
+    "tts": "cartesia",
+    "probe": "frustration",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "मैंने simple question पूछा था, fridge inspection fee का straight answer दीजिए।",
+        "reply": "Fridge inspection की fee 250 rupees है। अगर आप repair करवाते हैं, तो ये charge waive off हो जाएगा। क्या और कुछ जानना है आपको?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.62,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "250 rupees",
+          "fix": "फोन पर हिंदी में ज़्यादा नैचुरल: “ढाई सौ रुपये” या “250 रुपये”।"
+        },
+        {
+          "category": "unnatural_phrasing",
+          "quote": "fee 250 rupees है",
+          "fix": "“fee ढाई सौ रुपये है” या “inspection charge ढाई सौ रुपये है” ज़्यादा बोलचाल जैसा है।"
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "क्या और कुछ जानना है आपको?",
+          "fix": "Caller ने straight answer माँगा था; इसे हटाकर जवाब खत्म करें।"
+        }
+      ],
+      "verdict_note": "जवाब तथ्यात्मक और छोटा है, लेकिन '250 rupees' और आख़िर का follow-up थोड़ा scripted लगता है, खासकर caller ने सीधा जवाब माँगा था।"
+    },
+    "passed": true
+  },
+  {
+    "case": "hi-IN/cartesia/greeting_check",
+    "language": "hi-IN",
+    "tts": "cartesia",
+    "probe": "greeting_check",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Hello, मेरी आवाज़ clear आ रही है? और ये कौन-सी company है?",
+        "reply": "हाँ, आवाज़ साफ़ आ रही है। मैं SmartCare Appliance Services से Suresh हूँ। बताइए, आज किस चीज़ में मदद करूँ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.58,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 5,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "unnatural_phrasing",
+          "quote": "मैं SmartCare Appliance Services से Suresh हूँ",
+          "fix": "हिंदी में नाम भी बोलें: “मैं SmartCare Appliance Services से सुरेश बोल रहा हूँ।”"
+        },
+        {
+          "category": "robotic_or_scripted",
+          "quote": "बताइए, आज किस चीज़ में मदद करूँ?",
+          "fix": "थोड़ा ज़्यादा नैचुरल: “जी, बताइए?” या “बताइए, कैसे मदद करूँ?”"
+        }
+      ],
+      "verdict_note": "जवाब सही और छोटा है, caller के दोनों सवालों का जवाब दे देता है। बस नाम का English-script/उच्चारण और आख़िरी लाइन थोड़ी scripted लगती है।"
+    },
+    "passed": true
+  },
+  {
+    "case": "hi-IN/cartesia/numbers",
+    "language": "hi-IN",
+    "tts": "cartesia",
+    "probe": "numbers",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "दो split AC और एक window AC की servicing का total कितना आएगा?",
+        "reply": "Split AC की servicing 599 rupees और window AC की 499 rupees है। तो दो split और एक window AC का total 1,797 rupees आएगा। क्या आप visit book करवाना चाहेंगे?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.84,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "heavy_english_mixing:26/95",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 3,
+        "human_naturalness": 3,
+        "register": 4,
+        "correctness": 1,
+        "helpfulness": 3,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "invented_fact",
+          "quote": "total 1,797 rupees आएगा",
+          "fix": "सही total 1,697 रुपये है: “तो दो split और एक window AC का total 1,697 रुपये आएगा।”"
+        },
+        {
+          "category": "number_or_time_readout",
+          "quote": "1,797 rupees",
+          "fix": "Phone पर साफ़ बोलें: “एक हज़ार छह सौ सत्तानवे रुपये” या “1697 रुपये” TTS-friendly तरीके से।"
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "क्या आप visit book करवाना चाहेंगे?",
+          "fix": "Caller ने सिर्फ total पूछा है; booking question हटाना बेहतर है, या बहुत हल्का रखें: “अगर visit चाहिए तो बता दीजिए।”"
+        },
+        {
+          "category": "unnatural_phrasing",
+          "quote": "599 rupees",
+          "fix": "Hindi call में “599 रुपये” या बोलकर “पाँच सौ निन्यानवे रुपये” ज़्यादा natural है।"
+        }
+      ],
+      "verdict_note": "जवाब का tone ठीक है, लेकिन total गलत है, जो सबसे बड़ा issue है. Pricing answer के बाद booking push भी ज़रूरत से ज़्यादा लगता है."
+    },
+    "passed": false
+  },
+  {
+    "case": "hi-IN/cartesia/price",
+    "language": "hi-IN",
+    "tts": "cartesia",
+    "probe": "price",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "स्प्लिट AC servicing का कितना charge है?",
+        "reply": "Split AC servicing का charge 599 rupees है। और कुछ जानकारी चाहिए आपको?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.99,
+        "sarvam_requests": 3
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "599 rupees",
+          "fix": "फोन पर हिंदी में ज़्यादा नैचुरल होगा: “पाँच सौ निन्यानवे रुपये” या “599 रुपये” TTS के हिसाब से सही पढ़वाएँ।"
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "और कुछ जानकारी चाहिए आपको?",
+          "fix": "अगर पूछा सिर्फ़ रेट था, तो जवाब यहीं खत्म कर सकते हैं या हल्का सा: “बस।” नहीं; बेहतर: “Split AC servicing 599 रुपये है।”"
+        }
+      ],
+      "verdict_note": "जवाब सही और छोटा है, लेकिन देवनागरी हिंदी में 'rupees' थोड़ा अटपटा लगेगा और अंत का सवाल थोड़ा अनावश्यक है।"
+    },
+    "passed": true
+  },
+  {
+    "case": "hi-IN/cartesia/time_request",
+    "language": "hi-IN",
+    "tts": "cartesia",
+    "probe": "time_request",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "मेरा fridge cooling नहीं कर रहा। क्या technician कल morning 10:30 पर आ सकता है?",
+        "reply": "Fridge की inspection 250 rupees की होती है, लेकिन अगर आप repair करवाते हैं तो ये charge waive हो जाएगा। हमारी service Madhapur, Gachibowli, Kondapur और Kukatpally में available है। कल 10:30 AM का slot next-day visit में आ जाएगा। आप किस area से बोल रहे हैं?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.91,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [
+          "too_many_sentences:4"
+        ],
+        "warn": [
+          "over_soft_length:256",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 4,
+        "helpfulness": 4,
+        "brevity": 3
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "250 rupees",
+          "fix": "“दो सौ पचास रुपये” या “टू फिफ्टी” बोलें; हिंदी वाक्य में digits जैसा पढ़ना TTS पर अटपटा लग सकता है।"
+        },
+        {
+          "category": "number_or_time_readout",
+          "quote": "10:30 AM",
+          "fix": "“सुबह साढ़े दस” कहना ज़्यादा natural है।"
+        },
+        {
+          "category": "too_long",
+          "quote": "Fridge की inspection 250 rupees की होती है... आप किस area से बोल रहे हैं?",
+          "fix": "पहले सीधे slot और area पूछें; pricing को छोटा रखें या बाद में बताएं।"
+        },
+        {
+          "category": "other",
+          "quote": "कल 10:30 AM का slot next-day visit में आ जाएगा।",
+          "fix": "Business facts के हिसाब से next-day slots 10 AM से 6 PM हैं, पर confirmation team करेगी; बेहतर: “कल सुबह साढ़े दस का request ले लेता हूँ, team confirm कर देगी।”"
+        }
+      ],
+      "verdict_note": "Reply mostly fits Hindi-English phone style and gives correct inspection price and service areas. However, it sounds a bit scripted/long, time and price readout are not very TTS-friendly, and it implies the 10:30 slot is available rather than taking it as a request for confirmation."
+    },
+    "passed": false
+  },
+  {
+    "case": "hi-IN/gemini/frustration",
+    "language": "hi-IN",
+    "tts": "gemini",
+    "probe": "frustration",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "मैंने simple question पूछा था, fridge inspection fee का straight answer दीजिए।",
+        "reply": "Fridge inspection का charge 250 rupees है। अगर आप repair करवा लेते हैं, तो ये charge waive हो जाएगा। क्या और कुछ जानना है आपको?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.56,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 3,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "unnatural_phrasing",
+          "quote": "250 rupees",
+          "fix": "फोन पर हिंदी में ज़्यादा natural: \"ढाई सौ रुपये\" या \"250 रुपये\" कहें।"
+        },
+        {
+          "category": "robotic_or_scripted",
+          "quote": "क्या और कुछ जानना है आपको?",
+          "fix": "Caller ने straight answer मांगा था; इसे हटाकर छोटा जवाब रखें, जैसे: \"Fridge inspection ढाई सौ रुपये है; repair करवाने पर ये charge waive हो जाता है.\""
+        }
+      ],
+      "verdict_note": "जवाब factually सही और छोटा है, लेकिन आख़िर में पूछा गया सवाल थोड़ा scripted लगता है, खासकर caller के tone के बाद।"
+    },
+    "passed": false
+  },
+  {
+    "case": "hi-IN/gemini/greeting_check",
+    "language": "hi-IN",
+    "tts": "gemini",
+    "probe": "greeting_check",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Hello, मेरी आवाज़ clear आ रही है? और ये कौन-सी company है?",
+        "reply": "हाँ, आवाज़ clear आ रही है। मैं SmartCare Appliance Services से Suresh हूँ। बताइए, आज क्या जानकारी चाहिए आपको?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.47,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 4,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 5,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "robotic_or_scripted",
+          "quote": "बताइए, आज क्या जानकारी चाहिए आपको?",
+          "fix": "थोड़ा ज़्यादा स्वाभाविक: “जी, बताइए?” या “आप बताइए, कैसे मदद करूँ?”"
+        }
+      ],
+      "verdict_note": "जवाब सही भाषा में है, caller के दोनों सवालों का सीधा जवाब देता है, और छोटा है। बस आख़िरी लाइन थोड़ी scripted लगती है, लेकिन phone call के हिसाब से acceptable है।"
+    },
+    "passed": true
+  },
+  {
+    "case": "hi-IN/gemini/numbers",
+    "language": "hi-IN",
+    "tts": "gemini",
+    "probe": "numbers",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "दो split AC और एक window AC की servicing का total कितना आएगा?",
+        "reply": "Split AC की servicing 599 rupees और window AC की 499 rupees है। तो दो split और एक window का total 1,797 rupees आएगा। क्या आप visit book करवाना चाहेंगे?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.59,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "heavy_english_mixing:26/93",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "1,797 rupees",
+          "fix": "फोन पर हिंदी में ज़्यादा स्वाभाविक: “एक हज़ार सात सौ सत्तानवे रुपये” या “seventeen ninety-seven रुपये”।"
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "क्या आप visit book करवाना चाहेंगे?",
+          "fix": "सवाल सिर्फ़ total का था; बेहतर है पहले जवाब देकर रुकें, या बहुत हल्का: “अगर चाहें तो visit भी book कर सकते हैं।”"
+        }
+      ],
+      "verdict_note": "जवाब सही है और काफ़ी स्वाभाविक है। कीमत और कुल रकम सही हैं, लेकिन TTS के लिए संख्या पढ़ना थोड़ा अटपटा हो सकता है और अंत में booking push थोड़ा अनावश्यक लगता है।"
+    },
+    "passed": false
+  },
+  {
+    "case": "hi-IN/gemini/price",
+    "language": "hi-IN",
+    "tts": "gemini",
+    "probe": "price",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "स्प्लिट AC servicing का कितना charge है?",
+        "reply": "Split AC servicing का charge 599 rupees है। बताइए, और कुछ जानकारी चाहिए आपको?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.55,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "599 rupees",
+          "fix": "फोन पर हिंदी में ज़्यादा नैचुरल: “पाँच सौ निन्यानवे रुपये” या “फाइव नाइंटी नाइन रुपये” कहें।"
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "बताइए, और कुछ जानकारी चाहिए आपको?",
+          "fix": "सीधा जवाब काफी है; अगर जोड़ना हो तो छोटा रखें: “Split AC servicing 599 रुपये है।”"
+        }
+      ],
+      "verdict_note": "जवाब तथ्यात्मक और छोटा है, लेकिन हिंदी कॉल में “599 rupees” थोड़ा लिखित/अनैचुरल लग सकता है। आख़िर का सवाल ज़रूरी नहीं था, हालांकि बहुत बाधक नहीं है।"
+    },
+    "passed": true
+  },
+  {
+    "case": "hi-IN/gemini/time_request",
+    "language": "hi-IN",
+    "tts": "gemini",
+    "probe": "time_request",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "मेरा fridge cooling नहीं कर रहा। क्या technician कल morning 10:30 पर आ सकता है?",
+        "reply": "Fridge inspection का charge 250 rupees है, लेकिन अगर आप repair करवाते हैं तो ये charge waive हो जाएगा। कल 10:30 AM का slot next-day visit के लिए available है। बस ये confirm करना था कि आप Madhapur, Gachibowli, Kondapur या Kukatpally में ही रहते हैं ना?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.66,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "over_soft_length:251",
+          "three_sentences",
+          "heavy_english_mixing:46/161",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 3,
+        "register": 4,
+        "correctness": 2,
+        "helpfulness": 3,
+        "brevity": 3
+      },
+      "issues": [
+        {
+          "category": "invented_fact",
+          "quote": "कल 10:30 AM का slot next-day visit के लिए available है।",
+          "fix": "Availability पक्की बताने के बजाय कहें: “कल सुबह साढ़े दस का request ले सकता हूँ; team confirm करेगी.”"
+        },
+        {
+          "category": "missed_question",
+          "quote": "बस ये confirm करना था कि आप Madhapur, Gachibowli, Kondapur या Kukatpally में ही रहते हैं ना?",
+          "fix": "Visit के लिए locality के साथ नाम, appliance/issue और preferred slot भी लेना चाहिए: “आपका नाम और locality बता दीजिए, मैं request आगे भेज देता हूँ.”"
+        },
+        {
+          "category": "number_or_time_readout",
+          "quote": "10:30 AM",
+          "fix": "फोन पर हिंदी में ज़्यादा natural: “सुबह साढ़े दस”."
+        }
+      ],
+      "verdict_note": "Reply mostly natural Hindi-English code-mix है, लेकिन slot को confirmed available बताना business facts के खिलाफ है; सिर्फ request लेकर team confirmation कहना चाहिए था."
+    },
+    "passed": false
+  },
+  {
+    "case": "hi-IN/gnani/frustration",
+    "language": "hi-IN",
+    "tts": "gnani",
+    "probe": "frustration",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "मैंने simple question पूछा था, fridge inspection fee का straight answer दीजिए।",
+        "reply": "Fridge inspection का charge 250 rupees है। लेकिन अगर आप repair करवाते हैं, तो ये inspection charge waive off हो जाएगा। क्या और कुछ जानना है आपको?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.66,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 4,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "unneeded_sales_push",
+          "quote": "क्या और कुछ जानना है आपको?",
+          "fix": "Caller ने straight answer मांगा था; जवाब fee और waiver तक ही रखें, या बहुत हल्का 'जी' पर खत्म करें।"
+        }
+      ],
+      "verdict_note": "जवाब सही, natural Hinglish में है और facts match करते हैं। बस caller के tone को देखते हुए अंत में extra question थोड़ा unnecessary लगता है।"
+    },
+    "passed": true
+  },
+  {
+    "case": "hi-IN/gnani/greeting_check",
+    "language": "hi-IN",
+    "tts": "gnani",
+    "probe": "greeting_check",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Hello, मेरी आवाज़ clear आ रही है? और ये कौन-सी company है?",
+        "reply": "हाँ, आवाज़ बिल्कुल clear आ रही है। मैं SmartCare Appliance Services से Suresh बात कर रहा हूँ। बताइए, आज क्या जानकारी चाहिए आपको?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.67,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 4,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "robotic_or_scripted",
+          "quote": "बताइए, आज क्या जानकारी चाहिए आपको?",
+          "fix": "थोड़ा ज़्यादा natural: “जी, बताइए?” या “कहिए, क्या जानना था?”"
+        }
+      ],
+      "verdict_note": "Reply Hindi-English code-mix में natural है, caller के दोनों सवालों का जवाब देता है, और facts सही हैं। आख़िरी लाइन थोड़ी scripted लगती है but acceptable for a phone receptionist."
+    },
+    "passed": true
+  },
+  {
+    "case": "hi-IN/gnani/numbers",
+    "language": "hi-IN",
+    "tts": "gnani",
+    "probe": "numbers",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "दो split AC और एक window AC की servicing का total कितना आएगा?",
+        "reply": "Split AC की servicing 599 rupees और window AC की 499 rupees है। तो दो split और एक window AC का total 1,697 rupees आएगा। क्या आप visit book करवाना चाहेंगे?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 1.22,
+        "sarvam_requests": 3
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "heavy_english_mixing:26/95",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "1,697 rupees",
+          "fix": "TTS के लिए 'एक हज़ार छह सौ सत्तानवे रुपये' या बोलचाल में 'सोलह सौ सत्तानवे रुपये' कहें।"
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "क्या आप visit book करवाना चाहेंगे?",
+          "fix": "अगर caller ने सिर्फ total पूछा है, तो answer के बाद रुकना बेहतर है; चाहें तो हल्का सा 'बुकिंग चाहिए तो बता दीजिए' कह सकते हैं।"
+        }
+      ],
+      "verdict_note": "जवाब सही है और हिसाब भी ठीक है। भाषा natural Hindi-English mix है, लेकिन amount digits में TTS पर अटपटा हो सकता है और अंत में booking push थोड़ा unnecessary लगता है।"
+    },
+    "passed": false
+  },
+  {
+    "case": "hi-IN/gnani/price",
+    "language": "hi-IN",
+    "tts": "gnani",
+    "probe": "price",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "स्प्लिट AC servicing का कितना charge है?",
+        "reply": "Split AC servicing का charge 599 rupees है। और कुछ जानकारी चाहिए आपको?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.52,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 5,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "599 rupees",
+          "fix": "फोन पर हिंदी में ज़्यादा नैचुरल होगा: “पाँच सौ निन्यानवे रुपये” या “599 रुपये” को TTS सही तरह पढ़े तो ठीक है।"
+        },
+        {
+          "category": "unnatural_phrasing",
+          "quote": "servicing का charge",
+          "fix": "थोड़ा ज़्यादा बोलचाल का: “Split AC servicing के 599 रुपये लगेंगे।”"
+        }
+      ],
+      "verdict_note": "जवाब सही, छोटा और काम का है। बस हिंदी कॉल के हिसाब से कीमत और phrasing थोड़ा और नैचुरल हो सकती थी।"
+    },
+    "passed": true
+  },
+  {
+    "case": "hi-IN/gnani/time_request",
+    "language": "hi-IN",
+    "tts": "gnani",
+    "probe": "time_request",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "मेरा fridge cooling नहीं कर रहा। क्या technician कल morning 10:30 पर आ सकता है?",
+        "reply": "Fridge inspection का charge 250 rupees है, लेकिन अगर आप repair करवाते हैं तो ये charge waive हो जाएगा। हम Madhapur, Gachibowli, Kondapur और Kukatpally में service देते हैं, तो कल 10:30 AM का slot next-day visit के लिए note कर लेते हैं। क्या आप इन्हीं areas में रहते हैं?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 1.17,
+        "sarvam_requests": 3
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "over_soft_length:270",
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 3,
+        "register": 4,
+        "correctness": 3,
+        "helpfulness": 3,
+        "brevity": 2
+      },
+      "issues": [
+        {
+          "category": "missed_question",
+          "quote": "तो कल 10:30 AM का slot next-day visit के लिए note कर लेते हैं",
+          "fix": "पहले locality पूछनी चाहिए, क्योंकि service सिर्फ कुछ areas में है; slot note करने से पहले confirm करें।"
+        },
+        {
+          "category": "invented_fact",
+          "quote": "कल 10:30 AM का slot ... note कर लेते हैं",
+          "fix": "Business facts में visits next-day slots 10 AM से 6 PM हैं, लेकिन exact 10:30 availability confirm नहीं है; कहना चाहिए 'मैं request डाल देता हूँ, team confirm करेगी'।"
+        },
+        {
+          "category": "too_long",
+          "quote": "Fridge inspection का charge 250 rupees है... क्या आप इन्हीं areas में रहते हैं?",
+          "fix": "फोन के लिए छोटा रखें: 'कल 10:30 की request डाल सकता हूँ, team confirm करेगी. आप Madhapur/Gachibowli/Kondapur/Kukatpally में से किस locality में हैं?' "
+        },
+        {
+          "category": "number_or_time_readout",
+          "quote": "10:30 AM",
+          "fix": "Hindi call में 'सुबह साढ़े दस' ज़्यादा natural है।"
+        },
+        {
+          "category": "robotic_or_scripted",
+          "quote": "next-day visit के लिए note कर लेते हैं",
+          "fix": "ज़्यादा बोलचाल जैसा करें: 'कल के लिए request डाल देता हूँ'।"
+        }
+      ],
+      "verdict_note": "जवाब में सही pricing बताई गई है, लेकिन caller ने visit timing पूछा था; exact slot confirm करने जैसा बोल दिया जबकि team confirmation जरूरी है। पहले service area/locality पूछना चाहिए था और reply छोटा हो सकता था।"
+    },
+    "passed": false
+  },
+  {
+    "case": "kn-IN/cartesia/frustration",
+    "language": "kn-IN",
+    "tts": "cartesia",
+    "probe": "frustration",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "ನಾನು simple question ಕೇಳಿದ್ದೀನಿ, please straight answer ಕೊಡಿ. Fridge inspection fee ಎಷ್ಟು?",
+        "reply": "Fridge inspection-ಗೆ 250 rupees ಆಗುತ್ತೆ. ಒಂದು ವೇಳೆ ನೀವು repair ಮಾಡಿಸಿದ್ರೆ, ಆ inspection charge waive off ಆಗುತ್ತೆ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.55,
+        "sarvam_requests": 1
+      },
+      {
+        "caller": "ಯಾಕೆ ಇಷ್ಟು delay? Fridge inspectionಗೆ exact fee ಎಷ್ಟು ಅಂತ straight ಆಗಿ ಹೇಳಿ.",
+        "reply": "ಕ್ಷಮಿಸಿ, ಸ್ವಲ್ಪ confusion ಆಯ್ತು ಅನ್ಸುತ್ತೆ. Fridge inspection fee 250 rupees ಇದೆ. Repair ಮುಂದುವರಿಸಿದ್ರೆ ಆ charge waive off ಆಗುತ್ತೆ. ಇನ್ನೇನಾದ್ರೂ ಕೇಳ್ಬೇಕಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.56,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      },
+      {
+        "hard": [
+          "too_many_sentences:4"
+        ],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 3,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 3,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "robotic_or_scripted",
+          "quote": "ಕ್ಷಮಿಸಿ, ಸ್ವಲ್ಪ confusion ಆಯ್ತು ಅನ್ಸುತ್ತೆ.",
+          "fix": "Caller straight answer ಕೇಳಿದ್ದಾರೆ; apology/confusion ಬೇಡ. ನೇರವಾಗಿ: \"Fridge inspection fee 250 rupees.\""
+        },
+        {
+          "category": "missed_question",
+          "quote": "Repair ಮುಂದುವರಿಸಿದ್ರೆ ಆ charge waive off ಆಗುತ್ತೆ. ಇನ್ನೇನಾದ್ರೂ ಕೇಳ್ಬೇಕಾ?",
+          "fix": "Exact fee ಮಾತ್ರ ಕೇಳಿದಾಗ ಮೊದಲು/ಮಾತ್ರ ನೇರ ಉತ್ತರ ಕೊಡಿ; ಬೇಕಾದರೆ waive info ಒಂದು ಚಿಕ್ಕ ವಾಕ್ಯದಲ್ಲಿ ಹೇಳಿ, ಕೊನೆಯಲ್ಲಿ ಪ್ರಶ್ನೆ ಸೇರಿಸಬೇಡಿ."
+        }
+      ],
+      "verdict_note": "Correct facts and mostly natural Kannada-English mix, but the caller explicitly asked for a straight exact fee, so the apology and extra closing question feel scripted and less helpful. Better: “Fridge inspection fee 250 rupees. Repair ಮಾಡಿಸಿದ್ರೆ ಆ fee waive ಆಗುತ್ತೆ.”"
+    },
+    "passed": false
+  },
+  {
+    "case": "kn-IN/cartesia/greeting_check",
+    "language": "kn-IN",
+    "tts": "cartesia",
+    "probe": "greeting_check",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Hello, ನನ್ನ voice ಕೇಳಿಸ್ತಿದೆಯಾ? ಇದು ಯಾವ company?",
+        "reply": "ಹೌದು, ನಿಮ್ಮ voice clear ಆಗಿ ಕೇಳಿಸ್ತಿದೆ. ನಾನು SmartCare Appliance Services ಇಂದ ಸುರೇಶ್ ಮಾತಾಡ್ತಿದ್ದೀನಿ. ನಿಮಗೆ ಯಾವ ರೀತಿ ಸಹಾಯ ಮಾಡಲಿ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.58,
+        "sarvam_requests": 1
+      },
+      {
+        "caller": "Hi, ನೀವು ನನ್ನನ್ನು hear ಮಾಡ್ತಿದ್ದೀರಾ? ನಿಮ್ಮ company name ಏನು?",
+        "reply": "ಹೌದು, ನಾನು ನಿಮ್ಮನ್ನ clear ಆಗಿ ಕೇಳಿಸ್ತಾ ಇದೀನಿ. ನಾನು SmartCare Appliance Services ಇಂದ ಸುರೇಶ್. ನಿಮಗೆ ಯಾವ details ಬೇಕಿತ್ತು?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.53,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      },
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "missed_question",
+          "quote": "ನಿಮಗೆ ಯಾವ details ಬೇಕಿತ್ತು?",
+          "fix": "Caller asked only whether they’re audible and the company name; after answering, a softer prompt like “ಹೇಳಿ” is enough, or no extra question needed."
+        },
+        {
+          "category": "unnatural_phrasing",
+          "quote": "ನಾನು ನಿಮ್ಮನ್ನ clear ಆಗಿ ಕೇಳಿಸ್ತಾ ಇದೀನಿ",
+          "fix": "More natural: “ನಿಮ್ಮ voice clear ಆಗಿ ಕೇಳಿಸ್ತಿದೆ” or “ಹೌದು, clear ಆಗಿ ಕೇಳಿಸ್ತಿದೆ.”"
+        }
+      ],
+      "verdict_note": "Mostly natural Kannada-English phone speech and factually correct. Slightly repetitive/less natural phrasing, and the added details question is not necessary for the caller’s specific ask."
+    },
+    "passed": true
+  },
+  {
+    "case": "kn-IN/cartesia/numbers",
+    "language": "kn-IN",
+    "tts": "cartesia",
+    "probe": "numbers",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "ಎರಡು split ACಗಳು ಮತ್ತು ಒಂದು window AC service ಮಾಡಿದರೆ total ಎಷ್ಟು?",
+        "reply": "Split AC service-ಗೆ 599 rupees ಆಗುತ್ತೆ, ಮತ್ತೆ window AC-ಗೆ 499 rupees ಆಗುತ್ತೆ. So, ಎರಡು split AC ಮತ್ತೆ ಒಂದು window AC-ಗೆ total 1,697 rupees ಆಗುತ್ತೆ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 1.05,
+        "sarvam_requests": 3
+      },
+      {
+        "caller": "ಎರಡು split ಮತ್ತು ಒಂದು window ACಗಳ service charges ಸೇರಿಸಿ total ಹೇಳಿ.",
+        "reply": "ಎರಡು split AC-ಗೆ 599 rupees ತರಹ, ಅಂದ್ರೆ 1,198 rupees ಆಗುತ್ತೆ, ಮತ್ತೆ ಒಂದು window AC-ಗೆ 499 rupees ಸೇರಿಸಿ total 1,697 rupees ಆಗುತ್ತೆ. ಬೇರೆ ಏನಾದ್ರೂ ಮಾಹಿತಿ ಬೇಕಿತ್ತಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.89,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      },
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 3,
+        "human_naturalness": 3,
+        "register": 3,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 3
+      },
+      "issues": [
+        {
+          "category": "unnatural_phrasing",
+          "quote": "599 rupees ತರಹ",
+          "fix": "“ಒಂದಕ್ಕೆ 599 rupees” ಅಥವಾ “ಪ್ರತಿ split ACಗೆ 599 rupees” ಎಂದು ಹೇಳಿ."
+        },
+        {
+          "category": "too_long",
+          "quote": "ಎರಡು split AC-ಗೆ 599 rupees ತರಹ, ಅಂದ್ರೆ 1,198 rupees ಆಗುತ್ತೆ, ಮತ್ತೆ ಒಂದು window AC-ಗೆ 499 rupees ಸೇರಿಸಿ total 1,697 rupees ಆಗುತ್ತೆ.",
+          "fix": "Caller total ಮಾತ್ರ ಕೇಳಿದ್ದಾರೆ; “Total 1,697 rupees ಆಗುತ್ತೆ” ಸಾಕು."
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "ಬೇರೆ ಏನಾದ್ರೂ ಮಾಹಿತಿ ಬೇಕಿತ್ತಾ?",
+          "fix": "ಈ ಉತ್ತರದಲ್ಲಿ extra question ಬೇಡ; ಇಲ್ಲವಾದರೆ ಚಿಕ್ಕದಾಗಿ “ಇಷ್ಟೇ charge ಆಗುತ್ತೆ” ಎಂದು ಮುಗಿಸಿ."
+        },
+        {
+          "category": "number_or_time_readout",
+          "quote": "1,198 rupees / 1,697 rupees",
+          "fix": "TTSಗಾಗಿ “one thousand one hundred ninety eight rupees” / “one thousand six hundred ninety seven rupees” ಅಥವಾ ಸಹಜವಾಗಿ “ಹನ್ನೊಂದು ನೂರು ತೊಂಬತ್ತೆಂಟು ರೂಪಾಯಿ” / “ಹದಿನಾರು ನೂರು ತೊಂಬತ್ತೇಳು ರೂಪಾಯಿ” ಎಂದು ಬರೆಯಿರಿ."
+        }
+      ],
+      "verdict_note": "ಲೆಕ್ಕ ಸರಿಯಾಗಿದೆ ಮತ್ತು ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಇದೆ, ಆದರೆ Kannada phrasing ಸ್ವಲ್ಪ awkward ಆಗಿದೆ. Caller ಈಗಾಗಲೇ total ಕೇಳಿದ್ದರಿಂದ ಲೆಕ್ಕದ ವಿವರ ಪುನರಾವರ್ತನೆ ಮತ್ತು ಕೊನೆಯ follow-up ಬೇಡ."
+    },
+    "passed": false
+  },
+  {
+    "case": "kn-IN/cartesia/price",
+    "language": "kn-IN",
+    "tts": "cartesia",
+    "probe": "price",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "ಸ್ಪ್ಲಿಟ್ AC servicing ಗೆ ಎಷ್ಟು cost ಆಗುತ್ತೆ?",
+        "reply": "ಸ್ಪ್ಲಿಟ್ AC servicing-ಗೆ 599 rupees ಆಗುತ್ತೆ. ನಿಮಗೆ visit ಏನಾದ್ರೂ schedule ಮಾಡ್ಬೇಕಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 1.01,
+        "sarvam_requests": 3
+      },
+      {
+        "caller": "ನನ್ನ split AC ಗೆ service ಮಾಡಿಸಬೇಕು, charges ಎಷ್ಟು?",
+        "reply": "ಖಂಡಿತ, split AC servicing-ಗೆ 599 rupees ಆಗುತ್ತೆ. ನಿಮ್ಮ area Madhapur, Gachibowli, Kondapur ಅಥವಾ Kukatpally-ಅಲ್ಲಿ ಇದೆಯಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 1.14,
+        "sarvam_requests": 3
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      },
+      {
+        "hard": [],
+        "warn": [
+          "heavy_english_mixing:20/82",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 4,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 5,
+        "brevity": 5
+      },
+      "issues": [],
+      "verdict_note": "ಸ್ಪಷ್ಟವಾಗಿ charge ಹೇಳಿದೆ ಮತ್ತು service area confirm ಮಾಡುತ್ತಿದೆ. ಕನ್ನಡ-ಇಂಗ್ಲಿಷ್ mix ಸಹಜವಾಗಿದೆ; phone call‌ಗೆ ಚಿಕ್ಕದಾಗಿ ಸರಿಯಾಗಿದೆ."
+    },
+    "passed": true
+  },
+  {
+    "case": "kn-IN/cartesia/time_request",
+    "language": "kn-IN",
+    "tts": "cartesia",
+    "probe": "time_request",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Cooling ಆಗದ ನನ್ನ fridgeಗೆ ನಾಳೆ morning 10:30ಕ್ಕೆ technician ಬರಬಹುದಾ?",
+        "reply": "Fridge inspection-ಗೆ 250 rupees ಆಗುತ್ತೆ, ಆದ್ರೆ ನೀವು repair ಮಾಡಿಸಿದ್ರೆ ಆ charge waive off ಆಗುತ್ತೆ. Madhapur, Gachibowli, Kondapur ಅಥವಾ Kukatpally area-ದಲ್ಲಿ ಮಾತ್ರ ನಾವು service ಕೊಡ್ತೀವಿ, so ನಾಳೆ 10:30 AM slot-ಗೆ visit arrange ಮಾಡಬಹುದು. ನಿಮ್ಮ ಹೆಸರು ಹೇಳ್ತೀರಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 1.09,
+        "sarvam_requests": 3
+      },
+      {
+        "caller": "ನನ್ನ fridge cool ಆಗ್ತಿಲ್ಲ. ನಾಳೆ ಬೆಳಗ್ಗೆ 10:30ಕ್ಕೆ visit ಮಾಡೋಕೆ ಆಗುತ್ತಾ?",
+        "reply": "ಹೌದು, ನಾಳೆ ಬೆಳಗ್ಗೆ 10:30 AM slot-ಗೆ visit arrange ಮಾಡಬಹುದು. ನಿಮ್ಮ ಹೆಸರು ಹೇಳ್ತೀರಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.53,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "over_soft_length:255",
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      },
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 3,
+        "helpfulness": 4,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "invented_fact",
+          "quote": "10:30 AM slot-ಗೆ visit arrange ಮಾಡಬಹುದು",
+          "fix": "Exact 10:30 confirmation should not be promised; say next-day visits are between 10 AM and 6 PM and team will confirm the slot."
+        },
+        {
+          "category": "number_or_time_readout",
+          "quote": "10:30 AM",
+          "fix": "For spoken Kannada, use “ಹತ್ತು ಮೂವತ್ತು” or “ಬೆಳಗ್ಗೆ ಹತ್ತು ಮೂವತ್ತಕ್ಕೆ” instead of reading “10:30 AM”."
+        },
+        {
+          "category": "other",
+          "quote": "visit arrange ಮಾಡಬಹುದು",
+          "fix": "More natural: “visit book ಮಾಡಬಹುದು” or “technician ಕಳಿಸಬಹುದು, slot team confirm ಮಾಡ್ತಾರೆ.”"
+        }
+      ],
+      "verdict_note": "Kannada-English mix is mostly natural and brief, but it overpromises an exact appointment time even though only next-day slots between 10 AM and 6 PM are available and same-day/exact slots need confirmation."
+    },
+    "passed": false
+  },
+  {
+    "case": "kn-IN/gemini/frustration",
+    "language": "kn-IN",
+    "tts": "gemini",
+    "probe": "frustration",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "ನಾನು simple question ಕೇಳಿದ್ದೀನಿ, please straight answer ಕೊಡಿ. Fridge inspection fee ಎಷ್ಟು?",
+        "reply": "Fridge inspection-ಗೆ 250 rupees ಆಗುತ್ತೆ. ಒಂದು ವೇಳೆ ನೀವು repair ಮಾಡಿಸಿದ್ರೆ, ಆ inspection charge waive off ಆಗುತ್ತೆ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಿತ್ತಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.66,
+        "sarvam_requests": 1
+      },
+      {
+        "caller": "ಯಾಕೆ ಇಷ್ಟು delay? Fridge inspectionಗೆ exact fee ಎಷ್ಟು ಅಂತ straight ಆಗಿ ಹೇಳಿ.",
+        "reply": "Sorry, ಸ್ವಲ್ಪ delay ಆಯ್ತು. Fridge inspection-ಗೆ exact fee 250 rupees. ಬೇರೆ ಏನಾದ್ರೂ ಮಾಹಿತಿ ಬೇಕಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.69,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      },
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 3,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "robotic_or_scripted",
+          "quote": "ಬೇರೆ ಏನಾದ್ರೂ ಮಾಹಿತಿ ಬೇಕಾ?",
+          "fix": "Caller asked for a straight answer; stop after the fee, or say: “ಅಷ್ಟೇ, 250 rupees.”"
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "ಬೇರೆ ಏನಾದ್ರೂ ಮಾಹಿತಿ ಬೇಕಾ?",
+          "fix": "Don’t append an extra question when the caller specifically asked for an exact fee."
+        }
+      ],
+      "verdict_note": "Correct and brief, with natural Kannada-English mixing. But after a caller explicitly asks for a straight answer, the extra closing question feels scripted and slightly unhelpful."
+    },
+    "passed": false
+  },
+  {
+    "case": "kn-IN/gemini/greeting_check",
+    "language": "kn-IN",
+    "tts": "gemini",
+    "probe": "greeting_check",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Hello, ನನ್ನ voice ಕೇಳಿಸ್ತಿದೆಯಾ? ಇದು ಯಾವ company?",
+        "reply": "ಹೌದು, ನಿಮ್ಮ voice clear ಆಗಿ ಕೇಳಿಸ್ತಿದೆ. ನಾನು SmartCare Appliance Services ಇಂದ ಸುರೇಶ್. ನಿಮಗೆ ಯಾವ details ಬೇಕಿತ್ತು?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 1.22,
+        "sarvam_requests": 3
+      },
+      {
+        "caller": "Hi, ನೀವು ನನ್ನನ್ನು hear ಮಾಡ್ತಿದ್ದೀರಾ? ನಿಮ್ಮ company name ಏನು?",
+        "reply": "ಹೌದು, ನಾನು ಕೇಳಿಸ್ತಾ ಇದ್ದೀನಿ. ನಾನು SmartCare Appliance Services ಇಂದ ಸುರೇಶ್. ನಿಮ್ಮ ಹತ್ರ ಯಾವ service ಬಗ್ಗೆ details ಬೇಕಿತ್ತು?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 1.94,
+        "sarvam_requests": 3
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      },
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "unnatural_phrasing",
+          "quote": "ನಾನು ಕೇಳಿಸ್ತಾ ಇದ್ದೀನಿ",
+          "fix": "“ನಿಮ್ಮ ಮಾತು ಕೇಳಿಸ್ತಿದೆ” ಅಥವಾ “ಹೌದು, ಕೇಳಿಸ್ತಿದೆ” ಅಂದು ಹೇಳುವುದು ಹೆಚ್ಚು ಸಹಜ."
+        },
+        {
+          "category": "unnatural_phrasing",
+          "quote": "ನಿಮ್ಮ ಹತ್ರ ಯಾವ service ಬಗ್ಗೆ details ಬೇಕಿತ್ತು?",
+          "fix": "“ಯಾವ ಸರ್ವಿಸ್ ಬಗ್ಗೆ ತಿಳ್ಕೊಳ್ಳಬೇಕು?” ಅಥವಾ “ಯಾವ appliance service ಬೇಕು?” ಎಂದು ಹೆಚ್ಚು ಸಹಜವಾಗಿ ಹೇಳಿ."
+        }
+      ],
+      "verdict_note": "Correctly confirms audibility and gives company/name. Kannada-English mix is acceptable, but a couple of phrases sound slightly translated/awkward for spoken Kannada."
+    },
+    "passed": true
+  },
+  {
+    "case": "kn-IN/gemini/numbers",
+    "language": "kn-IN",
+    "tts": "gemini",
+    "probe": "numbers",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "ಎರಡು split ACಗಳು ಮತ್ತು ಒಂದು window AC service ಮಾಡಿದರೆ total ಎಷ್ಟು?",
+        "reply": "ಒಂದು split AC service-ಗೆ 599 rupees ಆಗುತ್ತೆ, ಮತ್ತೆ window AC-ಗೆ 499 rupees ಆಗುತ್ತೆ. So, ಎರಡು split AC ಮತ್ತೆ ಒಂದು window AC-ಗೆ total 1797 rupees ಆಗುತ್ತೆ. ನಿಮ್ಮ service area Madhapur, Gachibowli, Kondapur ಅಥವಾ Kukatpally-ನಲ್ಲಿ ಇದೆಯಾ ಅಂತ confirm ಮಾಡ್ತೀರಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 1.88,
+        "sarvam_requests": 4
+      },
+      {
+        "caller": "ಎರಡು split ಮತ್ತು ಒಂದು window ACಗಳ service charges ಸೇರಿಸಿ total ಹೇಳಿ.",
+        "reply": "ಎರಡು split AC ಮತ್ತೆ ಒಂದು window AC service-ಗೆ total 1797 rupees ಆಗುತ್ತೆ. ನಮ್ಮ service Madhapur, Gachibowli, Kondapur ಮತ್ತು Kukatpally area-ಗಳಲ್ಲಿ ಮಾತ್ರ ಇದೆ. ನೀವು ಈ area-ದಲ್ಲಿ ಇದ್ದೀರಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 1.41,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "over_soft_length:252",
+          "three_sentences",
+          "heavy_english_mixing:46/162",
+          "digits_reach_tts"
+        ]
+      },
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 3,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 3,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "unnatural_phrasing",
+          "quote": "ಎರಡು split AC ಮತ್ತೆ ಒಂದು window AC service-ಗೆ",
+          "fix": "ಎರಡು split AC ಮತ್ತು ಒಂದು window AC servicing ಸೇರಿ"
+        },
+        {
+          "category": "missed_question",
+          "quote": "ನಮ್ಮ service Madhapur, Gachibowli, Kondapur ಮತ್ತು Kukatpally area-ಗಳಲ್ಲಿ ಮಾತ್ರ ಇದೆ. ನೀವು ಈ area-ದಲ್ಲಿ ಇದ್ದೀರಾ?",
+          "fix": "Caller asked only to repeat the total; answer the total first and avoid adding an area question unless booking is being discussed."
+        },
+        {
+          "category": "number_or_time_readout",
+          "quote": "1797 rupees",
+          "fix": "TTS-friendly Kannada/English spoken form: “ಒಂದು ಸಾವಿರ ಏಳು ನೂರು ತೊಂಬತ್ತೇಳು ರೂಪಾಯಿ” or “seventeen ninety-seven rupees”."
+        }
+      ],
+      "verdict_note": "The amount is correct and the Kannada-English mix is mostly acceptable, but it sounds a bit scripted and unnecessarily pushes the area confirmation after the caller only asked for the total again."
+    },
+    "passed": false
+  },
+  {
+    "case": "kn-IN/gemini/price",
+    "language": "kn-IN",
+    "tts": "gemini",
+    "probe": "price",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "ಸ್ಪ್ಲಿಟ್ AC servicing ಗೆ ಎಷ್ಟು cost ಆಗುತ್ತೆ?",
+        "reply": "Split AC servicing-ಗೆ 599 rupees ಆಗುತ್ತೆ. ನಿಮ್ಮ area ಯಾವುದು ಅಂತ ಹೇಳ್ತೀರಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.77,
+        "sarvam_requests": 1
+      },
+      {
+        "caller": "ನನ್ನ split AC ಗೆ service ಮಾಡಿಸಬೇಕು, charges ಎಷ್ಟು?",
+        "reply": "Split AC servicing-ಗೆ 599 rupees charge ಆಗುತ್ತೆ. ನೀವು Madhapur, Gachibowli, Kondapur ಅಥವಾ Kukatpally-ಯಲ್ಲಿ ಇದ್ದೀರಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 2.44,
+        "sarvam_requests": 5
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      },
+      {
+        "hard": [],
+        "warn": [
+          "heavy_english_mixing:17/81",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "599 rupees",
+          "fix": "Kannada TTSಗೆ ಸಹಜವಾಗಿ 'ಐನೂರು ತೊಂಬತ್ತೊಂಬತ್ತು ರೂಪಾಯಿ' ಅಥವಾ spoken mixನಲ್ಲಿ 'ಫೈವ್ ನೈನ್ಟಿ ನೈನ್ ರೂಪೀಸ್' ಹೇಳಬಹುದು."
+        },
+        {
+          "category": "unnatural_phrasing",
+          "quote": "Madhapur, Gachibowli, Kondapur ಅಥವಾ Kukatpally-ಯಲ್ಲಿ ಇದ್ದೀರಾ?",
+          "fix": "ಹೆಸರುಗಳನ್ನು ಕನ್ನಡ ಮಾತಿನ ಶೈಲಿಯಲ್ಲಿ ಓದುವಂತೆ ಬರೆಯಿರಿ: 'ಮಾಧಾಪುರ, ಗಚ್ಚಿಬೌಲಿ, ಕೊಂಡಾಪುರ ಅಥವಾ ಕುಕಟ್‌ಪಲ್ಲಿ ಭಾಗದಲ್ಲಿದ್ದೀರಾ?'"
+        }
+      ],
+      "verdict_note": "ಉತ್ತರ ಸರಿಯಾದ ಮಾಹಿತಿ ಕೊಡುತ್ತದೆ ಮತ್ತು ಚಿಕ್ಕದಾಗಿದೆ. ಆದರೆ ಸಂಖ್ಯೆಯನ್ನು/ಏರಿಯಾ ಹೆಸರುಗಳನ್ನು TTSಗೆ ಹೆಚ್ಚು ಸಹಜವಾಗಿ ಬರೆಯಬಹುದು; ಇಲ್ಲದಿದ್ದರೆ ಕನ್ನಡ-ಇಂಗ್ಲಿಷ್ ಮಿಕ್ಸ್ ಒಪ್ಪಿಗೆಯಾಗಿದೆ."
+    },
+    "passed": true
+  },
+  {
+    "case": "kn-IN/gemini/time_request",
+    "language": "kn-IN",
+    "tts": "gemini",
+    "probe": "time_request",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Cooling ಆಗದ ನನ್ನ fridgeಗೆ ನಾಳೆ morning 10:30ಕ್ಕೆ technician ಬರಬಹುದಾ?",
+        "reply": "Fridge inspection charge 250 rupees ಆಗುತ್ತೆ, ಆದ್ರೆ ನೀವು repair ಮುಂದುವರಿಸಿದ್ರೆ ಆ charge waive off ಆಗುತ್ತೆ. Madhapur, Gachibowli, Kondapur ಅಥವಾ Kukatpally ಒಳಗಡೆ ಮಾತ್ರ ನಾಳೆ ಬೆಳಿಗ್ಗೆ 10:30 AM slot available ಇದೆ. ನಿಮ್ಮ ಹೆಸರು ಹೇಳ್ತೀರಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 1.81,
+        "sarvam_requests": 4
+      },
+      {
+        "caller": "ನನ್ನ fridge cool ಆಗ್ತಿಲ್ಲ. ನಾಳೆ ಬೆಳಗ್ಗೆ 10:30ಕ್ಕೆ visit ಮಾಡೋಕೆ ಆಗುತ್ತಾ?",
+        "reply": "ಹೌದು, ನಾಳೆ ಬೆಳಿಗ್ಗೆ 10:30 AM slot available ಇದೆ. ನಿಮ್ಮ ಹೆಸರು ಹೇಳ್ತೀರಾ? visit confirm ಮಾಡೋಕೆ ಬೇಕಾಗುತ್ತೆ.",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 1.39,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "over_soft_length:229",
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      },
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 2,
+        "helpfulness": 3,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "invented_fact",
+          "quote": "ನಾಳೆ ಬೆಳಿಗ್ಗೆ 10:30 AM slot available ಇದೆ",
+          "fix": "Availability guaranteed ಅಂತ ಹೇಳಬೇಡಿ; 'ನಾಳೆ ಹತ್ತು ಮುವತ್ತಕ್ಕೆ slot request ಮಾಡಬಹುದು, team confirm ಮಾಡ್ತಾರೆ' ಅಂತೆ ಹೇಳಿ."
+        },
+        {
+          "category": "missed_question",
+          "quote": "ನಿಮ್ಮ ಹೆಸರು ಹೇಳ್ತೀರಾ? visit confirm ಮಾಡೋಕೆ ಬೇಕಾಗುತ್ತೆ.",
+          "fix": "ಹೆಸರಿನ ಜೊತೆ locality ಕೂಡ ಕೇಳಬೇಕು, ಏಕೆಂದರೆ service areas limited: 'ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು locality ಹೇಳ್ತೀರಾ?'"
+        },
+        {
+          "category": "number_or_time_readout",
+          "quote": "10:30 AM",
+          "fix": "Phone TTSಗೆ 'ಹತ್ತು ಮುವತ್ತಕ್ಕೆ' ಅಥವಾ 'ಬೆಳಿಗ್ಗೆ ಹತ್ತು ಮುವತ್ತಕ್ಕೆ' ಅಂತೆ ಬರೆಯಿರಿ."
+        }
+      ],
+      "verdict_note": "Kannada is mostly natural and brief, but it over-promises slot availability/confirmation and doesn't check whether the caller is in a covered locality."
+    },
+    "passed": false
+  },
+  {
+    "case": "kn-IN/gnani/frustration",
+    "language": "kn-IN",
+    "tts": "gnani",
+    "probe": "frustration",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "ನಾನು simple question ಕೇಳಿದ್ದೀನಿ, please straight answer ಕೊಡಿ. Fridge inspection fee ಎಷ್ಟು?",
+        "reply": "Fridge inspection-ಗೆ 250 rupees ಆಗುತ್ತೆ. ಒಂದು ವೇಳೆ ನೀವು ಆ repair ಮಾಡಿಸಿದ್ರೆ, ಈ inspection charge waive off ಆಗುತ್ತೆ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.74,
+        "sarvam_requests": 2
+      },
+      {
+        "caller": "ಯಾಕೆ ಇಷ್ಟು delay? Fridge inspectionಗೆ exact fee ಎಷ್ಟು ಅಂತ straight ಆಗಿ ಹೇಳಿ.",
+        "reply": "ಕ್ಷಮಿಸಿ, ನಾನು straight ಆಗಿ ಹೇಳ್ತೀನಿ. Fridge inspection-ಗೆ exact fee 250 rupees ಆಗುತ್ತೆ. ನೀವು repair ಮುಂದುವರಿಸಿದ್ರೆ ಆ charge waive off ಆಗುತ್ತೆ. ಬೇರೆ ಏನಾದ್ರೂ ಕೇಳ್ಬೇಕಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.56,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      },
+      {
+        "hard": [
+          "too_many_sentences:4"
+        ],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 3,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 3,
+        "brevity": 3
+      },
+      "issues": [
+        {
+          "category": "robotic_or_scripted",
+          "quote": "ಕ್ಷಮಿಸಿ, ನಾನು straight ಆಗಿ ಹೇಳ್ತೀನಿ.",
+          "fix": "Caller asked for direct answer; just say the fee without meta-commentary."
+        },
+        {
+          "category": "missed_question",
+          "quote": "ನೀವು repair ಮುಂದುವರಿಸಿದ್ರೆ ಆ charge waive off ಆಗುತ್ತೆ.",
+          "fix": "Since caller specifically asked only exact fee again, answer first and keep waiver info optional/short or omit on repeat."
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "ಬೇರೆ ಏನಾದ್ರೂ ಕೇಳ್ಬೇಕಾ?",
+          "fix": "Avoid appending a question after a direct pricing answer, especially when caller asked for straight answer."
+        }
+      ],
+      "verdict_note": "Kannada-English code-mixing is natural and the facts are correct, but the reply feels a bit scripted and too long for a caller demanding a straight answer. A better response: “Fridge inspection fee exact 250 rupees.”"
+    },
+    "passed": false
+  },
+  {
+    "case": "kn-IN/gnani/greeting_check",
+    "language": "kn-IN",
+    "tts": "gnani",
+    "probe": "greeting_check",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Hello, ನನ್ನ voice ಕೇಳಿಸ್ತಿದೆಯಾ? ಇದು ಯಾವ company?",
+        "reply": "ಹೌದು, ನಿಮ್ಮ voice clear ಆಗಿ ಕೇಳಿಸ್ತಾ ಇದೆ. ನಾನು SmartCare Appliance Services ಇಂದ ಸುರೇಶ್ ಮಾತಾಡ್ತಾ ಇರೋದು. ನಿಮಗೆ ಯಾವ details ಬೇಕು?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.58,
+        "sarvam_requests": 1
+      },
+      {
+        "caller": "Hi, ನೀವು ನನ್ನನ್ನು hear ಮಾಡ್ತಿದ್ದೀರಾ? ನಿಮ್ಮ company name ಏನು?",
+        "reply": "ಹೌದು, ನಾನು clear ಆಗಿ ಕೇಳಿಸ್ತಾ ಇದ್ದೀನಿ. ನಾನು SmartCare Appliance Services ಇಂದ ಸುರೇಶ್. ನಿಮಗೆ ಯಾವ ವಿಷಯದಲ್ಲಿ ಸಹಾಯ ಬೇಕಿತ್ತು?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.64,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      },
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "unnatural_phrasing",
+          "quote": "ನಾನು clear ಆಗಿ ಕೇಳಿಸ್ತಾ ಇದ್ದೀನಿ",
+          "fix": "“ನಿಮ್ಮ voice clear ಆಗಿ ಕೇಳಿಸ್ತಿದೆ” ಅಥವಾ “ಹೌದು, ಕೇಳಿಸ್ತಿದೆ” ಹೆಚ್ಚು natural."
+        },
+        {
+          "category": "robotic_or_scripted",
+          "quote": "ನಿಮಗೆ ಯಾವ ವಿಷಯದಲ್ಲಿ ಸಹಾಯ ಬೇಕಿತ್ತು?",
+          "fix": "ಇಲ್ಲಿ caller company name ಕೇಳಿದ್ದರಿಂದ “ಯಾವ appliance service ಬೇಕು?” ಅಂತ ಸರಳವಾಗಿ ಮುಂದುವರಿಸಬಹುದು, ಅಥವಾ ಇದನ್ನು ಬಿಟ್ಟರೂ ಸಾಕು."
+        }
+      ],
+      "verdict_note": "Correct and brief, with acceptable Kannada-English mix. Slightly awkward phrasing for hearing the caller and a mildly scripted closing question, but overall usable for a phone receptionist."
+    },
+    "passed": true
+  },
+  {
+    "case": "kn-IN/gnani/price",
+    "language": "kn-IN",
+    "tts": "gnani",
+    "probe": "price",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "ಸ್ಪ್ಲಿಟ್ AC servicing ಗೆ ಎಷ್ಟು cost ಆಗುತ್ತೆ?",
+        "reply": "Split AC servicing-ಗೆ 599 rupees ಆಗುತ್ತೆ. ನಿಮಗೆ visit schedule ಮಾಡ್ಬೇಕಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.59,
+        "sarvam_requests": 1
+      },
+      {
+        "caller": "ನನ್ನ split AC ಗೆ service ಮಾಡಿಸಬೇಕು, charges ಎಷ್ಟು?",
+        "reply": "Split AC servicing-ಗೆ 599 rupees ಆಗುತ್ತೆ. ನಿಮ್ಮ area Madhapur, Gachibowli, Kondapur ಅಥವಾ Kukatpally-ನಲ್ಲಿ ಇದೆಯಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.59,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "heavy_english_mixing:12/47",
+          "digits_reach_tts"
+        ]
+      },
+      {
+        "hard": [],
+        "warn": [
+          "heavy_english_mixing:17/79",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 4,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "missed_question",
+          "quote": "ನಿಮ್ಮ area Madhapur, Gachibowli, Kondapur ಅಥವಾ Kukatpally-ನಲ್ಲಿ ಇದೆಯಾ?",
+          "fix": "Caller only asked charges again; ideally just answer price, or if moving to booking say: “Service ಮಾಡಿಸ್ಬೇಕಂದ್ರೆ ನಿಮ್ಮ area ಯಾವುದು?”"
+        }
+      ],
+      "verdict_note": "Good natural Kannada-English code-mix, accurate price, and concise. The follow-up area question is reasonable if treating it as booking intent, but it slightly goes beyond the repeated pricing question."
+    },
+    "passed": true
+  },
+  {
+    "case": "kn-IN/gnani/time_request",
+    "language": "kn-IN",
+    "tts": "gnani",
+    "probe": "time_request",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Cooling ಆಗದ ನನ್ನ fridgeಗೆ ನಾಳೆ morning 10:30ಕ್ಕೆ technician ಬರಬಹುದಾ?",
+        "reply": "Fridge inspection charge 250 rupees ಆಗುತ್ತೆ, ಆದ್ರೆ ನೀವು repair ಮಾಡಿಸಿದ್ರೆ ಆ charge waive off ಆಗುತ್ತೆ. ನಮ್ಮ service area Madhapur, Gachibowli, Kondapur ಮತ್ತೆ Kukatpally ಮಾತ್ರ. ನಾಳೆ 10:30 AM slot available ಇದೆಯಾ ಅಂತ team ಕಡೆಯಿಂದ confirm ಮಾಡ್ತೀನಿ. ನಿಮ್ಮ ಹೆಸರು ಹೇಳ್ತೀರಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.84,
+        "sarvam_requests": 1
+      },
+      {
+        "caller": "ನನ್ನ fridge cool ಆಗ್ತಿಲ್ಲ. ನಾಳೆ ಬೆಳಗ್ಗೆ 10:30ಕ್ಕೆ visit ಮಾಡೋಕೆ ಆಗುತ್ತಾ?",
+        "reply": "ನಾಳೆ 10:30 AM slotಗೆ team ಕಡೆಯಿಂದ confirm ಮಾಡ್ತೀನಿ, ಆದ್ರೆ same-day visits guarantee ಇರಲ್ಲ. ನಿಮ್ಮ ಹೆಸರು ಹೇಳ್ತೀರಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.98,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [
+          "too_many_sentences:4"
+        ],
+        "warn": [
+          "over_soft_length:266",
+          "digits_reach_tts"
+        ]
+      },
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 3,
+        "register": 4,
+        "correctness": 3,
+        "helpfulness": 3,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "invented_fact",
+          "quote": "same-day visits guarantee ಇರಲ್ಲ",
+          "fix": "Caller is asking for tomorrow, so say next-day slots are between 10 AM and 6 PM and confirmation is needed; don't mention same-day."
+        },
+        {
+          "category": "missed_question",
+          "quote": "ನಾಳೆ 10:30 AM slotಗೆ team ಕಡೆಯಿಂದ confirm ಮಾಡ್ತೀನಿ",
+          "fix": "First clearly answer: “ಆಗಬಹುದು, ಆದರೆ slot team confirm ಮಾಡಬೇಕು.”"
+        },
+        {
+          "category": "robotic_or_scripted",
+          "quote": "ನಿಮ್ಮ ಹೆಸರು ಹೇಳ್ತೀರಾ?",
+          "fix": "Softer spoken phrasing: “ಹೆಸರು ಹೇಳಿ, booking details ತೆಗೆದುಕೊಳ್ಳ್ತೀನಿ.”"
+        }
+      ],
+      "verdict_note": "Kannada with natural code-mixing is mostly okay, but the same-day line is irrelevant and slightly wrong for a tomorrow visit. It should answer yes/confirmation needed, then collect details."
+    },
+    "passed": false
+  },
+  {
+    "case": "ta-IN/cartesia/frustration",
+    "language": "ta-IN",
+    "tts": "cartesia",
+    "probe": "frustration",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "நான் ஒரு simple question தான் கேட்டேன், please straight answer சொல்லுங்க. Fridge inspection fee எவ்வளவு?",
+        "reply": "Fridge inspection-க்கு 250 rupees ஆகும். ஒருவேள நீங்க repair பண்ணிக்கிறீங்கன்னா அந்த charge waive ஆகிடும். வேற ஏதாவது details வேணுமா?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.86,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "250 rupees",
+          "fix": "Tamil TTS-க்கு 'இருநூற்று ஐம்பது ரூபாய்' என்று சொன்னால் இன்னும் இயல்பாக இருக்கும்."
+        },
+        {
+          "category": "unnatural_phrasing",
+          "quote": "Fridge inspection-க்கு 250 rupees ஆகும்",
+          "fix": "'Fridge inspection fee இருநூற்று ஐம்பது ரூபாய்' / 'Fridge inspection-க்கு இருநூற்று ஐம்பது ரூபாய்' என்று சுருக்கமாக சொல்லலாம்."
+        },
+        {
+          "category": "missed_question",
+          "quote": "வேற ஏதாவது details வேணுமா?",
+          "fix": "Caller straight answer கேட்டதால் இதை விடலாம்; அல்லது 'repair எடுத்துக்கிட்டா அந்த charge waive ஆகிடும்' என்று முடிக்கலாம்."
+        }
+      ],
+      "verdict_note": "Factually correct and mostly natural Tamil-English mix. However the caller explicitly asked for a straight answer, so the extra follow-up question is slightly unnecessary, and the number readout should be more TTS-friendly in Tamil."
+    },
+    "passed": false
+  },
+  {
+    "case": "ta-IN/cartesia/greeting_check",
+    "language": "ta-IN",
+    "tts": "cartesia",
+    "probe": "greeting_check",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Hello, என் voice கேட்கிறதா? இது என்ன company?",
+        "reply": "ஆமா, தெளிவா கேக்குது. நான் SmartCare Appliance Services-லிருந்து Suresh பேசுறேன். சொல்லுங்க, என்ன help வேணும்?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.5,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 4,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 5,
+        "brevity": 5
+      },
+      "issues": [],
+      "verdict_note": "Natural Tamil-English code-mixed reply, answers both hearing and company identity clearly. Slightly receptionist-like with “என்ன help வேணும்,” but acceptable for a phone opening."
+    },
+    "passed": true
+  },
+  {
+    "case": "ta-IN/cartesia/numbers",
+    "language": "ta-IN",
+    "tts": "cartesia",
+    "probe": "numbers",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "ரெண்டு split AC-யும் ஒரு window AC-யும் service பண்ணினா total எவ்வளவு?",
+        "reply": "Split AC servicing-க்கு 599 rupees, window AC-க்கு 499 rupees ஆகுது. So, ரெண்டு split AC அப்புறம் ஒரு window AC-க்கு total-ஆ 1,697 rupees வரும். வேற ஏதாச்சும் details வேணுமா?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.59,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "1,697 rupees",
+          "fix": "TTS-க்கு natural-ஆ 'ஆயிரத்து அறுநூற்று தொண்ணூற்று ஏழு ரூபாய்' அல்லது spoken Tamil-ல 'one thousand six ninety seven rupees' போல சொல்லவும்."
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "வேற ஏதாச்சும் details வேணுமா?",
+          "fix": "கேட்ட total-க்கு பதில் சொன்னதும் நிறுத்தலாம்; வேண்டுமானால் 'இதுதான் servicing charge, parts இருந்தா extra' என்று மட்டும் சேர்க்கலாம்."
+        }
+      ],
+      "verdict_note": "Tamil code-mixing mostly natural, calculation is correct, and answer is concise. Slightly TTS-unfriendly numeric readout and the closing question is not necessary for a direct price answer."
+    },
+    "passed": false
+  },
+  {
+    "case": "ta-IN/cartesia/price",
+    "language": "ta-IN",
+    "tts": "cartesia",
+    "probe": "price",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Split AC service பண்ண எவ்வளவு ஆகும்?",
+        "reply": "Split AC servicing-க்கு 599 rupees ஆகும். வேற ஏதாச்சும் details வேணுமா?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.55,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "599 rupees",
+          "fix": "TTS-க்கு இயல்பாக 'ஐந்நூற்று தொண்ணூற்று ஒன்பது ரூபாய்' அல்லது spoken-ஆ 'five ninety-nine ரூபாய்' என்று சொல்லலாம்."
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "வேற ஏதாச்சும் details வேணுமா?",
+          "fix": "கேட்ட விலைக்கு மட்டும் பதில் சொல்லி நிறுத்தலாம்; இல்லையெனில் 'வேற ஏதாவது தெரிஞ்சுக்கணுமா?' என்று இன்னும் இயல்பாக சொல்லலாம்."
+        }
+      ],
+      "verdict_note": "பதில் சரியான தகவலைச் சொல்கிறது, சுருக்கமாகவும் உள்ளது. ஆனால் எண்ணை TTS-க்கு தெளிவாக வாசிக்க ஏற்றபடி மாற்றலாம்; கடைசி கேள்வி சிறிது scripted/sales-like ஆக கேட்கிறது."
+    },
+    "passed": true
+  },
+  {
+    "case": "ta-IN/cartesia/time_request",
+    "language": "ta-IN",
+    "tts": "cartesia",
+    "probe": "time_request",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Cooling இல்லாத fridge-க்கு நாளைக்கு morning 10:30-க்கு technician வர முடியுமா?",
+        "reply": "Madhapur, Gachibowli, Kondapur இல்லனா Kukatpally area-ல கண்டிப்பா நாளைக்கு 10:30 AM slot-ல visit arrange பண்ணலாம். Fridge-ல என்ன issue இருக்குன்னு கொஞ்சம் சொல்றீங்களா?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.66,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 3,
+        "register": 4,
+        "correctness": 3,
+        "helpfulness": 3,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "invented_fact",
+          "quote": "கண்டிப்பா நாளைக்கு 10:30 AM slot-ல visit arrange பண்ணலாம்",
+          "fix": "Guarantee பண்ணாமல், “நாளைக்கு 10:30 slot request பண்ணி team confirm பண்ணுவாங்க” என்று சொல்லவும்."
+        },
+        {
+          "category": "missed_question",
+          "quote": "Madhapur, Gachibowli, Kondapur இல்லனா Kukatpally area-ல",
+          "fix": "Caller locality கேட்க வேண்டும்: “நீங்க எந்த area, sir/madam?”"
+        },
+        {
+          "category": "missed_question",
+          "quote": "Fridge-ல என்ன issue இருக்குன்னு கொஞ்சம் சொல்றீங்களா?",
+          "fix": "Caller ஏற்கனவே cooling இல்லை என்று சொன்னதால், இதை மீண்டும் கேட்காமல் name/locality கேட்கவும்."
+        },
+        {
+          "category": "unnatural_phrasing",
+          "quote": "Kondapur இல்லனா Kukatpally",
+          "fix": "List-க்கு “அல்லது” / “or” இயல்பாக இருக்கும்: “Kondapur அல்லது Kukatpally”."
+        }
+      ],
+      "verdict_note": "Tamil code-mixing is mostly natural, but it over-confirms the appointment before taking locality/name and repeats the issue already given."
+    },
+    "passed": false
+  },
+  {
+    "case": "ta-IN/gemini/frustration",
+    "language": "ta-IN",
+    "tts": "gemini",
+    "probe": "frustration",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "நான் ஒரு simple question தான் கேட்டேன், please straight answer சொல்லுங்க. Fridge inspection fee எவ்வளவு?",
+        "reply": "Fridge inspection-க்கு 250 rupees ஆகும். நீங்க அந்த repair-அ proceed பண்ணீங்கன்னா அந்த charge waive ஆகிடும். வேற ஏதாவது details வேணுமா?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.97,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 4,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "missed_question",
+          "quote": "வேற ஏதாவது details வேணுமா?",
+          "fix": "Caller specifically asked for a straight answer; better to stop after the fee/waiver or say “அவ்வளவுதான்.”"
+        }
+      ],
+      "verdict_note": "Natural spoken Tamil with acceptable English code-mixing and correct pricing. Slightly less helpful because it adds a follow-up despite the caller asking for a straight answer."
+    },
+    "passed": true
+  },
+  {
+    "case": "ta-IN/gemini/greeting_check",
+    "language": "ta-IN",
+    "tts": "gemini",
+    "probe": "greeting_check",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Hello, என் voice கேட்கிறதா? இது என்ன company?",
+        "reply": "ஆமா, தெளிவா கேக்குது. நான் SmartCare Appliance Services-லிருந்து Suresh பேசுறேன். சொல்லுங்க, என்ன help வேணும்?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.53,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 5,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 5,
+        "brevity": 5
+      },
+      "issues": [],
+      "verdict_note": "Natural spoken Tamil with light English code-mixing, directly answers both whether the voice is audible and which company it is. Polite, brief, and factually correct."
+    },
+    "passed": true
+  },
+  {
+    "case": "ta-IN/gemini/numbers",
+    "language": "ta-IN",
+    "tts": "gemini",
+    "probe": "numbers",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "ரெண்டு split AC-யும் ஒரு window AC-யும் service பண்ணினா total எவ்வளவு?",
+        "reply": "Split AC servicing 599 rupees, window AC servicing 499 rupees. So, ரெண்டு split AC அப்புறம் ஒரு window AC-க்கு total-ஆ 1,697 rupees வரும். வேற ஏதாச்சும் details வேணுமா?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.83,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "heavy_english_mixing:26/106",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "1,697 rupees",
+          "fix": "TTS-க்கு natural-ஆ “ஆயிரத்து அறுநூற்று தொண்ணூற்று ஏழு ரூபாய்” அல்லது “one thousand six hundred and ninety seven rupees” மாதிரி சொல்லலாம்."
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "வேற ஏதாச்சும் details வேணுமா?",
+          "fix": "கேட்ட total-ஐ சொல்லி நிறுத்தினால் போதும்; வேண்டுமானால் “இதுதான் total, sir/ma’am” என்று முடிக்கலாம்."
+        }
+      ],
+      "verdict_note": "Reply mostly natural Tamil-English code-mix and the pricing/math is correct. Slightly more phone-natural if the total is spoken out clearly and the extra follow-up question is avoided."
+    },
+    "passed": false
+  },
+  {
+    "case": "ta-IN/gemini/price",
+    "language": "ta-IN",
+    "tts": "gemini",
+    "probe": "price",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Split AC service பண்ண எவ்வளவு ஆகும்?",
+        "reply": "Split AC servicing-க்கு 599 rupees ஆகும். வேற ஏதாச்சும் details வேணுமா?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.62,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "599 rupees",
+          "fix": "Tamil TTS-க்கு இயல்பாக 'ஐநூற்று தொண்ணூற்று ஒன்பது ரூபாய்' அல்லது spoken mix-ஆ 'five ninety-nine rupees' என்று சொல்லலாம்."
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "வேற ஏதாச்சும் details வேணுமா?",
+          "fix": "கேட்ட விலைக்கு பதில் சொன்ன பிறகு நிறுத்தலாம், அல்லது மிகவும் இயல்பாக 'அதுதான் service charge' என்று முடிக்கலாம்."
+        }
+      ],
+      "verdict_note": "Overall clear and factually correct Tamil-English mix. It sounds reasonably natural, but the digit-style amount may be awkward for TTS, and the follow-up question is a bit unnecessary for a direct pricing query."
+    },
+    "passed": true
+  },
+  {
+    "case": "ta-IN/gemini/time_request",
+    "language": "ta-IN",
+    "tts": "gemini",
+    "probe": "time_request",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Cooling இல்லாத fridge-க்கு நாளைக்கு morning 10:30-க்கு technician வர முடியுமா?",
+        "reply": "Fridge-க்கு நம்ம technician வந்து inspection பண்றதுக்கு 250 rupees charge வரும். ஆனா, நீங்க repair பண்ணிக்க சம்மதிச்சா அந்த charge waive பண்ணிடுவோம். Madhapur, Gachibowli, Kondapur இல்ல Kukatpally area-ல தான் நாளைக்கு 10:30 AM slot-ல visit arrange பண்ண முடியும்.",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.73,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "over_soft_length:262",
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 3,
+        "register": 4,
+        "correctness": 4,
+        "helpfulness": 3,
+        "brevity": 3
+      },
+      "issues": [
+        {
+          "category": "missed_question",
+          "quote": "Madhapur, Gachibowli, Kondapur இல்ல Kukatpally area-ல தான் நாளைக்கு 10:30 AM slot-ல visit arrange பண்ண முடியும்.",
+          "fix": "Caller asked if 10:30 tomorrow is possible; answer yes only if locality is covered, then ask locality/name. e.g. “நாளைக்கு 10:30 பார்க்கலாம், ஆனா உங்கள் area Madhapur/Gachibowli/Kondapur/Kukatpally-ல இருக்கணும்.”"
+        },
+        {
+          "category": "invented_fact",
+          "quote": "நாளைக்கு 10:30 AM slot-ல visit arrange பண்ண முடியும்",
+          "fix": "Business facts say next-day slots are between 10 AM and 6 PM, team confirms; agent shouldn’t guarantee exact 10:30. Say “10:30 request note பண்ணலாம்; team confirm பண்ணுவாங்க.”"
+        },
+        {
+          "category": "too_long",
+          "quote": "Fridge-க்கு நம்ம technician வந்து inspection பண்றதுக்கு 250 rupees charge வரும். ஆனா, நீங்க repair பண்ணிக்க சம்மதிச்சா அந்த charge waive பண்ணிடுவோம்.",
+          "fix": "Pricing is relevant but the first answer should be shorter and focus on appointment possibility; combine briefly if needed."
+        }
+      ],
+      "verdict_note": "Mostly natural Tamil-English mix and correct inspection pricing, but it over-promises a specific 10:30 slot and doesn’t collect the customer’s locality/details needed to confirm the visit."
+    },
+    "passed": false
+  },
+  {
+    "case": "ta-IN/gnani/frustration",
+    "language": "ta-IN",
+    "tts": "gnani",
+    "probe": "frustration",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "நான் ஒரு simple question தான் கேட்டேன், please straight answer சொல்லுங்க. Fridge inspection fee எவ்வளவு?",
+        "reply": "Fridge inspection-க்கு 250 rupees ஆகும். ஆனா ஒரு விஷயம், நீங்க அந்த repair-அ proceed பண்ணீங்கன்னா இந்த inspection charge waive பண்ணிடுவோம். வேற ஏதாச்சும் details வேணுமா?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 1.83,
+        "sarvam_requests": 3
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 4,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "missed_question",
+          "quote": "வேற ஏதாச்சும் details வேணுமா?",
+          "fix": "Caller asked for a straight answer; better stop after the fee/waiver or say only “அவ்வளவுதான்.”"
+        }
+      ],
+      "verdict_note": "Natural spoken Tamil with normal code-mixing, and the price/waiver facts are correct. The final extra question is mildly unnecessary given the caller explicitly requested a straight answer."
+    },
+    "passed": true
+  },
+  {
+    "case": "ta-IN/gnani/greeting_check",
+    "language": "ta-IN",
+    "tts": "gnani",
+    "probe": "greeting_check",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Hello, என் voice கேட்கிறதா? இது என்ன company?",
+        "reply": "ஆமா, தெளிவா கேக்குது. நான் SmartCare Appliance Services-லிருந்து Suresh பேசுறேன். சொல்லுங்க, என்ன help வேணும்?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.61,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 5,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 5,
+        "brevity": 5
+      },
+      "issues": [],
+      "verdict_note": "Natural spoken Tamil with common English mixing, directly confirms audibility and identifies the company as asked. Polite, brief, and factually correct."
+    },
+    "passed": true
+  },
+  {
+    "case": "ta-IN/gnani/numbers",
+    "language": "ta-IN",
+    "tts": "gnani",
+    "probe": "numbers",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "ரெண்டு split AC-யும் ஒரு window AC-யும் service பண்ணினா total எவ்வளவு?",
+        "reply": "Split AC servicing 599 rupees, window AC-க்கு 499 rupees ஆகும். So ரெண்டு split AC அப்புறம் ஒரு window AC-க்கு total-ஆ 1,597 rupees வரும். உங்களுக்கு visit ஏதாச்சும் schedule பண்ணணுமா?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.77,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 2,
+        "helpfulness": 3,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "invented_fact",
+          "quote": "total-ஆ 1,597 rupees வரும்",
+          "fix": "கணக்கு தவறு. சரியாக: ரெண்டு split AC 1,198 rupees, ஒரு window AC 499 rupees; total 1,697 rupees."
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "உங்களுக்கு visit ஏதாச்சும் schedule பண்ணணுமா?",
+          "fix": "விலை மட்டும் கேட்டதால் முதலில் பதிலை முடிக்கலாம்; கேட்க வேண்டுமெனில் மென்மையாக: “Book பண்ணணும்னா சொல்லுங்க.”"
+        },
+        {
+          "category": "unnatural_phrasing",
+          "quote": "visit ஏதாச்சும் schedule பண்ணணுமா?",
+          "fix": "தமிழ் போன் பேச்சில் இயல்பாக: “visit book பண்ணட்டுமா?” அல்லது “slot book பண்ணணுமா?”"
+        }
+      ],
+      "verdict_note": "Tamil code-mixing is mostly natural and concise, but the total price is wrong, which is a major correctness issue."
+    },
+    "passed": false
+  },
+  {
+    "case": "ta-IN/gnani/price",
+    "language": "ta-IN",
+    "tts": "gnani",
+    "probe": "price",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Split AC service பண்ண எவ்வளவு ஆகும்?",
+        "reply": "Split AC servicing-க்கு 599 rupees ஆகும். வேற ஏதாவது details வேணுமா?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.5,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "599 rupees",
+          "fix": "Tamil TTS-க்கு இன்னும் இயல்பாக 'ஐநூற்று தொண்ணூற்றொன்பது ரூபாய்' அல்லது spoken mix-ஆ 'five ninety nine ரூபாய்' என்று சொல்லலாம்."
+        },
+        {
+          "category": "unnatural_phrasing",
+          "quote": "வேற ஏதாவது details வேணுமா?",
+          "fix": "இயல்பாக 'வேற ஏதாவது தெரிஞ்சுக்கணுமா?' அல்லது இந்த கேள்வி இல்லாமலே நிறுத்தலாம்."
+        }
+      ],
+      "verdict_note": "பதில் சரியான தகவலைச் சுருக்கமாக சொல்கிறது. Tamil-English mix ஏற்றுக்கொள்ளத்தக்கது, ஆனால் '599 rupees' TTS-ல் கொஞ்சம் இயல்பில்லாமல் இருக்கலாம்; கடைசி கேள்வி சற்று generic ஆக உள்ளது."
+    },
+    "passed": true
+  },
+  {
+    "case": "ta-IN/gnani/time_request",
+    "language": "ta-IN",
+    "tts": "gnani",
+    "probe": "time_request",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Cooling இல்லாத fridge-க்கு நாளைக்கு morning 10:30-க்கு technician வர முடியுமா?",
+        "reply": "Fridge inspection charge 250 rupees வரும், ஆனா நீங்க repair பண்ணிக்கிறீங்கன்னா அந்த charge waive ஆயிடும். Madhapur, Gachibowli, Kondapur இல்ல Kukatpally area-ல தான் நாங்க service பண்றோம். நீங்க இந்த areas-ல தான இருக்கீங்க?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.88,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "over_soft_length:222",
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 4,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "missed_question",
+          "quote": "நீங்க இந்த areas-ல தான இருக்கீங்க?",
+          "fix": "Caller asked specifically about tomorrow 10:30; mention that next-day slots are between 10 AM and 6 PM and team can confirm 10:30, then ask locality."
+        },
+        {
+          "category": "too_long",
+          "quote": "Fridge inspection charge 250 rupees வரும், ஆனா நீங்க repair பண்ணிக்கிறீங்கன்னா அந்த charge waive ஆயிடும். Madhapur, Gachibowli, Kondapur இல்ல Kukatpally area-ல தான் நாங்க service பண்றோம்.",
+          "fix": "For this booking request, keep it shorter: “நாளைக்கு 10:30 slot confirm பண்ணி சொல்றோம்; fridge inspection 250, repair பண்ணினா waive ஆகும்.”"
+        }
+      ],
+      "verdict_note": "Natural spoken Tamil with acceptable code-mixing and correct facts. But it answers pricing/area before addressing the requested tomorrow 10:30 visit, so it feels a bit indirect for a phone call."
+    },
+    "passed": true
+  },
+  {
+    "case": "te-IN/cartesia/frustration",
+    "language": "te-IN",
+    "tts": "cartesia",
+    "probe": "frustration",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "నేను simple question అడిగాను, please straight answer చెప్పండి. Fridge inspection fee ఎంత?",
+        "reply": "Fridge inspection fee 250 rupees అవుతుంది. ఒకవేళ మీరు repair చేయిస్తే ఆ inspection charge waive అవుతుంది.",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.61,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "heavy_english_mixing:19/71",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 5,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "250 rupees",
+          "fix": "తెలుగు TTS కోసం “రెండు వందల యాభై రూపాయలు” లేదా సహజంగా “టూ ఫిఫ్టీ” అని చెప్పొచ్చు."
+        },
+        {
+          "category": "unnatural_phrasing",
+          "quote": "inspection charge waive అవుతుంది",
+          "fix": "“ఆ inspection charge తీసుకోము” లేదా “waive చేస్తాం” అని చెప్పడం ఇంకా సహజంగా ఉంటుంది."
+        }
+      ],
+      "verdict_note": "సమాధానం నేరుగా, సరైనది, చిన్నది. చిన్నపాటి తెలుగు-ఇంగ్లీష్ phrasing సహజంగా మెరుగుపరచవచ్చు."
+    },
+    "passed": true
+  },
+  {
+    "case": "te-IN/cartesia/greeting_check",
+    "language": "te-IN",
+    "tts": "cartesia",
+    "probe": "greeting_check",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Hello, నా voice వినిపిస్తుందా? ఇది ఏ company?",
+        "reply": "అవును, నా voice clear గా వినిపిస్తోంది. నేను SmartCare Appliance Services నుంచి సురేష్ ని మాట్లాడుతున్నాను. చెప్పండి, మీకు ఎలా help చేయగలను?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.61,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 4,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 5,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "robotic_or_scripted",
+          "quote": "చెప్పండి, మీకు ఎలా help చేయగలను?",
+          "fix": "కొంచెం సహజంగా: “చెప్పండి, ఏ service కావాలి?”"
+        }
+      ],
+      "verdict_note": "సమాధానం సరైన Telugu-English code-mix లో ఉంది, company ఎవరో స్పష్టంగా చెప్పింది, caller అడిగినదానికి నేరుగా answer ఇచ్చింది. చివరి phrase కొద్దిగా call-center scripted గా ఉంది కానీ మొత్తంగా సహజంగా, సంక్షిప్తంగా ఉంది."
+    },
+    "passed": true
+  },
+  {
+    "case": "te-IN/cartesia/numbers",
+    "language": "te-IN",
+    "tts": "cartesia",
+    "probe": "numbers",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "రెండు split ACలు, ఒక window AC service చేస్తే total ఎంత అవుతుంది?",
+        "reply": "Split AC service కి 599 rupees అవుతుంది, window AC కి 499 rupees అవుతుంది. So, రెండు split ACలు, ఒక window AC కి total 1,697 rupees అవుతుంది. మీకు మా team ని visit కి పంపించాలా?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.92,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "heavy_english_mixing:29/100",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "total 1,697 rupees",
+          "fix": "TTS కోసం 'మొత్తం పదహారు వందల తొంభై ఏడు రూపాయలు' లేదా 'one six nine seven rupees'లా స్పష్టంగా చెప్పాలి."
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "మీకు మా team ని visit కి పంపించాలా?",
+          "fix": "ప్రైస్ మాత్రమే అడిగారు కాబట్టి 'మొత్తం ... అవుతుంది' వద్ద ఆపితే ఇంకా సహజంగా ఉంటుంది; లేదా మెత్తగా 'బుక్ చేయాలంటే చెప్పండి' అని చెప్పచ్చు."
+        }
+      ],
+      "verdict_note": "లెక్క సరైనది, భాష కూడా సహజమైన తెలుగు-ఇంగ్లీష్ మిక్స్. అయితే మొత్తం మొత్తాన్ని అంకెల్లో చదివేలా ఉండటం ఫోన్‌లో కొంచెం అసహజం, చివర్లో వెంటనే visit అడగడం స్వల్పంగా sales pushలా ఉంది."
+    },
+    "passed": false
+  },
+  {
+    "case": "te-IN/cartesia/price",
+    "language": "te-IN",
+    "tts": "cartesia",
+    "probe": "price",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "స్ప్లిట్ AC servicing కి ఎంత cost అవుతుంది?",
+        "reply": "Split AC servicing కి 599 rupees అవుతుంది. మీకు వేరే ఏదైనా details కావాలా?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.55,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "599 rupees",
+          "fix": "TTS కోసం 'ఐదు వందల తొంభై తొమ్మిది రూపాయలు' లేదా సహజంగా 'ఫైవ్ నైన్టీ నైన్ రూపీస్' అని చెప్పడం బాగుంటుంది."
+        },
+        {
+          "category": "unnatural_phrasing",
+          "quote": "cost అవుతుంది",
+          "fix": "తెలుగులో ఫోన్‌లో సహజంగా 'ఖర్చు అవుతుంది' లేదా 'ఛార్జ్ అవుతుంది' అని చెప్పండి."
+        },
+        {
+          "category": "missed_question",
+          "quote": "మీకు వేరే ఏదైనా details కావాలా?",
+          "fix": "ధర చెప్పాక ఇక్కడ ఆపితే సరిపోతుంది; అవసరమైతే 'బుకింగ్ కావాలంటే చెప్పండి' అని చిన్నగా చెప్పొచ్చు."
+        }
+      ],
+      "verdict_note": "సమాధానం factual‌గా సరైంది, చిన్నగా ఉంది. కానీ '599 rupees' TTSలో awkward‌గా వినిపించొచ్చు, 'cost అవుతుంది' కొంచెం translated feel ఇస్తుంది, చివరి ప్రశ్న అవసరం లేదు."
+    },
+    "passed": true
+  },
+  {
+    "case": "te-IN/cartesia/time_request",
+    "language": "te-IN",
+    "tts": "cartesia",
+    "probe": "time_request",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Cooling లేని fridge కి రేపు morning 10:30కి technician రావచ్చా?",
+        "reply": "Fridge inspection కి 250 rupees అవుతుంది, కానీ మీరు repair కి ముందుకు వస్తే ఆ charge waive అవుతుంది. మా service area Madhapur, Gachibowli, Kondapur, Kukatpally వరకే ఉంటుంది. మీరు ఈ areas లో ఉన్నారా?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.73,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "heavy_english_mixing:36/127",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 4,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "missed_question",
+          "quote": "మీరు ఈ areas లో ఉన్నారా?",
+          "fix": "Caller asked for tomorrow 10:30; first say next-day slots are between 10 AM and 6 PM and 10:30 can be requested, then ask locality."
+        },
+        {
+          "category": "too_long",
+          "quote": "Fridge inspection కి 250 rupees అవుతుంది, కానీ మీరు repair కి ముందుకు వస్తే ఆ charge waive అవుతుంది. మా service area Madhapur, Gachibowli, Kondapur, Kukatpally వరకే ఉంటుంది.",
+          "fix": "Can be shorter for phone: “Fridge inspection 250 rupees; repair చేస్తే waive అవుతుంది. రేపు 10:30 request చేయొచ్చు—మీ locality ఏది?”"
+        }
+      ],
+      "verdict_note": "Natural Telugu-English mix and factually correct, but it doesn’t directly acknowledge the requested tomorrow 10:30 slot before asking the area."
+    },
+    "passed": true
+  },
+  {
+    "case": "te-IN/gemini/frustration",
+    "language": "te-IN",
+    "tts": "gemini",
+    "probe": "frustration",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "నేను simple question అడిగాను, please straight answer చెప్పండి. Fridge inspection fee ఎంత?",
+        "reply": "Fridge inspection fee 250 rupees అవుతుంది. ఒకవేళ మీరు repair చేయిస్తే ఆ inspection charge waive అవుతుంది. ఇంకేమైనా details కావాలా?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 3.73,
+        "sarvam_requests": 5
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 3,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 3,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "robotic_or_scripted",
+          "quote": "ఇంకేమైనా details కావాలా?",
+          "fix": "Caller straight answer మాత్రమే అడిగారు; చివర్లో question అవసరం లేదు."
+        },
+        {
+          "category": "unnatural_phrasing",
+          "quote": "inspection charge waive అవుతుంది",
+          "fix": "సహజంగా: “repair చేయిస్తే inspection fee తీసుకోము” లేదా “adjust చేస్తాం” అని చెప్పండి."
+        },
+        {
+          "category": "number_or_time_readout",
+          "quote": "250 rupees",
+          "fix": "తెలుగులో ఫోన్‌లో సహజంగా “రెండు వందల యాభై రూపాయలు” లేదా “two fifty rupees” అనచ్చు; “250” digit readout లా ఉండకూడదు."
+        }
+      ],
+      "verdict_note": "సమాధానం facts పరంగా సరైనదే, కానీ caller ప్రత్యేకంగా straight answer అడిగినప్పుడు చివర్లో అదనపు ప్రశ్న వేసింది. “waive” కూడా కొంచెం English-heavy/office wording లా ఉంది."
+    },
+    "passed": false
+  },
+  {
+    "case": "te-IN/gemini/greeting_check",
+    "language": "te-IN",
+    "tts": "gemini",
+    "probe": "greeting_check",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Hello, నా voice వినిపిస్తుందా? ఇది ఏ company?",
+        "reply": "అవును, నా voice clear గా వినిపిస్తోంది. నేను Suresh ని, SmartCare Appliance Services నుంచి మాట్లాడుతున్నాను. చెప్పండి, మీకు ఎలా help చేయగలను?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 3.75,
+        "sarvam_requests": 5
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 5,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "robotic_or_scripted",
+          "quote": "చెప్పండి, మీకు ఎలా help చేయగలను?",
+          "fix": "ఇప్పుడే కంపెనీ పేరు అడిగారు కాబట్టి, 'SmartCare Appliance Services, Hyderabad lo appliance repair service.' అని చెప్పి ఆపితే మరింత సహజంగా ఉంటుంది."
+        },
+        {
+          "category": "unnatural_phrasing",
+          "quote": "నేను Suresh ని",
+          "fix": "తెలుగులో ఫోన్‌లో 'నేను సురేష్ మాట్లాడుతున్నాను' లేదా 'నా పేరు సురేష్' మరింత సహజం."
+        }
+      ],
+      "verdict_note": "సమాధానం సరైనది, caller అడిగినది నేరుగా answer చేసింది. కొంచెం scripted feel ఉంది, కానీ phone call context కి మొత్తం మీద acceptable."
+    },
+    "passed": true
+  },
+  {
+    "case": "te-IN/gemini/numbers",
+    "language": "te-IN",
+    "tts": "gemini",
+    "probe": "numbers",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "రెండు split ACలు, ఒక window AC service చేస్తే total ఎంత అవుతుంది?",
+        "reply": "Split AC service కి 599 rupees, window AC కి 499 rupees అవుతుంది. So రెండు split ACలు, ఒక window AC కలిపి total 1,696 rupees అవుతుంది. మీకు visit schedule చేయించాలా?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 3.52,
+        "sarvam_requests": 5
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "heavy_english_mixing:24/99",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 1,
+        "helpfulness": 3,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "invented_fact",
+          "quote": "total 1,696 rupees అవుతుంది",
+          "fix": "లెక్క తప్పు. రెండు split ACలు, ఒక window AC కలిపి 1,697 rupees అవుతుంది అని చెప్పాలి."
+        },
+        {
+          "category": "number_or_time_readout",
+          "quote": "1,696 rupees",
+          "fix": "TTS కోసం సహజంగా 'వెయ్యి ఆరు వందల తొంభై ఏడు రూపాయలు' అని చెప్పడం మంచిది."
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "మీకు visit schedule చేయించాలా?",
+          "fix": "Caller కేవలం total అడిగారు; ముందు total చెప్పి ఆగడం బెటర్. అవసరమైతే చాలా చిన్నగా 'booking కావాలంటే చెప్పండి' అనొచ్చు."
+        }
+      ],
+      "verdict_note": "భాష, tone బాగానే ఉన్నాయి, కానీ మొత్తం లెక్క తప్పింది — ఇది ముఖ్యమైన factual error. చివర్లో booking ప్రశ్న కొంచెం sales push లా ఉంది."
+    },
+    "passed": false
+  },
+  {
+    "case": "te-IN/gemini/price",
+    "language": "te-IN",
+    "tts": "gemini",
+    "probe": "price",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "స్ప్లిట్ AC servicing కి ఎంత cost అవుతుంది?",
+        "reply": "Split AC servicing కి 599 rupees అవుతుంది. మీకు మా team visit arrange చేయాలా?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 3.36,
+        "sarvam_requests": 5
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "heavy_english_mixing:11/49",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 4,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 5,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "robotic_or_scripted",
+          "quote": "మీకు మా team visit arrange చేయాలా?",
+          "fix": "కొంచెం సహజంగా: “visit book చేయాలా?” లేదా “technician visit పెట్టాలా?”"
+        }
+      ],
+      "verdict_note": "సమాధానం స్పష్టంగా, సంక్షిప్తంగా ఉంది; ధర business facts కి సరిపోతుంది. చిన్నగా ‘team visit arrange’ phrasing కొంచెం scripted గా ఉంది కానీ phone call లో అర్థమవుతుంది."
+    },
+    "passed": true
+  },
+  {
+    "case": "te-IN/gemini/time_request",
+    "language": "te-IN",
+    "tts": "gemini",
+    "probe": "time_request",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Cooling లేని fridge కి రేపు morning 10:30కి technician రావచ్చా?",
+        "reply": "Fridge inspection కి 250 rupees అవుతుంది, కానీ మీరు repair కి ముందుకు వస్తే ఆ inspection charge waive అవుతుంది. మా service area లో Madhapur, Gachibowli, Kondapur, Kukatpally మాత్రమే cover అవుతాయి. మీరు ఈ areas లో ఉన్నారా?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 3.84,
+        "sarvam_requests": 5
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "over_soft_length:221",
+          "three_sentences",
+          "heavy_english_mixing:39/145",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 3,
+        "brevity": 3
+      },
+      "issues": [
+        {
+          "category": "missed_question",
+          "quote": "మీరు ఈ areas లో ఉన్నారా?",
+          "fix": "Caller అడిగిన రేపు 10:30 slot గురించి ముందుగా చెప్పాలి: “రేపు 10:30 slot try చేయొచ్చు, team confirm చేస్తుంది…”"
+        },
+        {
+          "category": "too_long",
+          "quote": "Fridge inspection కి 250 rupees అవుతుంది, కానీ మీరు repair కి ముందుకు వస్తే ఆ inspection charge waive అవుతుంది. మా service area లో Madhapur, Gachibowli, Kondapur, Kukatpally మాత్రమే cover అవుతాయి.",
+          "fix": "ఇప్పుడే area అడిగి booking details తీసుకోవడం సరిపోతుంది; pricing మొత్తం అవసరమైతే మాత్రమే చెప్పాలి."
+        }
+      ],
+      "verdict_note": "Telugu code-mixing natural and facts are correct, but it doesn’t directly answer the requested next-day 10:30 visit/confirmation and gives a bit too much info before collecting booking details."
+    },
+    "passed": false
+  },
+  {
+    "case": "te-IN/gnani/frustration",
+    "language": "te-IN",
+    "tts": "gnani",
+    "probe": "frustration",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "నేను simple question అడిగాను, please straight answer చెప్పండి. Fridge inspection fee ఎంత?",
+        "reply": "Fridge inspection fee 250 rupees అవుతుంది. ఒకవేళ మీరు repair కి ముందుకు వెళితే ఆ inspection charge waive అవుతుంది.",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.75,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "heavy_english_mixing:22/74",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 4,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 5,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "unnatural_phrasing",
+          "quote": "repair కి ముందుకు వెళితే",
+          "fix": "repair చేయించుకుంటే అని చెప్పడం మరింత సహజంగా ఉంటుంది."
+        },
+        {
+          "category": "unnatural_phrasing",
+          "quote": "waive అవుతుంది",
+          "fix": "మాఫీ అవుతుంది లేదా charge తీసుకోము అని చెప్పడం ఫోన్‌లో ఇంకా natural."
+        }
+      ],
+      "verdict_note": "Straight, correct, and brief. Telugu-English mix is acceptable for Hyderabad service context, but two phrases sound slightly translated/office-like rather than everyday spoken Telugu."
+    },
+    "passed": true
+  },
+  {
+    "case": "te-IN/gnani/greeting_check",
+    "language": "te-IN",
+    "tts": "gnani",
+    "probe": "greeting_check",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Hello, నా voice వినిపిస్తుందా? ఇది ఏ company?",
+        "reply": "అవును, మీ voice clear గా వినిపిస్తోంది. నేను Suresh ని, SmartCare Appliance Services నుంచి మాట్లాడుతున్నాను. చెప్పండి, మీకు ఎలా help చేయగలను?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 1.09,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "robotic_or_scripted",
+          "quote": "చెప్పండి, మీకు ఎలా help చేయగలను?",
+          "fix": "ఇక్కడ ‘ఏ appliance service కావాలి చెప్పండి’ లాంటి కొంచెం సహజమైన మాట బాగుంటుంది."
+        }
+      ],
+      "verdict_note": "Reply is in natural Telugu-English mix, confirms audibility and company correctly, and is brief. Slightly standard customer-care phrasing at the end, but acceptable for a phone receptionist."
+    },
+    "passed": true
+  },
+  {
+    "case": "te-IN/gnani/numbers",
+    "language": "te-IN",
+    "tts": "gnani",
+    "probe": "numbers",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "రెండు split ACలు, ఒక window AC service చేస్తే total ఎంత అవుతుంది?",
+        "reply": "Split AC service కి 599 rupees, window AC కి 499 rupees అవుతుంది. రెండు split ACలు, ఒక window AC కలిపి total 1,697 rupees అవుతుంది. మీ area ఏది? Madhapur, Gachibowli, Kondapur లేదా Kukatpally లోనే service చేస్తాము.",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.66,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [
+          "too_many_sentences:4"
+        ],
+        "warn": [
+          "over_soft_length:214",
+          "heavy_english_mixing:29/136",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "total 1,697 rupees",
+          "fix": "TTS కోసం “మొత్తం వెయ్యి ఆరు వందల తొంభై ఏడు రూపాయలు” లేదా సహజంగా “మొత్తం sixteen ninety seven rupees” అని చెప్పాలి."
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "మీ area ఏది? Madhapur, Gachibowli, Kondapur లేదా Kukatpally లోనే service చేస్తాము.",
+          "fix": "కస్టమర్ కేవలం ధర అడిగాడు కాబట్టి ముందుగా ధరతోనే ఆపాలి; బుకింగ్ కావాలంటే మాత్రమే ఏరియా అడగాలి. ఉదా: “మొత్తం వెయ్యి ఆరు వందల తొంభై ఏడు రూపాయలు అవుతుంది.”"
+        }
+      ],
+      "verdict_note": "ధర లెక్క సరైనది, తెలుగు-ఇంగ్లీష్ మిక్స్ సహజంగానే ఉంది. కానీ ఫోన్‌లో చెప్పడానికి మొత్తం సంఖ్యను digitsలా ఉంచడం బాగోదు, అలాగే అడగని area question కొంచెం అదనంగా ఉంది."
+    },
+    "passed": false
+  },
+  {
+    "case": "te-IN/gnani/price",
+    "language": "te-IN",
+    "tts": "gnani",
+    "probe": "price",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "స్ప్లిట్ AC servicing కి ఎంత cost అవుతుంది?",
+        "reply": "Split AC servicing కి 599 rupees అవుతుంది. మీకు వేరే ఏదైనా details కావాలా?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.55,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 4,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 5,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "robotic_or_scripted",
+          "quote": "మీకు వేరే ఏదైనా details కావాలా?",
+          "fix": "కొంచెం సహజంగా: “ఇంకేమైనా తెలుసుకోవాలా?” లేదా ఈ వాక్యం వదిలేయచ్చు."
+        }
+      ],
+      "verdict_note": "ధరను సరిగ్గా, చిన్నగా చెప్పింది. Telugu-English mix సహజంగానే ఉంది. చివరి follow-up కొద్దిగా script లా అనిపించినా పెద్ద సమస్య కాదు."
+    },
+    "passed": true
+  },
+  {
+    "case": "te-IN/gnani/time_request",
+    "language": "te-IN",
+    "tts": "gnani",
+    "probe": "time_request",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Cooling లేని fridge కి రేపు morning 10:30కి technician రావచ్చా?",
+        "reply": "Fridge inspection charge 250 rupees ఉంటుంది, కానీ మీరు repair చేయించుకుంటే ఆ charge waive అవుతుంది. మా service area Madhapur, Gachibowli, Kondapur, Kukatpally కి మాత్రమే పరిమితం. మీరు ఈ areas లో ఉన్నారా?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.69,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "over_soft_length:203",
+          "three_sentences",
+          "heavy_english_mixing:35/132",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 3,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "missed_question",
+          "quote": "మీరు ఈ areas లో ఉన్నారా?",
+          "fix": "Caller asked specifically about tomorrow 10:30; first say next-day slots are possible between 10 AM and 6 PM, then ask locality/name details."
+        },
+        {
+          "category": "unnatural_phrasing",
+          "quote": "మా service area Madhapur, Gachibowli, Kondapur, Kukatpally కి మాత్రమే పరిమితం.",
+          "fix": "More natural: “మేము Madhapur, Gachibowli, Kondapur, Kukatpally లో మాత్రమే service చేస్తాం.”"
+        },
+        {
+          "category": "number_or_time_readout",
+          "quote": "250 rupees",
+          "fix": "For Telugu TTS, say “రెండు వందల యాభై రూపాయలు” or naturally “two fifty rupees” if the overall style supports it."
+        }
+      ],
+      "verdict_note": "Factually correct and fairly natural, but it doesn’t directly answer the requested tomorrow 10:30 slot before asking area, and one sentence sounds a bit formal/translated."
+    },
+    "passed": false
+  }
+]

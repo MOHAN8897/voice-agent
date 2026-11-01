@@ -1,0 +1,35 @@
+{
+  "call_id": "e55122e5-4955-439f-922d-3c65524df0fa",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the conversation by stating that they already have solar panels installed on their roof. The agent responded by asking the caller to share more details. The caller did not provide any further information, and no specific objections, agreements, or next steps were established before the call concluded.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500524"
+  },
+  "facts": {
+    "phone": "+919876500524"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:repeat_customer"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "signal:repeat_customer",
+    "action:required"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:40:26.678186Z",
+  "generation_ok": true
+}

@@ -1,0 +1,89 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller, Ramesh from Vijayawada, said he was unable to talk at that moment and explicitly requested a call back to the same number after 6:00 PM. The agent acknowledged and recorded the request. The call ended politely with no further discussion.",
+  "next_action": "Call Ramesh at the same number after 6:00 PM.",
+  "extracted_fields": {
+    "callback_number": "Same number",
+    "callback_time": "After 6:00 PM",
+    "caller_name": "రమేష్",
+    "location": "Vijayawada",
+    "name": "Ramesh",
+    "phone": "+12025550111"
+  },
+  "objections": [],
+  "notes": null,
+  "tags": [
+    "followup:callback",
+    "action:required",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:26:35.828991Z",
+  "generation_ok": true,
+  "facts": {
+    "callback_number": "Same number",
+    "callback_time": "After 6:00 PM",
+    "caller_name": "రమేష్",
+    "location": "Vijayawada",
+    "name": "Ramesh",
+    "phone": "+12025550111"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "followup:callback",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "44d8765e-1151-46e6-8891-c378659e2bd4",
+    "agentId": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 35,
+    "band": "cold",
+    "disposition": "callback_required",
+    "confidence": 0.99,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "callback_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

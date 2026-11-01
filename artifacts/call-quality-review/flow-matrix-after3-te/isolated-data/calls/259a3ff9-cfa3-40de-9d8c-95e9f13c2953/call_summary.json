@@ -1,0 +1,52 @@
+{
+  "call_id": "259a3ff9-cfa3-40de-9d8c-95e9f13c2953",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller contacted support because they were experiencing tooth pain and requested an appointment for tomorrow at 11:00 AM. The agent noted the requested time and gathered the caller's name, Kiran. When the caller asked if the appointment was confirmed, the agent clarified that it was not yet confirmed and explained that the team would reach out to finalize the booking. The caller accepted this, thanked the agent, and the call ended.",
+  "next_action": "Team to confirm the appointment for tomorrow at 11:00 AM with Kiran.",
+  "extracted_fields": {
+    "caller_name": "Kiran",
+    "phone": "+919876500510",
+    "requested_time": "రేపు ఉదయం 11 కి",
+    "slot": "tomorrow at 11:00 AM"
+  },
+  "facts": {
+    "caller_name": "Kiran",
+    "phone": "+919876500510",
+    "requested_time": "రేపు ఉదయం 11 కి",
+    "slot": "tomorrow at 11:00 AM"
+  },
+  "status_tags": [
+    "action:required",
+    "action:urgent",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:dental-appointment",
+    "followup:callback",
+    "followup:schedule_pending",
+    "followup:site_visit",
+    "intent:support",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:support",
+    "followup:callback",
+    "followup:schedule_pending",
+    "signal:objection",
+    "sentiment:neutral",
+    "action:urgent"
+  ],
+  "custom_tags": [
+    "custom:dental-appointment",
+    "custom:toothache"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:19:38.437381Z",
+  "generation_ok": true
+}

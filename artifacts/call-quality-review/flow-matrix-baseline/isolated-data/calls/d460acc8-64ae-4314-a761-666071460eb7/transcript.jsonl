@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "uh... hmm...", "ts": "2026-10-30T10:37:13.576788Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "The caller simply said \"uh, hmm,\", which does not constitute a question. Your draft \"Sorry, I missed that. Could you repeat it?\" is appropriate as it asks for clarification without adding unsupported information.", "ts": "2026-10-30T10:37:16.185629Z"}
+{"seq": 3, "role": "user", "text": "hello hello", "ts": "2026-10-30T10:37:16.187027Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Sorry, I missed that.", "ts": "2026-10-30T10:37:18.116102Z"}

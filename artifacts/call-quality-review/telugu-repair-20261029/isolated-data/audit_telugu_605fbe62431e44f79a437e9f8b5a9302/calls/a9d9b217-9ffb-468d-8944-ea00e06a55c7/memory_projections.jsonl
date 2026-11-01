@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-29T16:48:55.582204Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T16:49:00.011726Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-29T16:49:03.645204Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_name: కిరణ్ | email: kiran.audit@example.invalid | qualification: B.Com | caller_email: kiran.audit@example.invalid\n[Preferences]\navailability: వీకెండ్స్ మాత్రమే\n[Context]\nCaller provided contact details in this call."}
+{"turn_seq": 7, "ts": "2026-10-29T16:49:05.436719Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: కిరణ్ | email: kiran.audit@example.invalid | qualification: B.Com | caller_email: kiran.audit@example.invalid\n[Preferences]\navailability: వీకెండ్స్ మాత్రమే\n[Context]\nCaller provided contact details in this call."}

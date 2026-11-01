@@ -1,0 +1,95 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initially inquired about the consultation fee and clinic operating hours. The agent responded that the consultation fee is 300 rupees and the clinic is open Monday through Saturday from 10 AM to 8 PM. The caller then requested the timings in English, which the agent repeated. The caller subsequently mentioned having a toothache and asked if they could visit the next day. The agent confirmed that a visit the following day is possible within the standard operating hours, and the caller agreed and thanked the agent before ending the call.",
+  "next_action": "No immediate action required.",
+  "extracted_fields": {
+    "fee": "300 rupees",
+    "phone": "+919876500549",
+    "slot": "tomorrow"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "intent:booking",
+    "sentiment:neutral",
+    "signal:objection",
+    "followup:site_visit",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:dental-consultation",
+    "custom:clinic-hours"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:47:43.677645Z",
+  "generation_ok": true,
+  "facts": {
+    "fee": "300 rupees",
+    "phone": "+919876500549",
+    "slot": "tomorrow"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:clinic-hours",
+    "custom:dental-consultation",
+    "followup:site_visit",
+    "intent:booking",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "8e4d4ac4-486b-42f9-b4e2-4fec6eeb1f0e",
+    "agentId": "fa300339-070b-49f8-8491-7781b488a196",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "slot"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

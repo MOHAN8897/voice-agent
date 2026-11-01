@@ -1,0 +1,85 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, said they were unable to talk at the moment and explicitly requested a call back after approximately six hours at the same number. The agent acknowledged and recorded the caller's details and callback request, then ended the call politely. No product or service details were discussed.",
+  "next_action": "Call Kiran back at the same number in approximately six hours.",
+  "extracted_fields": {
+    "callback_number": "Same number",
+    "callback_time": "Approximately six hours later",
+    "caller_name": "Kiran",
+    "phone": "+12025550116"
+  },
+  "objections": [],
+  "notes": "Caller was unavailable to continue the conversation at the time of the call.",
+  "tags": [
+    "followup:callback",
+    "action:required",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:43:02.304482Z",
+  "generation_ok": true,
+  "facts": {
+    "callback_number": "Same number",
+    "callback_time": "Approximately six hours later",
+    "caller_name": "Kiran",
+    "phone": "+12025550116"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "followup:callback",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "85022054-cf4f-4f14-a759-5f764dbecf8f",
+    "agentId": "4c5270a8-990a-5800-868d-9d685eca9a09",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.99,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "callback_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

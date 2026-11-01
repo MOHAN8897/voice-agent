@@ -1,0 +1,16 @@
+{
+  "facts": {
+    "caller_name": "కిరణ్",
+    "product": "Python with Data Analytics course",
+    "email": "kiran.audit@example.invalid",
+    "qualification": "graduate",
+    "requested_time": "evening batch",
+    "caller_email": "kiran.audit@example.invalid"
+  },
+  "preferences": {
+    "requested_time": "వీకెండ్స్ లేదా ఈవినింగ్స్",
+    "demo_day": "శనివారం లేదా ఆదివారం"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "user: మేడమ్, ఎనిమిది వారాలేనా? సరే, నాకు ఈ Python with Data Analytics course ఫీజు వివరాలు, అలాగే placement assistance ఎలా ఉంటుందో కొంచెం వివరంగా చెప్పగలరా? అలాగే, నా enquiry ని save చేసి, వీలైతే ఒక demo క్లాస్ లేదా discussion arrange చేస్తారా?\nassistant: అవును కిరణ్ గారు, మొత్తం fee eight thousand nine hundred ninety nine rupees మాత్రమే. మేము one hundred% placement assistance ఇస్తాము — resume building, interview preparation, job referrals ఉంటాయి, కానీ job guarantee లేదా salary promise మాత్రం ఇవ్వము."
+}

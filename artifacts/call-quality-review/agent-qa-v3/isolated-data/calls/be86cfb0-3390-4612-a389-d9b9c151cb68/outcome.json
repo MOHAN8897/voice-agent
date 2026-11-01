@@ -1,0 +1,114 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The agent called the customer to present NatureVeda product options, including Aloe Vera Juice and Herbal Hair Oil. The customer inquired about the benefits for stomach wellness and hair fall, and the agent shared the relevant details and prices while advising professional consultation for medical conditions. The customer requested a callback in Telugu around 11 AM tomorrow, which the agent accepted and noted for the team. The call ended with mutual thanks after the callback request was confirmed. Language handoff: Caller asked to continue in Telugu; call back in Telugu with the same agent.",
+  "next_action": "Call back in Telugu with the same agent (Callback needed in another language). No callback time has been booked.",
+  "extracted_fields": {
+    "callback_language": "Telugu",
+    "callback_time": "Tomorrow around 11 AM",
+    "phone": "+919700000011",
+    "preferred_language": "te-IN",
+    "callback_requested": "true",
+    "requested_language": "te-IN",
+    "language_switch": "true"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:product-inquiry",
+    "custom:language-preference"
+  ],
+  "unanswered_questions": [],
+  "outcome_provider": "sarvam",
+  "summary_checks": [
+    "missing_local_summary"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T14:39:42.535169Z",
+  "generation_ok": true,
+  "summary_language": "hi-IN",
+  "language_callback": {
+    "status": "requested",
+    "kind": "language_switch",
+    "id": "e3159b98-9855-493d-978e-8442e6c50f01",
+    "caller_language": "te-IN",
+    "configured_language": "hi-IN",
+    "summary": "Caller asked to continue in Telugu; call back in Telugu with the same agent."
+  },
+  "language_switch": {
+    "requested_language": "te-IN",
+    "original_language": "hi-IN"
+  },
+  "facts": {
+    "callback_language": "Telugu",
+    "callback_time": "Tomorrow around 11 AM",
+    "phone": "+919700000011",
+    "preferred_language": "te-IN",
+    "callback_requested": "true",
+    "requested_language": "te-IN",
+    "language_switch": "true"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "contact:preferred_language",
+    "custom:language-preference",
+    "custom:product-inquiry",
+    "followup:callback",
+    "followup:language_switch",
+    "outcome:callback_required",
+    "sentiment:positive"
+  ],
+  "lead": {
+    "leadId": "dcea404a-30c3-4ede-9753-a3a9418594ca",
+    "agentId": "4fc20efa-52cb-5629-943a-8680ede7820f",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 35,
+    "band": "cold",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "callback_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

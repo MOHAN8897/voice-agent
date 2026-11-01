@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "call_id": "67e4d91f-b187-4bbd-8103-278ea2cc9105",
+  "tenant_id": "ffc79868-6583-40f0-9055-77387b86ab4f",
+  "agent_id": "d421e99b-27b4-4769-aa13-5517f5074111",
+  "status": "confirmed",
+  "quantity": 200,
+  "customer_name": "Ravi Kumar",
+  "delivery_address": "12 MG Road, Vijayawada",
+  "product": "matte visiting cards",
+  "confirmed_at": "2026-10-29T20:18:47.665009Z"
+}

@@ -1,0 +1,107 @@
+{
+  "disposition": "site_visit_planned",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, initiated the call expressing that the 3 kW rooftop solar system was too expensive. The agent responded by detailing the pricing, explaining the upfront cost of 1,95,000 rupees before a 78,000 rupee government subsidy, resulting in a net cost of 1,17,000 rupees, and offered an EMI option of 2,999 rupees per month for 48 months. The caller initially objected, stating it was still too expensive, but after the agent repeated the EMI terms, the caller agreed to proceed. Kiran provided their name, location in Velachery, and requested a Saturday slot for a free site survey. The agent acknowledged the details and stated they would confirm the booking, after which the caller thanked the agent and the call ended.",
+  "next_action": "Confirm the Saturday site survey booking for Kiran in Velachery.",
+  "extracted_fields": {
+    "budget": "Too expensive initially; accepted 2,999 rupees monthly EMI",
+    "caller_name": "Kiran",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "name": "Kiran",
+    "phone": "+919876500501",
+    "requested_time": "Saturday",
+    "slot": "Saturday"
+  },
+  "objections": [
+    "The system is too expensive"
+  ],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "followup:site_visit",
+    "signal:price_sensitive",
+    "signal:objection",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:rooftop-survey",
+    "custom:velachery"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T11:21:13.565639Z",
+  "generation_ok": true,
+  "facts": {
+    "budget": "Too expensive initially; accepted 2,999 rupees monthly EMI",
+    "caller_name": "Kiran",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "name": "Kiran",
+    "phone": "+919876500501",
+    "requested_time": "Saturday",
+    "slot": "Saturday"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:rooftop-survey",
+    "custom:velachery",
+    "followup:site_visit",
+    "intent:information",
+    "outcome:site_visit_planned",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "e2540e8e-f727-440d-967e-36da2b95ce1c",
+    "agentId": "847e7b27-4062-4414-acde-4cfecd7bca8d",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 100,
+    "band": "hot",
+    "disposition": "site_visit_planned",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "site_visit_planned"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "budget"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "slot"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

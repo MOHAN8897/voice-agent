@@ -1,0 +1,41 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller opened the call by aggressively accusing the company of being useless, idiotic, and fraudulent. The agent responded by thanking the caller for their time and immediately ending the call with a goodbye. The caller did not engage further, and no next steps were agreed upon. The call concluded with the agent terminating the interaction.",
+  "next_action": "none",
+  "extracted_fields": {
+    "phone": "+919876500511"
+  },
+  "objections": [
+    "Caller accused the company of fraud and expressed extreme frustration."
+  ],
+  "notes": "",
+  "tags": [
+    "sentiment:negative",
+    "signal:objection"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T11:00:56.417381Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500511"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "outcome:not_interested",
+    "sentiment:negative",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

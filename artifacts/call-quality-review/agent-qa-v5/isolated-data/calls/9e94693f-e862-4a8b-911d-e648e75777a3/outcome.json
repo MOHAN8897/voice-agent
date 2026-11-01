@@ -1,0 +1,103 @@
+{
+  "disposition": "converted",
+  "disposition_confidence": 1.0,
+  "summary_te": "व्यवसाय के एजेंट ने ग्राहक को फोन किया और फेस क्रीम के घटकों और मूल्य के बारे में जानकारी दी। ग्राहक ने 2 हेयर ऑयल और 1 फेस क्रीम का ऑर्डर देने की इच्छा जताई और डिलीवरी के समय तथा छूट के बारे में पूछा, जिसका एजेंट के पास उत्तर नहीं था। ग्राहक ने अपना नाम, पता और ईमेल साझा किया, और एजेंट ने ऑर्डर की पुष्टि की। ग्राहक ने पुष्टि सुनकर संतुष्टि व्यक्त की और कॉल समाप्त हो गई।",
+  "summary_en": "The business agent called the customer to share product details, and the customer expressed interest in purchasing two hair oils and one face cream. The agent quoted a total of ₹1,597, but could not provide information on delivery timelines or discounts. After the customer provided her name, address, and email, the agent confirmed that the order was successfully placed and that further details would be sent via email. The customer expressed satisfaction upon hearing the confirmation, and the call ended. The agent assured her that the order was already confirmed and finalized.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919784836503",
+    "product_list": "2 bottles Herbal Hair Oil, 1 Herbal Face Cream",
+    "quantity": "1",
+    "total_price": "₹1,597"
+  },
+  "objections": [],
+  "notes": null,
+  "tags": [
+    "intent:purchase",
+    "signal:ready_to_buy",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:herbal-skincare",
+    "custom:order-confirmation"
+  ],
+  "unanswered_questions": [
+    "What is the delivery time?",
+    "Is there a discount available?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T17:33:51.840083Z",
+  "generation_ok": true,
+  "summary_language": "hi-IN",
+  "facts": {
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919784836503",
+    "product_list": "2 bottles Herbal Hair Oil, 1 Herbal Face Cream",
+    "quantity": "1",
+    "total_price": "₹1,597"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:herbal-skincare",
+    "custom:order-confirmation",
+    "followup:send_info",
+    "intent:purchase",
+    "outcome:converted",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "c6215167-86c3-4dcb-ba78-285115d6a0fa",
+    "agentId": "67eb8019-5907-4da3-879c-950e4e7c515d",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "converted",
+    "confidence": 1.0,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "converted"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "quantity"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

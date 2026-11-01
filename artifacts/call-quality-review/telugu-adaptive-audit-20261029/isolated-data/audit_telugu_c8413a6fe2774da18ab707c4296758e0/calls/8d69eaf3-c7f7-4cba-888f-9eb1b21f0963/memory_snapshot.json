@@ -1,0 +1,14 @@
+{
+  "facts": {
+    "product": "split AC",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "caller_name": "సురేష్ గారు",
+    "delivery_locality": "మాదాపూర్",
+    "budget": "599 rupees"
+  },
+  "preferences": {
+    "requested_time": "రేపు ఉదయం 10 గంటలకి"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "user: అవును సురేష్ గారు, నేను మాదాపూర్ లో ఉంటాను. ఈ 599 rupees price కి technician రేపు 10 AM కి వస్తారా, booking confirm చేయనా?\nassistant: అవును, మాదాపూర్ మా service area లో ఉంది. రేపు ఉదయం 10 గంటలకి technician visit schedule చేయొచ్చు. Booking confirm చేయడానికి మీ పేరు, అలాగే AC లో ఏమైనా issue ఉందా చెప్తారా?\nuser: నా పేరు శ్రావణి, AC లో వేరే issue ఏమీ లేదు, just general service సరిపోతుంది. ఈ 599 rupees కి రేపు 10 AM కి booking confirm చేసేయండి.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\nuser: ఆగండి, ఇంకో ప్రశ్న ఉంది. ఇన్‌స్పెక్షన్ ఫీజు ఎంత?"
+}

@@ -1,0 +1,5 @@
+{"turn_seq": 1, "ts": "2026-10-29T17:43:39.559555Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T17:43:43.978771Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: split AC"}
+{"turn_seq": 5, "ts": "2026-10-29T17:43:46.148267Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: split AC"}
+{"turn_seq": 7, "ts": "2026-10-29T17:43:49.414600Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: split AC"}
+{"turn_seq": 9, "ts": "2026-10-29T17:43:51.652236Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: split AC"}

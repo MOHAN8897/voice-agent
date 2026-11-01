@@ -1,0 +1,5 @@
+{"turn_seq": 1, "ts": "2026-10-29T17:50:54.579034Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T17:51:02.236802Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: visiting cards | quantity: 100 | budget: 500 rupees"}
+{"turn_seq": 5, "ts": "2026-10-29T17:51:07.172671Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: visiting cards | quantity: 200 | budget: 900 rupees"}
+{"turn_seq": 7, "ts": "2026-10-29T17:51:10.896102Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: visiting cards | quantity: 200 | budget: 900 rupees"}
+{"turn_seq": 9, "ts": "2026-10-29T17:51:13.175645Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: visiting cards | quantity: 200 | budget: 900 rupees"}

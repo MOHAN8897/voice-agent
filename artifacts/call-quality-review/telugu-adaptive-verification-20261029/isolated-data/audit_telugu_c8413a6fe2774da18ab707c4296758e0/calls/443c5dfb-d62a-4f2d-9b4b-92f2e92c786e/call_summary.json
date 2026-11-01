@@ -1,0 +1,54 @@
+{
+  "call_id": "443c5dfb-d62a-4f2d-9b4b-92f2e92c786e",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller asked about the fee for a part-time Python with Data Analytics training course and was quoted ₹8,999, with weekday and weekend batch options mentioned. The caller then asked for a guaranteed high-salary job in exchange for paying the same day. The agent clarified that no job or salary guarantee is provided, but placement assistance includes resume building, interview preparation, and job referrals. The caller requested clarification about the assistance, received the details, and declined to register for a demo or admission counselling at this time. The call ended politely with no further action agreed.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "course": "Python with Data Analytics",
+    "fee": "₹8,999",
+    "format": "Part-time training",
+    "phone": "+12025550144",
+    "placement_assistance": "Resume building, interview preparation, and job referrals"
+  },
+  "facts": {
+    "course": "Python with Data Analytics",
+    "fee": "₹8,999",
+    "format": "Part-time training",
+    "phone": "+12025550144",
+    "placement_assistance": "Resume building, interview preparation, and job referrals"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:data-analytics",
+    "custom:placement-assistance",
+    "custom:python-training",
+    "intent:information",
+    "intent:pricing",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:pricing",
+    "signal:objection",
+    "signal:do_not_call",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-training",
+    "custom:data-analytics",
+    "custom:placement-assistance"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "No job or high-salary guarantee was available."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T15:50:23.142329Z",
+  "generation_ok": true
+}

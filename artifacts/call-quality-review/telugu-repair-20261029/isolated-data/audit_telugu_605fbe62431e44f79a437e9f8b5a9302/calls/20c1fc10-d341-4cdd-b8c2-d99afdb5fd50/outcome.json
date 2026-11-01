@@ -1,0 +1,116 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "The caller requested visiting cards and first asked about the price difference between standard and matte finishes and the minimum order quantity. The agent quoted ₹200 for 100 standard cards, ₹350 for 100 matte cards, and stated that the minimum order is 100 cards, with the same rate applying for 200 cards. The caller said the prices were acceptable and asked about design approval, delivery timing, and rush-order charges. The agent stated that delivery in Vijayawada takes three working days after artwork approval, and a rush order within 24 hours incurs an extra ₹150 charge; the caller provided the email ramesh.audit@example.invalid. The caller also asked about advance payment and wedding-card pricing. The agent said orders above ₹1,000 require 50% advance payment and that wedding-card pricing depends on design, paper sample, and quantity. The caller then identified himself as Ramesh from Vijayawada and requested that a quote or order request be noted for 200 matte visiting cards, asking how much quantity had been recorded. The agent did not confirm the quantity, record the quote/order request, or provide a clear next step before ending the call, so follow-up is required.",
+  "next_action": "Confirm and record the requested quote/order for 200 matte visiting cards, then contact Ramesh to confirm the quantity and provide the quote and design-approval process.",
+  "extracted_fields": {
+    "advance_payment": "50% for orders above ₹1,000",
+    "delivery_time": "3 working days in Vijayawada after artwork approval",
+    "email": "ramesh.audit@example.invalid",
+    "finish": "Matte",
+    "location": "Vijayawada",
+    "matte_price": "₹350 per 100 cards",
+    "minimum_order_quantity": "100 cards",
+    "name": "Ramesh",
+    "phone": "+12025550110",
+    "product": "Visiting cards",
+    "quantity": "200",
+    "rush_order_charge": "₹150 for delivery within 24 hours",
+    "standard_price": "₹200 per 100 cards"
+  },
+  "objections": [],
+  "notes": "The caller was positive about the quoted prices and showed clear purchase intent. The agent's final response did not address the caller's request to confirm the recorded quantity or explicitly confirm the quote/order request.",
+  "tags": [
+    "intent:purchase",
+    "intent:quote",
+    "sentiment:positive",
+    "followup:callback",
+    "action:required",
+    "signal:ready_to_buy"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:matte-finish",
+    "custom:200-cards"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:26:28.989757Z",
+  "generation_ok": true,
+  "facts": {
+    "advance_payment": "50% for orders above ₹1,000",
+    "delivery_time": "3 working days in Vijayawada after artwork approval",
+    "email": "ramesh.audit@example.invalid",
+    "finish": "Matte",
+    "location": "Vijayawada",
+    "matte_price": "₹350 per 100 cards",
+    "minimum_order_quantity": "100 cards",
+    "name": "Ramesh",
+    "phone": "+12025550110",
+    "product": "Visiting cards",
+    "quantity": "200",
+    "rush_order_charge": "₹150 for delivery within 24 hours",
+    "standard_price": "₹200 per 100 cards"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:matte-finish",
+    "custom:visiting-cards",
+    "followup:callback",
+    "intent:purchase",
+    "intent:quote",
+    "outcome:callback_required",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "f3428bbe-6ee5-4eb8-82b8-b4ee4a64969e",
+    "agentId": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.97,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

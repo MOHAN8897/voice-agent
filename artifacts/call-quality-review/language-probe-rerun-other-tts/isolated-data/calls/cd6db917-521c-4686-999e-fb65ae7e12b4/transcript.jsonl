@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "ಎರಡು split ACಗಳು ಮತ್ತು ಒಂದು window AC service ಮಾಡಿದರೆ total ಎಷ್ಟು?", "ts": "2026-10-29T19:15:18.887203Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Split AC service-ಗೆ 599 rupees ಆಗುತ್ತೆ, ಮತ್ತೆ window AC-ಗೆ 499 rupees ಆಗುತ್ತೆ. So, ಎರಡು split AC ಮತ್ತೆ ಒಂದು window AC-ಗೆ total 1,697 rupees ಆಗುತ್ತೆ. ನಿಮ್ಮ area ಯಾವುದು ಅಂತ ಹೇಳ್ತೀರಾ? ನಮ್ಮ service Madhapur, Gachibowli, Kondapur ಮತ್ತೆ Kukatpally-ನಲ್ಲಿ ಮಾತ್ರ ಇರೋದು.", "ts": "2026-10-29T19:15:19.657840Z", "brain_latency_ms": 776}
+{"seq": 3, "role": "user", "text": "ಎರಡು split ಮತ್ತು ಒಂದು window ACಗಳ service charges ಸೇರಿಸಿ total ಹೇಳಿ.", "ts": "2026-10-29T19:15:19.677175Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಎರಡು split AC ಮತ್ತೆ ಒಂದು window AC service-ಗೆ total 1,697 rupees ಆಗುತ್ತೆ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಿತ್ತಾ?", "ts": "2026-10-29T19:15:20.269172Z", "brain_latency_ms": 597}

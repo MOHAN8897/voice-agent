@@ -1,0 +1,36 @@
+{
+  "call_id": "c149d08c-8dca-42fa-88e7-eb245ca8dbcc",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call by aggressively insulting the agent and the company, labeling it a fraud and expressing intense frustration. The agent apologized for the caller's anger and offered to help with an appointment or provide clinic details. The caller did not accept the offer and continued to refuse engagement. The call concluded with the caller's ongoing hostility and no further steps agreed upon.",
+  "next_action": "No further action required.",
+  "extracted_fields": {
+    "phone": "+919876500512"
+  },
+  "facts": {
+    "phone": "+919876500512"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "intent:support",
+    "outcome:not_interested",
+    "signal:objection"
+  ],
+  "tags": [
+    "sentiment:negative",
+    "sentiment:frustrated",
+    "signal:objection",
+    "intent:support"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [
+    "Caller expressed extreme frustration and labeled the company as a fraud."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:19:54.023868Z",
+  "generation_ok": true
+}

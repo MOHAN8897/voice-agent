@@ -1,0 +1,14 @@
+{"seq": 1, "role": "user", "text": "नमस्ते प्रिया जी। हाँ, मैं face cream और hair oil के बारे में जानना चाहती हूँ, इनका price क्या है?", "ts": "2026-10-31T13:52:27.461211Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "देखिए, हमारा Herbal Hair Oil 200 ml का ₹499 का है। और Herbal Face Cream 50 g का ₹599 का है। आपको किस product की details और चाहिए?", "ts": "2026-10-31T13:52:29.455870Z"}
+{"seq": 3, "role": "user", "text": "अच्छा ठीक है। आप मुझे इनकी details और price मेरे email पर भेज दीजिए, email है mohansaiteja.99@gmail.com।", "ts": "2026-10-31T13:52:47.357069Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "माफ़ कीजिए, email भेजने में अभी कुछ technical issue आ रहा है, इसलिए मैं अभी email नहीं भेज पा रही हूँ। मैं आपकी enquiry save कर देती हूँ, ताकि हमारी team आपको details और price भेज दे। क्या मैं note कर लूँ?", "ts": "2026-10-31T13:52:51.518779Z"}
+{"seq": 5, "role": "user", "text": "ठीक है, आप note कर लीजिए, पर क्या आपकी team मुझे कल सुबह तक email भेज देगी?", "ts": "2026-10-31T13:53:14.132159Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "माफ़ कीजिए, team की तरफ से कल सुबह तक email भेजने की पुष्टि नहीं हो सकती। आपकी enquiry save हो गई है।", "ts": "2026-10-31T13:53:17.070685Z"}
+{"seq": 7, "role": "user", "text": "अच्छा ठीक है, तो फिर क्या face cream अभी stock में है?", "ts": "2026-10-31T13:53:31.075475Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "अभी stock में face cream है या नहीं, इसकी जानकारी मेरे पास नहीं है।", "ts": "2026-10-31T13:53:32.689029Z"}
+{"seq": 9, "role": "user", "text": "अच्छा, अगर stock में है, तो Kukatpally delivery में कितना time लगेगा?", "ts": "2026-10-31T13:53:45.747503Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "Kukatpally की delivery में कितना समय लगेगा, इसकी जानकारी अभी उपलब्ध नहीं है।", "ts": "2026-10-31T13:53:47.490180Z"}
+{"seq": 11, "role": "user", "text": "ठीक है, फिर आप कल सुबह 11 बजे के लिए हमारी team के साथ एक short call book कर दीजिए, ताकि मैं order place कर सकूँ।", "ts": "2026-10-31T13:54:06.761715Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "आपकी कल सुबह 11 बजे वाली team call की request note कर ली है। हमारी team आपसे contact करके order में मदद कर देगी।", "ts": "2026-10-31T13:54:09.569054Z"}
+{"seq": 13, "role": "user", "text": "चलो ठीक है, धन्यवाद प्रिया जी, मैं कल call का wait करूँगी।", "ts": "2026-10-31T13:54:24.336080Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "ठीक है, आपका callback note कर लिया है। समय देने के लिए धन्यवाद। नमस्कार।", "ts": "2026-10-31T13:54:25.391954Z"}

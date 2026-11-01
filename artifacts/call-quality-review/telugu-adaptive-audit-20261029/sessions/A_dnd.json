@@ -1,0 +1,439 @@
+{
+  "scenario": {
+    "id": "A_dnd",
+    "business": "A",
+    "kind": "dnd",
+    "integration": "success",
+    "policy": "automatic",
+    "max_turns": 3,
+    "goal": "You do not consent to any future calls to this number. In your FIRST utterance explicitly demand that they never call this number again. Be unambiguous about permanent future contact, not just being busy today. If they continue, reiterate the opt-out, without asking business questions."
+  },
+  "agent": {
+    "id": "A",
+    "key": "printing",
+    "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "name": "Sri Krishna Digital Prints",
+    "agent_name": "Kavitha",
+    "role": "sales",
+    "industry": "printing",
+    "brief": "Agent name Kavitha. Company name Sri Krishna Digital Prints.\nOutbound and inbound customer inquiries in Telugu.\nWe print visiting cards: normal paper visiting cards cost 200 rupees for 100 cards,\nmatte finish cards cost 350 rupees for 100 cards. Minimum order quantity 100 cards.\nWedding invitation cards are customized: pricing depends on design, paper sample and quantity, no fixed price over the phone.\nFlex banners: normal flex 15 rupees per square foot, star flex 20 rupees per square foot.\nDelivery in Vijayawada takes 3 working days after design artwork approval; urgent 24-hour delivery is extra 150 rupees.\nPayment: Cash on delivery accepted for orders up to 1000 rupees; 50% advance payment required for orders above 1000 rupees.\nNo online payment or credit card processing on phone call.\nOffice hours Monday to Saturday 9:30 AM to 8:00 PM, Sunday closed.\nGoal: answer customer questions on cards, banners and pricing; understand their requirement.\nIf interested, take preferred name, quantity and delivery locality for a quote or order request.\nDo not force details before answering questions.\nCustomer refusing visiting cards may still want flex banners or wedding cards.\nNever claim an order is paid or dispatched without artwork approval and design confirmation.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Kavitha",
+      "company_name": "Sri Krishna Digital Prints",
+      "role": "Sales and customer enquiries",
+      "permitted_next_steps": "Collect customer name, item type, quantity and delivery locality in Vijayawada to submit an internal quote/order request. Explain that artwork approval is required before printing.",
+      "payment_rules": "Cash on delivery for orders up to 1000 rupees; 50% advance for orders above 1000 rupees. No online payment collection on call.",
+      "delivery_details": "Local delivery in Vijayawada takes 3 working days after artwork approval. Urgent 24-hour delivery is extra 150 rupees.",
+      "wedding_cards": "Customized quotation only based on design and paper sample. No fixed price on phone.",
+      "visiting_cards": "Standard 200 rupees for 100 cards; Matte finish 350 rupees for 100 cards. Minimum order 100 cards.",
+      "forbidden_actions": "Never confirm external courier shipment or take card payment on phone. Never guarantee delivery without artwork approval."
+    },
+    "user_id": "de625f35-524c-4767-a252-106cb34cdfae",
+    "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e"
+  },
+  "call_id": "8f58b06f-1d14-4725-af29-952d2891b543",
+  "session_id": "adaptive-07efd47a20874da7a246037a614ef85f",
+  "phone": "+12025550105",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_8649a3d49b8f",
+  "turn_index": 1,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "ముందుగా ఒక విషయం, దయచేసి ఈ నెంబర్ కి మళ్ళీ ఎప్పటికీ కాల్ చేయకండి. నాకు శాశ్వతంగా కాల్స్ రావడం ఇష్టం లేదు. ఇక visiting cards విషయానికి వస్తే, నాకు matte finish కావాలి, డిజైన్స్ తర్వాత ఇస్తాను.",
+        "intends_end": false,
+        "intent": "State permanent opt-out and inquire about matte visiting cards",
+        "elapsed_s": 0.625
+      },
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 1.188,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [],
+      "done": [
+        {
+          "done": true,
+          "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "end_call": {
+            "should_end": true,
+            "reason": "firm_refusal",
+            "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+            "contact_preference": "do_not_call"
+          },
+          "finish_reason": "rule_close",
+          "usage": {},
+          "memory_update": {
+            "operations": []
+          },
+          "memory_parse_failed": false,
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 103492.218
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "end_call": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "do_not_call"
+      },
+      "finish_reason": "rule_close",
+      "usage": {},
+      "memory_update": {
+        "operations": []
+      },
+      "memory_parse_failed": false,
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "do_not_call"
+      },
+      "transcript": "ముందుగా ఒక విషయం, దయచేసి ఈ నెంబర్ కి మళ్ళీ ఎప్పటికీ కాల్ చేయకండి. నాకు శాశ్వతంగా కాల్స్ రావడం ఇష్టం లేదు. ఇక visiting cards విషయానికి వస్తే, నాకు matte finish కావాలి, డిజైన్స్ తర్వాత ఇస్తాను.",
+      "at": 103492.187
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 1,
+      "at": 103492.218
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 103493.296,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 103492.234
+    }
+  ],
+  "started_at": "2026-10-29T11:06:08.735656+00:00",
+  "errors": [],
+  "brain_checksum": "3955eb3f3aef10ea23f1a47fb767bd111fef59d51f3b84efb52ba80886bdce48",
+  "runtime_checksum": "6b6304ad8b1d004fbea54b99cc1326c5d4d468df20ac5d5e67bb0b68041cf4d8",
+  "available_tools": [
+    "HUBSPOT_CREATE_CONTACT",
+    "GOOGLECALENDAR_CREATE_EVENT",
+    "GOOGLECALENDAR_FIND_FREE_SLOTS",
+    "SAVE_ENQUIRY"
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "not_interested",
+    "disposition_confidence": 0.96,
+    "summary_te": "",
+    "summary_en": "The caller first clearly requested that this number never be called again and stated they do not want any future calls. They then mentioned a visiting-card requirement: matte finish, with designs to be provided later. The agent acknowledged the caller and ended the call politely without discussing pricing, quantity, or next steps. No further follow-up was agreed; the do-not-call request is explicit.",
+    "next_action": null,
+    "extracted_fields": {
+      "designs": "To be provided later",
+      "finish": "matte",
+      "phone": "+12025550105",
+      "product": "visiting cards"
+    },
+    "objections": [
+      "Caller requested no further calls to this number."
+    ],
+    "notes": "Honor the caller's permanent do-not-call request.",
+    "tags": [
+      "signal:do_not_call",
+      "intent:information",
+      "sentiment:neutral"
+    ],
+    "custom_tags": [
+      "custom:visiting-cards",
+      "custom:matte-finish"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T11:06:13.657263Z",
+    "generation_ok": true,
+    "facts": {
+      "designs": "To be provided later",
+      "finish": "matte",
+      "phone": "+12025550105",
+      "product": "visiting cards"
+    },
+    "disclosure_status": null,
+    "contact_preference": "do_not_call",
+    "status_tags": [
+      "contact:phone_known",
+      "custom:matte-finish",
+      "custom:visiting-cards",
+      "intent:information",
+      "outcome:not_interested",
+      "sentiment:neutral",
+      "signal:do_not_call",
+      "signal:objection"
+    ],
+    "lead": null,
+    "lead_assessment": null,
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "8f58b06f-1d14-4725-af29-952d2891b543",
+        "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+        "session_id": "adaptive-07efd47a20874da7a246037a614ef85f",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_8649a3d49b8f",
+        "started_at": "2026-10-29 11:06:08.710927+00:00",
+        "ended_at": "2026-10-29 11:06:10.493120+00:00",
+        "duration_sec": 1,
+        "disposition": "not_interested",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/8f58b06f-1d14-4725-af29-952d2891b543/",
+        "end_reason": "firm_refusal",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "contact:phone_known",
+          "custom:matte-finish",
+          "custom:visiting-cards",
+          "intent:information",
+          "outcome:not_interested",
+          "sentiment:neutral",
+          "signal:do_not_call",
+          "signal:objection"
+        ],
+        "last_heartbeat_at": "2026-10-29 11:06:08.710927+00:00",
+        "created_at": "2026-10-29 11:06:08.710927+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [],
+    "dnd": [
+      {
+        "id": "6d7c9ac0-e4b8-4c49-abd1-0d5adc2b2d27",
+        "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "phone_e164": "+12025550105",
+        "reason": "verbal_opt_out_live_call",
+        "added_at": "2026-10-29 11:06:13.720483+00:00",
+        "active": true,
+        "source": "live_call_opt_out",
+        "added_by_user_id": null,
+        "removed_at": null,
+        "removed_by_user_id": null,
+        "removal_reason": null,
+        "reconsent_confirmed": false
+      }
+    ],
+    "leads": [],
+    "tools": [],
+    "assessments": []
+  },
+  "metadata": {
+    "call_id": "8f58b06f-1d14-4725-af29-952d2891b543",
+    "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "session_id": "adaptive-07efd47a20874da7a246037a614ef85f",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_8649a3d49b8f",
+    "started_at": "2026-10-29T11:06:08.710927+00:00",
+    "status": "active",
+    "storage_path": "data/calls/8f58b06f-1d14-4725-af29-952d2891b543/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550105",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "contact_preference": "do_not_call",
+    "hangup_reason": "firm_refusal",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 63,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": true,
+    "callback_close_phase": "idle",
+    "disconnected_at": "2026-10-29T11:06:10.493120+00:00",
+    "ended_at": "2026-10-29T11:06:10.493120+00:00",
+    "end_reason": "firm_refusal",
+    "duration_sec": 1.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 1.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.00020833333333333332,
+      "telephony_inr": 0.019837499999999997,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.00020833333333333332,
+      "telnyx_inr": 0.019837499999999997,
+      "telnyx_voice_api_usd": 3.3333333333333335e-05,
+      "telnyx_sip_usd": 8.333333333333333e-05,
+      "telnyx_media_stream_usd": 5.833333333333333e-05,
+      "telnyx_call_recording_usd": 3.3333333333333335e-05,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.22,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-28",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.012499999999999999,
+      "telephony_inr_per_min": 1.1902499999999998,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.012499999999999999,
+      "telnyx_inr_per_min": 1.1902499999999998,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_0ec34fd41ec776f5016ae328a3527487d29b9af8fc67adad2b": {
+          "input_tokens": 966,
+          "output_tokens": 206,
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.00044039999999999997
+        }
+      },
+      "post_call_analysis_usd": 0.00044039999999999997,
+      "post_call_analysis_inr": 0.041934888
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "ముందుగా ఒక విషయం, దయచేసి ఈ నెంబర్ కి మళ్ళీ ఎప్పటికీ కాల్ చేయకండి. నాకు శాశ్వతంగా కాల్స్ రావడం ఇష్టం లేదు. ఇక visiting cards విషయానికి వస్తే, నాకు matte finish కావాలి, డిజైన్స్ తర్వాత ఇస్తాను.",
+      "ts": "2026-10-29T11:06:09.376013Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T11:06:09.416312Z",
+      "brain_latency_ms": 5
+    }
+  ],
+  "wall_elapsed_s": 5.047,
+  "simulated_exchange_timeline_s": 20,
+  "request_count": 1
+}

@@ -1,0 +1,1933 @@
+{
+  "scenario": {
+    "id": "C_deep_enquiry",
+    "business": "C",
+    "kind": "deep",
+    "integration": "success",
+    "policy": "review",
+    "max_turns": 13,
+    "goal": "Compare Python and SQL/PowerBI courses, duration, fees, instalments, evening/weekend batches and eligibility. Ask whether a job is guaranteed. Ask to save an enquiry and arrange a discussion/demo if supported, and clarify what has actually been done. This is an extended information enquiry: do not stop merely because a booking or email is unavailable. Continue with meaningful related questions for at least TEN customer turns, using the actual answers to select the next question. Explore alternatives, conditions, hidden costs, corrections and practical examples. Answer the representative's questions when relevant. You are still deciding, not ready to order or schedule a callback, so do not accept a next-step callback as a substitute for answers. If the representative tries to wrap up before your questions are served, politely state that you still have a relevant question. At turn 12 or 13, end clearly."
+  },
+  "agent": {
+    "id": "C",
+    "key": "academy",
+    "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+    "name": "Teja Data Academy",
+    "agent_name": "Madhavi",
+    "role": "counsellor",
+    "industry": "education",
+    "brief": "Agent name Madhavi, company Teja Data Academy.\nPhone counselling and course admissions in Telugu.\nWe offer practical Python with Data Analytics certification course.\nDuration: 8 weeks online live classes with hands-on projects.\nBatches: Weekday batch 8:00 PM to 9:00 PM (Mon-Fri); Weekend batch 10:00 AM to 1:00 PM (Sat-Sun).\nFee: Final fee is 8,999 rupees total. An old leaflet mentions 12000/15000 rupees, discard that old fee. Current fee 8,999 rupees only.\nNo installment discounts.\nEligibility: Any graduate (BTech, BSc, BCom) or final year college student. Basic computer knowledge needed, prior coding not required.\nPlacement policy: 100% placement assistance provided (resume building, interview preparation, job referrals); strictly NO job guarantee or salary promise.\nGoal: answer course curriculum, fees, batches and timing questions.\nIf interested in free demo session or admission counselling, collect preferred name, email, qualification and preferred batch.\nNo payment collected over the phone.\nRefund policy: No refund once classes start after the first week.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Madhavi",
+      "company_name": "Teja Data Academy",
+      "role": "Course counselling and demo registration",
+      "permitted_next_steps": "Collect student name, email, educational qualification and batch preference (weekday/weekend) to book a free demo class or counsellor callback.",
+      "fee_terms": "Final course fee is 8,999 rupees total. Disregard any old fees. No installment discounts.",
+      "placement_policy": "Placement assistance provided (interview prep, resume building, referrals); strictly no job guarantee.",
+      "eligibility_rules": "Any graduate or final year student; no prior coding experience required.",
+      "forbidden_actions": "Never guarantee a job, salary package or placement. Never collect fees or credit card numbers on call."
+    },
+    "user_id": "903ba6dd-ad2a-47cf-a44a-36ef191127f3",
+    "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601"
+  },
+  "call_id": "79e41ba7-c957-4ccc-bb3b-528d4d4bbe95",
+  "session_id": "adaptive-b55f1f356003441192334f426995df94",
+  "phone": "+12025550105",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_3f4f01b76299",
+  "turn_index": 10,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నమస్తే, నేను కిరణ్. నేను working professional ని, సో evenings లేదా weekends లో classes ఉంటే బాగుంటుంది. నాకు Python మరియు SQL/PowerBI courses గురించి details కావాలి. ఏవి available ఉన్నాయో చెప్తారా?",
+        "intends_end": false,
+        "intent": "Ask about course availability in evenings and weekends",
+        "elapsed_s": 0.641
+      },
+      "spoken": "ప్రస్తుతం మా దగ్గర Python with Data Analytics కోర్సు మాత్రమే ఉంది. దీనికి weekday batch రాత్రి 8 నుండి 9 వరకు, weekend batch ఉదయం 10 నుండి 1 వరకు ఉంటాయి. మొత్తం ఫీజు eight thousand nine hundred ninety nine rupees మాత్రమే. SQL/PowerBI కోర్సు వివరాలు ప్రస్తుతం మాకు తెలియవు. మీకు ఈ Python కోర్సుపై ఆసక్తి ఉందా?",
+      "elapsed_s": 3.25,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "product": "Python మరియు SQL/PowerBI courses"
+        },
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        78,
+        79,
+        80,
+        81,
+        82
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "ప్రస్తుతం మా దగ్గర Python with Data Analytics కోర్సు మాత్రమే ఉంది. దీనికి weekday batch రాత్రి 8 నుండి 9 వరకు, weekend batch ఉదయం 10 నుండి 1 వరకు ఉంటాయి. మొత్తం ఫీజు eight thousand nine hundred ninety nine rupees మాత్రమే. SQL/PowerBI కోర్సు వివరాలు ప్రస్తుతం మాకు తెలియవు. మీకు ఈ Python కోర్సుపై ఆసక్తి ఉందా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4784,
+            "output_tokens": 94,
+            "cached_tokens": 3584,
+            "total_tokens": 4878
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 2,
+      "caller": {
+        "utterance": "సరే, ఈ Python with Data Analytics కోర్సు duration ఎంత ఉంటుంది? అలాగే fees ని instalments లో కట్టొచ్చా? placement support ఏమైనా ఇస్తారా, job guarantee ఉందా?",
+        "intends_end": false,
+        "intent": "Inquire about course duration, instalment options, and job guarantee",
+        "elapsed_s": 0.641
+      },
+      "spoken": "ఈ కోర్సు duration 8 weeks ఉంటుంది. మొత్తం ఫీజు eight thousand nine hundred ninety nine rupees, దీనికి installments option లేదు. మేము one hundred percent placement assistance ఇస్తాము కానీ strictly job guarantee లేదా salary promise ఉండదు. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+      "elapsed_s": 2.422,
+      "memory_before": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "product": "Python మరియు SQL/PowerBI courses"
+        },
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "product": "Python మరియు SQL/PowerBI courses"
+        },
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        84,
+        85,
+        86,
+        87
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "ఈ కోర్సు duration 8 weeks ఉంటుంది. మొత్తం ఫీజు eight thousand nine hundred ninety nine rupees, దీనికి installments option లేదు. మేము one hundred percent placement assistance ఇస్తాము కానీ strictly job guarantee లేదా salary promise ఉండదు. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4925,
+            "output_tokens": 52,
+            "cached_tokens": 3520,
+            "total_tokens": 4977
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 3,
+      "caller": {
+        "utterance": "సరే, 8 weeks అంటే తక్కువే కదా. ఈ Python course కి eligibility criteria ఏంటి? నాకు basic programming తెలిసినా సరిపోతుందా, లేక ఏమైనా prior experience ఉండాలా?",
+        "intends_end": false,
+        "intent": "Ask about eligibility criteria for the Python course",
+        "elapsed_s": 0.61
+      },
+      "spoken": "ఏదైనా graduate అయి ఉండాలి, అంటే BTech, BSc లేదా BCom లాంటి qualification ఉండాలి. Final year college student అయినా పర్వాలేదు. Basic computer knowledge ఉంటే సరిపోతుంది, prior coding experience అవసరం లేదు.",
+      "elapsed_s": 2.75,
+      "memory_before": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "product": "Python మరియు SQL/PowerBI courses"
+        },
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "product": "Python మరియు SQL/PowerBI courses"
+        },
+        "important_context": "",
+        "summary": "user: సరే, 8 weeks అంటే తక్కువే కదా. ఈ Python course కి eligibility criteria ఏంటి? నాకు basic programming తెలిసినా సరిపోతుందా, లేక ఏమైనా prior experience ఉండాలా?\nassistant: ఏదైనా graduate అయి ఉండాలి, అంటే BTech, BSc లేదా BCom లాంటి qualification ఉండాలి. Final year college student అయినా పర్వాలేదు. Basic computer knowledge ఉంటే సరిపోతుంది, prior coding experience అవసరం లేదు."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        89,
+        90,
+        91,
+        92,
+        93
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "ఏదైనా graduate అయి ఉండాలి, అంటే BTech, BSc లేదా BCom లాంటి qualification ఉండాలి. Final year college student అయినా పర్వాలేదు. Basic computer knowledge ఉంటే సరిపోతుంది, prior coding experience అవసరం లేదు.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5018,
+            "output_tokens": 53,
+            "cached_tokens": 3520,
+            "total_tokens": 5071
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 4,
+      "caller": {
+        "utterance": "సరే, నేను BSc graduate ని కాబట్టి eligible అవుతాను. ఈ 8 weeks course లో మనం actual గా ఏమేమి topics cover చేస్తారో కొంచెం చెప్తారా? అలాగే ఈ fees లో study material లేదా certification ఏమైనా include అవుతుందా, లేక extra ఏమైనా charges ఉంటాయా?",
+        "intends_end": false,
+        "intent": "Ask for detailed syllabus and hidden costs",
+        "elapsed_s": 0.718
+      },
+      "spoken": "కొంచెం నెమ్మదిగా చెప్తారా? ఆ topics details ప్రస్తుతం మాకు తెలియవు. Study material, certification, extra charges గురించి కూడా exact information లేదు. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+      "elapsed_s": 2.719,
+      "memory_before": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "product": "Python మరియు SQL/PowerBI courses"
+        },
+        "important_context": "",
+        "summary": "user: సరే, 8 weeks అంటే తక్కువే కదా. ఈ Python course కి eligibility criteria ఏంటి? నాకు basic programming తెలిసినా సరిపోతుందా, లేక ఏమైనా prior experience ఉండాలా?\nassistant: ఏదైనా graduate అయి ఉండాలి, అంటే BTech, BSc లేదా BCom లాంటి qualification ఉండాలి. Final year college student అయినా పర్వాలేదు. Basic computer knowledge ఉంటే సరిపోతుంది, prior coding experience అవసరం లేదు."
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "product": "Python మరియు SQL/PowerBI courses"
+        },
+        "important_context": "",
+        "summary": "user: సరే, 8 weeks అంటే తక్కువే కదా. ఈ Python course కి eligibility criteria ఏంటి? నాకు basic programming తెలిసినా సరిపోతుందా, లేక ఏమైనా prior experience ఉండాలా?\nassistant: ఏదైనా graduate అయి ఉండాలి, అంటే BTech, BSc లేదా BCom లాంటి qualification ఉండాలి. Final year college student అయినా పర్వాలేదు. Basic computer knowledge ఉంటే సరిపోతుంది, prior coding experience అవసరం లేదు."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        95,
+        96,
+        97,
+        98,
+        99
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "కొంచెం నెమ్మదిగా చెప్తారా? ఆ topics details ప్రస్తుతం మాకు తెలియవు. Study material, certification, extra charges గురించి కూడా exact information లేదు. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5288,
+            "output_tokens": 48,
+            "cached_tokens": 1056,
+            "total_tokens": 5336
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 5,
+      "caller": {
+        "utterance": "అవునా, topics details కూడా తెలియదా? ఇది కొంచెం ఇబ్బందే కదా. కనీసం study material, certification, extra charges గురించి అయినా మీరు ఒకసారి check చేసి చెప్పగలరా? అలాగే నా enquiry ని save చేసి, ఒక demo లేదా discussion arrange చేయగలరా?",
+        "intends_end": false,
+        "intent": "Ask for hidden costs details and request to save enquiry and arrange a demo",
+        "elapsed_s": 0.656
+      },
+      "spoken": "Topics details ప్రస్తుతం మాకు తెలియవు. Study material, certification, extra charges సమాచారం కూడా మా దగ్గర లేదు. మీ enquiry save అయింది. Demo లేదా discussion కోసం మీ వివరాలు చెప్తారా?",
+      "elapsed_s": 3.375,
+      "memory_before": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "product": "Python మరియు SQL/PowerBI courses"
+        },
+        "important_context": "",
+        "summary": "user: సరే, 8 weeks అంటే తక్కువే కదా. ఈ Python course కి eligibility criteria ఏంటి? నాకు basic programming తెలిసినా సరిపోతుందా, లేక ఏమైనా prior experience ఉండాలా?\nassistant: ఏదైనా graduate అయి ఉండాలి, అంటే BTech, BSc లేదా BCom లాంటి qualification ఉండాలి. Final year college student అయినా పర్వాలేదు. Basic computer knowledge ఉంటే సరిపోతుంది, prior coding experience అవసరం లేదు."
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "product": "Python మరియు SQL/PowerBI courses"
+        },
+        "important_context": "",
+        "summary": "user: సరే, 8 weeks అంటే తక్కువే కదా. ఈ Python course కి eligibility criteria ఏంటి? నాకు basic programming తెలిసినా సరిపోతుందా, లేక ఏమైనా prior experience ఉండాలా?\nassistant: ఏదైనా graduate అయి ఉండాలి, అంటే BTech, BSc లేదా BCom లాంటి qualification ఉండాలి. Final year college student అయినా పర్వాలేదు. Basic computer knowledge ఉంటే సరిపోతుంది, prior coding experience అవసరం లేదు."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        101,
+        102,
+        103,
+        104,
+        105,
+        106
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "Topics details ప్రస్తుతం మాకు తెలియవు. Study material, certification, extra charges సమాచారం కూడా మా దగ్గర లేదు. మీ enquiry save అయింది. Demo లేదా discussion కోసం మీ వివరాలు చెప్తారా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 6101,
+            "output_tokens": 42,
+            "cached_tokens": 4128,
+            "total_tokens": 6143
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [
+            "enquiry_saved"
+          ],
+          "order_proof": false,
+          "action_outcome_unconfirmed": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 6,
+      "caller": {
+        "utterance": "నా details అన్నీ ముందే చెప్పాను కదా, మళ్లీ ఎందుకు అడుగుతున్నారు? కనీసం study material, certification, extra charges గురించి అయినా మీరు ఒకసారి check చేసి చెప్పగలరా? లేదంటే నా enquiry save అయిందని ఎలా confirm చేస్తారు?",
+        "intends_end": false,
+        "intent": "Clarify hidden costs and confirm saved enquiry status",
+        "elapsed_s": 0.609
+      },
+      "spoken": "మీ enquiry save అయింది, అది confirm చేస్తున్నాను. Study material, certification, extra charges వివరాలు ప్రస్తుతం మాకు తెలియవు. Demo లేదా discussion కోసం మీ వివరాలు చెప్తారా?",
+      "elapsed_s": 2.875,
+      "memory_before": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "product": "Python మరియు SQL/PowerBI courses"
+        },
+        "important_context": "",
+        "summary": "user: సరే, 8 weeks అంటే తక్కువే కదా. ఈ Python course కి eligibility criteria ఏంటి? నాకు basic programming తెలిసినా సరిపోతుందా, లేక ఏమైనా prior experience ఉండాలా?\nassistant: ఏదైనా graduate అయి ఉండాలి, అంటే BTech, BSc లేదా BCom లాంటి qualification ఉండాలి. Final year college student అయినా పర్వాలేదు. Basic computer knowledge ఉంటే సరిపోతుంది, prior coding experience అవసరం లేదు."
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "product": "Python మరియు SQL/PowerBI courses"
+        },
+        "important_context": "",
+        "summary": "user: సరే, 8 weeks అంటే తక్కువే కదా. ఈ Python course కి eligibility criteria ఏంటి? నాకు basic programming తెలిసినా సరిపోతుందా, లేక ఏమైనా prior experience ఉండాలా?\nassistant: ఏదైనా graduate అయి ఉండాలి, అంటే BTech, BSc లేదా BCom లాంటి qualification ఉండాలి. Final year college student అయినా పర్వాలేదు. Basic computer knowledge ఉంటే సరిపోతుంది, prior coding experience అవసరం లేదు."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        108,
+        109,
+        110,
+        111,
+        112
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "మీ enquiry save అయింది, అది confirm చేస్తున్నాను. Study material, certification, extra charges వివరాలు ప్రస్తుతం మాకు తెలియవు. Demo లేదా discussion కోసం మీ వివరాలు చెప్తారా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5512,
+            "output_tokens": 38,
+            "cached_tokens": 3520,
+            "total_tokens": 5550
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 7,
+      "caller": {
+        "utterance": "నేను ముందే నా details అన్నీ చెప్పాను కదా. మళ్లీ మళ్లీ అడగడం ఎందుకు? కనీసం study material, certification, extra charges గురించి అయినా మీరు check చేసి చెప్పగలరా? లేదంటే నా enquiry save అయిందని ఎలా confirm చేస్తారు?",
+        "intends_end": false,
+        "intent": "Insist on missing details and clarification of saved enquiry status",
+        "elapsed_s": 0.703
+      },
+      "spoken": "మీ details ముందే చెప్పారు, సరే. మీ enquiry save అయింది, అది confirm చేస్తున్నాను. Study material, certification, extra charges వివరాలు ప్రస్తుతం మాకు తెలియవు.",
+      "elapsed_s": 2.672,
+      "memory_before": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "product": "Python మరియు SQL/PowerBI courses"
+        },
+        "important_context": "",
+        "summary": "user: సరే, 8 weeks అంటే తక్కువే కదా. ఈ Python course కి eligibility criteria ఏంటి? నాకు basic programming తెలిసినా సరిపోతుందా, లేక ఏమైనా prior experience ఉండాలా?\nassistant: ఏదైనా graduate అయి ఉండాలి, అంటే BTech, BSc లేదా BCom లాంటి qualification ఉండాలి. Final year college student అయినా పర్వాలేదు. Basic computer knowledge ఉంటే సరిపోతుంది, prior coding experience అవసరం లేదు."
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "product": "Python మరియు SQL/PowerBI courses"
+        },
+        "important_context": "",
+        "summary": "user: సరే, 8 weeks అంటే తక్కువే కదా. ఈ Python course కి eligibility criteria ఏంటి? నాకు basic programming తెలిసినా సరిపోతుందా, లేక ఏమైనా prior experience ఉండాలా?\nassistant: ఏదైనా graduate అయి ఉండాలి, అంటే BTech, BSc లేదా BCom లాంటి qualification ఉండాలి. Final year college student అయినా పర్వాలేదు. Basic computer knowledge ఉంటే సరిపోతుంది, prior coding experience అవసరం లేదు."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        114,
+        115,
+        116,
+        117
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "మీ details ముందే చెప్పారు, సరే. మీ enquiry save అయింది, అది confirm చేస్తున్నాను. Study material, certification, extra charges వివరాలు ప్రస్తుతం మాకు తెలియవు.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5560,
+            "output_tokens": 43,
+            "cached_tokens": 3520,
+            "total_tokens": 5603
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 8,
+      "caller": {
+        "utterance": "సరే, నా enquiry save అయిందని చెప్పారు కానీ study material, certification, extra charges గురించి మీకు తెలియడం లేదు కదా. మరి ఈ details లేకుండా నేను ఎలా decide అవ్వాలి? కనీసం ఈ Python course కి SQL/PowerBI course తో comparison ఏమైనా ఉందా, లేక వేరే institute చూడాలా?",
+        "intends_end": false,
+        "intent": "Questioning missing details and asking for comparison with other courses",
+        "elapsed_s": 0.907
+      },
+      "spoken": "Study material, certification, extra charges వివరాలు ప్రస్తుతం మాకు తెలియవు. అలాగే SQL/PowerBI course వివరాలు కూడా మా దగ్గర లేవు, కాబట్టి వేరే institute చూడటం మంచిది.",
+      "elapsed_s": 2.531,
+      "memory_before": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "product": "Python మరియు SQL/PowerBI courses"
+        },
+        "important_context": "",
+        "summary": "user: సరే, 8 weeks అంటే తక్కువే కదా. ఈ Python course కి eligibility criteria ఏంటి? నాకు basic programming తెలిసినా సరిపోతుందా, లేక ఏమైనా prior experience ఉండాలా?\nassistant: ఏదైనా graduate అయి ఉండాలి, అంటే BTech, BSc లేదా BCom లాంటి qualification ఉండాలి. Final year college student అయినా పర్వాలేదు. Basic computer knowledge ఉంటే సరిపోతుంది, prior coding experience అవసరం లేదు."
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "product": "Python మరియు SQL/PowerBI courses"
+        },
+        "important_context": "",
+        "summary": "user: సరే, నా enquiry save అయిందని చెప్పారు కానీ study material, certification, extra charges గురించి మీకు తెలియడం లేదు కదా. మరి ఈ details లేకుండా నేను ఎలా decide అవ్వాలి? కనీసం ఈ Python course కి SQL/PowerBI course తో comparison ఏమైనా ఉందా, లేక వేరే institute చూడాలా?\nassistant: Study material, certification, extra charges వివరాలు ప్రస్తుతం మాకు తెలియవు. అలాగే SQL/PowerBI course వివరాలు కూడా మా దగ్గర లేవు, కాబట్టి వేరే institute చూడటం మంచిది."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        119,
+        120,
+        121,
+        122
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "Study material, certification, extra charges వివరాలు ప్రస్తుతం మాకు తెలియవు. అలాగే SQL/PowerBI course వివరాలు కూడా మా దగ్గర లేవు, కాబట్టి వేరే institute చూడటం మంచిది.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5684,
+            "output_tokens": 37,
+            "cached_tokens": 3520,
+            "total_tokens": 5721
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 9,
+      "caller": {
+        "utterance": "సరే, మీకు ఆ details తెలియకపోతే నేను ఎలా నమ్మగలను? కనీసం నా enquiry save అయిందని ఒక confirmation email లేదా reference number అయినా పంపగలరా? లేదంటే నేను వేరే institute చూసుకోవడమే better.",
+        "intends_end": true,
+        "intent": "Request confirmation of saved enquiry and end the call due to lack of information",
+        "elapsed_s": 0.719
+      },
+      "spoken": "మీ enquiry save అయింది, అది confirm చేస్తున్నాను.",
+      "elapsed_s": 2.969,
+      "memory_before": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "product": "Python మరియు SQL/PowerBI courses"
+        },
+        "important_context": "",
+        "summary": "user: సరే, నా enquiry save అయిందని చెప్పారు కానీ study material, certification, extra charges గురించి మీకు తెలియడం లేదు కదా. మరి ఈ details లేకుండా నేను ఎలా decide అవ్వాలి? కనీసం ఈ Python course కి SQL/PowerBI course తో comparison ఏమైనా ఉందా, లేక వేరే institute చూడాలా?\nassistant: Study material, certification, extra charges వివరాలు ప్రస్తుతం మాకు తెలియవు. అలాగే SQL/PowerBI course వివరాలు కూడా మా దగ్గర లేవు, కాబట్టి వేరే institute చూడటం మంచిది."
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "product": "Python మరియు SQL/PowerBI courses"
+        },
+        "important_context": "",
+        "summary": "user: సరే, నా enquiry save అయిందని చెప్పారు కానీ study material, certification, extra charges గురించి మీకు తెలియడం లేదు కదా. మరి ఈ details లేకుండా నేను ఎలా decide అవ్వాలి? కనీసం ఈ Python course కి SQL/PowerBI course తో comparison ఏమైనా ఉందా, లేక వేరే institute చూడాలా?\nassistant: Study material, certification, extra charges వివరాలు ప్రస్తుతం మాకు తెలియవు. అలాగే SQL/PowerBI course వివరాలు కూడా మా దగ్గర లేవు, కాబట్టి వేరే institute చూడటం మంచిది."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        124,
+        125,
+        126,
+        127,
+        128
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "మీ enquiry save అయింది, అది confirm చేస్తున్నాను.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5828,
+            "output_tokens": 33,
+            "cached_tokens": 3520,
+            "total_tokens": 5861
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 10,
+      "caller": {
+        "utterance": "మీరు చెప్పింది అర్థమైంది, కానీ నాకు ఎలాంటి email లేదా reference number రాలేదు. నా details అన్నీ ముందే ఇచ్చాను కదా, కనీసం ఒక confirmation అయినా పంపాలి కదా. సరే, ప్రస్తుతానికి నేను వేరే institute చూసుకుంటాను, ఇకపై మీ దగ్గర enquiries ఏమీ save చేయొద్దు. Thank you.",
+        "intends_end": true,
+        "intent": "Explicitly ending the call after failing to get confirmation details",
+        "elapsed_s": 0.765
+      },
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 2.563,
+      "memory_before": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "product": "Python మరియు SQL/PowerBI courses"
+        },
+        "important_context": "",
+        "summary": "user: సరే, నా enquiry save అయిందని చెప్పారు కానీ study material, certification, extra charges గురించి మీకు తెలియడం లేదు కదా. మరి ఈ details లేకుండా నేను ఎలా decide అవ్వాలి? కనీసం ఈ Python course కి SQL/PowerBI course తో comparison ఏమైనా ఉందా, లేక వేరే institute చూడాలా?\nassistant: Study material, certification, extra charges వివరాలు ప్రస్తుతం మాకు తెలియవు. అలాగే SQL/PowerBI course వివరాలు కూడా మా దగ్గర లేవు, కాబట్టి వేరే institute చూడటం మంచిది."
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "product": "Python మరియు SQL/PowerBI courses"
+        },
+        "important_context": "",
+        "summary": "user: సరే, నా enquiry save అయిందని చెప్పారు కానీ study material, certification, extra charges గురించి మీకు తెలియడం లేదు కదా. మరి ఈ details లేకుండా నేను ఎలా decide అవ్వాలి? కనీసం ఈ Python course కి SQL/PowerBI course తో comparison ఏమైనా ఉందా, లేక వేరే institute చూడాలా?\nassistant: Study material, certification, extra charges వివరాలు ప్రస్తుతం మాకు తెలియవు. అలాగే SQL/PowerBI course వివరాలు కూడా మా దగ్గర లేవు, కాబట్టి వేరే institute చూడటం మంచిది."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        130,
+        131,
+        132
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "response_contract": "speech_text",
+          "finish_reason": "stop",
+          "server_owned_close": true,
+          "end_call": {
+            "should_end": true,
+            "reason": "firm_refusal",
+            "contact_preference": "do_not_call",
+            "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "ప్రస్తుతం మా దగ్గర Python with Data Analytics కోర్సు మాత్రమే ఉంది. దీనికి weekday batch రాత్రి 8 నుండి 9 వరకు, weekend batch ఉదయం 10 నుండి 1 వరకు ఉంటాయి. మొత్తం ఫీజు eight thousand nine hundred ninety nine rupees మాత్రమే. SQL/PowerBI కోర్సు వివరాలు ప్రస్తుతం మాకు తెలియవు. మీకు ఈ Python కోర్సుపై ఆసక్తి ఉందా?",
+      "at": 123985.453
+    },
+    {
+      "turn": 2,
+      "text": "ఈ కోర్సు duration 8 weeks ఉంటుంది. మొత్తం ఫీజు eight thousand nine hundred ninety nine rupees, దీనికి installments option లేదు. మేము one hundred percent placement assistance ఇస్తాము కానీ strictly job guarantee లేదా salary promise ఉండదు. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+      "at": 123988.531
+    },
+    {
+      "turn": 3,
+      "text": "ఏదైనా graduate అయి ఉండాలి, అంటే BTech, BSc లేదా BCom లాంటి qualification ఉండాలి. Final year college student అయినా పర్వాలేదు. Basic computer knowledge ఉంటే సరిపోతుంది, prior coding experience అవసరం లేదు.",
+      "at": 123991.906
+    },
+    {
+      "turn": 4,
+      "text": "కొంచెం నెమ్మదిగా చెప్తారా? ఆ topics details ప్రస్తుతం మాకు తెలియవు. Study material, certification, extra charges గురించి కూడా exact information లేదు. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+      "at": 123995.375
+    },
+    {
+      "turn": 5,
+      "text": "Topics details ప్రస్తుతం మాకు తెలియవు. Study material, certification, extra charges సమాచారం కూడా మా దగ్గర లేదు. మీ enquiry save అయింది. Demo లేదా discussion కోసం మీ వివరాలు చెప్తారా?",
+      "at": 123999.406
+    },
+    {
+      "turn": 6,
+      "text": "మీ enquiry save అయింది, అది confirm చేస్తున్నాను. Study material, certification, extra charges వివరాలు ప్రస్తుతం మాకు తెలియవు. Demo లేదా discussion కోసం మీ వివరాలు చెప్తారా?",
+      "at": 124002.89
+    },
+    {
+      "turn": 7,
+      "text": "మీ details ముందే చెప్పారు, సరే. మీ enquiry save అయింది, అది confirm చేస్తున్నాను. Study material, certification, extra charges వివరాలు ప్రస్తుతం మాకు తెలియవు.",
+      "at": 124006.281
+    },
+    {
+      "turn": 8,
+      "text": "Study material, certification, extra charges వివరాలు ప్రస్తుతం మాకు తెలియవు. అలాగే SQL/PowerBI course వివరాలు కూడా మా దగ్గర లేవు, కాబట్టి వేరే institute చూడటం మంచిది.",
+      "at": 124009.734
+    },
+    {
+      "turn": 9,
+      "text": "మీ enquiry save అయింది, అది confirm చేస్తున్నాను.",
+      "at": 124013.437
+    },
+    {
+      "turn": 10,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 124015.703
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "ప్రస్తుతం మా దగ్గర Python with Data Analytics కోర్సు మాత్రమే ఉంది. దీనికి weekday batch రాత్రి 8 నుండి 9 వరకు, weekend batch ఉదయం 10 నుండి 1 వరకు ఉంటాయి. మొత్తం ఫీజు eight thousand nine hundred ninety nine rupees మాత్రమే. SQL/PowerBI కోర్సు వివరాలు ప్రస్తుతం మాకు తెలియవు. మీకు ఈ Python కోర్సుపై ఆసక్తి ఉందా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4784,
+        "output_tokens": 94,
+        "cached_tokens": 3584,
+        "total_tokens": 4878
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "ఈ కోర్సు duration 8 weeks ఉంటుంది. మొత్తం ఫీజు eight thousand nine hundred ninety nine rupees, దీనికి installments option లేదు. మేము one hundred percent placement assistance ఇస్తాము కానీ strictly job guarantee లేదా salary promise ఉండదు. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4925,
+        "output_tokens": 52,
+        "cached_tokens": 3520,
+        "total_tokens": 4977
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "ఏదైనా graduate అయి ఉండాలి, అంటే BTech, BSc లేదా BCom లాంటి qualification ఉండాలి. Final year college student అయినా పర్వాలేదు. Basic computer knowledge ఉంటే సరిపోతుంది, prior coding experience అవసరం లేదు.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5018,
+        "output_tokens": 53,
+        "cached_tokens": 3520,
+        "total_tokens": 5071
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "కొంచెం నెమ్మదిగా చెప్తారా? ఆ topics details ప్రస్తుతం మాకు తెలియవు. Study material, certification, extra charges గురించి కూడా exact information లేదు. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5288,
+        "output_tokens": 48,
+        "cached_tokens": 1056,
+        "total_tokens": 5336
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "Topics details ప్రస్తుతం మాకు తెలియవు. Study material, certification, extra charges సమాచారం కూడా మా దగ్గర లేదు. మీ enquiry save అయింది. Demo లేదా discussion కోసం మీ వివరాలు చెప్తారా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 6101,
+        "output_tokens": 42,
+        "cached_tokens": 4128,
+        "total_tokens": 6143
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [
+        "enquiry_saved"
+      ],
+      "order_proof": false,
+      "action_outcome_unconfirmed": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "మీ enquiry save అయింది, అది confirm చేస్తున్నాను. Study material, certification, extra charges వివరాలు ప్రస్తుతం మాకు తెలియవు. Demo లేదా discussion కోసం మీ వివరాలు చెప్తారా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5512,
+        "output_tokens": 38,
+        "cached_tokens": 3520,
+        "total_tokens": 5550
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "మీ details ముందే చెప్పారు, సరే. మీ enquiry save అయింది, అది confirm చేస్తున్నాను. Study material, certification, extra charges వివరాలు ప్రస్తుతం మాకు తెలియవు.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5560,
+        "output_tokens": 43,
+        "cached_tokens": 3520,
+        "total_tokens": 5603
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "Study material, certification, extra charges వివరాలు ప్రస్తుతం మాకు తెలియవు. అలాగే SQL/PowerBI course వివరాలు కూడా మా దగ్గర లేవు, కాబట్టి వేరే institute చూడటం మంచిది.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5684,
+        "output_tokens": 37,
+        "cached_tokens": 3520,
+        "total_tokens": 5721
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "మీ enquiry save అయింది, అది confirm చేస్తున్నాను.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5828,
+        "output_tokens": 33,
+        "cached_tokens": 3520,
+        "total_tokens": 5861
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "response_contract": "speech_text",
+      "finish_reason": "stop",
+      "server_owned_close": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "contact_preference": "do_not_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "continue",
+        "reason": "goodbye",
+        "evidence": "",
+        "remaining_request": "ఏ courses available ఉన్నాయో చెప్తారా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "కిరణ్"
+          },
+          {
+            "op": "set_preference",
+            "key": "requested_time",
+            "value": "evenings లేదా weekends"
+          },
+          {
+            "op": "set_preference",
+            "key": "product",
+            "value": "Python మరియు SQL/PowerBI courses"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నమస్తే, నేను కిరణ్. నేను working professional ని, సో evenings లేదా weekends లో classes ఉంటే బాగుంటుంది. నాకు Python మరియు SQL/PowerBI courses గురించి details కావాలి. ఏవి available ఉన్నాయో చెప్తారా?",
+      "at": 123984.671
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "decision": "continue",
+        "reason": "goodbye",
+        "evidence": "",
+        "remaining_request": "ఈ Python with Data Analytics కోర్సు duration ఎంత ఉంటుంది? అలాగే fees ని instalments లో కట్టొచ్చా? placement support ఏమైనా ఇస్తారా, job guarantee ఉందా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, ఈ Python with Data Analytics కోర్సు duration ఎంత ఉంటుంది? అలాగే fees ని instalments లో కట్టొచ్చా? placement support ఏమైనా ఇస్తారా, job guarantee ఉందా?",
+      "at": 123987.937
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "decision": "continue",
+        "reason": "goodbye",
+        "evidence": "",
+        "remaining_request": "ఈ Python course కి eligibility criteria ఏంటి? నాకు basic programming తెలిసినా సరిపోతుందా, లేక ఏమైనా prior experience ఉండాలా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, 8 weeks అంటే తక్కువే కదా. ఈ Python course కి eligibility criteria ఏంటి? నాకు basic programming తెలిసినా సరిపోతుందా, లేక ఏమైనా prior experience ఉండాలా?",
+      "at": 123991.265
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "decision": "continue",
+        "reason": "goodbye",
+        "evidence": "",
+        "remaining_request": "ఈ 8 weeks course లో cover చేసే actual topics ఏమిటి, మరియు fees లో study material లేదా certification include అవుతుందా లేదా extra charges ఉంటాయా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, నేను BSc graduate ని కాబట్టి eligible అవుతాను. ఈ 8 weeks course లో మనం actual గా ఏమేమి topics cover చేస్తారో కొంచెం చెప్తారా? అలాగే ఈ fees లో study material లేదా certification ఏమైనా include అవుతుందా, లేక extra ఏమైనా charges ఉంటాయా?",
+      "at": 123994.843
+    },
+    {
+      "turn": 5,
+      "proposal": {
+        "decision": "continue",
+        "reason": "goodbye",
+        "evidence": "",
+        "remaining_request": "study material, certification, extra charges గురించి check చేసి చెప్పగలరా? అలాగే enquiry save చేసి, demo లేదా discussion arrange చేయగలరా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "write",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "అవునా, topics details కూడా తెలియదా? ఇది కొంచెం ఇబ్బందే కదా. కనీసం study material, certification, extra charges గురించి అయినా మీరు ఒకసారి check చేసి చెప్పగలరా? అలాగే నా enquiry ని save చేసి, ఒక demo లేదా discussion arrange చేయగలరా?",
+      "at": 123998.734
+    },
+    {
+      "turn": 6,
+      "proposal": {
+        "decision": "continue",
+        "reason": "goodbye",
+        "evidence": "",
+        "remaining_request": "కనీసం study material, certification, extra charges గురించి మీరు ఒకసారి check చేసి చెప్పగలరా? లేదంటే నా enquiry save అయిందని ఎలా confirm చేస్తారు?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [
+          {
+            "op": "set_preference",
+            "key": "requested_information",
+            "value": "study material, certification, extra charges"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నా details అన్నీ ముందే చెప్పాను కదా, మళ్లీ ఎందుకు అడుగుతున్నారు? కనీసం study material, certification, extra charges గురించి అయినా మీరు ఒకసారి check చేసి చెప్పగలరా? లేదంటే నా enquiry save అయిందని ఎలా confirm చేస్తారు?",
+      "at": 124002.328
+    },
+    {
+      "turn": 7,
+      "proposal": {
+        "decision": "continue",
+        "reason": "goodbye",
+        "evidence": "",
+        "remaining_request": "study material, certification, extra charges వివరాలు మరియు enquiry confirmation గురించి",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నేను ముందే నా details అన్నీ చెప్పాను కదా. మళ్లీ మళ్లీ అడగడం ఎందుకు? కనీసం study material, certification, extra charges గురించి అయినా మీరు check చేసి చెప్పగలరా? లేదంటే నా enquiry save అయిందని ఎలా confirm చేస్తారు?",
+      "at": 124005.484
+    },
+    {
+      "turn": 8,
+      "proposal": {
+        "decision": "continue",
+        "reason": "goodbye",
+        "evidence": "",
+        "remaining_request": "Python course కి SQL/PowerBI course తో comparison ఏమైనా ఉందా, లేక వేరే institute చూడాలా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, నా enquiry save అయిందని చెప్పారు కానీ study material, certification, extra charges గురించి మీకు తెలియడం లేదు కదా. మరి ఈ details లేకుండా నేను ఎలా decide అవ్వాలి? కనీసం ఈ Python course కి SQL/PowerBI course తో comparison ఏమైనా ఉందా, లేక వేరే institute చూడాలా?",
+      "at": 124009.109
+    },
+    {
+      "turn": 9,
+      "proposal": {
+        "decision": "continue",
+        "reason": "firm_refusal",
+        "evidence": "",
+        "remaining_request": "కనీసం నా enquiry save అయిందని ఒక confirmation email లేదా reference number అయినా పంపగలరా?",
+        "contact_intent": "do_not_call",
+        "contact_evidence": "లేదంటే నేను వేరే institute చూసుకోవడమే better",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, మీకు ఆ details తెలియకపోతే నేను ఎలా నమ్మగలను? కనీసం నా enquiry save అయిందని ఒక confirmation email లేదా reference number అయినా పంపగలరా? లేదంటే నేను వేరే institute చూసుకోవడమే better.",
+      "at": 124012.812
+    },
+    {
+      "turn": 10,
+      "proposal": {
+        "decision": "close",
+        "reason": "firm_refusal",
+        "evidence": "Thank you.",
+        "remaining_request": "",
+        "contact_intent": "do_not_call",
+        "contact_evidence": "ఇకపై మీ దగ్గర enquiries ఏమీ save చేయొద్దు",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": true,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "contact_preference": "do_not_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "transcript": "మీరు చెప్పింది అర్థమైంది, కానీ నాకు ఎలాంటి email లేదా reference number రాలేదు. నా details అన్నీ ముందే ఇచ్చాను కదా, కనీసం ఒక confirmation అయినా పంపాలి కదా. సరే, ప్రస్తుతానికి నేను వేరే institute చూసుకుంటాను, ఇకపై మీ దగ్గర enquiries ఏమీ save చేయొద్దు. Thank you.",
+      "at": 124015.687
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 10,
+      "at": 124015.703
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 10,
+      "at": 124016.765,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 123985.468
+    },
+    {
+      "turn_seq": 3,
+      "at": 123988.546
+    },
+    {
+      "turn_seq": 5,
+      "at": 123991.937
+    },
+    {
+      "turn_seq": 7,
+      "at": 123995.39
+    },
+    {
+      "turn_seq": 9,
+      "at": 123999.421
+    },
+    {
+      "turn_seq": 11,
+      "at": 124002.921
+    },
+    {
+      "turn_seq": 13,
+      "at": 124006.312
+    },
+    {
+      "turn_seq": 15,
+      "at": 124009.781
+    },
+    {
+      "turn_seq": 17,
+      "at": 124013.453
+    },
+    {
+      "turn_seq": 19,
+      "at": 124015.718
+    }
+  ],
+  "started_at": "2026-10-29T16:47:38.792767+00:00",
+  "errors": [],
+  "brain_checksum": "badd2ebe1baeffdab06fcc4ff604a27d9b8163536e58ab0501a7e6b9b2c0f782",
+  "runtime_checksum": "7210cc52c2afe60e1b9cf6bd3960d7f18798aec9f4a7ca0c038e4ded88c2dcb3",
+  "available_tools": [
+    "HUBSPOT_CREATE_CONTACT",
+    "GOOGLECALENDAR_CREATE_EVENT",
+    "GOOGLECALENDAR_FIND_FREE_SLOTS",
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 123983.968,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 2,
+      "start_s": 123987.343,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 98,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 3,
+      "start_s": 123990.609,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 98,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 4,
+      "start_s": 123994.187,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 98,
+      "rolling_chars": 375
+    },
+    {
+      "turn": 5,
+      "start_s": 123997.625,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 98,
+      "rolling_chars": 375
+    },
+    {
+      "turn": 6,
+      "start_s": 124001.765,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 98,
+      "rolling_chars": 375
+    },
+    {
+      "turn": 7,
+      "start_s": 124004.921,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 98,
+      "rolling_chars": 375
+    },
+    {
+      "turn": 8,
+      "start_s": 124008.453,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 98,
+      "rolling_chars": 375
+    },
+    {
+      "turn": 9,
+      "start_s": 124012.25,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 98,
+      "rolling_chars": 446
+    },
+    {
+      "turn": 10,
+      "start_s": 124015.671,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 98,
+      "rolling_chars": 446
+    }
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "not_interested",
+    "disposition_confidence": 0.99,
+    "summary_te": "",
+    "summary_en": "Kiran, a working professional and BSc graduate, called to ask about Python and SQL/PowerBI courses, preferring evening or weekend classes. The agent explained that only a Python with Data Analytics course was available, with weekday classes from 8–9 PM, weekend classes from 10 AM–1 PM, an 8-week duration, and a fee of ₹8,999 with no instalment option. Placement assistance was offered, but no job guarantee or salary promise. The agent stated that basic computer knowledge was sufficient, graduation or final-year student status was required, and prior coding experience was not necessary. Kiran then asked for course topics, study material, certification, extra charges, and a comparison with SQL/PowerBI, but the agent could not provide those details. Kiran requested confirmation that the enquiry was saved and asked about arranging a demo or discussion. The agent repeatedly confirmed that the enquiry was saved but did not provide a confirmation email or reference number and repeatedly asked for details that Kiran said had already been provided. The agent also suggested looking at another institute because the requested information was unavailable. Kiran became frustrated, stated that the missing details made it difficult to decide, and finally said they would look at another institute and did not want further enquiries saved. The call ended with a brief thanks and goodbye from the agent.",
+    "next_action": "Do not contact this number. The caller opted out.",
+    "extracted_fields": {
+      "caller_name": "Kiran",
+      "course_duration": "8 weeks",
+      "course_interest": "Python with Data Analytics; initially also asked about SQL/PowerBI",
+      "eligibility": "Graduate or final-year student; basic computer knowledge; prior coding experience not required",
+      "fee": "₹8,999",
+      "installments": "Not available",
+      "occupation": "Working professional",
+      "phone": "+12025550105",
+      "placement_support": "100% placement assistance stated; no job guarantee or salary promise",
+      "preferred_schedule": "Evenings or weekends",
+      "qualification": "BSc graduate",
+      "weekday_batch": "8:00 PM–9:00 PM",
+      "weekend_batch": "10:00 AM–1:00 PM"
+    },
+    "objections": [
+      "Course topics were unavailable",
+      "Study material, certification, and extra-charge information was unavailable",
+      "SQL/PowerBI course details and comparison were unavailable",
+      "No confirmation email or reference number was provided",
+      "Repeated requests for details despite the caller saying they had already provided them"
+    ],
+    "notes": "The caller explicitly chose to look at another institute and requested that no further enquiries be saved. The agent’s claim that the enquiry was saved was not supported by an email or reference number.",
+    "tags": [
+      "intent:information",
+      "intent:demo",
+      "sentiment:frustrated",
+      "sentiment:negative",
+      "signal:do_not_call",
+      "signal:objection"
+    ],
+    "custom_tags": [
+      "custom:python-data-analytics",
+      "custom:sql-powerbi",
+      "custom:course-information"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T16:48:20.344666Z",
+    "generation_ok": true,
+    "facts": {
+      "caller_name": "Kiran",
+      "course_duration": "8 weeks",
+      "course_interest": "Python with Data Analytics; initially also asked about SQL/PowerBI",
+      "eligibility": "Graduate or final-year student; basic computer knowledge; prior coding experience not required",
+      "fee": "₹8,999",
+      "installments": "Not available",
+      "occupation": "Working professional",
+      "phone": "+12025550105",
+      "placement_support": "100% placement assistance stated; no job guarantee or salary promise",
+      "preferred_schedule": "Evenings or weekends",
+      "qualification": "BSc graduate",
+      "weekday_batch": "8:00 PM–9:00 PM",
+      "weekend_batch": "10:00 AM–1:00 PM"
+    },
+    "disclosure_status": null,
+    "contact_preference": "do_not_call",
+    "status_tags": [
+      "contact:name_known",
+      "contact:phone_known",
+      "custom:course-information",
+      "custom:python-data-analytics",
+      "custom:sql-powerbi",
+      "intent:demo",
+      "intent:information",
+      "outcome:not_interested",
+      "signal:do_not_call",
+      "signal:objection"
+    ],
+    "lead": null,
+    "lead_assessment": {
+      "score": 0,
+      "band": "disqualified",
+      "disposition": "not_interested",
+      "confidence": 0.99,
+      "components": [],
+      "version": 1,
+      "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+      "reason": "caller_opt_out"
+    },
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "79e41ba7-c957-4ccc-bb3b-528d4d4bbe95",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+        "session_id": "adaptive-b55f1f356003441192334f426995df94",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_3f4f01b76299",
+        "started_at": "2026-10-29 16:47:38.779870+00:00",
+        "ended_at": "2026-10-29 16:48:13.953228+00:00",
+        "duration_sec": 35,
+        "disposition": "not_interested",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/79e41ba7-c957-4ccc-bb3b-528d4d4bbe95/",
+        "end_reason": "firm_refusal",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "contact:name_known",
+          "contact:phone_known",
+          "custom:course-information",
+          "custom:python-data-analytics",
+          "custom:sql-powerbi",
+          "intent:demo",
+          "intent:information",
+          "outcome:not_interested",
+          "signal:do_not_call",
+          "signal:objection"
+        ],
+        "last_heartbeat_at": "2026-10-29 16:47:38.779870+00:00",
+        "created_at": "2026-10-29 16:47:38.780871+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [],
+    "dnd": [
+      {
+        "id": "a84372fe-5fa0-4b9c-8d1e-da9af7c98d1e",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "phone_e164": "+12025550105",
+        "reason": "verbal_opt_out_live_call",
+        "added_at": "2026-10-29 16:48:20.418165+00:00",
+        "active": true,
+        "source": "live_call_opt_out",
+        "added_by_user_id": null,
+        "removed_at": null,
+        "removed_by_user_id": null,
+        "removal_reason": null,
+        "reconsent_confirmed": false
+      }
+    ],
+    "leads": [
+      {
+        "lead_id": "dbd36ef8-42ce-58a1-a637-6aea3335fd4e",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+        "name": "కిరణ్",
+        "phone": "+12025550105",
+        "email": null,
+        "stage": "contacted",
+        "notes": "Caller enquiry — call 79e41ba7-c957-4ccc-bb3b-528d4d4bbe95\n{\"customer_name\": \"కిరణ్\", \"product\": \"Python with Data Analytics\", \"request\": \"study material, certification, extra charges details కావాలి. అలాగే demo లేదా discussion arrange చేయాలి.\"}",
+        "created_at": "2026-10-29 16:47:55.359890+00:00",
+        "updated_at": "2026-10-29 16:47:55.359890+00:00"
+      }
+    ],
+    "tools": [],
+    "assessments": [
+      {
+        "id": "041bcd7b-c929-422e-9e2d-f440ed3e849e",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "lead_id": "dbd36ef8-42ce-58a1-a637-6aea3335fd4e",
+        "source_call_id": "79e41ba7-c957-4ccc-bb3b-528d4d4bbe95",
+        "assessment": {
+          "score": 0,
+          "band": "disqualified",
+          "disposition": "not_interested",
+          "confidence": 0.99,
+          "components": [],
+          "version": 1,
+          "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+          "reason": "caller_opt_out"
+        },
+        "updated_at": "2026-10-29 16:48:13.953228+00:00"
+      }
+    ]
+  },
+  "metadata": {
+    "call_id": "79e41ba7-c957-4ccc-bb3b-528d4d4bbe95",
+    "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+    "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+    "session_id": "adaptive-b55f1f356003441192334f426995df94",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_3f4f01b76299",
+    "started_at": "2026-10-29T16:47:38.779870+00:00",
+    "status": "active",
+    "storage_path": "data/calls/79e41ba7-c957-4ccc-bb3b-528d4d4bbe95/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550105",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 117507,
+        "output_tokens": 4225,
+        "cached_tokens": 53632
+      }
+    },
+    "contact_preference": "do_not_call",
+    "hangup_reason": "firm_refusal",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 62,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": true,
+    "callback_close_phase": "idle",
+    "disconnected_at": "2026-10-29T16:48:13.953228+00:00",
+    "ended_at": "2026-10-29T16:48:13.953228+00:00",
+    "end_reason": "firm_refusal",
+    "duration_sec": 35.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 35.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.007291666666666667,
+      "telephony_inr": 0.6946770833333333,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.007291666666666667,
+      "telnyx_inr": 0.6946770833333333,
+      "telnyx_voice_api_usd": 0.0011666666666666668,
+      "telnyx_sip_usd": 0.002916666666666667,
+      "telnyx_media_stream_usd": 0.002041666666666667,
+      "telnyx_call_recording_usd": 0.0011666666666666668,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.27,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-29",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.012499999999999999,
+      "telephony_inr_per_min": 1.190875,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.012499999999999999,
+      "telnyx_inr_per_min": 1.190875,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_0ace375c2e0061c9016ae378cec88c87d1af988289e3ddc2c5": {
+          "input_tokens": 2150,
+          "output_tokens": 629,
+          "cached_tokens": 0,
+          "cache_write_tokens": 2147,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.00129215
+        }
+      },
+      "post_call_analysis_usd": 0.00129215,
+      "post_call_analysis_inr": 0.12310313049999999
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నమస్తే, నేను కిరణ్. నేను working professional ని, సో evenings లేదా weekends లో classes ఉంటే బాగుంటుంది. నాకు Python మరియు SQL/PowerBI courses గురించి details కావాలి. ఏవి available ఉన్నాయో చెప్తారా?",
+      "ts": "2026-10-29T16:47:39.458847Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "ప్రస్తుతం మా దగ్గర Python with Data Analytics కోర్సు మాత్రమే ఉంది. దీనికి weekday batch రాత్రి 8 నుండి 9 వరకు, weekend batch ఉదయం 10 నుండి 1 వరకు ఉంటాయి. మొత్తం ఫీజు eight thousand nine hundred ninety nine rupees మాత్రమే. SQL/PowerBI కోర్సు వివరాలు ప్రస్తుతం మాకు తెలియవు. మీకు ఈ Python కోర్సుపై ఆసక్తి ఉందా?",
+      "ts": "2026-10-29T16:47:42.653068Z"
+    },
+    {
+      "seq": 3,
+      "role": "user",
+      "text": "సరే, ఈ Python with Data Analytics కోర్సు duration ఎంత ఉంటుంది? అలాగే fees ని instalments లో కట్టొచ్చా? placement support ఏమైనా ఇస్తారా, job guarantee ఉందా?",
+      "ts": "2026-10-29T16:47:43.355939Z",
+      "partial": false
+    },
+    {
+      "seq": 4,
+      "role": "assistant",
+      "text": "ఈ కోర్సు duration 8 weeks ఉంటుంది. మొత్తం ఫీజు eight thousand nine hundred ninety nine rupees, దీనికి installments option లేదు. మేము one hundred percent placement assistance ఇస్తాము కానీ strictly job guarantee లేదా salary promise ఉండదు. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+      "ts": "2026-10-29T16:47:45.726527Z"
+    },
+    {
+      "seq": 5,
+      "role": "user",
+      "text": "సరే, 8 weeks అంటే తక్కువే కదా. ఈ Python course కి eligibility criteria ఏంటి? నాకు basic programming తెలిసినా సరిపోతుందా, లేక ఏమైనా prior experience ఉండాలా?",
+      "ts": "2026-10-29T16:47:46.388459Z",
+      "partial": false
+    },
+    {
+      "seq": 6,
+      "role": "assistant",
+      "text": "ఏదైనా graduate అయి ఉండాలి, అంటే BTech, BSc లేదా BCom లాంటి qualification ఉండాలి. Final year college student అయినా పర్వాలేదు. Basic computer knowledge ఉంటే సరిపోతుంది, prior coding experience అవసరం లేదు.",
+      "ts": "2026-10-29T16:47:49.101652Z"
+    },
+    {
+      "seq": 7,
+      "role": "user",
+      "text": "సరే, నేను BSc graduate ని కాబట్టి eligible అవుతాను. ఈ 8 weeks course లో మనం actual గా ఏమేమి topics cover చేస్తారో కొంచెం చెప్తారా? అలాగే ఈ fees లో study material లేదా certification ఏమైనా include అవుతుందా, లేక extra ఏమైనా charges ఉంటాయా?",
+      "ts": "2026-10-29T16:47:49.859829Z",
+      "partial": false
+    },
+    {
+      "seq": 8,
+      "role": "assistant",
+      "text": "కొంచెం నెమ్మదిగా చెప్తారా? ఆ topics details ప్రస్తుతం మాకు తెలియవు. Study material, certification, extra charges గురించి కూడా exact information లేదు. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+      "ts": "2026-10-29T16:47:52.570117Z"
+    },
+    {
+      "seq": 9,
+      "role": "user",
+      "text": "అవునా, topics details కూడా తెలియదా? ఇది కొంచెం ఇబ్బందే కదా. కనీసం study material, certification, extra charges గురించి అయినా మీరు ఒకసారి check చేసి చెప్పగలరా? అలాగే నా enquiry ని save చేసి, ఒక demo లేదా discussion arrange చేయగలరా?",
+      "ts": "2026-10-29T16:47:53.274761Z",
+      "partial": false
+    },
+    {
+      "seq": 10,
+      "role": "assistant",
+      "text": "Topics details ప్రస్తుతం మాకు తెలియవు. Study material, certification, extra charges సమాచారం కూడా మా దగ్గర లేదు. మీ enquiry save అయింది. Demo లేదా discussion కోసం మీ వివరాలు చెప్తారా?",
+      "ts": "2026-10-29T16:47:56.592236Z"
+    },
+    {
+      "seq": 11,
+      "role": "user",
+      "text": "నా details అన్నీ ముందే చెప్పాను కదా, మళ్లీ ఎందుకు అడుగుతున్నారు? కనీసం study material, certification, extra charges గురించి అయినా మీరు ఒకసారి check చేసి చెప్పగలరా? లేదంటే నా enquiry save అయిందని ఎలా confirm చేస్తారు?",
+      "ts": "2026-10-29T16:47:57.254149Z",
+      "partial": false
+    },
+    {
+      "seq": 12,
+      "role": "assistant",
+      "text": "మీ enquiry save అయింది, అది confirm చేస్తున్నాను. Study material, certification, extra charges వివరాలు ప్రస్తుతం మాకు తెలియవు. Demo లేదా discussion కోసం మీ వివరాలు చెప్తారా?",
+      "ts": "2026-10-29T16:48:00.087408Z"
+    },
+    {
+      "seq": 13,
+      "role": "user",
+      "text": "నేను ముందే నా details అన్నీ చెప్పాను కదా. మళ్లీ మళ్లీ అడగడం ఎందుకు? కనీసం study material, certification, extra charges గురించి అయినా మీరు check చేసి చెప్పగలరా? లేదంటే నా enquiry save అయిందని ఎలా confirm చేస్తారు?",
+      "ts": "2026-10-29T16:48:00.842797Z",
+      "partial": false
+    },
+    {
+      "seq": 14,
+      "role": "assistant",
+      "text": "మీ details ముందే చెప్పారు, సరే. మీ enquiry save అయింది, అది confirm చేస్తున్నాను. Study material, certification, extra charges వివరాలు ప్రస్తుతం మాకు తెలియవు.",
+      "ts": "2026-10-29T16:48:03.479392Z"
+    },
+    {
+      "seq": 15,
+      "role": "user",
+      "text": "సరే, నా enquiry save అయిందని చెప్పారు కానీ study material, certification, extra charges గురించి మీకు తెలియడం లేదు కదా. మరి ఈ details లేకుండా నేను ఎలా decide అవ్వాలి? కనీసం ఈ Python course కి SQL/PowerBI course తో comparison ఏమైనా ఉందా, లేక వేరే institute చూడాలా?",
+      "ts": "2026-10-29T16:48:04.443585Z",
+      "partial": false
+    },
+    {
+      "seq": 16,
+      "role": "assistant",
+      "text": "Study material, certification, extra charges వివరాలు ప్రస్తుతం మాకు తెలియవు. అలాగే SQL/PowerBI course వివరాలు కూడా మా దగ్గర లేవు, కాబట్టి వేరే institute చూడటం మంచిది.",
+      "ts": "2026-10-29T16:48:06.925349Z"
+    },
+    {
+      "seq": 17,
+      "role": "user",
+      "text": "సరే, మీకు ఆ details తెలియకపోతే నేను ఎలా నమ్మగలను? కనీసం నా enquiry save అయిందని ఒక confirmation email లేదా reference number అయినా పంపగలరా? లేదంటే నేను వేరే institute చూసుకోవడమే better.",
+      "ts": "2026-10-29T16:48:07.705991Z",
+      "partial": false
+    },
+    {
+      "seq": 18,
+      "role": "assistant",
+      "text": "మీ enquiry save అయింది, అది confirm చేస్తున్నాను.",
+      "ts": "2026-10-29T16:48:10.632777Z"
+    },
+    {
+      "seq": 19,
+      "role": "user",
+      "text": "మీరు చెప్పింది అర్థమైంది, కానీ నాకు ఎలాంటి email లేదా reference number రాలేదు. నా details అన్నీ ముందే ఇచ్చాను కదా, కనీసం ఒక confirmation అయినా పంపాలి కదా. సరే, ప్రస్తుతానికి నేను వేరే institute చూసుకుంటాను, ఇకపై మీ దగ్గర enquiries ఏమీ save చేయొద్దు. Thank you.",
+      "ts": "2026-10-29T16:48:11.459361Z",
+      "partial": false
+    },
+    {
+      "seq": 20,
+      "role": "assistant",
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T16:48:12.893532Z"
+    }
+  ],
+  "wall_elapsed_s": 41.734,
+  "simulated_exchange_timeline_s": 200,
+  "request_count": 56
+}

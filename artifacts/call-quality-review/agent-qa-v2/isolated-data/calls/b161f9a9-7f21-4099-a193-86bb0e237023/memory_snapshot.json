@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "product": "herbal hair oil"
+  },
+  "preferences": {
+    "contact_time": "tomorrow at 6:30 in the evening"
+  },
+  "important_context": "",
+  "summary": "user: That sounds nice, but how many times in a week should I apply it?\nassistant: The information on how many times a week to apply the Herbal Hair Oil is currently unavailable. For personalized guidance on your dry hair, I'd recommend consulting a qualified healthcare professional. Would you like to place an order today?\nuser: Actually, I am at work and quite busy right now, so can you please call me back tomorrow at 6:30 in the evening on this same number?\nassistant: Okay, I've noted your callback. Thank you for your time. Goodbye."
+}

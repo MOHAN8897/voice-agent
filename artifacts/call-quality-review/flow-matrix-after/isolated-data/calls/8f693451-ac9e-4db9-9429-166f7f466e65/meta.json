@@ -1,0 +1,132 @@
+{
+  "call_id": "8f693451-ac9e-4db9-9429-166f7f466e65",
+  "tenant_id": "8fc13902-cd7a-486d-9754-d9b34238215b",
+  "agent_id": "9632fd4d-4e4f-4e57-86d9-9c9191d9c6a6",
+  "session_id": "wf-d61ae4bda53049f18e30eec12cd67a48",
+  "channel": "pstn",
+  "direction": "inbound",
+  "environment": "development",
+  "tier": "medium",
+  "combination_id": "5b3ecb0dcd721b7f",
+  "compiled_brain_version": "cb_sim_35e2a4b21d2c45d2",
+  "started_at": "2026-10-30T11:00:37.132868+00:00",
+  "status": "active",
+  "storage_path": "data/calls/8f693451-ac9e-4db9-9429-166f7f466e65/",
+  "resolved_stack": {
+    "combination_id": "5b3ecb0dcd721b7f",
+    "tier": "medium",
+    "mode": "frontend",
+    "language": "en-IN",
+    "voice_preset": "telugu_natural",
+    "stt": {
+      "provider": "sarvam",
+      "model": "saaras:v3-realtime",
+      "config": {
+        "mode": "realtime"
+      }
+    },
+    "llm": {
+      "provider": "sarvam",
+      "model": "sarvam-105b-conversations",
+      "config": {
+        "api_mode": "chat_completions_v1"
+      }
+    },
+    "tts": {
+      "provider": "sarvam",
+      "model": "bulbul:v3",
+      "config": {
+        "speaker": "shubh",
+        "api_mode": "websocket"
+      }
+    }
+  },
+  "pipeline": "composed_voice",
+  "caller_id": "+919876500510",
+  "callee_e164": "+914000000000",
+  "is_test": true,
+  "call_end_policy": {
+    "allowedReasons": [
+      "goodbye",
+      "firm_refusal",
+      "not_interested",
+      "goal_complete",
+      "abuse"
+    ],
+    "farewell": "Thank you for your time. Goodbye.",
+    "farewellSource": "default"
+  },
+  "stage_usage": {
+    "llm": {
+      "input_tokens": 30405,
+      "output_tokens": 1659,
+      "cached_tokens": 14880
+    },
+    "stt": {
+      "audio_seconds": 0.0
+    }
+  },
+  "contact_preference": "end_call",
+  "hangup_reason": "goodbye",
+  "hangup_initiator": "agent",
+  "hangup_outcome": "agent_ended",
+  "hangup_playback_wait_ms": 47,
+  "hangup_trail_ms": 1000,
+  "hangup_heard_playback": true,
+  "callback_close_phase": "idle",
+  "disconnected_at": "2026-10-30T11:00:48.120745+00:00",
+  "ended_at": "2026-10-30T11:00:48.120745+00:00",
+  "end_reason": "goodbye",
+  "duration_sec": 10.0,
+  "provider_cost_result": {
+    "status": "incomplete",
+    "missing": [
+      "provider_cost_snapshot"
+    ],
+    "stages": {},
+    "totalUsd": null,
+    "totalInr": null
+  },
+  "usage": {
+    "cost_accounting_version": 3,
+    "supplier_cost_status": "incomplete",
+    "live_transcript_usd": 0.0,
+    "live_transcript_inr": 0.0,
+    "pipeline": "composed_voice",
+    "duration_sec": 10.0,
+    "telephony_provider": "telnyx",
+    "telephony_usd": 0.0017833333333333332,
+    "telephony_inr": 0.16989816666666666,
+    "model_cost_usd": null,
+    "model_cost_inr": null,
+    "telnyx_usd": 0.0017833333333333332,
+    "telnyx_inr": 0.16989816666666666,
+    "telnyx_voice_api_usd": 0.0003333333333333333,
+    "telnyx_sip_usd": 0.0005333333333333334,
+    "telnyx_media_stream_usd": 0.0005833333333333333,
+    "telnyx_call_recording_usd": 0.0003333333333333333,
+    "telnyx_destination_country": "IN",
+    "telnyx_sip_usd_per_min": 0.0032,
+    "telnyx_cost_is_estimate": true,
+    "vobiz_usd": 0.0,
+    "vobiz_inr": 0.0,
+    "carrier_cost_source": "tariff_estimate",
+    "cost_usd": null,
+    "cost_inr": null,
+    "cost_is_estimate": true,
+    "fx_rate_inr": 95.27,
+    "fx_source": "live_cache",
+    "fx_as_of": "2026-10-29",
+    "gst_inr": 0.0,
+    "cost_usd_per_min": null,
+    "cost_inr_per_min": null,
+    "telephony_usd_per_min": 0.0107,
+    "telephony_inr_per_min": 1.019389,
+    "model_cost_usd_per_min": null,
+    "model_cost_inr_per_min": null,
+    "telnyx_usd_per_min": 0.0107,
+    "telnyx_inr_per_min": 1.019389,
+    "vobiz_usd_per_min": 0.0,
+    "vobiz_inr_per_min": 0.0
+  }
+}

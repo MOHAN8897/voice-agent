@@ -1,0 +1,39 @@
+{
+  "disposition": "no_outcome",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call but did not clearly state their intent or share any details. The agent responded by introducing themselves and asking how they could assist. The caller did not provide a clear response, resulting in an inconclusive conversation with no agreed next steps.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500514"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "sentiment:neutral",
+    "intent:information"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T11:20:10.927007Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500514"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:no_outcome",
+    "quality:inconclusive",
+    "sentiment:neutral"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

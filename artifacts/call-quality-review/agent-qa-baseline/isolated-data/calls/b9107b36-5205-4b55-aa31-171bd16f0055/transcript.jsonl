@@ -1,0 +1,9 @@
+{"seq": 1, "role": "user", "text": "नमस्ते प्रिया जी। हाँ, बताइए, आप लोग क्या बेचते हैं?", "ts": "2026-10-31T13:21:44.440417Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "हमारे पास चार main products हैं। Herbal Hair Oil ₹499 में 200 ml मिलता है, जिसमें Amla, Bhringraj, Hibiscus, और Coconut Oil हैं, जो routine hair और scalp care के लिए है। क्या आप इनमें से किसी प्रोडक्ट के बारे में और जानना चाहते हैं?", "ts": "2026-10-31T13:21:46.215045Z"}
+{"seq": 3, "role": "user", "text": "अच्छा, यह हेयर ऑयल काफी सही लग रहा है। इसकी डिलीवरी फ्री है क्या?", "ts": "2026-10-31T13:22:08.232553Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "मुझे free delivery के बारे में अभी confirm नहीं पता, यह जानकारी available नहीं है।", "ts": "2026-10-31T13:22:10.078545Z"}
+{"seq": 5, "role": "user", "text": "अच्छा, कोई बात नहीं। वैसे क्या इस हेयर ऑयल से हेयर फॉल सच में कम होता है?", "ts": "2026-10-31T13:22:24.425249Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "देखिए, medical conditions या possible side effects के लिए आप किसी qualified healthcare professional से सलाह लीजिए। इस product के बारे में और कोई details चाहिए आपको?", "ts": "2026-10-31T13:22:26.148697Z"}
+{"seq": 7, "role": "user", "text": "ठीक है, मैं सोच कर बताती हूँ।", "ts": "2026-10-31T13:22:42.115615Z", "partial": false}
+{"seq": 8, "role": "user", "text": "देखिए, मुझे ऐसे बहुत सारे कॉल्स आते हैं। आप मेरा नंबर अपनी लिस्ट से हटा दीजिए और आगे से कभी कॉल मत कीजिए।", "ts": "2026-10-31T13:22:54.445962Z", "partial": false}
+{"seq": 9, "role": "assistant", "text": "ठीक है, इस नंबर पर अब दोबारा कॉल नहीं करेंगे। समय देने के लिए धन्यवाद। नमस्कार।", "ts": "2026-10-31T13:22:55.939433Z"}

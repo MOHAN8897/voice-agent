@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "నా order ఎక్కడ ఉంది? Order ID FC10234, అది ఇంకా రాలేదు.", "ts": "2026-10-30T10:45:26.883618Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "క్షమించండి, phone లో live order status చూసే అవకాశం నాకు లేదు. మీ order ID FC మరియు మీ పేరు చెప్పగలరా? మా support team దీన్ని check చేసి మీకు తిరిగి call చేస్తుంది.", "ts": "2026-10-30T10:45:29.459172Z"}
+{"seq": 3, "role": "user", "text": "నా పేరు కిరణ్.", "ts": "2026-10-30T10:45:29.459677Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "సరే కిరణ్ గారు, మీ order ID FC మరియు మీ పేరు నోట్ చేసుకున్నాను.", "ts": "2026-10-30T10:45:32.434731Z"}
+{"seq": 5, "role": "user", "text": "సరే, thanks.", "ts": "2026-10-30T10:45:32.434731Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "మా team దీన్ని check చేసి త్వరలోనే మీకు తిరిగి call చేస్తుంది.", "ts": "2026-10-30T10:45:35.173262Z"}

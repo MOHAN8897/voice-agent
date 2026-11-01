@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Okay, నేను think చేస్తాను. Later మళ్లీ call చేస్తాను.", "ts": "2026-10-29T18:42:15.212308Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "సరే, మీరు తర్వాత call చేస్తాను అనుకుంటున్నారు కదా. మీకు ఎప్పుడు call చేయమంటారో ఆ time చెప్పండి, నేను note చేసుకుంటాను.", "ts": "2026-10-29T18:42:15.706311Z", "brain_latency_ms": 496}

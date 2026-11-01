@@ -1,0 +1,34 @@
+{
+  "call_id": "0a817b15-cf1d-4407-84a8-b260df8574ca",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 1.0,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to explicitly request that the agent never call this number again and remove it from their list. The agent acknowledged the request and confirmed that no further calls would be made to the number, after which the agent ended the call. No other topics or next steps were discussed.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+919876500514"
+  },
+  "facts": {
+    "phone": "+919876500514"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "tags": [
+    "signal:do_not_call",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [
+    "Do not call this number again"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:05:56.375689Z",
+  "generation_ok": true
+}

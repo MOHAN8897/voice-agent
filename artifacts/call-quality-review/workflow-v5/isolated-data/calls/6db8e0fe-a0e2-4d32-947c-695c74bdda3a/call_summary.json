@@ -1,0 +1,34 @@
+{
+  "call_id": "6db8e0fe-a0e2-4d32-947c-695c74bdda3a",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call by requesting to be removed from the contact list and explicitly asked not to receive any more calls on this number. The agent acknowledged the request and confirmed that no further calls would be made to this number. The call concluded after the agent's confirmation.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+919876500008"
+  },
+  "facts": {
+    "phone": "+919876500008"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "tags": [
+    "sentiment:neutral",
+    "signal:do_not_call"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [
+    "Caller requested to be removed from the contact list and stop receiving calls."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:56:15.650833Z",
+  "generation_ok": true
+}

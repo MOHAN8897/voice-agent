@@ -1,0 +1,40 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call by aggressively insulting the agent and labeling the business as a fraud company. The agent attempted to de-escalate the situation by apologizing for the inconvenience and asking what specific issue had occurred. The caller responded with further verbal abuse and refused to explain any issue. Consequently, the agent was unable to address any concerns, and the call ended abruptly due to the caller's hostile behavior.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500528"
+  },
+  "objections": [
+    "Hostile behavior and verbal abuse"
+  ],
+  "notes": "",
+  "tags": [
+    "sentiment:negative",
+    "signal:objection"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:41:43.463304Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500528"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "contact:phone_known",
+    "outcome:not_interested",
+    "sentiment:negative",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,30 @@
+{
+  "language": "te-IN",
+  "updated_at": "2026-10-23T03:51:05.246958+00:00",
+  "updated_by": "admin",
+  "stack_override": {
+    "llm": {
+      "model": "gemini-3.8-live",
+      "provider": "gemini"
+    },
+    "language": "te-IN",
+    "pipeline": "realtime_voice",
+    "voice_flow": "realtime_e2e",
+    "transcription": {
+      "live_model": "gpt-transcribe",
+      "live_enabled": true,
+      "post_call_model": "gemini-3.5-transcribe",
+      "post_call_enabled": false
+    },
+    "realtime_voice": {
+      "speed": 1.0,
+      "voice": "te-in-csagent-5",
+      "silence_ms": 250,
+      "vad_eagerness": "high",
+      "turn_detection": "semantic_vad",
+      "noise_reduction": "near_field"
+    },
+    "transcription_mode": "live",
+    "transcription_live_model": "gpt-transcribe"
+  }
+}

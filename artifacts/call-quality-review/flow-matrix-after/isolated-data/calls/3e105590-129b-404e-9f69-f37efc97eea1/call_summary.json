@@ -1,0 +1,35 @@
+{
+  "call_id": "3e105590-129b-404e-9f69-f37efc97eea1",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller opened the call but stated they were busy and requested to be called later, without specifying a particular time. The agent acknowledged this, confirmed that the request for a follow-up call was saved, and concluded the conversation. There were no objections beyond the caller's stated busyness, and no concrete appointment or agreed next step was established.",
+  "next_action": "Call the caller back at a later time as requested.",
+  "extracted_fields": {
+    "phone": "+919876500505"
+  },
+  "facts": {
+    "phone": "+919876500505"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "followup:callback",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [
+    "Caller stated they were busy and did not want to speak at that moment."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:59:54.695630Z",
+  "generation_ok": true
+}

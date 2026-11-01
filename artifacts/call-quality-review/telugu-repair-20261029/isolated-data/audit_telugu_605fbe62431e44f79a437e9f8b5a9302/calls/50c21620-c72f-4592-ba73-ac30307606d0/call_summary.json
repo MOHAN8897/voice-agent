@@ -1,0 +1,65 @@
+{
+  "call_id": "50c21620-c72f-4592-ba73-ac30307606d0",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Kiran contacted the business to learn Python and data training while working, preferring weekend or evening classes. The agent quoted a total Python training fee of ₹8,999 and explained that placement assistance includes resume building, interview preparation, and job referrals, but there is no job guarantee or salary promise. Kiran selected the weekend batch and provided the name Kiran, B.Com qualification, and email kiran.audit@example.invalid, asking for the contact and enquiry to be saved. The agent repeatedly confirmed that the details and enquiry were saved, although the transcript only contains the agent’s confirmation and does not independently verify system completion. Kiran thanked the agent and ended the call; no payment or enrollment was completed and no concrete follow-up appointment was set.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "course": "Python training",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550103",
+    "placement_support": "Resume building, interview preparation, and job referrals; no job or salary guarantee",
+    "preferred_batch": "Weekend",
+    "qualification": "B.Com"
+  },
+  "facts": {
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "course": "Python training",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550103",
+    "placement_support": "Resume building, interview preparation, and job referrals; no job or salary guarantee",
+    "preferred_batch": "Weekend",
+    "qualification": "B.Com"
+  },
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:placement-assistance",
+    "custom:python-training",
+    "custom:weekend-batch",
+    "intent:information",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:pricing",
+    "intent:purchase",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:python-training",
+    "custom:weekend-batch",
+    "custom:placement-assistance"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "No job guarantee or salary promise was available."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T16:37:00.248605Z",
+  "generation_ok": true
+}

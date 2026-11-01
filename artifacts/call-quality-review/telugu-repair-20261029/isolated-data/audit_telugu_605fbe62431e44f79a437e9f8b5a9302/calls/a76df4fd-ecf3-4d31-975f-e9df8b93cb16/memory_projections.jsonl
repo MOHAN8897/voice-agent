@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-29T16:28:42.275870Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T16:28:46.823425Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_name: రమణ | product: matte visiting cards | quantity: 200\n[Context]\nCaller provided contact details in this call."}
+{"turn_seq": 5, "ts": "2026-10-29T16:28:52.246583Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_name: రమణ | product: matte visiting cards | quantity: 200\n[Context]\nCaller provided contact details in this call."}
+{"turn_seq": 7, "ts": "2026-10-29T16:28:56.489109Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: రమణ | product: matte visiting cards | quantity: 200\n[Context]\nCaller provided contact details in this call."}

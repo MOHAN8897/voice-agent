@@ -1,0 +1,14 @@
+{
+  "facts": {
+    "product": "split AC",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "delivery_locality": "మాదాపూర్",
+    "caller_name": "శ్రావణి",
+    "caller_email": "sravani.audit@example.invalid"
+  },
+  "preferences": {
+    "requested_time": "రేపు 10 గంటలకి"
+  },
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "assistant: అవును, ఆ price correct ఏ. రేపు ఉదయం 10 గంటలకి slot ఖచ్చితంగా book చేయగలను. మరి మీ AC లో exact గా ఏ issue ఉందో చెప్తారా?\nuser: అసలు AC లో పెద్ద problem ఏమీ లేదు, just general service కదా. ఇంత రేటు పెట్టినా సరిగ్గా చేయకపోతే ఎలా? రేపు 10 గంటలకి technician వస్తే సరిపోతుంది, confirm చేయండి.\nassistant: ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మా team రేపు ఉదయం 10 గంటలకి మాదాపూర్ కి visit చేస్తారు. మా technician వచ్చి inspection చేసి parts అవసరమైతే exact cost చెప్తారు. ఇంకేమైనా వివరాలు కావాలా?"
+}

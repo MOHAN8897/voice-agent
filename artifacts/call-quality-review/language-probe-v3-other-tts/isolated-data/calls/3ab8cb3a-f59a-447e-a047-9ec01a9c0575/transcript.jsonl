@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Hello, എന്റെ voice കേൾക്കുന്നുണ്ടോ? ഇത് ഏത് company ആണ്?", "ts": "2026-10-29T19:33:29.360149Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "അതെ, കേൾക്കുന്നുണ്ട്. ഞാൻ SmartCare Appliance Services-ൽ നിന്നാണ് വിളിക്കുന്നത്. വേറെ എന്തെങ്കിലും അറിയണോ?", "ts": "2026-10-29T19:33:29.868783Z", "brain_latency_ms": 513}

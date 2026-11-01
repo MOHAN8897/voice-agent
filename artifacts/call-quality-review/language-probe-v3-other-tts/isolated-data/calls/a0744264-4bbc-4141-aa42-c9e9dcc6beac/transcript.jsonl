@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Cooling లేని fridge కి రేపు morning 10:30కి technician రావచ్చా?", "ts": "2026-10-29T19:30:45.862940Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Fridge inspection కి ₹250 అవుతుంది, కానీ మీరు repair చేయిస్తే ఆ inspection charge waive అవుతుంది. మా service area లో రేపు ఉదయం 10:30 కి slot దొరకవచ్చు, కానీ same-day visit guarantee ఉండదు. మీ locality ఏంటో చెప్తారా?", "ts": "2026-10-29T19:30:46.495013Z", "brain_latency_ms": 637}

@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "ನಾನು simple question ಕೇಳಿದ್ದೀನಿ please straight answer ಕೊಡಿ fridge inspection fee ಎಷ್ಟು", "ts": "2026-10-29T19:37:39.076638Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Fridge inspection-ಗೆ ₹250 ಆಗುತ್ತೆ. ಒಂದು ವೇಳೆ ನೀವು ಮುಂದೆ repair ಮಾಡಿಸಿದ್ರೆ, ಆ inspection charge waive off ಆಗುತ್ತೆ.", "ts": "2026-10-29T19:37:40.040587Z", "brain_latency_ms": 967}
+{"seq": 3, "role": "user", "text": "ಯಾಕೆ ಇಷ್ಟು delay fridge inspectionಗೆ exact fee ಎಷ್ಟು straight ಆಗಿ ಹೇಳಿ", "ts": "2026-10-29T19:37:40.052151Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಕ್ಷಮಿಸಿ, ಸ್ವಲ್ಪ delay ಆಯ್ತು. Fridge inspection-ಗೆ exact fee ₹250 ಇದೆ.", "ts": "2026-10-29T19:37:40.540598Z", "brain_latency_ms": 490}

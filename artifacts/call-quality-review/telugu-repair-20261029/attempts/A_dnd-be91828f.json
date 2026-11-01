@@ -1,0 +1,594 @@
+{
+  "scenario": {
+    "id": "A_dnd",
+    "business": "A",
+    "kind": "dnd",
+    "integration": "success",
+    "policy": "automatic",
+    "max_turns": 3,
+    "goal": "You do not consent to any future calls to this number. In your FIRST utterance explicitly demand that they never call this number again. Be unambiguous about permanent future contact, not just being busy today. If they continue, reiterate the opt-out, without asking business questions."
+  },
+  "agent": {
+    "id": "A",
+    "key": "printing",
+    "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+    "name": "Sri Krishna Digital Prints",
+    "agent_name": "Kavitha",
+    "role": "sales",
+    "industry": "printing",
+    "brief": "Agent name Kavitha. Company name Sri Krishna Digital Prints.\nOutbound and inbound customer inquiries in Telugu.\nWe print visiting cards: normal paper visiting cards cost 200 rupees for 100 cards,\nmatte finish cards cost 350 rupees for 100 cards. Minimum order quantity 100 cards.\nWedding invitation cards are customized: pricing depends on design, paper sample and quantity, no fixed price over the phone.\nFlex banners: normal flex 15 rupees per square foot, star flex 20 rupees per square foot.\nDelivery in Vijayawada takes 3 working days after design artwork approval; urgent 24-hour delivery is extra 150 rupees.\nPayment: Cash on delivery accepted for orders up to 1000 rupees; 50% advance payment required for orders above 1000 rupees.\nNo online payment or credit card processing on phone call.\nOffice hours Monday to Saturday 9:30 AM to 8:00 PM, Sunday closed.\nGoal: answer customer questions on cards, banners and pricing; understand their requirement.\nIf interested, take preferred name, quantity and delivery locality for a quote or order request.\nDo not force details before answering questions.\nCustomer refusing visiting cards may still want flex banners or wedding cards.\nNever claim an order is paid or dispatched without artwork approval and design confirmation.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Kavitha",
+      "company_name": "Sri Krishna Digital Prints",
+      "role": "Sales and customer enquiries",
+      "permitted_next_steps": "Collect customer name, item type, quantity and delivery locality in Vijayawada to submit an internal quote/order request. Explain that artwork approval is required before printing.",
+      "payment_rules": "Cash on delivery for orders up to 1000 rupees; 50% advance for orders above 1000 rupees. No online payment collection on call.",
+      "delivery_details": "Local delivery in Vijayawada takes 3 working days after artwork approval. Urgent 24-hour delivery is extra 150 rupees.",
+      "wedding_cards": "Customized quotation only based on design and paper sample. No fixed price on phone.",
+      "visiting_cards": "Standard 200 rupees for 100 cards; Matte finish 350 rupees for 100 cards. Minimum order 100 cards.",
+      "forbidden_actions": "Never confirm external courier shipment or take card payment on phone. Never guarantee delivery without artwork approval."
+    },
+    "user_id": "c0afb80f-ba42-4f85-ad75-ac1c23a9873f",
+    "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408"
+  },
+  "call_id": "f98276c7-4100-492b-94d4-d08d8f36764a",
+  "session_id": "adaptive-b60dc749103744f386a2de18aa983ba8",
+  "phone": "+12025550112",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_ce356842dc55",
+  "turn_index": 2,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "దయచేసి ఈ నంబర్‌కి మళ్లీ ఎప్పటికీ కాల్ చేయకండి. నాకు మీ బిజినెస్ గురించి ఏమీ అవసరం లేదు, ఇది పర్మినెంట్ ఆప్ట్-అవుట్.",
+        "intends_end": true,
+        "intent": "Permanently opt-out of future calls and end the conversation",
+        "elapsed_s": 0.75
+      },
+      "spoken": "మీ నంబర్‌ని do not call లో నమోదు చేస్తున్నాను. ఇకపై మీకు calls రావు. ధన్యవాదాలు.",
+      "elapsed_s": 2.265,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        135,
+        136,
+        137,
+        138
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "మీ నంబర్‌ని do not call లో నమోదు చేస్తున్నాను. ఇకపై మీకు calls రావు. ధన్యవాదాలు.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4536,
+            "output_tokens": 29,
+            "cached_tokens": 3264,
+            "total_tokens": 4565
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 2,
+      "caller": {
+        "utterance": "సరే, నా ఆప్ట్-అవుట్ కన్ఫర్మ్ చేసుకున్నందుకు థాంక్స్. ఇకపై ఈ నంబర్‌కి ఎప్పటికీ కాల్ చేయకండి.",
+        "intends_end": true,
+        "intent": "Confirming permanent opt-out and ending the call",
+        "elapsed_s": 0.594
+      },
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 2.297,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        140,
+        141
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "response_contract": "speech_text",
+          "finish_reason": "stop",
+          "server_owned_close": true,
+          "end_call": {
+            "should_end": true,
+            "reason": "firm_refusal",
+            "contact_preference": "do_not_call",
+            "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "మీ నంబర్‌ని do not call లో నమోదు చేస్తున్నాను. ఇకపై మీకు calls రావు. ధన్యవాదాలు.",
+      "at": 126321.781
+    },
+    {
+      "turn": 2,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 126323.578
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "మీ నంబర్‌ని do not call లో నమోదు చేస్తున్నాను. ఇకపై మీకు calls రావు. ధన్యవాదాలు.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4536,
+        "output_tokens": 29,
+        "cached_tokens": 3264,
+        "total_tokens": 4565
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "response_contract": "speech_text",
+      "finish_reason": "stop",
+      "server_owned_close": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "contact_preference": "do_not_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_intent": "do_not_call",
+        "contact_evidence": "దయచేసి ఈ నంబర్‌కి మళ్లీ ఎప్పటికీ కాల్ చేయకండి. నాకు మీ బిజినెస్ గురించి ఏమీ అవసరం లేదు, ఇది పర్మినెంట్ ఆప్ట్-అవుట్.",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "దయచేసి ఈ నంబర్‌కి మళ్లీ ఎప్పటికీ కాల్ చేయకండి. నాకు మీ బిజినెస్ గురించి ఏమీ అవసరం లేదు, ఇది పర్మినెంట్ ఆప్ట్-అవుట్.",
+      "at": 126321.328
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "decision": "close",
+        "reason": "firm_refusal",
+        "evidence": "సరే, నా ఆప్ట్-అవుట్ కన్ఫర్మ్ చేసుకున్నందుకు థాంక్స్.",
+        "remaining_request": "",
+        "contact_intent": "do_not_call",
+        "contact_evidence": "ఇకపై ఈ నంబర్‌కి ఎప్పటికీ కాల్ చేయకండి.",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": true,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "contact_preference": "do_not_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "transcript": "సరే, నా ఆప్ట్-అవుట్ కన్ఫర్మ్ చేసుకున్నందుకు థాంక్స్. ఇకపై ఈ నంబర్‌కి ఎప్పటికీ కాల్ చేయకండి.",
+      "at": 126323.562
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 2,
+      "at": 126323.578
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 126324.64,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 126321.796
+    },
+    {
+      "turn_seq": 3,
+      "at": 126323.593
+    }
+  ],
+  "started_at": "2026-10-29T17:26:35.961690+00:00",
+  "errors": [],
+  "brain_checksum": "7659e650332eab9c37ce386504d366b02952b949cee0a4ac862d76bf9a30d6d5",
+  "runtime_checksum": "a542c68755afdc7d20c2ea611f0f5067bf856cca2d3ee608454d41d95442fdb1",
+  "available_tools": [
+    "HUBSPOT_CREATE_CONTACT",
+    "GOOGLECALENDAR_CREATE_EVENT",
+    "GOOGLECALENDAR_FIND_FREE_SLOTS",
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 126320.734,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 2,
+      "start_s": 126323.546,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    }
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "not_interested",
+    "disposition_confidence": 1.0,
+    "summary_te": "",
+    "summary_en": "The caller clearly requested a permanent opt-out and stated that they did not need anything from the business. The agent acknowledged the request and said the number was being recorded on the do-not-call list. The caller thanked the agent for confirming the opt-out and repeated that the number should never be called again. The call ended politely with no further action requested.",
+    "next_action": "Do not contact this number. The caller opted out.",
+    "extracted_fields": {
+      "do_not_call": "Permanent opt-out requested for this phone number",
+      "phone": "+12025550112"
+    },
+    "objections": [
+      "Caller does not need anything from the business",
+      "Caller requested no further calls permanently"
+    ],
+    "notes": "Permanent do-not-call request; honor the caller's opt-out.",
+    "tags": [
+      "signal:do_not_call",
+      "intent:information",
+      "sentiment:neutral"
+    ],
+    "custom_tags": [],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T17:26:46.086590Z",
+    "generation_ok": true,
+    "facts": {
+      "do_not_call": "Permanent opt-out requested for this phone number",
+      "phone": "+12025550112"
+    },
+    "disclosure_status": null,
+    "contact_preference": "do_not_call",
+    "status_tags": [
+      "contact:phone_known",
+      "intent:information",
+      "outcome:not_interested",
+      "sentiment:neutral",
+      "signal:do_not_call",
+      "signal:objection"
+    ],
+    "lead": null,
+    "lead_assessment": null,
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "f98276c7-4100-492b-94d4-d08d8f36764a",
+        "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+        "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+        "session_id": "adaptive-b60dc749103744f386a2de18aa983ba8",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_ce356842dc55",
+        "started_at": "2026-10-29 17:26:35.951231+00:00",
+        "ended_at": "2026-10-29 17:26:41.840514+00:00",
+        "duration_sec": 5,
+        "disposition": "not_interested",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/f98276c7-4100-492b-94d4-d08d8f36764a/",
+        "end_reason": "firm_refusal",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "contact:phone_known",
+          "intent:information",
+          "outcome:not_interested",
+          "sentiment:neutral",
+          "signal:do_not_call",
+          "signal:objection"
+        ],
+        "last_heartbeat_at": "2026-10-29 17:26:35.951231+00:00",
+        "created_at": "2026-10-29 17:26:35.951231+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [],
+    "dnd": [
+      {
+        "id": "0887d4bd-d3ee-4785-81bf-318a87e3c26c",
+        "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+        "phone_e164": "+12025550112",
+        "reason": "verbal_opt_out_live_call",
+        "added_at": "2026-10-29 17:26:46.136416+00:00",
+        "active": true,
+        "source": "live_call_opt_out",
+        "added_by_user_id": null,
+        "removed_at": null,
+        "removed_by_user_id": null,
+        "removal_reason": null,
+        "reconsent_confirmed": false
+      }
+    ],
+    "leads": [],
+    "tools": [],
+    "assessments": []
+  },
+  "metadata": {
+    "call_id": "f98276c7-4100-492b-94d4-d08d8f36764a",
+    "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+    "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+    "session_id": "adaptive-b60dc749103744f386a2de18aa983ba8",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_ce356842dc55",
+    "started_at": "2026-10-29T17:26:35.951231+00:00",
+    "status": "active",
+    "storage_path": "data/calls/f98276c7-4100-492b-94d4-d08d8f36764a/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550112",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 9811,
+        "output_tokens": 569,
+        "cached_tokens": 6720
+      }
+    },
+    "contact_preference": "do_not_call",
+    "hangup_reason": "firm_refusal",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 47,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": true,
+    "callback_close_phase": "idle",
+    "disconnected_at": "2026-10-29T17:26:41.840514+00:00",
+    "ended_at": "2026-10-29T17:26:41.840514+00:00",
+    "end_reason": "firm_refusal",
+    "duration_sec": 5.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 5.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.0010416666666666667,
+      "telephony_inr": 0.09923958333333333,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.0010416666666666667,
+      "telnyx_inr": 0.09923958333333333,
+      "telnyx_voice_api_usd": 0.00016666666666666666,
+      "telnyx_sip_usd": 0.00041666666666666664,
+      "telnyx_media_stream_usd": 0.00029166666666666664,
+      "telnyx_call_recording_usd": 0.00016666666666666666,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.27,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-29",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.0125,
+      "telephony_inr_per_min": 1.190875,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.0125,
+      "telnyx_inr_per_min": 1.190875,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_084051491f2f745d016ae381d30b9c87d1a284748c2fdb8fb0": {
+          "input_tokens": 1088,
+          "output_tokens": 187,
+          "cached_tokens": 0,
+          "cache_write_tokens": 1085,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.0004962500000000001
+        }
+      },
+      "post_call_analysis_usd": 0.0004962500000000001,
+      "post_call_analysis_inr": 0.0472777375
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "దయచేసి ఈ నంబర్‌కి మళ్లీ ఎప్పటికీ కాల్ చేయకండి. నాకు మీ బిజినెస్ గురించి ఏమీ అవసరం లేదు, ఇది పర్మినెంట్ ఆప్ట్-అవుట్.",
+      "ts": "2026-10-29T17:26:36.743342Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "మీ నంబర్‌ని do not call లో నమోదు చేస్తున్నాను. ఇకపై మీకు calls రావు. ధన్యవాదాలు.",
+      "ts": "2026-10-29T17:26:38.973594Z"
+    },
+    {
+      "seq": 3,
+      "role": "user",
+      "text": "సరే, నా ఆప్ట్-అవుట్ కన్ఫర్మ్ చేసుకున్నందుకు థాంక్స్. ఇకపై ఈ నంబర్‌కి ఎప్పటికీ కాల్ చేయకండి.",
+      "ts": "2026-10-29T17:26:39.604914Z",
+      "partial": false
+    },
+    {
+      "seq": 4,
+      "role": "assistant",
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T17:26:40.763847Z"
+    }
+  ],
+  "wall_elapsed_s": 10.359,
+  "simulated_exchange_timeline_s": 40,
+  "request_count": 8
+}

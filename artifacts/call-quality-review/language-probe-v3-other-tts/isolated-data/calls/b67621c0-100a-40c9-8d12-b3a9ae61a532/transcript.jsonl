@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Hi, can a technician come to Kondapur tomorrow morning? My split AC is not cooling.", "ts": "2026-10-29T19:31:12.023827Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "हाँ, Kondapur हमारे service area में आता है। Split AC servicing का charge ₹599 है। Technician inspection के बाद जो भी spare parts लगेंगे, वो actual MRP पर extra लगेंगे, उसकी price phone पर नहीं बताई जा सकती। कल सुबह का visit note कर लेता हूँ, team slot confirm करेगी।", "ts": "2026-10-29T19:31:12.695361Z", "brain_latency_ms": 673}

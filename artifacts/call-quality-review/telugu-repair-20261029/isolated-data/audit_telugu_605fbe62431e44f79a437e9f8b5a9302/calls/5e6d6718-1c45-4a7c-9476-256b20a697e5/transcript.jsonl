@@ -1,0 +1,10 @@
+{"seq": 1, "role": "user", "text": "నమస్తే సురేష్. నా split AC కి general service కావాలి. దీనికి ఎంత ఖర్చు అవుతుంది? అలాగే రేపు ఉదయం 10 గంటల ప్రాంతంలో technician వస్తారా?", "ts": "2026-10-29T17:43:34.198054Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "మీ split AC general servicing కి five hundred ninety nine rupees అవుతుంది. రేపు ఉదయం 10 AM నుంచి 6 PM మధ్యలో next-day visit slot available ఉంది. మీకు appointment కావాలా?", "ts": "2026-10-29T17:43:39.556477Z"}
+{"seq": 3, "role": "user", "text": "సరే, 599 rupees okay. మరి ఆ technician వచ్చేటప్పుడు spare parts ఏమైనా అవసరమైతే దానికి extra charge పడుతుందా? ఒకసారి confirm చేయండి.", "ts": "2026-10-29T17:43:40.506638Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "అవును, technician వచ్చేటప్పుడు ఏవైనా replacement parts అవసరమైతే, అవి actual MRP ప్రకారం extra పడతాయి. Inspection అయ్యాక technician మీకు exact quote ఇస్తారు, phone లో fixed price చెప్పలేము.", "ts": "2026-10-29T17:43:43.978771Z"}
+{"seq": 5, "role": "user", "text": "సరే, అర్థమైంది. నా questions అన్నీ clear అయ్యాయి, thank you.", "ts": "2026-10-29T17:43:44.906517Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-29T17:43:46.146247Z"}
+{"seq": 7, "role": "user", "text": "ఆగండి, ఇంకో ప్రశ్న ఉంది. ఇన్‌స్పెక్షన్ ఫీజు ఎంత?", "ts": "2026-10-29T17:43:46.148267Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Fridge inspection కి two hundred fifty rupees charge అవుతుంది. ఒకవేళ మా technician ద్వారా repair చేయిస్తే, ఈ inspection fee పూర్తిగా మాఫీ అవుతుంది.", "ts": "2026-10-29T17:43:49.411102Z"}
+{"seq": 9, "role": "user", "text": "ఓహో, fridge inspection కి 250 rupees అవుతుందా? సరే, నా AC service కి సంబంధించి నా doubts అన్నీ clear అయ్యాయి. Thank you.", "ts": "2026-10-29T17:43:50.255829Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-29T17:43:51.651051Z"}

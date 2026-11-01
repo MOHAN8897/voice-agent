@@ -1,0 +1,110 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "Shravani, located in Madhapur, requested general servicing for her split AC and asked for a technician visit tomorrow at 10:00 AM. The agent said next-day service was available in a broad 10:00 AM–6:00 PM window and asked whether to record the appointment; Shravani agreed. The agent quoted ₹599 for split AC servicing and explained that the ₹250 inspection fee mentioned applies only to refrigerators and is waived if the technician performs a repair. Shravani then asked about the cost of replacement parts and requested a confirmation message or email confirming a 10:00 AM visit. The agent did not answer the parts-cost question, did not confirm a specific 10:00 AM appointment, and did not confirm that a message or email would be sent. The call ended with the agent thanking her and saying goodbye.",
+  "next_action": "Confirm whether the appointment is specifically scheduled for tomorrow at 10:00 AM, send the requested confirmation message or email if supported, and provide the applicable replacement-parts pricing information.",
+  "extracted_fields": {
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "inspection_fee": "₹250 applies to refrigerators only; waived if repair is performed",
+    "locality": "Madhapur",
+    "phone": "+12025550105",
+    "product": "Split AC",
+    "quoted_service_price": "₹599",
+    "requested_visit_time": "Tomorrow at 10:00 AM",
+    "service": "General servicing"
+  },
+  "objections": [
+    "Replacement-parts pricing was not provided.",
+    "Specific 10:00 AM appointment confirmation and requested message/email were not provided."
+  ],
+  "notes": "The caller agreed to record the appointment, but the transcript does not confirm that it was successfully booked for 10:00 AM.",
+  "tags": [
+    "intent:booking",
+    "intent:pricing",
+    "followup:callback",
+    "followup:send_info",
+    "signal:ready_to_buy"
+  ],
+  "custom_tags": [
+    "custom:split-ac",
+    "custom:general-service",
+    "custom:madhapur"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:36:34.920334Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "inspection_fee": "₹250 applies to refrigerators only; waived if repair is performed",
+    "locality": "Madhapur",
+    "phone": "+12025550105",
+    "product": "Split AC",
+    "quoted_service_price": "₹599",
+    "requested_visit_time": "Tomorrow at 10:00 AM",
+    "service": "General servicing"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:split-ac",
+    "followup:callback",
+    "followup:send_info",
+    "followup:site_visit",
+    "intent:booking",
+    "intent:pricing",
+    "outcome:callback_required",
+    "signal:objection",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "3bdf0861-8e22-46b0-bf70-54a69d5b7e77",
+    "agentId": "da7e8b71-9465-55a3-b920-fae16cb86c5c",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 35,
+    "band": "cold",
+    "disposition": "callback_required",
+    "confidence": 0.97,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

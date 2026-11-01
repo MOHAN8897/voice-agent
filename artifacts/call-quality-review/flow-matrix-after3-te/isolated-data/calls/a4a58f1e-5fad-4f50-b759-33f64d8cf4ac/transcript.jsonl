@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "Consultation fee ఎంత అవుతుంది, మీరు ఎప్పుడు open ఉంటారు?", "ts": "2026-10-30T11:20:12.946664Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "కన్సల్టేషన్ ఫీజు 300 రూపాయలు అవుతుంది. మా క్లినిక్ సోమవారం నుండి శనివారం వరకు ఉదయం 10 నుండి రాత్రి 8 గంటల వరకు open ఉంటుంది.", "ts": "2026-10-30T11:20:15.922514Z"}
+{"seq": 3, "role": "user", "text": "Can you tell me the clinic timings in English please?", "ts": "2026-10-30T11:20:15.936690Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "The clinic timings are from Monday to Saturday, 10 AM to 8 PM.", "ts": "2026-10-30T11:20:18.567572Z"}
+{"seq": 5, "role": "user", "text": "मुझे दांत में दर्द है, क्या कल आ सकता हूँ?", "ts": "2026-10-30T11:20:18.568030Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "మీ అభ్యర్థన నిర్ధారణ అయిందో లేదో నాకు తెలియదు. దయచేసి దాన్ని పూర్తయినట్టు భావించకండి.", "ts": "2026-10-30T11:20:21.562175Z"}
+{"seq": 7, "role": "user", "text": "సరే, thanks.", "ts": "2026-10-30T11:20:21.562175Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-30T11:20:22.671186Z"}

@@ -1,0 +1,57 @@
+{
+  "call_id": "fce4c60f-a0f6-4207-b41f-bed81feea587",
+  "language_callback": null,
+  "disposition": "converted",
+  "disposition_confidence": 0.95,
+  "summary_te": "एजेंट ने ग्राहक को फोन किया। ग्राहक ने फेस क्रीम और हेयर ऑयल खरीदने में रुचि दिखाई और कुल कीमत पूछी। एजेंट ने कीमत ₹1497 बताई और ऑर्डर कन्फर्म करने के लिए नाम और पता मांगा। ग्राहक ने अपना नाम लक्ष्मी रेड्डी और पता कुकटपल्ली, हैदराबाद दिया, और ऑर्डर कन्फर्म करने को कहा। एजेंट ने ऑर्डर कन्फर्म कर दिया और बताया कि डिलीवरी टीम जल्द ही संपर्क करेगी, जिसके बाद कॉल समाप्त हो गया।",
+  "summary_language": "hi-IN",
+  "summary_en": "The agent called the customer to offer products, and the customer expressed an intent to purchase two bottles of hair oil and one face cream. The agent shared the total price of ₹1497 and requested the customer's name and delivery address to proceed. The customer provided the details as Lakshmi Reddy at Flat 302, Sai Residency, Kukatpally, Hyderabad 500072. After confirming the order details, the agent confirmed the order and informed the customer that the delivery team would contact them soon. The call ended with the customer thanking the agent.",
+  "next_action": "Delivery team to contact the customer regarding the shipment.",
+  "extracted_fields": {
+    "caller_name": "लक्ष्मी रेड्डी",
+    "delivery_address": "फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072",
+    "phone": "+919700000001",
+    "quantity": "1",
+    "quantity_face_cream": "1",
+    "quantity_hair_oil": "2 bottles",
+    "total_price": "₹1497"
+  },
+  "facts": {
+    "caller_name": "लक्ष्मी रेड्डी",
+    "delivery_address": "फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072",
+    "phone": "+919700000001",
+    "quantity": "1",
+    "quantity_face_cream": "1",
+    "quantity_hair_oil": "2 bottles",
+    "total_price": "₹1497"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:order-placed",
+    "followup:send_info",
+    "intent:purchase",
+    "outcome:converted",
+    "sentiment:positive"
+  ],
+  "tags": [
+    "intent:purchase",
+    "sentiment:positive",
+    "followup:send_info",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:order-placed"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T14:57:40.453933Z",
+  "generation_ok": true
+}

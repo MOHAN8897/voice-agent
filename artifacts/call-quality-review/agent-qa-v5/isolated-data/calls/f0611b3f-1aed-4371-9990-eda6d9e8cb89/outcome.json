@@ -1,0 +1,101 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "व्यवसाय के एजेंट ने ग्राहक को फोन किया। ग्राहक ने फेस क्रीम और हेयर ऑयल की कीमत पूछी। एजेंट ने कीमतें बताईं और स्टॉक तथा डिलीवरी की जानकारी न होने की बात कही। ग्राहक ने कल सुबह 11 बजे ऑर्डर करने के लिए एक कॉल बुक करने को कहा। एजेंट ने इस अनुरोध को नोट कर लिया, और ग्राहक ने पुष्टि की कि वह टीम के कॉल का इंतजार करेगी।",
+  "summary_en": "The business agent called the customer to provide product information. The customer inquired about prices for face cream and hair oil, and provided their email address. The agent shared the pricing but could not confirm stock or delivery timelines for Kukatpally. After the customer requested a callback at 11 AM the next morning to place an order, the agent noted the request. The customer agreed to wait for the team's call, and the conversation ended.",
+  "next_action": "Team to contact the customer at the requested time to confirm details and assist with the order.",
+  "extracted_fields": {
+    "delivery_locality": "Kukatpally",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919700000004",
+    "product": "face cream",
+    "product_interest": "face cream",
+    "requested_time": "कल सुबह 11 बजे"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:product-inquiry",
+    "custom:callback-booked"
+  ],
+  "unanswered_questions": [
+    "Is the face cream currently in stock?",
+    "When will delivery be available in Kukatpally?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T16:10:15.488486Z",
+  "generation_ok": true,
+  "summary_language": "hi-IN",
+  "facts": {
+    "delivery_locality": "Kukatpally",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919700000004",
+    "product": "face cream",
+    "product_interest": "face cream",
+    "requested_time": "कल सुबह 11 बजे"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:phone_known",
+    "custom:callback-booked",
+    "custom:product-inquiry",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "023c42f9-4bde-5632-8923-e0835469a615",
+    "agentId": "67eb8019-5907-4da3-879c-950e4e7c515d",
+    "stage": "qualified",
+    "action": "advanced"
+  },
+  "lead_assessment": {
+    "score": 35,
+    "band": "cold",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

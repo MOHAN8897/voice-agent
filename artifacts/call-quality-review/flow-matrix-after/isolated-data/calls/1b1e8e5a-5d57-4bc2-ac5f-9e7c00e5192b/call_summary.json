@@ -1,0 +1,47 @@
+{
+  "call_id": "1b1e8e5a-5d57-4bc2-ac5f-9e7c00e5192b",
+  "language_callback": null,
+  "disposition": "new_lead",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to report that their milk packet arrived damaged and to inquire about the refund timeline. The agent explained that refunds are processed within 5 working days of submitting a damage report. The agent offered to record the caller's name and order ID so the support team could follow up with a callback. The caller agreed to this, and the call concluded after the agent thanked them.",
+  "next_action": "callback_required",
+  "extracted_fields": {
+    "name": "not_provided",
+    "order_id": "not_provided",
+    "phone": "+919876500526",
+    "refund_status": "pending_damage_report"
+  },
+  "facts": {
+    "name": "not_provided",
+    "order_id": "not_provided",
+    "phone": "+919876500526",
+    "refund_status": "pending_damage_report"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:damaged-goods",
+    "custom:refund-query",
+    "followup:callback",
+    "intent:support",
+    "outcome:new_lead",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:support",
+    "sentiment:neutral",
+    "followup:callback",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:damaged-goods",
+    "custom:refund-query"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:04:01.225312Z",
+  "generation_ok": true
+}

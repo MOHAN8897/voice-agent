@@ -1,0 +1,10 @@
+{"seq": 1, "role": "user", "text": "ये मेरे लिए बहुत महँगा है।", "ts": "2026-10-30T11:01:59.076679Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "समझ सकती हूँ। 3 kW system की cost subsidy से पहले ₹1,95,000 है, और ₹78,000 की government subsidy के बाद आपको ₹1,17,000 देने होंगे। क्या यह आपके लिए ठीक रहेगा?", "ts": "2026-10-30T11:02:02.891481Z"}
+{"seq": 3, "role": "user", "text": "नहीं, ये अभी भी हमारे लिए बहुत महँगा है।", "ts": "2026-10-30T11:02:02.892545Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "देखिए, अगर upfront payment मुश्किल लग रहा है तो चिंता मत कीजिए। EMI का option भी available है, जो 2,999 रुपये प्रति माह से शुरू हो रहा है 48 महीनों के लिए। क्या इस plan में interest रहेगा आपके लिए?", "ts": "2026-10-30T11:02:05.126855Z"}
+{"seq": 5, "role": "user", "text": "ठीक है, monthly EMI फिर से कितनी है?", "ts": "2026-10-30T11:02:05.126855Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "Monthly EMI 2,999 रुपये से शुरू हो रही है, 48 महीनों के लिए।", "ts": "2026-10-30T11:02:07.730077Z"}
+{"seq": 7, "role": "user", "text": "ठीक है, free survey book कर दो। मेरा नाम किरण है, मैं Velachery में रहता हूँ, शनिवार सही रहेगा।", "ts": "2026-10-30T11:02:07.733020Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "शनिवार के लिए आपका free site survey book कर दिया गया है। आपकी details नोट कर ली गई हैं, team इसे confirm कर लेगी।", "ts": "2026-10-30T11:02:12.261266Z"}
+{"seq": 9, "role": "user", "text": "Thanks।", "ts": "2026-10-30T11:02:12.261266Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "समय देने के लिए धन्यवाद। नमस्कार।", "ts": "2026-10-30T11:02:13.221408Z"}

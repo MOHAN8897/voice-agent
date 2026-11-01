@@ -1,0 +1,95 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the price of split AC servicing. The agent provided the cost as 599 rupees. The caller identified himself as Kiran, requested that his enquiry be recorded, and expressed interest in the service. The agent acknowledged the enquiry and asked which appliance the caller was interested in, to which the caller replied that he had nothing further to add at that moment. The agent thanked the caller and ended the call.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_name": "Kiran",
+    "name": "Kiran",
+    "phone": "+919876500033"
+  },
+  "objections": [],
+  "notes": null,
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "signal:objection",
+    "followup:send_info",
+    "action:required",
+    "action:urgent"
+  ],
+  "custom_tags": [
+    "custom:split-ac",
+    "custom:servicing-enquiry"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T20:36:26.915270Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_name": "Kiran",
+    "name": "Kiran",
+    "phone": "+919876500033"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "action:urgent",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:servicing-enquiry",
+    "custom:split-ac",
+    "followup:send_info",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "9436a1a7-1fc9-40dc-a639-b9bf346971ee",
+    "agentId": "43e368ec-4208-423a-8cbf-9a8f2970c9f3",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 50,
+    "band": "warm",
+    "disposition": "interested",
+    "confidence": 0.85,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,55 @@
+{
+  "call_id": "bd683102-54f3-4a99-aa25-2b120b337e94",
+  "language_callback": null,
+  "disposition": "converted",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call with the intent to purchase 200 matte visiting cards. The agent provided the pricing, explaining that the rate is ₹350 per 100 cards, totaling ₹700 for 200 cards, with a minimum order of 100. The caller provided his name as Ravi Kumar and the delivery address as 12 MG Road, Vijayawada. The agent confirmed the total cost and delivery details, and the caller agreed to proceed. The agent confirmed the order with cash on delivery, and the caller expressed thanks before ending the call.",
+  "next_action": null,
+  "extracted_fields": {
+    "budget": "₹700",
+    "caller_name": "Ravi Kumar",
+    "delivery_address": "12 MG Road, Vijayawada",
+    "name": "Ravi Kumar",
+    "phone": "+919876500054",
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "slot": "12 MG Road, Vijayawada"
+  },
+  "facts": {
+    "budget": "₹700",
+    "caller_name": "Ravi Kumar",
+    "delivery_address": "12 MG Road, Vijayawada",
+    "name": "Ravi Kumar",
+    "phone": "+919876500054",
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "slot": "12 MG Road, Vijayawada"
+  },
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:cash-on-delivery",
+    "custom:visiting-cards",
+    "followup:send_quote",
+    "intent:purchase",
+    "outcome:converted",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:purchase",
+    "sentiment:positive",
+    "signal:ready_to_buy",
+    "followup:send_quote"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:cash-on-delivery"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:23:07.117689Z",
+  "generation_ok": true
+}

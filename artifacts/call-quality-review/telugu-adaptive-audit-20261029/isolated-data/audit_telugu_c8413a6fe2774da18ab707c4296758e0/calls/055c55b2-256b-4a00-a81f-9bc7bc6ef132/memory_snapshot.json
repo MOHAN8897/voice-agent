@@ -1,0 +1,14 @@
+{
+  "facts": {
+    "caller_name": "కిరణ్",
+    "product": "Python training",
+    "budget": "కొంచెం తక్కువ",
+    "caller_email": "kiran.audit@example.invalid"
+  },
+  "preferences": {
+    "requested_time": "evenings లేదా weekends",
+    "preferred_batch": "weekend batch"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "assistant: Fee లో 8 weeks online live classes, hands-on projects అన్నీ cover అవుతాయి. ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు.\nuser: సరే, మీరు note చేసుకుంటాను అన్నారు కానీ CRM లో save చేయడానికి లేదా follow-up హామీ ఇవ్వడానికి మీకు access లేదు కదా. అయితే నా details ని review కోసం మీ supervisor కి forward చేస్తారా?\nassistant: ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మీకు ఏ batch కావాలో చెప్తారా, weekday ఆ లేక weekend ఆ?"
+}

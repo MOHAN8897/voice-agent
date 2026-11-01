@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "फ्रिज नया compressor का exact price कितना है", "ts": "2026-10-29T19:11:08.943719Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "मुझे exact price नहीं पता, क्योंकि spare parts का charge actual MRP पर लगता है और technician inspection के बाद ही quote करता है। क्या मैं आपकी service request note कर दूँ?", "ts": "2026-10-29T19:11:09.797937Z", "brain_latency_ms": 856}

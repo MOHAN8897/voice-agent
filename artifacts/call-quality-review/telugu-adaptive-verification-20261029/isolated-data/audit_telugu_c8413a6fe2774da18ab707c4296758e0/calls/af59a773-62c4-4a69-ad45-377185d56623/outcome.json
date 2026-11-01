@@ -1,0 +1,39 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller immediately stated in Telugu that they do not need the service at this time and asked for the call to end. The agent acknowledged the request, thanked the caller, and ended the call. No further information or follow-up was requested or agreed.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+12025550112"
+  },
+  "objections": [],
+  "notes": null,
+  "tags": [
+    "intent:information",
+    "signal:do_not_call",
+    "sentiment:negative"
+  ],
+  "custom_tags": [],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:41:17.757172Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+12025550112"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:negative",
+    "signal:do_not_call"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

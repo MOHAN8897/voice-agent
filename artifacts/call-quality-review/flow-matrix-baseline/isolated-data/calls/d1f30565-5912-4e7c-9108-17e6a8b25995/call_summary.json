@@ -1,0 +1,32 @@
+{
+  "call_id": "d1f30565-5912-4e7c-9108-17e6a8b25995",
+  "language_callback": null,
+  "disposition": "new_lead",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call but was initially unclear and hesitant. After the agent asked for the purpose of the call, the caller simply responded with \"hello hello\" without stating a clear intent. The agent, identifying himself as Arjun from FreshCart, asked the caller to explain what they needed. The conversation ended at this point without any further details being shared, objections raised, or next steps being agreed upon.",
+  "next_action": "No immediate next action was agreed upon during the call.",
+  "extracted_fields": {
+    "phone": "+919876500531"
+  },
+  "facts": {
+    "phone": "+919876500531"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "intent:information",
+    "outcome:new_lead",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:42:44.756282Z",
+  "generation_ok": true
+}

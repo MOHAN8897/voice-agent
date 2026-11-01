@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "requested_time": "tomorrow at 11 AM",
+    "caller_name": "Kiran"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: My name is Kiran.\nassistant: Thank you, Kiran. You mentioned you have tooth pain and want to book an appointment for tomorrow at 11 AM. Could you tell me exactly what is troubling you so I can note it for the front desk?\nuser: Is my appointment confirmed?\nassistant: I don't have a confirmed booking yet. I have noted your name as Kiran, your tooth pain, and tomorrow at 11 AM for the front desk to confirm.\nuser: Okay, thanks."
+}

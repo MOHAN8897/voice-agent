@@ -1,0 +1,71 @@
+{
+  "call_id": "1ffa7516-261e-44ba-bacf-f202e976ffa7",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller requested general servicing for an AC and initially asked for a 30-minute technician appointment on 30 October 2026 at 10:00 AM India time. The agent offered 10:00 AM and 2:00 PM slots and requested the caller's name. The caller selected 10:00 AM, provided the name Shravani, locality Madhapur, email sravani.audit@example.invalid, and phone number +12025550149, and clarified that the appliance was a window AC. The agent stated that a 10:00–10:30 AM appointment was confirmed, but incorrectly referred to split AC servicing and quoted ₹599. The caller raised the appliance and pricing discrepancy and asked for the appointment details to be sent by email. The agent corrected the service type and quoted ₹499 for window AC general servicing, stating that the appointment details had been emailed. The caller accepted the ₹499 price and repeatedly requested final confirmation. The agent again confirmed that the appointment was recorded and confirmed. The caller ended by confirming the 30 October 2026 10:00 AM India-time window AC appointment and explicitly said no callback was needed; the call ended courteously.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "appointment_date": "30 October 2026",
+    "appointment_duration": "30 minutes",
+    "appointment_time": "10:00 AM India time",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "location": "Madhapur",
+    "phone_number": "+12025550149",
+    "price": "₹499",
+    "product": "Window AC",
+    "requested_time": "10 AM",
+    "service_type": "General servicing"
+  },
+  "facts": {
+    "appointment_date": "30 October 2026",
+    "appointment_duration": "30 minutes",
+    "appointment_time": "10:00 AM India time",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "location": "Madhapur",
+    "phone_number": "+12025550149",
+    "price": "₹499",
+    "product": "Window AC",
+    "requested_time": "10 AM",
+    "service_type": "General servicing"
+  },
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:window-ac",
+    "intent:booking",
+    "intent:pricing",
+    "outcome:not_interested",
+    "sentiment:positive",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:booking",
+    "intent:pricing",
+    "followup:site_visit",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "custom_tags": [
+    "custom:window-ac",
+    "custom:general-servicing",
+    "custom:madhapur"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "The agent initially identified the appliance as split AC instead of window AC.",
+    "The agent initially quoted ₹599 instead of the corrected ₹499 window AC service price."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T15:51:43.558597Z",
+  "generation_ok": true
+}

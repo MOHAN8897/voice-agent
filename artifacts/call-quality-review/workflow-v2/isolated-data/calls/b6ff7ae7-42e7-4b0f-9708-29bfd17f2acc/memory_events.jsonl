@@ -1,0 +1,1 @@
+{"turn_seq": 1, "ts": "2026-10-29T20:32:25.878907Z", "source": "model", "operations": [{"op": "set_preference", "key": "callback_time", "value": "వచ్చే Monday morning"}], "applied": true, "validation_errors": []}

@@ -1,0 +1,13 @@
+{
+  "facts": {
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "requested_time": "రేపు ఉదయం 10 AM",
+    "caller_email": "sravani.audit@example.invalid"
+  },
+  "preferences": {
+    "requested_time": "రేపు ఉదయం 10 AM"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "user: సురేష్, ఇది నిజమైన limitation అయితే నాకు అర్థం అవుతుంది. దయచేసి నా calendar లో appointment create చేయడానికి వేరే దారి ఉందేమో చెప్పండి. ఒకవేళ అది సాధ్యం కాకపోతే, కనీసం technician visit కోసం నా request ని note చేసి, నాకు confirmation message పంపగలరా?\nassistant: క్షమించండి, నా దగ్గర మీ calendar లో appointment create చేసే permission లేదు, కాబట్టి ఆ పని చేయలేను. అలాగే, మీ technician visit request ని note చేసి confirmation message పంపే అవకాశం కూడా నాకు లేదు. నేను ప్రస్తుతం ఈ actions ని confirm చేయలేను."
+}

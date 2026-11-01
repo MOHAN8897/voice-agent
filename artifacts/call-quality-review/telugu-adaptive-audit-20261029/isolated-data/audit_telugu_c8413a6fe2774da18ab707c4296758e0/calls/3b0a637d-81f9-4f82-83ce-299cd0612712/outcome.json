@@ -1,0 +1,40 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller clearly stated that they were not interested in purchasing AC servicing. They clarified that they were not requesting permanent number blocking or to stop future calls, only that the current call be ended. The agent thanked them and ended the call. No follow-up was requested or agreed.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+12025550131"
+  },
+  "objections": [],
+  "notes": null,
+  "tags": [
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:ac-servicing"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:15:49.631795Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+12025550131"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:ac-servicing",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

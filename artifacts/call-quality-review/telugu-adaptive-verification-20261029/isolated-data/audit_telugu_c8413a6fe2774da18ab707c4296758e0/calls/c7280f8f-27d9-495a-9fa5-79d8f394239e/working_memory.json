@@ -1,0 +1,13 @@
+{
+  "facts": {
+    "product": "split AC",
+    "delivery_locality": "మాదాపూర్",
+    "caller_name": "శ్రావణి",
+    "email": "sravani.audit@example.invalid",
+    "caller_email": "sravani.audit@example.invalid",
+    "requested_time": "రేపు ఉదయం 10 గంటల"
+  },
+  "preferences": {},
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "assistant: అవును, parts actual MRP ప్రకారమే extra cost అవుతుంది. Technician inspection తర్వాత ఆ cost చెప్తారు. రేపు ఉదయం 10 నుంచి సాయంత్రం 6 మధ్యలో next-day slot ఖాళీగా ఉంది. మీ పేరు, అలాగే exact issue ఏంటో చెప్తారా? అప్పుడు booking process చేస్తాను.\nuser: నా పేరు శ్రావణి, మాదాపూర్ లో ఉన్నాను. AC కి పెద్ద issue ఏమీ లేదు, just general service కావాలి. రేపు 10 నుంచి 6 మధ్యలో ఏ exact time confirm అవుతుంది? Booking process లో నా email sravani.audit@example.invalid note చేసుకోండి.\nassistant: సరే శ్రావణి గారు, రేపు 10 నుంచి 6 మధ్యలో exact time confirm చేస్తాను. మీకు ఏ time వీలవుతుందో చెప్తారా?"
+}

@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "ನನ್ನ fridgeಗೆ new compressor ಹಾಕೋಕೆ exact price ಎಷ್ಟು", "ts": "2026-10-29T19:37:42.824226Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ಆ exact price ನಂಗೆ phone-ಅಲ್ಲಿ ಹೇಳೋಕೆ ಆಗಲ್ಲ. Technician ಬಂದು inspection ಮಾಡಿದ ಮೇಲೆ ಮಾತ್ರ spare parts-ನ actual MRP ಹೇಳ್ತಾರೆ. Inspection charge ₹250 ಇರುತ್ತೆ, ಆದ್ರೆ ನೀವು repair ಮುಂದುವರಿಸಿದ್ರೆ ಆ charge waive off ಆಗುತ್ತೆ.", "ts": "2026-10-29T19:37:43.693174Z", "brain_latency_ms": 873}
+{"seq": 3, "role": "user", "text": "fridge ಹೊಸ compressor total price exact ಆಗಿ ಹೇಳಿ", "ts": "2026-10-29T19:37:43.725533Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಆ exact price ನಂಗೆ phone-ಅಲ್ಲಿ ಹೇಳೋಕೆ ಆಗಲ್ಲ, ಯಾಕಂದ್ರೆ technician inspection ಮುಗಿಸಿದ ಮೇಲೆ ಮಾತ್ರ actual MRP ಹೇಳ್ತಾರೆ. ನಿಮಗೆ ನಮ್ಮ team ಇಂದ visit arrange ಮಾಡ್ಬೇಕಾ?", "ts": "2026-10-29T19:37:44.781129Z", "brain_latency_ms": 1056}

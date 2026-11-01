@@ -1,0 +1,148 @@
+{
+  "call_id": "4e7aeafa-4d3f-4735-b62b-780caedb8f4a",
+  "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+  "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09",
+  "session_id": "adaptive-23e650b24d3c407f9421b241c3b5bbd8",
+  "channel": "pstn",
+  "direction": "outbound",
+  "environment": "development",
+  "tier": "medium",
+  "combination_id": "5b3ecb0dcd721b7f",
+  "compiled_brain_version": "cb_v20261029_fef6bbf1152f",
+  "started_at": "2026-10-29T11:07:37.494845+00:00",
+  "status": "active",
+  "storage_path": "data/calls/4e7aeafa-4d3f-4735-b62b-780caedb8f4a/",
+  "resolved_stack": {
+    "combination_id": "5b3ecb0dcd721b7f",
+    "tier": "medium",
+    "mode": "frontend",
+    "language": "te-IN",
+    "voice_preset": "telugu_natural",
+    "stt": {
+      "provider": "sarvam",
+      "model": "saaras:v3-realtime",
+      "config": {
+        "mode": "realtime"
+      }
+    },
+    "llm": {
+      "provider": "sarvam",
+      "model": "sarvam-105b-conversations",
+      "config": {
+        "api_mode": "chat_completions_v1"
+      }
+    },
+    "tts": {
+      "provider": "sarvam",
+      "model": "bulbul:v3",
+      "config": {
+        "speaker": "shubh",
+        "api_mode": "websocket"
+      }
+    }
+  },
+  "pipeline": "composed_voice",
+  "caller_id": "+12025550100",
+  "callee_e164": "+12025550113",
+  "audit": true,
+  "is_test": true,
+  "call_end_policy": {
+    "allowedReasons": [
+      "goodbye",
+      "firm_refusal",
+      "not_interested",
+      "goal_complete",
+      "abuse"
+    ],
+    "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+    "farewellSource": "default"
+  },
+  "stage_usage": {
+    "llm": {
+      "input_tokens": 67012,
+      "output_tokens": 1794,
+      "cached_tokens": 24448
+    }
+  },
+  "callback_request": {
+    "id": "18bcc252-8eb6-469d-a43b-b06f9fa81b75",
+    "status": "requested",
+    "requestedWhen": "సరే, నా phone number 9876543210. మీరు details save చేయలేకపోయినా పర్వాలేదు, ప్రస్తుతానికి ఈ call లోనే note చేసుకోండి. అలాగే, ఈ Python course కి సంబంధించి ఏమైనా prerequisites లేదా basic coding knowledge ముందే ఉండాలా?",
+    "requestText": "సరే, నా phone number 9876543210. మీరు details save చేయలేకపోయినా పర్వాలేదు, ప్రస్తుతానికి ఈ call లోనే note చేసుకోండి. అలాగే, ఈ Python course కి సంబంధించి ఏమైనా prerequisites లేదా basic coding knowledge ముందే ఉండాలా?"
+  },
+  "contact_preference": "callback",
+  "hangup_reason": "goal_complete",
+  "hangup_initiator": "agent",
+  "hangup_outcome": "agent_ended",
+  "hangup_playback_wait_ms": 46,
+  "hangup_trail_ms": 1000,
+  "hangup_heard_playback": true,
+  "callback_close_phase": "closing_allowed",
+  "disconnected_at": "2026-10-29T11:07:52.919028+00:00",
+  "ended_at": "2026-10-29T11:07:52.919028+00:00",
+  "end_reason": "goal_complete",
+  "duration_sec": 15.0,
+  "provider_cost_result": {
+    "status": "incomplete",
+    "missing": [
+      "provider_cost_snapshot"
+    ],
+    "stages": {},
+    "totalUsd": null,
+    "totalInr": null
+  },
+  "usage": {
+    "cost_accounting_version": 3,
+    "supplier_cost_status": "incomplete",
+    "live_transcript_usd": 0.0,
+    "live_transcript_inr": 0.0,
+    "pipeline": "composed_voice",
+    "duration_sec": 15.0,
+    "telephony_provider": "telnyx",
+    "telephony_usd": 0.003125,
+    "telephony_inr": 0.2975625,
+    "model_cost_usd": null,
+    "model_cost_inr": null,
+    "telnyx_usd": 0.003125,
+    "telnyx_inr": 0.2975625,
+    "telnyx_voice_api_usd": 0.0005,
+    "telnyx_sip_usd": 0.00125,
+    "telnyx_media_stream_usd": 0.000875,
+    "telnyx_call_recording_usd": 0.0005,
+    "telnyx_destination_country": "US",
+    "telnyx_sip_usd_per_min": 0.005,
+    "telnyx_cost_is_estimate": true,
+    "vobiz_usd": 0.0,
+    "vobiz_inr": 0.0,
+    "carrier_cost_source": "tariff_estimate",
+    "cost_usd": null,
+    "cost_inr": null,
+    "cost_is_estimate": true,
+    "fx_rate_inr": 95.22,
+    "fx_source": "live_cache",
+    "fx_as_of": "2026-10-28",
+    "gst_inr": 0.0,
+    "cost_usd_per_min": null,
+    "cost_inr_per_min": null,
+    "telephony_usd_per_min": 0.0125,
+    "telephony_inr_per_min": 1.19025,
+    "model_cost_usd_per_min": null,
+    "model_cost_inr_per_min": null,
+    "telnyx_usd_per_min": 0.0125,
+    "telnyx_inr_per_min": 1.19025,
+    "vobiz_usd_per_min": 0.0,
+    "vobiz_inr_per_min": 0.0,
+    "post_call_analysis_responses": {
+      "resp_0d949946a83f2f2a016ae3290a127c87d298175c2fae40b1d3": {
+        "input_tokens": 1669,
+        "output_tokens": 627,
+        "cached_tokens": 0,
+        "cache_write_tokens": 1666,
+        "model": "gpt-5.6-luna",
+        "cost_usd": 0.0011695
+      }
+    },
+    "post_call_analysis_usd": 0.0011695,
+    "post_call_analysis_inr": 0.11135979
+  }
+}

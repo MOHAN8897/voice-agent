@@ -1,0 +1,59 @@
+{
+  "call_id": "d016b6bf-b119-4c1b-8bd9-4cc5eda1fd0e",
+  "language_callback": null,
+  "disposition": "site_visit_planned",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, initiated the call to inquire about a 3 kW solar system. Initially, the caller expressed that the pricing was too costly. The agent responded by explaining the breakdown of the ₹1,95,000 pre-subsidy cost, the ₹78,000 government subsidy, the resulting net price of ₹1,17,000, and the monthly EMI option of ₹2,999 over 48 months. Although the caller initially objected to the cost, they asked for the EMI details to be repeated. After confirming the monthly EMI, the caller agreed to proceed and requested to book a free site survey. The agent collected the caller's name (Kiran), location (Velachery), and preferred day (Saturday) and confirmed that the request for the free site survey was noted. The caller thanked the agent, and the call ended.",
+  "next_action": "Agent to conduct the free site survey in Velachery on Saturday.",
+  "extracted_fields": {
+    "budget": "Costly",
+    "caller_name": "Kiran",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "phone": "+919876500501",
+    "requested_time": "சனிக்கிழமை",
+    "slot": "Saturday"
+  },
+  "facts": {
+    "budget": "Costly",
+    "caller_name": "Kiran",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "phone": "+919876500501",
+    "requested_time": "சனிக்கிழமை",
+    "slot": "Saturday"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:free-site-survey",
+    "custom:solar-system",
+    "followup:site_visit",
+    "intent:information",
+    "intent:purchase",
+    "outcome:site_visit_planned",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "signal:price_sensitive",
+    "signal:objection",
+    "followup:site_visit",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:free-site-survey",
+    "custom:solar-system"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Pricing is too costly"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:02:08.827206Z",
+  "generation_ok": true
+}

@@ -1,0 +1,92 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "Ramesh said he could not talk at the moment and explicitly requested a call back after approximately six hours. He provided the email address ramesh.audit@example.invalid and requested that the same phone number be used. The agent acknowledged recording his details and callback request, thanked him, and ended the call. No product or service details were discussed.",
+  "next_action": "Call Ramesh on the same number in approximately six hours.",
+  "extracted_fields": {
+    "callback_time": "Approximately six hours later",
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "Ramesh",
+    "email": "ramesh.audit@example.invalid",
+    "phone": "+12025550104",
+    "preferred_contact_method": "Call the same phone number"
+  },
+  "objections": [],
+  "notes": null,
+  "tags": [
+    "followup:callback",
+    "action:required",
+    "sentiment:neutral",
+    "intent:information"
+  ],
+  "custom_tags": [],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:39:20.027305Z",
+  "generation_ok": true,
+  "facts": {
+    "callback_time": "Approximately six hours later",
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "Ramesh",
+    "email": "ramesh.audit@example.invalid",
+    "phone": "+12025550104",
+    "preferred_contact_method": "Call the same phone number"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "bfbaa0af-0076-44e2-a07e-31240a9d28c5",
+    "agentId": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.99,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "callback_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

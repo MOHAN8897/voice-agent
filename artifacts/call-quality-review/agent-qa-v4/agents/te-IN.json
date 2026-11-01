@@ -1,0 +1,18 @@
+{
+  "language": "te-IN",
+  "tenant_id": "bc287ec8-62fb-497b-b4af-e446ef0ca748",
+  "agent_id": "60e25f6e-5494-59f3-99a0-dcd3c42c309a",
+  "user_id": "6bbb904d-dbc5-4045-9778-9382dd7585a4",
+  "brain_version": "cb_v20261031_2a2863d717b5",
+  "brain_chars": 20905,
+  "creation_s": 15.0,
+  "build_attempts": [
+    {
+      "status": 200,
+      "code": null
+    }
+  ],
+  "direction": "outbound",
+  "name": "Priya",
+  "brain_path": "artifacts\\call-quality-review\\agent-qa-v4\\agents\\te-IN-brain.txt"
+}

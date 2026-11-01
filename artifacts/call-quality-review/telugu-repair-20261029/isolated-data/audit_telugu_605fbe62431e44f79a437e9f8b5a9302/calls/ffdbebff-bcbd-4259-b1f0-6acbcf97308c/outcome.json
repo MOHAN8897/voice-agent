@@ -1,0 +1,45 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller stated that they do not currently need visiting cards and declined the service, explicitly asking to end the call. The agent acknowledged the request, thanked the caller, and ended the call. No follow-up action was agreed.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+12025550113"
+  },
+  "objections": [
+    "No current need for visiting cards"
+  ],
+  "notes": null,
+  "tags": [
+    "intent:information",
+    "sentiment:negative",
+    "signal:do_not_call"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:26:51.746079Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+12025550113"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:visiting-cards",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:negative",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

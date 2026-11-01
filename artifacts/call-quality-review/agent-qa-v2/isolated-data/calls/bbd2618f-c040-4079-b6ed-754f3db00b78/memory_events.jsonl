@@ -1,0 +1,8 @@
+{"turn_seq": 1, "ts": "2026-10-31T13:34:46.723548Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T13:34:57.446403Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T13:35:08.695731Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T13:35:08.710092Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: నమస్తే అండి, నేను మాట్లాడొచ్చు. ఆ అలోవెరా జ్యూస్ price ఎంతండి, bottle size ఎంత వస్తుంది?\nassistant: ఆ అలోవెరా జ్యూస్ 500 ml బాటిల్‌కు 399 రూపాయలు ఉంటుంది.\nuser: అది ఎలా తీసుకోవాలి అండి, రోజుకి ఎన్ని సార్లు తాగాలి?\nassistant: ప్రస్తుతం ఆ నిర్దిష్ట సమాచారం నా వద్ద అందుబాటులో లేదు.\nuser: ఓహ్ పర్వాలేదు లేండి, అది ఉదయాన్నే పరగడుపున తీసుకోవచ్చా?\nassistant: ఆ విషయం నాకు ప్రస్తుతం తెలియదు. వైద్య పరిస్థితులు లేదా మందుల విషయమై అయితే అర్హత కలిగిన ఆరోగ్య సంరక్షణ నిపుణులను సంప్రదించమని మేము సిఫార్సు చేస్తున్నాము."}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T13:35:29.599215Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T13:35:53.409620Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-31T13:36:06.453236Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 13, "ts": "2026-10-31T13:36:25.375247Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

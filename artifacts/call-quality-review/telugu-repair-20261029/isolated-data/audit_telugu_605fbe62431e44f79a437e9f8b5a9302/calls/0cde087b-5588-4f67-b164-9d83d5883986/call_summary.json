@@ -1,0 +1,65 @@
+{
+  "call_id": "0cde087b-5588-4f67-b164-9d83d5883986",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller asked about part-time Python training, specifically whether weekend classes are available and the fee. The agent explained that Saturday and Sunday classes run from 10 AM to 1 PM and cost ₹8,999. The caller accepted the fee, shared the name Kiran, email kiran.audit@example.invalid, and B.Com qualification, and requested that a proper customer record be created in the CRM because weekends are the only suitable time. The agent said the customer record creation could not be confirmed and offered to save the information as an enquiry instead. The caller rejected that option, repeatedly requested confirmation of a proper CRM record, and was told again that creation could not be confirmed. The call ended politely without confirmation that the details were saved or that enrollment was completed.",
+  "next_action": "Verify whether Kiran's details were saved in the CRM and, if not, create the proper customer record or contact the caller to resolve the request.",
+  "extracted_fields": {
+    "caller_name": "కిరణ్",
+    "course": "Part-time Python training",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550122",
+    "product": "Python training",
+    "qualification": "B.Com",
+    "schedule": "Weekends, Saturday and Sunday, 10 AM-1 PM"
+  },
+  "facts": {
+    "caller_name": "కిరణ్",
+    "course": "Part-time Python training",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550122",
+    "product": "Python training",
+    "qualification": "B.Com",
+    "schedule": "Weekends, Saturday and Sunday, 10 AM-1 PM"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:python-training",
+    "custom:weekend-classes",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "signal:price_sensitive",
+    "action:required",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-training",
+    "custom:weekend-classes",
+    "custom:crm-record"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "The caller did not accept saving the information only as an enquiry and wanted a proper CRM customer record.",
+    "The caller needed confirmation that the record was actually saved."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:53:13.979656Z",
+  "generation_ok": true
+}

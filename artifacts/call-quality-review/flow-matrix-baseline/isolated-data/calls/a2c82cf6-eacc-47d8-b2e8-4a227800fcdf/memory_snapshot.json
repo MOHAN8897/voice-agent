@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "requested_time": "రేపు ఉదయం 11 కి",
+    "caller_name": "కిరణ్"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: నాకు పంటి నొప్పిగా ఉంది. రేపు ఉదయం 11 కి appointment కావాలి.\nassistant: అర్థమైంది. కన్సల్టేషన్ ఫీజు ₹300 ఉంటుంది.\nuser: నా పేరు కిరణ్.\nassistant: సరే కిరణ్ గారు, మీ పేరు నోట్ చేసుకున్నాను. పంటి నొప్పికి సంబంధించి రేపు ఉదయం 11 కి మీ appointment కావాలని రాసుకుంటాను.\nuser: నా appointment confirm అయిందా?\nassistant: ప్రస్తుతం నా దగ్గర confirmation receipt లేదు. ఫ్రంట్ డెస్క్ వాళ్ళు details చెక్ చేసి confirm చేస్తారు. మీకు కావాల్సిన time నోట్ చేసుకున్నాను, వాళ్ళు త్వరలోనే call చేసి చెప్తారు.\nuser: సరే, thanks."
+}

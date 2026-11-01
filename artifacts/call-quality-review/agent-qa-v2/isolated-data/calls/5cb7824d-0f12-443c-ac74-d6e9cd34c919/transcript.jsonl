@@ -1,0 +1,12 @@
+{"seq": 1, "role": "user", "text": "नमस्ते, हाँ जी। वो आपका जो एलोवेरा जूस है, उसका क्या price है, कितनी bottle size है और उसे कैसे लेना होता है?", "ts": "2026-10-31T13:50:31.463527Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "एलोवेरा जूस ₹399 का है और इसकी bottle size 500 ml है। इसे general wellness beverage के तौर पर लिया जाता है। इसे कैसे लेना है, इसकी जानकारी मेरे पास अभी उपलब्ध नहीं है।", "ts": "2026-10-31T13:50:33.414941Z"}
+{"seq": 3, "role": "user", "text": "अच्छा, ठीक है जी।", "ts": "2026-10-31T13:50:48.437761Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "इसे पीने का सही तरीका मेरे पास अभी उपलब्ध नहीं है।", "ts": "2026-10-31T13:50:50.112138Z"}
+{"seq": 5, "role": "user", "text": "अच्छा छोड़िए, वैसे अब मैं ना हिंदी में बात करना चाहूँगी। मुझे वो जूस का price फिर से बता दीजिए जो आपने पहले बताया था?", "ts": "2026-10-31T13:51:05.354031Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "NatureVeda Aloe Vera Juice का price ₹399 है और इसकी size 500 ml है। क्या आप इसका order place करना चाहेंगे?", "ts": "2026-10-31T13:51:07.013797Z"}
+{"seq": 7, "role": "user", "text": "Actually, can you tell me what ingredients are there in your hair oil?", "ts": "2026-10-31T13:51:23.343516Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "NatureVeda Herbal Hair Oil में Amla, Bhringraj, Hibiscus और Coconut Oil होता है।", "ts": "2026-10-31T13:51:25.220875Z"}
+{"seq": 9, "role": "user", "text": "Could you tell me how much the total would come to for one juice and one hair oil?", "ts": "2026-10-31T13:51:40.865105Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "One Aloe Vera Juice ₹399 और one Herbal Hair Oil ₹499 का total ₹898 होगा। क्या आप इसका order place करना चाहेंगे?", "ts": "2026-10-31T13:51:42.841619Z"}
+{"seq": 11, "role": "user", "text": "That sounds fine, but I don't want to place an order right now. Thank you for the details, bye!", "ts": "2026-10-31T13:52:00.873119Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-31T13:52:02.694316Z"}

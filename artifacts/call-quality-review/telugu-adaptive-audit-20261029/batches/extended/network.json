@@ -1,0 +1,872 @@
+[
+  {
+    "case": "A_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions"
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_deep_enquiry",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_refusal_clean_repeat",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_refusal_clean_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_refusal_clean_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_refusal_clean_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_self_callback",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_callback_dispatch_repeat",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_callback_dispatch_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions"
+  }
+]

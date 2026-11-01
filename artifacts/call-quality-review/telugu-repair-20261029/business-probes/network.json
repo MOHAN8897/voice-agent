@@ -1,0 +1,50 @@
+[
+  {
+    "case": null,
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": null,
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": null,
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": null,
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": null,
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": null,
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  }
+]

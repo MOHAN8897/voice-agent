@@ -1,0 +1,8 @@
+{"turn_seq": 1, "ts": "2026-10-31T14:34:00.564100Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T14:34:20.048982Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T14:34:36.148891Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T14:34:36.167229Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: नमस्ते प्रिया जी, हाँ बताइए, आप लोग क्या बेचते हैं?\nassistant: हमारे पास NatureVeda Herbal Hair Oil है जो ₹499 में 200 ml मिलता है, जिसमें Amla, Bhringraj, Hibiscus और Coconut Oil हैं और यह routine hair and scalp care के लिए है।\nuser: अच्छा, यह hair oil सच में natural ingredients से बना है क्या?\nassistant: हाँ, यह natural ingredients से ही बना है। इसमें Amla, Bhringraj, Hibiscus और Coconut Oil शामिल हैं। क्या आप इसके बारे में और जानना चाहेंगे?\nuser: ठीक है, delivery charges extra लगते हैं क्या?\nassistant: इसकी जानकारी मेरे पास नहीं है। आपको कौन सी details चाहिए?"}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T14:34:46.993868Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T14:34:57.415583Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-31T14:35:13.603385Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 13, "ts": "2026-10-31T14:35:28.059753Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

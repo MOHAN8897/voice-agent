@@ -1,0 +1,118 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.93,
+  "summary_te": "",
+  "summary_en": "The caller, Shravani, asked about general servicing for her split AC in Madhapur, including the price, inspection fee, replacement-part costs, service coverage, and technician availability. The agent stated that general servicing costs ₹599 and the inspection fee is ₹250, which would be waived if the technician performs a repair. Replacement parts would be charged at actual MRP and quoted only after inspection. A next-day visit window from 10 AM to 6 PM was mentioned, but the requested next-day 10 AM slot was never confirmed; ultimately, no date or time was confirmed. The caller repeatedly requested the exact service checks and coverage, but the agent could not provide those details. The caller provided her name, locality, and preferred slot, acknowledged that the appointment remained unconfirmed, thanked the agent, and ended the call. No booking or follow-up action was confirmed.",
+  "next_action": "Check availability and confirm a technician appointment for Shravani in Madhapur, preferably for the requested next-day 10 AM slot, and provide the exact service coverage/checklist.",
+  "extracted_fields": {
+    "availability": "Not confirmed; no date or time confirmed",
+    "delivery_locality": "మాదాపూర్",
+    "inspection_fee": "₹250, waived if repair is performed",
+    "locality": "Madhapur",
+    "name": "Shravani",
+    "phone": "+12025550106",
+    "product": "Split AC",
+    "replacement_parts": "Actual MRP, quoted after technician inspection",
+    "requested_slot": "Next day at 10 AM",
+    "requested_time": "రేపు 10 AM",
+    "service": "General servicing",
+    "service_price": "₹599"
+  },
+  "objections": [
+    "The requested appointment slot was not confirmed.",
+    "Exact service coverage and checks were not available.",
+    "Replacement-part pricing could not be provided before inspection."
+  ],
+  "notes": "The caller was interested in the service but did not receive a confirmed appointment or complete service details.",
+  "tags": [
+    "intent:information",
+    "intent:pricing",
+    "intent:purchase",
+    "followup:site_visit",
+    "action:required",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:split-ac",
+    "custom:madhapur",
+    "custom:next-day-10am"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:37:44.682743Z",
+  "generation_ok": true,
+  "facts": {
+    "availability": "Not confirmed; no date or time confirmed",
+    "delivery_locality": "మాదాపూర్",
+    "inspection_fee": "₹250, waived if repair is performed",
+    "locality": "Madhapur",
+    "name": "Shravani",
+    "phone": "+12025550106",
+    "product": "Split AC",
+    "replacement_parts": "Actual MRP, quoted after technician inspection",
+    "requested_slot": "Next day at 10 AM",
+    "requested_time": "రేపు 10 AM",
+    "service": "General servicing",
+    "service_price": "₹599"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:madhapur",
+    "custom:split-ac",
+    "followup:site_visit",
+    "intent:information",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "0d394c11-78bb-48cd-9f1d-3585ad51ccf2",
+    "agentId": "da7e8b71-9465-55a3-b920-fae16cb86c5c",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.93,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

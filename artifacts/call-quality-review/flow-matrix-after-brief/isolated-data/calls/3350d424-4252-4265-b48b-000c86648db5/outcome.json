@@ -1,0 +1,45 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call, and the agent responded. The caller immediately stated that they already have solar panels installed on their roof. Based on this statement, the agent concluded the conversation and ended the call by saying goodbye.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500505"
+  },
+  "objections": [
+    "Already has solar installed"
+  ],
+  "notes": "",
+  "tags": [
+    "sentiment:neutral",
+    "intent:information",
+    "signal:do_not_call"
+  ],
+  "custom_tags": [
+    "custom:solar-installation"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:49:36.197187Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500505"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:solar-installation",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

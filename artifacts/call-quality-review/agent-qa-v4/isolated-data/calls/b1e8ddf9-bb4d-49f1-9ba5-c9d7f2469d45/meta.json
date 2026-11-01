@@ -1,0 +1,148 @@
+{
+  "call_id": "b1e8ddf9-bb4d-49f1-9ba5-c9d7f2469d45",
+  "tenant_id": "bc287ec8-62fb-497b-b4af-e446ef0ca748",
+  "agent_id": "60e25f6e-5494-59f3-99a0-dcd3c42c309a",
+  "session_id": "qa-a391d0142d5f4d9aa576ac9a6dd37ce5",
+  "channel": "pstn",
+  "direction": "outbound",
+  "environment": "development",
+  "tier": "medium",
+  "combination_id": "5b3ecb0dcd721b7f",
+  "compiled_brain_version": "cb_v20261031_2a2863d717b5",
+  "started_at": "2026-10-31T15:03:46.196787+00:00",
+  "status": "active",
+  "storage_path": "data/calls/b1e8ddf9-bb4d-49f1-9ba5-c9d7f2469d45/",
+  "resolved_stack": {
+    "combination_id": "5b3ecb0dcd721b7f",
+    "tier": "medium",
+    "mode": "frontend",
+    "language": "te-IN",
+    "voice_preset": "telugu_natural",
+    "stt": {
+      "provider": "sarvam",
+      "model": "saaras:v3-realtime",
+      "config": {
+        "mode": "realtime"
+      }
+    },
+    "llm": {
+      "provider": "sarvam",
+      "model": "sarvam-105b-conversations",
+      "config": {
+        "api_mode": "chat_completions_v1"
+      }
+    },
+    "tts": {
+      "provider": "sarvam",
+      "model": "bulbul:v3",
+      "config": {
+        "speaker": "shubh",
+        "api_mode": "websocket"
+      }
+    }
+  },
+  "pipeline": "composed_voice",
+  "callee_e164": "+919700000003",
+  "caller_id": "+914000000000",
+  "is_test": true,
+  "call_end_policy": {
+    "allowedReasons": [
+      "goodbye",
+      "firm_refusal",
+      "not_interested",
+      "goal_complete",
+      "abuse"
+    ],
+    "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+    "farewellSource": "default"
+  },
+  "stage_usage": {
+    "llm": {
+      "input_tokens": 81480,
+      "output_tokens": 3114,
+      "cached_tokens": 59008
+    },
+    "stt": {
+      "audio_seconds": 0.0
+    }
+  },
+  "language_callback": {
+    "status": "requested",
+    "kind": "language_switch",
+    "id": "375d23cd-2e8e-405c-8938-2a2d9eaaf4bd",
+    "caller_language": "hi-IN",
+    "configured_language": "te-IN",
+    "summary": "Caller asked to continue in Hindi; call back in Hindi with the same agent."
+  },
+  "contact_preference": "callback",
+  "callback_request": {
+    "id": "cc6f6110-7fa9-4de9-b8d0-a5e44b3bd8cb",
+    "status": "requested",
+    "requestedWhen": "कल सुबह 11 बजे",
+    "requestText": "ठीक है, कल सुबह 11 बजे कॉल कीजिएगा। शुक्रिया, धन्यवाद।"
+  },
+  "callback_cancelled": false,
+  "callback_withdrawal_pending": false,
+  "hangup_reason": "goal_complete",
+  "hangup_initiator": "agent",
+  "hangup_outcome": "agent_ended",
+  "hangup_playback_wait_ms": 47,
+  "hangup_trail_ms": 1000,
+  "hangup_heard_playback": true,
+  "callback_close_phase": "semantic_pending",
+  "disconnected_at": "2026-10-31T15:05:53.244568+00:00",
+  "ended_at": "2026-10-31T15:05:53.244568+00:00",
+  "end_reason": "goal_complete",
+  "duration_sec": 127.0,
+  "provider_cost_result": {
+    "status": "incomplete",
+    "missing": [
+      "provider_cost_snapshot"
+    ],
+    "stages": {},
+    "totalUsd": null,
+    "totalInr": null
+  },
+  "usage": {
+    "cost_accounting_version": 3,
+    "supplier_cost_status": "incomplete",
+    "live_transcript_usd": 0.0,
+    "live_transcript_inr": 0.0,
+    "pipeline": "composed_voice",
+    "duration_sec": 127.0,
+    "telephony_provider": "telnyx",
+    "telephony_usd": 0.034925,
+    "telephony_inr": 3.31612875,
+    "model_cost_usd": null,
+    "model_cost_inr": null,
+    "telnyx_usd": 0.034925,
+    "telnyx_inr": 3.31612875,
+    "telnyx_voice_api_usd": 0.004233333333333334,
+    "telnyx_sip_usd": 0.019049999999999997,
+    "telnyx_media_stream_usd": 0.007408333333333334,
+    "telnyx_call_recording_usd": 0.004233333333333334,
+    "telnyx_destination_country": "IN",
+    "telnyx_sip_usd_per_min": 0.009,
+    "telnyx_cost_is_estimate": true,
+    "vobiz_usd": 0.0,
+    "vobiz_inr": 0.0,
+    "carrier_cost_source": "tariff_estimate",
+    "cost_usd": null,
+    "cost_inr": null,
+    "cost_is_estimate": true,
+    "fx_rate_inr": 94.95,
+    "fx_source": "live_cache",
+    "fx_as_of": "2026-10-30",
+    "gst_inr": 0.0,
+    "cost_usd_per_min": null,
+    "cost_inr_per_min": null,
+    "telephony_usd_per_min": 0.016499999999999997,
+    "telephony_inr_per_min": 1.5666749999999998,
+    "model_cost_usd_per_min": null,
+    "model_cost_inr_per_min": null,
+    "telnyx_usd_per_min": 0.016499999999999997,
+    "telnyx_inr_per_min": 1.5666749999999998,
+    "vobiz_usd_per_min": 0.0,
+    "vobiz_inr_per_min": 0.0
+  }
+}

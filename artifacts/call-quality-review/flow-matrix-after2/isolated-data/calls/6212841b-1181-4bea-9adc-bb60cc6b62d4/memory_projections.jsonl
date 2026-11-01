@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-30T11:03:34.335636Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-30T11:03:39.329238Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: appointment | requested_time: நாளைக்கு காலைல 11 மணிக்கு"}
+{"turn_seq": 5, "ts": "2026-10-30T11:03:42.972742Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: appointment | requested_time: நாளைக்கு காலைல 11 மணிக்கு | caller_name: Kiran"}
+{"turn_seq": 7, "ts": "2026-10-30T11:03:44.263226Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: appointment | requested_time: நாளைக்கு காலைல 11 மணிக்கு | caller_name: Kiran"}

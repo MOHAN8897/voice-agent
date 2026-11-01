@@ -1,0 +1,64 @@
+{
+  "call_id": "eaf02c2b-baac-40c2-81e2-884daf425976",
+  "language_callback": {
+    "status": "requested",
+    "kind": "language_switch",
+    "id": "ccb508d6-ddfc-43fa-af9e-76a2516963fe",
+    "caller_language": "hi-IN",
+    "configured_language": "te-IN",
+    "summary": "Caller asked to continue in Hindi; call back in Hindi with the same agent."
+  },
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్ కు కాల్ చేసి, హెయిర్ ఆయిల్, అలోవెరా జ్యూస్, ఫేస్ క్రీమ్ మరియు అశ్వగంధ క్యాప్సూల్స్ వంటి ఉత్పత్తుల గురించి వివరించారు. కస్టమర్ అలోవెరా జ్యూస్ ధర మరియు డెలివరీ ఛార్జీల గురించి అడిగారు, కానీ ఏజెంట్ డెలివరీ ఛార్జీల గురించి సమాచారం లేదని తెలిపారు. కస్టమర్ హిందీలో మాట్లాడటానికి సౌకర్యంగా ఉందని మరియు రేపు ఉదయం 11 గంటలకు కాల్ చేయాలని కోరారు. ఏజెంట్ ఈ అభ్యర్థనను అంగీకరించి, రేపు ఉదయం 11 గంటలకు కాల్ చేయడానికి నోట్ చేసుకున్నారు. కాల్ ముగిసే సమయానికి కస్టమర్ ధన్యవాదాలు తెలిపారు.",
+  "summary_language": "te-IN",
+  "summary_en": "The business agent called the customer to share details about available products, including hair oil and aloe vera juice. The customer asked about the price of aloe vera juice and whether delivery charges were included, but the agent stated they did not have that information. The customer requested that the next call be made in Hindi at 11:00 AM tomorrow. The agent agreed to this callback, and the call ended with the customer expressing thanks. Language handoff: Caller asked to continue in Hindi; call back in Hindi with the same agent.",
+  "next_action": "Call back in Hindi with the same agent (Callback needed in another language). No callback time has been booked.",
+  "extracted_fields": {
+    "callback_time": "Tomorrow at 11:00 AM",
+    "language_preference": "Hindi",
+    "phone": "+919700000003",
+    "preferred_language": "hi-IN",
+    "callback_requested": "true",
+    "requested_language": "hi-IN",
+    "language_switch": "true"
+  },
+  "facts": {
+    "callback_time": "Tomorrow at 11:00 AM",
+    "language_preference": "Hindi",
+    "phone": "+919700000003",
+    "preferred_language": "hi-IN",
+    "callback_requested": "true",
+    "requested_language": "hi-IN",
+    "language_switch": "true"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "contact:preferred_language",
+    "custom:language-switch",
+    "custom:product-inquiry",
+    "followup:callback",
+    "followup:language_switch",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral",
+    "intent:information"
+  ],
+  "custom_tags": [
+    "custom:product-inquiry",
+    "custom:language-switch"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [
+    "Are there any delivery charges?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T13:12:05.576798Z",
+  "generation_ok": true
+}

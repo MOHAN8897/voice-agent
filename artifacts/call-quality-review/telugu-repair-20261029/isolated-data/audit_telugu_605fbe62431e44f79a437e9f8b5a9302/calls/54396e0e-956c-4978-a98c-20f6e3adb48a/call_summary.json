@@ -1,0 +1,54 @@
+{
+  "call_id": "54396e0e-956c-4978-a98c-20f6e3adb48a",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "The caller asked for the Python course fee and requested a call the next morning at 10:00, while also asking for the SQL course fee. The agent stated that the Python with Data Analytics course costs ₹8,999. The caller then clarified that they would call later themselves and explicitly requested not to receive a callback. The agent repeated the Python course fee and incorrectly said a callback would be made, without answering the SQL pricing question. The caller said they had received the needed details and ended the call politely.",
+  "next_action": null,
+  "extracted_fields": {
+    "additional_course_requested": "SQL",
+    "caller_preference": "Caller will call later; do not call back",
+    "course_fee": "₹8,999",
+    "course_requested": "Python with Data Analytics",
+    "phone": "+12025550104",
+    "requested_time": "Tomorrow at 10:00 AM"
+  },
+  "facts": {
+    "additional_course_requested": "SQL",
+    "caller_preference": "Caller will call later; do not call back",
+    "course_fee": "₹8,999",
+    "course_requested": "Python with Data Analytics",
+    "phone": "+12025550104",
+    "requested_time": "Tomorrow at 10:00 AM"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:course-fee",
+    "custom:python-course",
+    "custom:sql-course",
+    "intent:information",
+    "intent:pricing",
+    "outcome:interested",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:pricing",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:python-course",
+    "custom:sql-course",
+    "custom:course-fee"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Caller explicitly declined a callback.",
+    "SQL course fee was not answered."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T16:37:41.623727Z",
+  "generation_ok": true
+}

@@ -1,0 +1,32 @@
+{
+  "call_id": "4bfe9a01-4345-4104-bd0b-f71317640cd8",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller opened the conversation by stating that they already have solar panels installed on their roof. In response, the agent thanked the caller for their time and immediately ended the call with a goodbye. The caller did not express any interest in additional services, products, or further discussion, and there were no objections, agreements, or next steps established. The call concluded abruptly after the caller's initial statement.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500502"
+  },
+  "facts": {
+    "phone": "+919876500502"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "signal:do_not_call"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:32:41.065672Z",
+  "generation_ok": true
+}

@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "मैंने simple question पूछा सीधा answer चाहिए fridge inspection fee कितना", "ts": "2026-10-29T19:11:05.016669Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Fridge inspection की fee 250 rupees है। अगर आप repair के साथ आगे बढ़ते हैं, तो ये charge waive off हो जाएगा।", "ts": "2026-10-29T19:11:05.503503Z", "brain_latency_ms": 489}

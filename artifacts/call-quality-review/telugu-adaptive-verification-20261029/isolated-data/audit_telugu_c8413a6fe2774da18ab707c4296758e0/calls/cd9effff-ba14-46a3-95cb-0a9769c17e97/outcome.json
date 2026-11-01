@@ -1,0 +1,92 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller requested visiting cards with a matte finish and said they would share the designs later. They asked for a callback after six hours to discuss the order. The agent recorded the details and callback request, thanked the caller, and ended the call. No callback completion or order confirmation was stated.",
+  "next_action": "Arrange a callback after six hours to discuss the visiting cards and receive the designs.",
+  "extracted_fields": {
+    "callback_time": "After six hours",
+    "designs": "Caller will send designs later",
+    "finish": "matte finish",
+    "phone": "+12025550119",
+    "product": "visiting cards"
+  },
+  "objections": [],
+  "notes": null,
+  "tags": [
+    "intent:purchase",
+    "followup:callback",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:matte-finish"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:43:23.241751Z",
+  "generation_ok": true,
+  "facts": {
+    "callback_time": "After six hours",
+    "designs": "Caller will send designs later",
+    "finish": "matte finish",
+    "phone": "+12025550119",
+    "product": "visiting cards"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:matte-finish",
+    "custom:visiting-cards",
+    "followup:callback",
+    "intent:purchase",
+    "outcome:callback_required",
+    "sentiment:positive"
+  ],
+  "lead": {
+    "leadId": "2805df33-2078-47ab-af68-4d1c41466af8",
+    "agentId": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 100,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.99,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "callback_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

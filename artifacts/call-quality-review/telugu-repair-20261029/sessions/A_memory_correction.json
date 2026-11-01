@@ -1,0 +1,1394 @@
+{
+  "scenario": {
+    "id": "A_memory_correction",
+    "business": "A",
+    "kind": "memory",
+    "integration": "success",
+    "policy": "review",
+    "max_turns": 11,
+    "goal": "First enquire about 100 normal visiting cards and give your name as రమేష్. After two actual exchanges correct your name to రమణ and requirement to 200 MATTE visiting cards. Discuss delivery and design in between. Later ask what name, product and quantity they currently have, without giving the answers again. Do not correct again unless their recall is wrong. Finally request the order/enquiry and clearly end."
+  },
+  "agent": {
+    "id": "A",
+    "key": "printing",
+    "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+    "name": "Sri Krishna Digital Prints",
+    "agent_name": "Kavitha",
+    "role": "sales",
+    "industry": "printing",
+    "brief": "Agent name Kavitha. Company name Sri Krishna Digital Prints.\nOutbound and inbound customer inquiries in Telugu.\nWe print visiting cards: normal paper visiting cards cost 200 rupees for 100 cards,\nmatte finish cards cost 350 rupees for 100 cards. Minimum order quantity 100 cards.\nWedding invitation cards are customized: pricing depends on design, paper sample and quantity, no fixed price over the phone.\nFlex banners: normal flex 15 rupees per square foot, star flex 20 rupees per square foot.\nDelivery in Vijayawada takes 3 working days after design artwork approval; urgent 24-hour delivery is extra 150 rupees.\nPayment: Cash on delivery accepted for orders up to 1000 rupees; 50% advance payment required for orders above 1000 rupees.\nNo online payment or credit card processing on phone call.\nOffice hours Monday to Saturday 9:30 AM to 8:00 PM, Sunday closed.\nGoal: answer customer questions on cards, banners and pricing; understand their requirement.\nIf interested, take preferred name, quantity and delivery locality for a quote or order request.\nDo not force details before answering questions.\nCustomer refusing visiting cards may still want flex banners or wedding cards.\nNever claim an order is paid or dispatched without artwork approval and design confirmation.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Kavitha",
+      "company_name": "Sri Krishna Digital Prints",
+      "role": "Sales and customer enquiries",
+      "permitted_next_steps": "Collect customer name, item type, quantity and delivery locality in Vijayawada to submit an internal quote/order request. Explain that artwork approval is required before printing.",
+      "payment_rules": "Cash on delivery for orders up to 1000 rupees; 50% advance for orders above 1000 rupees. No online payment collection on call.",
+      "delivery_details": "Local delivery in Vijayawada takes 3 working days after artwork approval. Urgent 24-hour delivery is extra 150 rupees.",
+      "wedding_cards": "Customized quotation only based on design and paper sample. No fixed price on phone.",
+      "visiting_cards": "Standard 200 rupees for 100 cards; Matte finish 350 rupees for 100 cards. Minimum order 100 cards.",
+      "forbidden_actions": "Never confirm external courier shipment or take card payment on phone. Never guarantee delivery without artwork approval."
+    },
+    "user_id": "c0afb80f-ba42-4f85-ad75-ac1c23a9873f",
+    "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408"
+  },
+  "call_id": "b3057ccf-b33e-49d0-a3f4-067d35e91685",
+  "session_id": "adaptive-04df8d2c4b6644e29a290829ba3f780e",
+  "phone": "+12025550118",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_ce356842dc55",
+  "turn_index": 6,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నమస్తే, నేను రమేష్ ని మాట్లాడుతున్నాను విజయవాడ నుంచి. నాకు 100 visiting cards కావాలి, matte finish అయితే బాగుంటుంది. నా email ramesh.audit@example.invalid. దీని గురించి వివరాలు చెప్పగలరా?",
+        "intends_end": false,
+        "intent": "Enquire about 100 visiting cards as Ramesh and ask for details",
+        "elapsed_s": 0.703
+      },
+      "spoken": "నమస్తే రమేష్ గారు, one hundred matte finish visiting cards కి three hundred fifty rupees అవుతుంది. మీ email ramesh. audit@example. invalid అని note చేసుకున్నాను. Vijayawada లో delivery కి design artwork approval తర్వాత 3 working days పడుతుంది.",
+      "elapsed_s": 4.453,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "100",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        276,
+        277,
+        278,
+        279,
+        280,
+        281
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "నమస్తే రమేష్ గారు, one hundred matte finish visiting cards కి three hundred fifty rupees అవుతుంది. మీ email ramesh. audit@example. invalid అని note చేసుకున్నాను. Vijayawada లో delivery కి design artwork approval తర్వాత 3 working days పడుతుంది.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4627,
+            "output_tokens": 49,
+            "total_tokens": 4676
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 2,
+      "caller": {
+        "utterance": "సరే, 3 working days అంటే కొంచెం late అవుతుంది. డిజైన్స్ నేను తర్వాత ఇస్తాను, మరి delivery కి ఎంత time పడుతుంది? అలాగే ఒక చిన్న విషయం, నా పేరు actually రమణ, మరియు నాకు 200 matte visiting cards కావాలి.",
+        "intends_end": false,
+        "intent": "Correct name and quantity, and ask about delivery time.",
+        "elapsed_s": 0.688
+      },
+      "spoken": "రమణ గారు, design artwork approval తర్వాత Vijayawada లో delivery కి 3 working days పడుతుంది. మీరు అడిగిన two hundred matte finish visiting cards కి seven hundred rupees అవుతుంది. మీకు వేరే వివరాలు ఏమైనా కావాలా?",
+      "elapsed_s": 3.765,
+      "memory_before": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "100",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid",
+          "caller_name": "రమణ"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        283,
+        284,
+        285,
+        286,
+        287,
+        288
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "రమణ గారు, design artwork approval తర్వాత Vijayawada లో delivery కి 3 working days పడుతుంది. మీరు అడిగిన two hundred matte finish visiting cards కి seven hundred rupees అవుతుంది. మీకు వేరే వివరాలు ఏమైనా కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4886,
+            "output_tokens": 45,
+            "cached_tokens": 992,
+            "total_tokens": 4931
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 3,
+      "caller": {
+        "utterance": "సరే, delivery time ఓకే. ప్రస్తుతం మీ దగ్గర ఏ పేరు, ఏ product, మరియు ఏ quantity అందుబాటులో ఉన్నాయో చెప్పగలరా?",
+        "intends_end": false,
+        "intent": "Ask available product, name, and quantity details",
+        "elapsed_s": 0.547
+      },
+      "spoken": "రమణ గారు, ప్రస్తుతం నా దగ్గర మీ పేరు రమణ, product matte finish visiting cards, మరియు quantity two hundred అని ఉన్నాయి. మీకు ఇంకా వేరే వివరాలు కావాలా?",
+      "elapsed_s": 4.062,
+      "memory_before": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid",
+          "caller_name": "రమణ"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid",
+          "caller_name": "రమణ"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "assistant: రమణ గారు, design artwork approval తర్వాత Vijayawada లో delivery కి 3 working days పడుతుంది. మీరు అడిగిన two hundred matte finish visiting cards కి seven hundred rupees అవుతుంది. మీకు వేరే వివరాలు ఏమైనా కావాలా?\nuser: సరే, delivery time ఓకే. ప్రస్తుతం మీ దగ్గర ఏ పేరు, ఏ product, మరియు ఏ quantity అందుబాటులో ఉన్నాయో చెప్పగలరా?\nassistant: రమణ గారు, ప్రస్తుతం నా దగ్గర మీ పేరు రమణ, product matte finish visiting cards, మరియు quantity two hundred అని ఉన్నాయి. మీకు ఇంకా వేరే వివరాలు కావాలా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        290,
+        291,
+        292,
+        293,
+        294,
+        295
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "రమణ గారు, ప్రస్తుతం నా దగ్గర మీ పేరు రమణ, product matte finish visiting cards, మరియు quantity two hundred అని ఉన్నాయి. మీకు ఇంకా వేరే వివరాలు కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4895,
+            "output_tokens": 36,
+            "cached_tokens": 992,
+            "total_tokens": 4931
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 4,
+      "caller": {
+        "utterance": "అవును, నా పేరు రమణ, product matte finish visiting cards, quantity 200 అని కరెక్ట్ గా గుర్తుపెట్టుకున్నారు. ఇక order place చేయడానికి నా enquiry note చేసుకుంటారా?",
+        "intends_end": true,
+        "intent": "Requesting to place the order and ending the call",
+        "elapsed_s": 0.656
+      },
+      "spoken": "సరే రమణ గారు, మీ enquiry save చేశాను. ఇది confirmed order కాదు, కేవలం మా team review కోసం మాత్రమే save చేశాను.",
+      "elapsed_s": 4.078,
+      "memory_before": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid",
+          "caller_name": "రమణ"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "assistant: రమణ గారు, design artwork approval తర్వాత Vijayawada లో delivery కి 3 working days పడుతుంది. మీరు అడిగిన two hundred matte finish visiting cards కి seven hundred rupees అవుతుంది. మీకు వేరే వివరాలు ఏమైనా కావాలా?\nuser: సరే, delivery time ఓకే. ప్రస్తుతం మీ దగ్గర ఏ పేరు, ఏ product, మరియు ఏ quantity అందుబాటులో ఉన్నాయో చెప్పగలరా?\nassistant: రమణ గారు, ప్రస్తుతం నా దగ్గర మీ పేరు రమణ, product matte finish visiting cards, మరియు quantity two hundred అని ఉన్నాయి. మీకు ఇంకా వేరే వివరాలు కావాలా?"
+      },
+      "memory_after": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid",
+          "caller_name": "రమణ"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "assistant: రమణ గారు, design artwork approval తర్వాత Vijayawada లో delivery కి 3 working days పడుతుంది. మీరు అడిగిన two hundred matte finish visiting cards కి seven hundred rupees అవుతుంది. మీకు వేరే వివరాలు ఏమైనా కావాలా?\nuser: సరే, delivery time ఓకే. ప్రస్తుతం మీ దగ్గర ఏ పేరు, ఏ product, మరియు ఏ quantity అందుబాటులో ఉన్నాయో చెప్పగలరా?\nassistant: రమణ గారు, ప్రస్తుతం నా దగ్గర మీ పేరు రమణ, product matte finish visiting cards, మరియు quantity two hundred అని ఉన్నాయి. మీకు ఇంకా వేరే వివరాలు కావాలా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        297,
+        298,
+        299,
+        300,
+        301,
+        302,
+        303
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సరే రమణ గారు, మీ enquiry save చేశాను. ఇది confirmed order కాదు, కేవలం మా team review కోసం మాత్రమే save చేశాను.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5951,
+            "output_tokens": 38,
+            "cached_tokens": 3872,
+            "total_tokens": 5989
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [
+            "enquiry_saved"
+          ],
+          "order_proof": false,
+          "action_outcome_unconfirmed": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 5,
+      "caller": {
+        "utterance": "అర్థమైంది, ఇది కేవలం enquiry మాత్రమే అని note చేసుకున్నాను. దయచేసి నా order request ని team కి పంపించండి, ఇక నేను call end చేస్తున్నాను.",
+        "intends_end": true,
+        "intent": "Request to forward enquiry and end the call",
+        "elapsed_s": 0.719
+      },
+      "spoken": "సరే రమణ గారు, మీ order request ని team కి పంపించాను. ఇంకేమైనా సహాయం కావాలా?",
+      "elapsed_s": 3.875,
+      "memory_before": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid",
+          "caller_name": "రమణ"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "assistant: రమణ గారు, design artwork approval తర్వాత Vijayawada లో delivery కి 3 working days పడుతుంది. మీరు అడిగిన two hundred matte finish visiting cards కి seven hundred rupees అవుతుంది. మీకు వేరే వివరాలు ఏమైనా కావాలా?\nuser: సరే, delivery time ఓకే. ప్రస్తుతం మీ దగ్గర ఏ పేరు, ఏ product, మరియు ఏ quantity అందుబాటులో ఉన్నాయో చెప్పగలరా?\nassistant: రమణ గారు, ప్రస్తుతం నా దగ్గర మీ పేరు రమణ, product matte finish visiting cards, మరియు quantity two hundred అని ఉన్నాయి. మీకు ఇంకా వేరే వివరాలు కావాలా?"
+      },
+      "memory_after": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid",
+          "caller_name": "రమణ"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "assistant: రమణ గారు, design artwork approval తర్వాత Vijayawada లో delivery కి 3 working days పడుతుంది. మీరు అడిగిన two hundred matte finish visiting cards కి seven hundred rupees అవుతుంది. మీకు వేరే వివరాలు ఏమైనా కావాలా?\nuser: సరే, delivery time ఓకే. ప్రస్తుతం మీ దగ్గర ఏ పేరు, ఏ product, మరియు ఏ quantity అందుబాటులో ఉన్నాయో చెప్పగలరా?\nassistant: రమణ గారు, ప్రస్తుతం నా దగ్గర మీ పేరు రమణ, product matte finish visiting cards, మరియు quantity two hundred అని ఉన్నాయి. మీకు ఇంకా వేరే వివరాలు కావాలా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        305,
+        306,
+        307,
+        308,
+        309,
+        310
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సరే రమణ గారు, మీ order request ని team కి పంపించాను. ఇంకేమైనా సహాయం కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5254,
+            "output_tokens": 25,
+            "cached_tokens": 3264,
+            "total_tokens": 5279
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 6,
+      "caller": {
+        "utterance": "లేదు, ఇంకేమీ అవసరం లేదు. థాంక్యూ, బై.",
+        "intends_end": true,
+        "intent": "explicitly ending the call",
+        "elapsed_s": 0.485
+      },
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 2.968,
+      "memory_before": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid",
+          "caller_name": "రమణ"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "assistant: రమణ గారు, design artwork approval తర్వాత Vijayawada లో delivery కి 3 working days పడుతుంది. మీరు అడిగిన two hundred matte finish visiting cards కి seven hundred rupees అవుతుంది. మీకు వేరే వివరాలు ఏమైనా కావాలా?\nuser: సరే, delivery time ఓకే. ప్రస్తుతం మీ దగ్గర ఏ పేరు, ఏ product, మరియు ఏ quantity అందుబాటులో ఉన్నాయో చెప్పగలరా?\nassistant: రమణ గారు, ప్రస్తుతం నా దగ్గర మీ పేరు రమణ, product matte finish visiting cards, మరియు quantity two hundred అని ఉన్నాయి. మీకు ఇంకా వేరే వివరాలు కావాలా?"
+      },
+      "memory_after": {
+        "facts": {
+          "product": "visiting cards",
+          "quantity": "200",
+          "email": "ramesh.audit@example.invalid",
+          "caller_name": "రమణ"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "assistant: రమణ గారు, design artwork approval తర్వాత Vijayawada లో delivery కి 3 working days పడుతుంది. మీరు అడిగిన two hundred matte finish visiting cards కి seven hundred rupees అవుతుంది. మీకు వేరే వివరాలు ఏమైనా కావాలా?\nuser: సరే, delivery time ఓకే. ప్రస్తుతం మీ దగ్గర ఏ పేరు, ఏ product, మరియు ఏ quantity అందుబాటులో ఉన్నాయో చెప్పగలరా?\nassistant: రమణ గారు, ప్రస్తుతం నా దగ్గర మీ పేరు రమణ, product matte finish visiting cards, మరియు quantity two hundred అని ఉన్నాయి. మీకు ఇంకా వేరే వివరాలు కావాలా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        312,
+        313,
+        314
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "response_contract": "speech_text",
+          "finish_reason": "stop",
+          "server_owned_close": true,
+          "end_call": {
+            "should_end": true,
+            "reason": "goodbye",
+            "contact_preference": "end_call",
+            "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "నమస్తే రమేష్ గారు, one hundred matte finish visiting cards కి three hundred fifty rupees అవుతుంది. మీ email ramesh. audit@example. invalid అని note చేసుకున్నాను. Vijayawada లో delivery కి design artwork approval తర్వాత 3 working days పడుతుంది.",
+      "at": 127168.906
+    },
+    {
+      "turn": 2,
+      "text": "రమణ గారు, design artwork approval తర్వాత Vijayawada లో delivery కి 3 working days పడుతుంది. మీరు అడిగిన two hundred matte finish visiting cards కి seven hundred rupees అవుతుంది. మీకు వేరే వివరాలు ఏమైనా కావాలా?",
+      "at": 127173.375
+    },
+    {
+      "turn": 3,
+      "text": "రమణ గారు, ప్రస్తుతం నా దగ్గర మీ పేరు రమణ, product matte finish visiting cards, మరియు quantity two hundred అని ఉన్నాయి. మీకు ఇంకా వేరే వివరాలు కావాలా?",
+      "at": 127177.953
+    },
+    {
+      "turn": 4,
+      "text": "సరే రమణ గారు, మీ enquiry save చేశాను. ఇది confirmed order కాదు, కేవలం మా team review కోసం మాత్రమే save చేశాను.",
+      "at": 127182.718
+    },
+    {
+      "turn": 5,
+      "text": "సరే రమణ గారు, మీ order request ని team కి పంపించాను. ఇంకేమైనా సహాయం కావాలా?",
+      "at": 127187.328
+    },
+    {
+      "turn": 6,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 127189.671
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "నమస్తే రమేష్ గారు, one hundred matte finish visiting cards కి three hundred fifty rupees అవుతుంది. మీ email ramesh. audit@example. invalid అని note చేసుకున్నాను. Vijayawada లో delivery కి design artwork approval తర్వాత 3 working days పడుతుంది.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4627,
+        "output_tokens": 49,
+        "total_tokens": 4676
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "రమణ గారు, design artwork approval తర్వాత Vijayawada లో delivery కి 3 working days పడుతుంది. మీరు అడిగిన two hundred matte finish visiting cards కి seven hundred rupees అవుతుంది. మీకు వేరే వివరాలు ఏమైనా కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4886,
+        "output_tokens": 45,
+        "cached_tokens": 992,
+        "total_tokens": 4931
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "రమణ గారు, ప్రస్తుతం నా దగ్గర మీ పేరు రమణ, product matte finish visiting cards, మరియు quantity two hundred అని ఉన్నాయి. మీకు ఇంకా వేరే వివరాలు కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4895,
+        "output_tokens": 36,
+        "cached_tokens": 992,
+        "total_tokens": 4931
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "సరే రమణ గారు, మీ enquiry save చేశాను. ఇది confirmed order కాదు, కేవలం మా team review కోసం మాత్రమే save చేశాను.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5951,
+        "output_tokens": 38,
+        "cached_tokens": 3872,
+        "total_tokens": 5989
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [
+        "enquiry_saved"
+      ],
+      "order_proof": false,
+      "action_outcome_unconfirmed": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "సరే రమణ గారు, మీ order request ని team కి పంపించాను. ఇంకేమైనా సహాయం కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5254,
+        "output_tokens": 25,
+        "cached_tokens": 3264,
+        "total_tokens": 5279
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "response_contract": "speech_text",
+      "finish_reason": "stop",
+      "server_owned_close": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "goodbye",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "వివరాలు చెప్పగలరా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "product",
+            "value": "visiting cards"
+          },
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "100"
+          },
+          {
+            "op": "set_fact",
+            "key": "email",
+            "value": "ramesh.audit@example.invalid"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నమస్తే, నేను రమేష్ ని మాట్లాడుతున్నాను విజయవాడ నుంచి. నాకు 100 visiting cards కావాలి, matte finish అయితే బాగుంటుంది. నా email ramesh.audit@example.invalid. దీని గురించి వివరాలు చెప్పగలరా?",
+      "at": 127168.14
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "Delivery కి ఎంత time పడుతుంది?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "రమణ"
+          },
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "200"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, 3 working days అంటే కొంచెం late అవుతుంది. డిజైన్స్ నేను తర్వాత ఇస్తాను, మరి delivery కి ఎంత time పడుతుంది? అలాగే ఒక చిన్న విషయం, నా పేరు actually రమణ, మరియు నాకు 200 matte visiting cards కావాలి.",
+      "at": 127172.796
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "ప్రస్తుతం మీ దగ్గర ఏ పేరు, ఏ product, మరియు ఏ quantity అందుబాటులో ఉన్నాయో చెప్పగలరా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "read",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, delivery time ఓకే. ప్రస్తుతం మీ దగ్గర ఏ పేరు, ఏ product, మరియు ఏ quantity అందుబాటులో ఉన్నాయో చెప్పగలరా?",
+      "at": 127177.343
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "order place చేయడానికి నా enquiry note చేసుకుంటారా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "write",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "రమణ"
+          },
+          {
+            "op": "set_fact",
+            "key": "product",
+            "value": "visiting cards"
+          },
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "200"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "అవును, నా పేరు రమణ, product matte finish visiting cards, quantity 200 అని కరెక్ట్ గా గుర్తుపెట్టుకున్నారు. ఇక order place చేయడానికి నా enquiry note చేసుకుంటారా?",
+      "at": 127182.234
+    },
+    {
+      "turn": 5,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "ఇక నేను call end చేస్తున్నాను",
+        "remaining_request": "దయచేసి నా order request ని team కి పంపించండి",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "అర్థమైంది, ఇది కేవలం enquiry మాత్రమే అని note చేసుకున్నాను. దయచేసి నా order request ని team కి పంపించండి, ఇక నేను call end చేస్తున్నాను.",
+      "at": 127186.828
+    },
+    {
+      "turn": 6,
+      "proposal": {
+        "decision": "close",
+        "reason": "goodbye",
+        "evidence": "లేదు, ఇంకేమీ అవసరం లేదు. థాంక్యూ, బై.",
+        "remaining_request": "",
+        "contact_intent": "end_this_call",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": true,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "transcript": "లేదు, ఇంకేమీ అవసరం లేదు. థాంక్యూ, బై.",
+      "at": 127189.671
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 6,
+      "at": 127189.671
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 6,
+      "at": 127190.75,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 127168.937
+    },
+    {
+      "turn_seq": 3,
+      "at": 127173.39
+    },
+    {
+      "turn_seq": 5,
+      "at": 127177.984
+    },
+    {
+      "turn_seq": 7,
+      "at": 127182.75
+    },
+    {
+      "turn_seq": 9,
+      "at": 127187.343
+    },
+    {
+      "turn_seq": 11,
+      "at": 127189.703
+    }
+  ],
+  "started_at": "2026-10-29T17:40:40.935819+00:00",
+  "errors": [],
+  "brain_checksum": "f1701af0d53369e603869a1bafee427e6d3493490cec35765d0b259410b7068c",
+  "runtime_checksum": "24e02fd7087c832858e2d6db4bca57f7f79a5e3617429d149011e26fa44a6d19",
+  "available_tools": [
+    "HUBSPOT_CREATE_CONTACT",
+    "GOOGLECALENDAR_CREATE_EVENT",
+    "GOOGLECALENDAR_FIND_FREE_SLOTS",
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 127167.546,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 2,
+      "start_s": 127172.203,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 101,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 3,
+      "start_s": 127176.093,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 120,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 4,
+      "start_s": 127180.984,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 120,
+      "rolling_chars": 496
+    },
+    {
+      "turn": 5,
+      "start_s": 127186.359,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 120,
+      "rolling_chars": 496
+    },
+    {
+      "turn": 6,
+      "start_s": 127189.671,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 120,
+      "rolling_chars": 496
+    }
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "interested",
+    "disposition_confidence": 0.98,
+    "summary_te": "",
+    "summary_en": "Ramesh from Vijayawada initially asked for details and pricing for 100 matte-finish visiting cards, quoted at ₹350, with delivery taking 3 working days after artwork approval. He clarified that his name is Raman and increased the requirement to 200 cards, quoted at ₹700. He accepted the delivery timeline, verified that the recorded details were Raman, matte-finish visiting cards, and quantity 200, and asked to save the enquiry. The agent clarified that this was not a confirmed order, but an enquiry for team review, and stated that the order request was sent to the team. Raman acknowledged this and ended the call politely. No confirmed order or completed purchase was established.",
+    "next_action": "Team review of the enquiry and follow up regarding the order request.",
+    "extracted_fields": {
+      "caller_name": "రమణ",
+      "delivery_time": "3 working days after artwork approval",
+      "email": "ramesh.audit@example.invalid",
+      "location": "Vijayawada",
+      "phone": "+12025550118",
+      "price": "₹700",
+      "product": "matte-finish visiting cards",
+      "quantity": "200"
+    },
+    "objections": [
+      "The caller initially felt that 3 working days was somewhat late, but then accepted the delivery timeline."
+    ],
+    "notes": "The caller requested that the enquiry/order request be sent to the team; the call ended after the agent said it was sent. This was not a confirmed order.",
+    "tags": [
+      "intent:purchase",
+      "intent:information",
+      "followup:callback",
+      "sentiment:positive"
+    ],
+    "custom_tags": [
+      "custom:matte-visiting-cards",
+      "custom:200-cards",
+      "custom:artwork-approval"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T17:41:12.497051Z",
+    "generation_ok": true,
+    "facts": {
+      "caller_name": "రమణ",
+      "delivery_time": "3 working days after artwork approval",
+      "email": "ramesh.audit@example.invalid",
+      "location": "Vijayawada",
+      "phone": "+12025550118",
+      "price": "₹700",
+      "product": "matte-finish visiting cards",
+      "quantity": "200"
+    },
+    "disclosure_status": null,
+    "contact_preference": "end_call",
+    "status_tags": [
+      "action:required",
+      "contact:email_known",
+      "contact:name_known",
+      "contact:phone_known",
+      "custom:200-cards",
+      "custom:matte-visiting-cards",
+      "followup:callback",
+      "intent:information",
+      "intent:purchase",
+      "outcome:interested",
+      "sentiment:positive",
+      "signal:objection"
+    ],
+    "lead": {
+      "leadId": "f8bb1a51-d5b9-5cfe-a9f6-456895b45c34",
+      "agentId": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+      "stage": "contacted",
+      "action": "unchanged"
+    },
+    "lead_assessment": {
+      "score": 75,
+      "band": "hot",
+      "disposition": "interested",
+      "confidence": 0.98,
+      "components": [
+        {
+          "signal": "interest",
+          "points": 40,
+          "max": 40,
+          "evidence": "interested"
+        },
+        {
+          "signal": "requirements",
+          "points": 25,
+          "max": 25,
+          "evidence": "product"
+        },
+        {
+          "signal": "timing",
+          "points": 0,
+          "max": 25,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "contact",
+          "points": 10,
+          "max": 10,
+          "evidence": "phone"
+        }
+      ],
+      "version": 1,
+      "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+      "reason": "recorded_signals"
+    },
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "b3057ccf-b33e-49d0-a3f4-067d35e91685",
+        "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+        "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+        "session_id": "adaptive-04df8d2c4b6644e29a290829ba3f780e",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_ce356842dc55",
+        "started_at": "2026-10-29 17:40:40.933820+00:00",
+        "ended_at": "2026-10-29 17:41:07.951861+00:00",
+        "duration_sec": 27,
+        "disposition": "interested",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/b3057ccf-b33e-49d0-a3f4-067d35e91685/",
+        "end_reason": "goodbye",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "action:required",
+          "contact:email_known",
+          "contact:name_known",
+          "contact:phone_known",
+          "custom:200-cards",
+          "custom:matte-visiting-cards",
+          "followup:callback",
+          "intent:information",
+          "intent:purchase",
+          "outcome:interested",
+          "sentiment:positive",
+          "signal:objection"
+        ],
+        "last_heartbeat_at": "2026-10-29 17:40:40.933820+00:00",
+        "created_at": "2026-10-29 17:40:40.934819+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [],
+    "dnd": [],
+    "leads": [
+      {
+        "lead_id": "f8bb1a51-d5b9-5cfe-a9f6-456895b45c34",
+        "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+        "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+        "name": "రమణ",
+        "phone": "+12025550118",
+        "email": "ramesh.audit@example.invalid",
+        "stage": "contacted",
+        "notes": "Caller enquiry — call b3057ccf-b33e-49d0-a3f4-067d35e91685\n{\"customer_name\": \"రమణ\", \"product\": \"matte finish visiting cards\", \"quantity\": \"200\", \"request\": \"Order place చేయడానికి enquiry note చేసుకోండి. Delivery locality Vijayawada.\"}\n\n---\n[Call reference: b3057ccf-b33e-49d0-a3f4-067d35e91685]\nRamesh from Vijayawada initially asked for details and pricing for 100 matte-finish visiting cards, quoted at ₹350, with delivery taking 3 working days after artwork approval. He clarified that his name is Raman and increased the requirement to 200 cards, quoted at ₹700. He accepted the delivery timeline, verified that the recorded details were Raman, matte-finish visiting cards, and quantity 200, and asked to save the enquiry. The agent clarified that this was not a confirmed order, but an enquiry for team review, and stated that the order request was sent to the team. Raman acknowledged this and ended the call politely. No confirmed order or completed purchase was established.\n\nNext step: Team review of the enquiry and follow up regarding the order request.\n\nObjections: The caller initially felt that 3 working days was somewhat late, but then accept\n\nCall outcome: interested (98% confidence)",
+        "created_at": "2026-10-29 17:40:58.834004+00:00",
+        "updated_at": "2026-10-29 17:41:12.512030+00:00"
+      }
+    ],
+    "tools": [],
+    "assessments": [
+      {
+        "id": "74e35143-4ec0-46b7-95f1-858e09f6276a",
+        "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+        "lead_id": "f8bb1a51-d5b9-5cfe-a9f6-456895b45c34",
+        "source_call_id": "b3057ccf-b33e-49d0-a3f4-067d35e91685",
+        "assessment": {
+          "score": 75,
+          "band": "hot",
+          "disposition": "interested",
+          "confidence": 0.98,
+          "components": [
+            {
+              "signal": "interest",
+              "points": 40,
+              "max": 40,
+              "evidence": "interested"
+            },
+            {
+              "signal": "requirements",
+              "points": 25,
+              "max": 25,
+              "evidence": "product"
+            },
+            {
+              "signal": "timing",
+              "points": 0,
+              "max": 25,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "contact",
+              "points": 10,
+              "max": 10,
+              "evidence": "phone"
+            }
+          ],
+          "version": 1,
+          "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+          "reason": "recorded_signals"
+        },
+        "updated_at": "2026-10-29 17:41:07.951861+00:00"
+      }
+    ]
+  },
+  "metadata": {
+    "call_id": "b3057ccf-b33e-49d0-a3f4-067d35e91685",
+    "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+    "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+    "session_id": "adaptive-04df8d2c4b6644e29a290829ba3f780e",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_ce356842dc55",
+    "started_at": "2026-10-29T17:40:40.933820+00:00",
+    "status": "active",
+    "storage_path": "data/calls/b3057ccf-b33e-49d0-a3f4-067d35e91685/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550118",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 68219,
+        "output_tokens": 4450,
+        "cached_tokens": 25952
+      }
+    },
+    "contact_preference": "end_call",
+    "hangup_reason": "goodbye",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 62,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": true,
+    "callback_close_phase": "idle",
+    "disconnected_at": "2026-10-29T17:41:07.951861+00:00",
+    "ended_at": "2026-10-29T17:41:07.951861+00:00",
+    "end_reason": "goodbye",
+    "duration_sec": 27.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 27.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.005625,
+      "telephony_inr": 0.53589375,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.005625,
+      "telnyx_inr": 0.53589375,
+      "telnyx_voice_api_usd": 0.0009000000000000001,
+      "telnyx_sip_usd": 0.0022500000000000003,
+      "telnyx_media_stream_usd": 0.001575,
+      "telnyx_call_recording_usd": 0.0009000000000000001,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.27,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-29",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.012499999999999999,
+      "telephony_inr_per_min": 1.190875,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.012499999999999999,
+      "telnyx_inr_per_min": 1.190875,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_05684f2b370d388b016ae38534d3c087d191e99d8e40f895a3": {
+          "input_tokens": 1607,
+          "output_tokens": 371,
+          "cached_tokens": 0,
+          "cache_write_tokens": 1604,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.0008468
+        }
+      },
+      "post_call_analysis_usd": 0.0008468,
+      "post_call_analysis_inr": 0.080674636
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నమస్తే, నేను రమేష్ ని మాట్లాడుతున్నాను విజయవాడ నుంచి. నాకు 100 visiting cards కావాలి, matte finish అయితే బాగుంటుంది. నా email ramesh.audit@example.invalid. దీని గురించి వివరాలు చెప్పగలరా?",
+      "ts": "2026-10-29T17:40:41.680225Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "నమస్తే రమేష్ గారు, one hundred matte finish visiting cards కి three hundred fifty rupees అవుతుంది. మీ email ramesh. audit@example. invalid అని note చేసుకున్నాను. Vijayawada లో delivery కి design artwork approval తర్వాత 3 working days పడుతుంది.",
+      "ts": "2026-10-29T17:40:46.091909Z"
+    },
+    {
+      "seq": 3,
+      "role": "user",
+      "text": "సరే, 3 working days అంటే కొంచెం late అవుతుంది. డిజైన్స్ నేను తర్వాత ఇస్తాను, మరి delivery కి ఎంత time పడుతుంది? అలాగే ఒక చిన్న విషయం, నా పేరు actually రమణ, మరియు నాకు 200 matte visiting cards కావాలి.",
+      "ts": "2026-10-29T17:40:46.823101Z",
+      "partial": false
+    },
+    {
+      "seq": 4,
+      "role": "assistant",
+      "text": "రమణ గారు, design artwork approval తర్వాత Vijayawada లో delivery కి 3 working days పడుతుంది. మీరు అడిగిన two hundred matte finish visiting cards కి seven hundred rupees అవుతుంది. మీకు వేరే వివరాలు ఏమైనా కావాలా?",
+      "ts": "2026-10-29T17:40:50.571980Z"
+    },
+    {
+      "seq": 5,
+      "role": "user",
+      "text": "సరే, delivery time ఓకే. ప్రస్తుతం మీ దగ్గర ఏ పేరు, ఏ product, మరియు ఏ quantity అందుబాటులో ఉన్నాయో చెప్పగలరా?",
+      "ts": "2026-10-29T17:40:51.150521Z",
+      "partial": false
+    },
+    {
+      "seq": 6,
+      "role": "assistant",
+      "text": "రమణ గారు, ప్రస్తుతం నా దగ్గర మీ పేరు రమణ, product matte finish visiting cards, మరియు quantity two hundred అని ఉన్నాయి. మీకు ఇంకా వేరే వివరాలు కావాలా?",
+      "ts": "2026-10-29T17:40:55.144342Z"
+    },
+    {
+      "seq": 7,
+      "role": "user",
+      "text": "అవును, నా పేరు రమణ, product matte finish visiting cards, quantity 200 అని కరెక్ట్ గా గుర్తుపెట్టుకున్నారు. ఇక order place చేయడానికి నా enquiry note చేసుకుంటారా?",
+      "ts": "2026-10-29T17:40:55.884681Z",
+      "partial": false
+    },
+    {
+      "seq": 8,
+      "role": "assistant",
+      "text": "సరే రమణ గారు, మీ enquiry save చేశాను. ఇది confirmed order కాదు, కేవలం మా team review కోసం మాత్రమే save చేశాను.",
+      "ts": "2026-10-29T17:40:59.915116Z"
+    },
+    {
+      "seq": 9,
+      "role": "user",
+      "text": "అర్థమైంది, ఇది కేవలం enquiry మాత్రమే అని note చేసుకున్నాను. దయచేసి నా order request ని team కి పంపించండి, ఇక నేను call end చేస్తున్నాను.",
+      "ts": "2026-10-29T17:41:00.685209Z",
+      "partial": false
+    },
+    {
+      "seq": 10,
+      "role": "assistant",
+      "text": "సరే రమణ గారు, మీ order request ని team కి పంపించాను. ఇంకేమైనా సహాయం కావాలా?",
+      "ts": "2026-10-29T17:41:04.519486Z"
+    },
+    {
+      "seq": 11,
+      "role": "user",
+      "text": "లేదు, ఇంకేమీ అవసరం లేదు. థాంక్యూ, బై.",
+      "ts": "2026-10-29T17:41:05.073768Z",
+      "partial": false
+    },
+    {
+      "seq": 12,
+      "role": "assistant",
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T17:41:06.863688Z"
+    }
+  ],
+  "wall_elapsed_s": 31.687,
+  "simulated_exchange_timeline_s": 120,
+  "request_count": 40
+}

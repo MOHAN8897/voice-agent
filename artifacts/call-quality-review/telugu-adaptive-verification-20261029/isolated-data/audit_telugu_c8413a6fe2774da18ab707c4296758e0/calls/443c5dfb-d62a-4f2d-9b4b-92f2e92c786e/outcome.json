@@ -1,0 +1,60 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller asked about the fee for a part-time Python with Data Analytics training course and was quoted ₹8,999, with weekday and weekend batch options mentioned. The caller then asked for a guaranteed high-salary job in exchange for paying the same day. The agent clarified that no job or salary guarantee is provided, but placement assistance includes resume building, interview preparation, and job referrals. The caller requested clarification about the assistance, received the details, and declined to register for a demo or admission counselling at this time. The call ended politely with no further action agreed.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "course": "Python with Data Analytics",
+    "fee": "₹8,999",
+    "format": "Part-time training",
+    "phone": "+12025550144",
+    "placement_assistance": "Resume building, interview preparation, and job referrals"
+  },
+  "objections": [
+    "No job or high-salary guarantee was available."
+  ],
+  "notes": "Caller did not register and ended the conversation after receiving course and placement-assistance information.",
+  "tags": [
+    "intent:information",
+    "intent:pricing",
+    "signal:objection",
+    "signal:do_not_call",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-training",
+    "custom:data-analytics",
+    "custom:placement-assistance"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:50:23.142329Z",
+  "generation_ok": true,
+  "facts": {
+    "course": "Python with Data Analytics",
+    "fee": "₹8,999",
+    "format": "Part-time training",
+    "phone": "+12025550144",
+    "placement_assistance": "Resume building, interview preparation, and job referrals"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:data-analytics",
+    "custom:placement-assistance",
+    "custom:python-training",
+    "intent:information",
+    "intent:pricing",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

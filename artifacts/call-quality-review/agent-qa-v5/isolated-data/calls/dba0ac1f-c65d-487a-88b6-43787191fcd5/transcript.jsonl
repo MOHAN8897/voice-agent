@@ -1,0 +1,14 @@
+{"seq": 1, "role": "user", "text": "Yes, tell me. I am listening.", "ts": "2026-10-31T16:12:35.165523Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Great. Which herbal product or category would you like to explore today?", "ts": "2026-10-31T16:12:36.517300Z"}
+{"seq": 3, "role": "user", "text": "Actually, can you tell me what products you have? I am especially interested in the aloe vera juice, what is the price for that?", "ts": "2026-10-31T16:12:51.803183Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Our NatureVeda Aloe Vera Juice costs 399 rupees for 500 ml. It contains Aloe Vera and is marketed as a general wellness beverage. Would you like to know more about it?", "ts": "2026-10-31T16:12:53.731847Z"}
+{"seq": 5, "role": "user", "text": "399 rupees is okay. Does it have any added sugar or preservatives in it?", "ts": "2026-10-31T16:13:11.554020Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "I’m sorry, I don’t have that detail right now.", "ts": "2026-10-31T16:13:12.951873Z"}
+{"seq": 7, "role": "user", "text": "Ah, that is okay. Is it available for delivery to my address in Kukatpally, Hyderabad?", "ts": "2026-10-31T16:13:23.160312Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "I’m sorry, but I currently don’t have the delivery availability for Kukatpally, Hyderabad. Would you like me to note this enquiry for you?", "ts": "2026-10-31T16:13:26.040728Z"}
+{"seq": 9, "role": "user", "text": "No need to note it right now. What other products do you have, maybe something for hair?", "ts": "2026-10-31T16:13:43.110553Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "We have NatureVeda Herbal Hair Oil for 499 rupees for 200 ml. It contains Amla, Bhringraj, Hibiscus, and Coconut Oil, and is intended for routine hair and scalp care. Which details would you like to know?", "ts": "2026-10-31T16:13:44.491072Z"}
+{"seq": 11, "role": "user", "text": "499 rupees is a bit high for me. Do you have anything cheaper for hair growth?", "ts": "2026-10-31T16:14:05.557185Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "Our NatureVeda Aloe Vera Juice is 399 rupees for 500 ml, which is our lower-priced option. For hair growth specifically, I don’t have a cheaper product in that category right now. Would you like to explore the Aloe Vera Juice instead?", "ts": "2026-10-31T16:14:07.400802Z"}
+{"seq": 13, "role": "user", "text": "No, let us just stop here for now. I am more comfortable speaking in Hindi, so can you call me back tomorrow morning around 11?", "ts": "2026-10-31T16:14:32.258046Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "Okay, I've noted your callback. Thank you for your time. Goodbye.", "ts": "2026-10-31T16:14:33.314987Z"}

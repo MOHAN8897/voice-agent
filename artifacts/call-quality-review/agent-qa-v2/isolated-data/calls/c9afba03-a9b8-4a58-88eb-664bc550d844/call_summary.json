@@ -1,0 +1,51 @@
+{
+  "call_id": "c9afba03-a9b8-4a58-88eb-664bc550d844",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్‌కు ఫోన్ చేసి నేచర్‌వేదా హెర్బల్స్ ఉత్పత్తుల గురించి వివరించారు. కస్టమర్ హెయిర్ ఆయిల్ ధర మరియు ప్రయోజనాల గురించి అడిగారు, కానీ ఏజెంట్ కొన్ని వివరాలను అందించలేకపోయారు. ఆ తర్వాత కస్టమర్ తనకు మరిన్ని కాల్స్ వస్తున్నాయని, తన నంబర్‌ను డేటాబేస్ నుండి తొలగించాలని కోరారు. ఏజెంట్ దీనికి అంగీకరించి, ఇకపై కాల్ చేయనని హామీ ఇచ్చారు, దాంతో కాల్ ముగిసింది.",
+  "summary_language": "te-IN",
+  "summary_en": "An agent from the business called the customer to discuss product offerings. The customer inquired about the price and hair fall reduction benefits of a 200 ml hair oil priced at 499 rupees, but the agent could not confirm if it reduced hair fall. When the customer asked about other offers, the agent stated they did not have that information. The customer then requested to be removed from the database due to receiving frequent calls, which the agent agreed to. The call ended after the agent confirmed no further calls would be placed to this number.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+919700000001",
+    "product_discussed": "Hair Oil 200 ml",
+    "product_price": "499 rupees"
+  },
+  "facts": {
+    "phone": "+919700000001",
+    "product_discussed": "Hair Oil 200 ml",
+    "product_price": "499 rupees"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:hair-oil",
+    "custom:price-inquiry",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "tags": [
+    "signal:do_not_call",
+    "sentiment:neutral",
+    "intent:information",
+    "followup:callback"
+  ],
+  "custom_tags": [
+    "custom:hair-oil",
+    "custom:price-inquiry"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "The customer objected to receiving frequent calls and requested to be removed from the database."
+  ],
+  "unanswered_questions": [
+    "Are there any new offers available?",
+    "Does the hair oil reduce hair fall?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T13:26:01.394833Z",
+  "generation_ok": true
+}

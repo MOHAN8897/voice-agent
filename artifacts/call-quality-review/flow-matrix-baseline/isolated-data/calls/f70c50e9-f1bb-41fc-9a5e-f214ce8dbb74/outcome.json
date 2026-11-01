@@ -1,0 +1,44 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to report that the milk packet in their order arrived damaged and to inquire about receiving a refund. The agent explained that refunds for damaged items are processed within five working days after the damage is reported, and offered to record the caller's order ID and name for the support team to check the order status. The caller declined further assistance by stating 'Okay, that's all,' after which the agent concluded the call.",
+  "next_action": "No further action.",
+  "extracted_fields": {
+    "phone": "+919876500509"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:complaint",
+    "sentiment:neutral",
+    "action:required",
+    "followup:send_info",
+    "signal:objection"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:35:37.905160Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500509"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "followup:send_info",
+    "intent:complaint",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

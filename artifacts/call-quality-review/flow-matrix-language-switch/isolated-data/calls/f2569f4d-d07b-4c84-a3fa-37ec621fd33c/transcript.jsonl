@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "300 रुपये के order की delivery fee कितनी है?", "ts": "2026-10-30T12:29:46.420954Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "देखिए, 499 रुपये से कम के orders पर ₹30 की delivery fee लगती है। तो आपके 300 रुपये के order पर ₹30 charge लगेगा।", "ts": "2026-10-30T12:29:49.650479Z"}
+{"seq": 3, "role": "user", "text": "Can you please speak in English? I want to talk in English.", "ts": "2026-10-30T12:29:49.652496Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ज़रूर, हम आपको English में वापस call करेंगे। समय देने के लिए धन्यवाद। नमस्कार।", "ts": "2026-10-30T12:29:49.699881Z", "brain_latency_ms": 0}

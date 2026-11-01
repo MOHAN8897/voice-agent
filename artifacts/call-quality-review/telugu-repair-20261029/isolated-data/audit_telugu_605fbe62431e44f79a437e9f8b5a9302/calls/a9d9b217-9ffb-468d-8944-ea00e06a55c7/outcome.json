@@ -1,0 +1,107 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "Kiran inquired about a Python and Data Analytics course, preferring weekend or evening classes because of work. The agent quoted a total fee of ₹8,999 and explained that placement assistance includes resume building, interview preparation, and job referrals, but does not include a guaranteed job or salary. Kiran accepted the fee, requested that his details be created in the system, and provided his name, email, B.Com qualification, and weekend-only availability. The agent said the details were noted and later confirmed that they had been saved, although the transcript does not independently verify the system action. Kiran thanked the agent and closed the enquiry; no enrollment or payment was completed.",
+  "next_action": null,
+  "extracted_fields": {
+    "availability": "Weekends only",
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "course": "Python with Data Analytics",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550106",
+    "placement_terms": "Placement assistance with resume building, interview preparation, and job referrals; no job guarantee or salary promise",
+    "qualification": "B.Com"
+  },
+  "objections": [],
+  "notes": "Caller showed purchase interest and accepted the quoted fee, but enrollment was not completed during the call.",
+  "tags": [
+    "intent:purchase",
+    "intent:information",
+    "signal:price_sensitive",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:python-data-analytics",
+    "custom:weekend-classes",
+    "custom:placement-assistance"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T16:49:10.889544Z",
+  "generation_ok": true,
+  "facts": {
+    "availability": "Weekends only",
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "course": "Python with Data Analytics",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550106",
+    "placement_terms": "Placement assistance with resume building, interview preparation, and job referrals; no job guarantee or salary promise",
+    "qualification": "B.Com"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:placement-assistance",
+    "custom:python-data-analytics",
+    "custom:weekend-classes",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "4b8d58a2-3ac8-4e1c-80ff-c1f5ff88fbf9",
+    "agentId": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 50,
+    "band": "warm",
+    "disposition": "interested",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,92 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller inquired about the pricing and available subsidies for a 3 kW rooftop solar system. The agent provided the details, explaining that the system costs 1,95,000 rupees before a government subsidy of 78,000 rupees, leaving a net payment of 1,17,000 rupees. The agent also mentioned an EMI option starting at 2,999 rupees per month for 48 months. The caller found the pricing reasonable. The agent then offered a free site survey, and the caller responded hesitantly with 'Hmm, okay' but did not explicitly agree to book the survey. The agent asked for confirmation again, but the call ended without a concrete agreement on scheduling.",
+  "next_action": "callback_required",
+  "extracted_fields": {
+    "budget": "1,17,000 rupees",
+    "phone": "+919876500502"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "intent:pricing",
+    "sentiment:neutral",
+    "signal:price_sensitive",
+    "followup:site_visit"
+  ],
+  "custom_tags": [
+    "custom:rooftop-solar",
+    "custom:subsidy-inquiry"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:48:21.504169Z",
+  "generation_ok": true,
+  "facts": {
+    "budget": "1,17,000 rupees",
+    "phone": "+919876500502"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:rooftop-solar",
+    "custom:subsidy-inquiry",
+    "followup:callback",
+    "followup:site_visit",
+    "intent:information",
+    "intent:pricing",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "58379ecd-6e77-4e1f-a3cb-5f116615b704",
+    "agentId": "6f60434e-61c5-4e8d-906f-b2cecd74536d",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.9,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "budget"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

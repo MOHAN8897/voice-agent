@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "नमस्ते, हाँ बोलिए, aap log kya sale karte hain?", "ts": "2026-10-31T14:42:14.002891Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "हमारे पास चार products हैं। Herbal Hair Oil ₹499 में 200 ml है, Aloe Vera Juice ₹399 में 500 ml, Herbal Face Cream ₹599 में 50 g, और Ashwagandha Capsules ₹699 में 60 capsules मिलते हैं। इनमें से किसी के बारे में और details चाहिए आपको?", "ts": "2026-10-31T14:42:16.119822Z"}
+{"seq": 3, "role": "user", "text": "अच्छा, ye jo hair oil hai, isme kya kya ingredients use hote hain?", "ts": "2026-10-31T14:42:37.339209Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Herbal Hair Oil में Amla, Bhringraj, Hibiscus और Coconut Oil होता है। बताइए, आपको इनमें से किसी प्रोडक्ट के बारे में और जानना है?", "ts": "2026-10-31T14:42:38.780729Z"}
+{"seq": 5, "role": "user", "text": "ठीक है, aur ye products kahan bante hain, matlab manufacturing kahan hoti hai?", "ts": "2026-10-31T14:42:55.271824Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "इसकी जानकारी मेरे पास उपलब्ध नहीं है।", "ts": "2026-10-31T14:42:56.761447Z"}

@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "ನಾನು ಸಿಕಂದರಾಬಾದ್‌ನಲ್ಲಿ ಇದ್ದೇನೆ. ಅಲ್ಲಿ ಟೆಕ್ನಿಷಿಯನ್ ಬರಬಹುದೇ?", "ts": "2026-10-29T19:28:29.849445Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ಕ್ಷಮಿಸಿ, ಸಿಕಂದರಾಬಾದ್ ಮತ್ತೆ ಓಲ್ಡ್ ಸಿಟಿಗೆ ನಾವು service ಕೊಡಲ್ಲ. ನಮ್ಮ service area ಬಂದು Madhapur, Gachibowli, Kondapur ಮತ್ತೆ Kukatpally ಮಾತ್ರ. ನೀವು ಈ areas-ನಲ್ಲಿ ಇದ್ದೀರಾ?", "ts": "2026-10-29T19:28:30.919747Z", "brain_latency_ms": 1069}
+{"seq": 3, "role": "user", "text": "ನನ್ನ ಮನೆ ಸಿಕಂದರಾಬಾದ್‌ನಲ್ಲಿ ಇದೆ, ನಿಮ್ಮ ಸರ್ವಿಸ್ ಅಲ್ಲಿ ಲಭ್ಯವಿದೆಯೇ?", "ts": "2026-10-29T19:28:31.169815Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಇಲ್ಲ, ಸಿಕಂದರಾಬಾದ್‌ನಲ್ಲಿ service available ಇಲ್ಲ. ನಮ್ಮ service ಬಂದು Madhapur, Gachibowli, Kondapur ಮತ್ತೆ Kukatpally ಮಾತ್ರ. ನೀವು ಈ areas-ನಲ್ಲಿ ಇದ್ದೀರಾ?", "ts": "2026-10-29T19:28:32.292268Z", "brain_latency_ms": 1125}

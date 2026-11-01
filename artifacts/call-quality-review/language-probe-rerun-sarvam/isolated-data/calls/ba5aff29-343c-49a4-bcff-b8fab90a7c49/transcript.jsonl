@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "സ്പ്ലിറ്റ് എസി സർവീസിന് എത്ര ചെലവാകും?", "ts": "2026-10-29T19:11:42.927528Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Split AC servicing-ന് 599 rupees ആകും. വേറെ എന്തെങ്കിലും അറിയണോ?", "ts": "2026-10-29T19:11:43.718281Z", "brain_latency_ms": 793}
+{"seq": 3, "role": "user", "text": "ക്ഷമിക്കണം, അത് സ്പ്ലിറ്റ് എസി അല്ല, വിൻഡോ എസിയാണ്. അതിന്റെ സർവീസ് ചാർജ് എത്രയാണ്?", "ts": "2026-10-29T19:11:43.735147Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Window AC servicing-ന് 499 rupees ആണ് charge വരുന്നത്. വേറെ എന്തെങ്കിലും details അറിയണോ?", "ts": "2026-10-29T19:11:44.377293Z", "brain_latency_ms": 648}

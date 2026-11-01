@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "For two split ACs and one window AC, what will the total come to?", "ts": "2026-10-29T19:32:27.565866Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "For one split AC servicing it is 599 rupees, and for a window AC it is 499 rupees. So for two split ACs and one window AC, the total comes to 1,697 rupees.", "ts": "2026-10-29T19:32:28.688720Z", "brain_latency_ms": 1124}

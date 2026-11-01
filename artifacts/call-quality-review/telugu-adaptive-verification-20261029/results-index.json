@@ -1,0 +1,30 @@
+[
+  {
+    "id": "A_dnd_question_then_goodbye",
+    "turns": 2,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 9.297
+  },
+  {
+    "id": "A_addressing_agent_name",
+    "turns": 2,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 8.11
+  },
+  {
+    "id": "A_rejected_product_memory",
+    "turns": 3,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 10.031
+  },
+  {
+    "id": "C_callback_withdrawn_after_question",
+    "turns": 3,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 10.188
+  }
+]

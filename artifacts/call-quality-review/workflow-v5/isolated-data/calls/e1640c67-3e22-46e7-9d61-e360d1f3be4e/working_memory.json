@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_name": "Kiran"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: હું અત્યારે busy છું. તમે મને કાલે સાંજે 6 વાગ્યે call કરી શકશો?\nassistant: હું સમજી શકું છું કે તમે અત્યારે busy છો. મેં કાલે સાંજે 6 વાગ્યાની તમારી callback request નોંધી લીધી છે. અમારી team તમને ત્યારે call કરશે.\nuser: હા, આ જ number પર. મારું નામ Kiran છે.\nassistant: ઠીક છે Kiran ભાઈ, મેં તમારો number અને કાલે સાંજે 6 વાગ્યાનો time નોંધી લીધો છે. અમારી team તમને ત્યારે જ call કરશે.\nuser: ઠીક છે, આભાર.\nassistant: તમારી વિગતો અને ફરીથી કૉલ કરવાની વિનંતી નોંધી લીધી છે. તમારા સમય માટે આભાર. આવજો."
+}

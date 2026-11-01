@@ -1,0 +1,11 @@
+{"seq": 1, "role": "user", "text": "Hello Priya, yes, I have a few minutes, what kind of herbal products do you have?", "ts": "2026-10-31T13:58:33.311742Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "We have Herbal Hair Oil for 499 rupees, Aloe Vera Juice for 399 rupees, Face Cream for 599 rupees, and Ashwagandha Capsules for 699 rupees. Would you like to know more about any of these?", "ts": "2026-10-31T13:58:36.706356Z"}
+{"seq": 3, "role": "user", "text": "That aloe vera juice sounds interesting, does it have any added sugar?", "ts": "2026-10-31T13:58:57.993007Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "The information about added sugar is currently unavailable.", "ts": "2026-10-31T13:58:59.620223Z"}
+{"seq": 5, "role": "user", "text": "Ah, okay, no problem, does it help with digestion?", "ts": "2026-10-31T13:59:11.711827Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "Aloe Vera Juice is marketed as a general wellness beverage, so I don't have specific details on whether it helps with digestion. For medical concerns, it is best to consult a qualified healthcare professional.", "ts": "2026-10-31T13:59:13.202292Z"}
+{"seq": 7, "role": "user", "text": "Haan, that makes sense actually, ji.", "ts": "2026-10-31T13:59:33.600101Z", "partial": false}
+{"seq": 8, "role": "user", "text": "Actually Priya ji, thoda Hindi mein baat karein toh better rahega. Kya aap kal subah gyarah baje call back kar sakti hain?", "ts": "2026-10-31T13:59:46.988020Z", "partial": false}
+{"seq": 9, "role": "assistant", "text": "bilkul. Main note kar leti hoon ki aapko kal subah 11 baje call back chahiye.", "ts": "2026-10-31T13:59:48.689696Z"}
+{"seq": 10, "role": "user", "text": "Theek hai, dhanyawaad Priya ji. Bye!", "ts": "2026-10-31T14:00:00.028827Z", "partial": false}
+{"seq": 11, "role": "assistant", "text": "Okay, I've noted your callback. Thank you for your time. Goodbye.", "ts": "2026-10-31T14:00:00.787034Z"}

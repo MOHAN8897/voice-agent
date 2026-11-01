@@ -1,0 +1,43 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the pricing for split AC servicing. The agent provided the cost of ₹599. The caller acknowledged the information, indicated that was all they needed, and concluded the call by saying goodbye. There were no objections, and no further actions or follow-ups were agreed upon.",
+  "next_action": "No action required.",
+  "extracted_fields": {
+    "phone": "+919876500052",
+    "price": "₹599",
+    "service_type": "split AC servicing"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T20:22:48.445675Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500052",
+    "price": "₹599",
+    "service_type": "split AC servicing"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

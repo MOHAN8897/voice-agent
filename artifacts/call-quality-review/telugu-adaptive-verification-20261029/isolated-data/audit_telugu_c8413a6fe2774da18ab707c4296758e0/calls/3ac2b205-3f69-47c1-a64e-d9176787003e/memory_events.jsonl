@@ -1,0 +1,1 @@
+{"turn_seq": 1, "ts": "2026-10-29T15:41:07.440557Z", "source": "model", "operations": [{"op": "set_fact", "key": "caller_name", "value": "శ్రావణి"}, {"op": "append_context", "value": "Caller provided contact details in this call."}], "applied": true, "validation_errors": []}

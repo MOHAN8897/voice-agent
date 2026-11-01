@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "education": "B.Com",
+    "caller_name": "కిరణ్",
+    "email": "kiran.audit@example.invalid",
+    "qualification": "B.Com"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: సరే, eight thousand nine hundred ninety nine rupees fees ఓకే. నా details ని మీ system లో save చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com, weekend preference. ఇది save చేశారా లేదా ఒకసారి చెప్పండి.\nassistant: క్షమించండి, మీ details save చేయడం కుదరలేదు.\nuser: అవునా, save అవ్వలేదా? సరే, మళ్ళీ ఒకసారి నా details save చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com, weekend preference. ఇది సరిగ్గా save అయిందో లేదో మళ్ళీ ఒకసారి confirm చేయండి.\nassistant: క్షమించండి, system లో మీ details save అవ్వలేదు."
+}

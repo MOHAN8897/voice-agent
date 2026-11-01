@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "phone_number": "9949012345"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "assistant: ಆ ಮಾಹಿತಿ ನನ್ನ ಬಳಿ ಇಲ್ಲ. Delivery time ಬಗ್ಗೆ exact ಆಗಿ ಹೇಳ್ಬೇಕಂದ್ರೆ, ನಮ್ಮ team ಕಡೆಯಿಂದ confirm ಮಾಡ್ಬೇಕಾಗುತ್ತೆ. ನಿಮ್ಮ order details ತಗೊಂಡು note ಮಾಡ್ಲಾ?\nuser: ಸರಿ, details ತಗೊಂಡು note ಮಾಡ್ಕೊಳ್ಳಿ. ನನ್ನ ಹೆಸರು Lakshmi Reddy.\nassistant: Lakshmi Reddy ಅವರ details ತಗೊಂಡು note ಮಾಡ್ಕೊಳ್ತೀನಿ. ನಿಮ್ಮ delivery address ಹೇಳ್ತೀರಾ? order ಕಳಿಸೋಕೆ ಅದು ಬೇಕಾಗುತ್ತೆ.\nuser: ನನ್ನ address Flat 302, Sai Residency, Kukatpally, Hyderabad 500072.\nassistant: ಸರಿ, Flat 302, Sai Residency, Kukatpally, Hyderabad 500072 ಅಂತ note ಮಾಡ್ಕೊಂಡಿದ್ದೀನಿ. ಈಗ order confirm ಮಾಡ್ಲಾ?"
+}

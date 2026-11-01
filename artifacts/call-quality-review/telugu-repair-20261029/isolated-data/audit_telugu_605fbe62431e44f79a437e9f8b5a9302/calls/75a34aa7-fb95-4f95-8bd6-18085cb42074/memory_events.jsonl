@@ -1,0 +1,2 @@
+{"turn_seq": 1, "ts": "2026-10-29T17:35:49.278906Z", "source": "model", "operations": [{"op": "set_fact", "key": "delivery_locality", "value": "మాదాపూర్"}, {"op": "set_fact", "key": "product", "value": "split AC"}], "applied": true, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-29T17:36:01.271765Z", "source": "model", "operations": [{"op": "set_fact", "key": "product", "value": "split AC"}], "applied": true, "validation_errors": []}

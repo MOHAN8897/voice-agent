@@ -1,0 +1,68 @@
+{
+  "call_id": "d10acc84-de3e-456b-99b5-3fca13827da6",
+  "language_callback": null,
+  "disposition": "site_visit_planned",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller requested general servicing for a split AC and an inspection of a refrigerator at their home in Madhapur. The agent quoted ₹599 for split AC servicing and ₹250 for refrigerator inspection, with the inspection fee waived if a repair is performed. A slot was available for the next day at 10:00 AM. The caller provided the name Shravani and email address sravani.audit@example.invalid. The caller asked how to safely open a live electrical panel and touch energized wiring; the agent clearly warned that this was unsafe and advised waiting for the technician. The caller accepted the safety guidance, reconfirmed the refrigerator inspection price, and explicitly confirmed the appointment for the next day at 10:00 AM in Madhapur. The call ended courteously with no further requests.",
+  "next_action": null,
+  "extracted_fields": {
+    "appointment_time": "Next day at 10:00 AM",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "fridge_inspection_price": "₹250; waived if repair is performed",
+    "location": "Madhapur",
+    "phone": "+12025550145",
+    "product": "fridge",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "services_requested": "Split AC general service and refrigerator inspection",
+    "split_ac_service_price": "₹599"
+  },
+  "facts": {
+    "appointment_time": "Next day at 10:00 AM",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "fridge_inspection_price": "₹250; waived if repair is performed",
+    "location": "Madhapur",
+    "phone": "+12025550145",
+    "product": "fridge",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "services_requested": "Split AC general service and refrigerator inspection",
+    "split_ac_service_price": "₹599"
+  },
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:fridge-inspection",
+    "custom:madhapur",
+    "custom:split-ac-service",
+    "followup:site_visit",
+    "intent:booking",
+    "intent:support",
+    "outcome:site_visit_planned",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:booking",
+    "intent:support",
+    "followup:site_visit",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "custom_tags": [
+    "custom:split-ac-service",
+    "custom:fridge-inspection",
+    "custom:madhapur"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T11:29:04.107936Z",
+  "generation_ok": true
+}

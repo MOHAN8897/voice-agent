@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "I need to discuss this with my family first.", "ts": "2026-10-30T10:33:36.120652Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "When would be a good time for us to call you back?", "ts": "2026-10-30T10:33:38.361210Z"}
+{"seq": 3, "role": "user", "text": "Call me on Sunday evening at 7.", "ts": "2026-10-30T10:33:38.362251Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Noted, I have recorded Sunday evening at 7 for the callback. I will arrange for the team to contact you at that time. Let me know if you need anything else.", "ts": "2026-10-30T10:33:40.618469Z"}
+{"seq": 5, "role": "user", "text": "Okay, thanks.", "ts": "2026-10-30T10:33:40.622063Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-30T10:33:41.738160Z"}

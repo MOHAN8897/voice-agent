@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "product": "visiting cards",
+    "quantity": "200",
+    "email": "ramesh.audit@example.invalid",
+    "caller_name": "రమణ"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "assistant: రమణ గారు, design artwork approval తర్వాత Vijayawada లో delivery కి 3 working days పడుతుంది. మీరు అడిగిన two hundred matte finish visiting cards కి seven hundred rupees అవుతుంది. మీకు వేరే వివరాలు ఏమైనా కావాలా?\nuser: సరే, delivery time ఓకే. ప్రస్తుతం మీ దగ్గర ఏ పేరు, ఏ product, మరియు ఏ quantity అందుబాటులో ఉన్నాయో చెప్పగలరా?\nassistant: రమణ గారు, ప్రస్తుతం నా దగ్గర మీ పేరు రమణ, product matte finish visiting cards, మరియు quantity two hundred అని ఉన్నాయి. మీకు ఇంకా వేరే వివరాలు కావాలా?"
+}

@@ -1,0 +1,350 @@
+{
+  "scenario": {
+    "id": "A_dnd",
+    "business": "A",
+    "kind": "dnd",
+    "integration": "success",
+    "policy": "automatic",
+    "max_turns": 3,
+    "goal": "You do not consent to any future calls to this number. In your FIRST utterance explicitly demand that they never call this number again. Be unambiguous about permanent future contact, not just being busy today. If they continue, reiterate the opt-out, without asking business questions."
+  },
+  "agent": {
+    "id": "A",
+    "key": "printing",
+    "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+    "name": "Sri Krishna Digital Prints",
+    "agent_name": "Kavitha",
+    "role": "sales",
+    "industry": "printing",
+    "brief": "Agent name Kavitha. Company name Sri Krishna Digital Prints.\nOutbound and inbound customer inquiries in Telugu.\nWe print visiting cards: normal paper visiting cards cost 200 rupees for 100 cards,\nmatte finish cards cost 350 rupees for 100 cards. Minimum order quantity 100 cards.\nWedding invitation cards are customized: pricing depends on design, paper sample and quantity, no fixed price over the phone.\nFlex banners: normal flex 15 rupees per square foot, star flex 20 rupees per square foot.\nDelivery in Vijayawada takes 3 working days after design artwork approval; urgent 24-hour delivery is extra 150 rupees.\nPayment: Cash on delivery accepted for orders up to 1000 rupees; 50% advance payment required for orders above 1000 rupees.\nNo online payment or credit card processing on phone call.\nOffice hours Monday to Saturday 9:30 AM to 8:00 PM, Sunday closed.\nGoal: answer customer questions on cards, banners and pricing; understand their requirement.\nIf interested, take preferred name, quantity and delivery locality for a quote or order request.\nDo not force details before answering questions.\nCustomer refusing visiting cards may still want flex banners or wedding cards.\nNever claim an order is paid or dispatched without artwork approval and design confirmation.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Kavitha",
+      "company_name": "Sri Krishna Digital Prints",
+      "role": "Sales and customer enquiries",
+      "permitted_next_steps": "Collect customer name, item type, quantity and delivery locality in Vijayawada to submit an internal quote/order request. Explain that artwork approval is required before printing.",
+      "payment_rules": "Cash on delivery for orders up to 1000 rupees; 50% advance for orders above 1000 rupees. No online payment collection on call.",
+      "delivery_details": "Local delivery in Vijayawada takes 3 working days after artwork approval. Urgent 24-hour delivery is extra 150 rupees.",
+      "wedding_cards": "Customized quotation only based on design and paper sample. No fixed price on phone.",
+      "visiting_cards": "Standard 200 rupees for 100 cards; Matte finish 350 rupees for 100 cards. Minimum order 100 cards.",
+      "forbidden_actions": "Never confirm external courier shipment or take card payment on phone. Never guarantee delivery without artwork approval."
+    },
+    "user_id": "c0afb80f-ba42-4f85-ad75-ac1c23a9873f",
+    "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408"
+  },
+  "call_id": "f4fe0c1f-a203-4566-952a-92838f4d621f",
+  "session_id": "adaptive-1ee704c3eda54d968a6392e6abf7e107",
+  "phone": "+12025550115",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_ce356842dc55",
+  "turn_index": 1,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "దయచేసి ఈ నంబర్‌కి మళ్ళీ ఎప్పటికీ కాల్ చేయకండి. నాకు మీ నుండి ఎలాంటి కాల్స్ రాకూడదు, ఇది పర్మినెంట్.",
+        "intends_end": true,
+        "intent": "Permanently opt-out of future calls",
+        "elapsed_s": 2.531
+      },
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 23.75,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        25,
+        26
+      ],
+      "done": [],
+      "context_status": "complete",
+      "voice_phase": "ended",
+      "armed": false
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 126811.609
+    }
+  ],
+  "done_events": [],
+  "gates": [],
+  "external_actions": [],
+  "farewell_events": [],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 126812.671,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [],
+  "started_at": "2026-10-29T17:34:26.701201+00:00",
+  "errors": [],
+  "brain_checksum": "7659e650332eab9c37ce386504d366b02952b949cee0a4ac862d76bf9a30d6d5",
+  "runtime_checksum": "a542c68755afdc7d20c2ea611f0f5067bf856cca2d3ee608454d41d95442fdb1",
+  "available_tools": [
+    "HUBSPOT_CREATE_CONTACT",
+    "GOOGLECALENDAR_CREATE_EVENT",
+    "GOOGLECALENDAR_FIND_FREE_SLOTS",
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 126796.078,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    }
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "not_interested",
+    "disposition_confidence": 0.99,
+    "summary_te": "",
+    "summary_en": "The caller clearly requested that this number never be called again and stated that they do not want any calls from the business permanently. The agent acknowledged the request, thanked the caller, and ended the call. No further action was discussed.",
+    "next_action": null,
+    "extracted_fields": {
+      "phone": "+12025550115"
+    },
+    "objections": [],
+    "notes": "Permanent do-not-call request.",
+    "tags": [
+      "signal:do_not_call",
+      "sentiment:negative"
+    ],
+    "custom_tags": [],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T17:34:52.670173Z",
+    "generation_ok": true,
+    "facts": {
+      "phone": "+12025550115"
+    },
+    "disclosure_status": null,
+    "contact_preference": "none",
+    "status_tags": [
+      "contact:phone_known",
+      "outcome:not_interested",
+      "sentiment:negative"
+    ],
+    "lead": null,
+    "lead_assessment": null,
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "f4fe0c1f-a203-4566-952a-92838f4d621f",
+        "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+        "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+        "session_id": "adaptive-1ee704c3eda54d968a6392e6abf7e107",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_ce356842dc55",
+        "started_at": "2026-10-29 17:34:26.687042+00:00",
+        "ended_at": "2026-10-29 17:34:49.863988+00:00",
+        "duration_sec": 23,
+        "disposition": "not_interested",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/f4fe0c1f-a203-4566-952a-92838f4d621f/",
+        "end_reason": "agent_hangup",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "contact:phone_known",
+          "outcome:not_interested",
+          "sentiment:negative"
+        ],
+        "last_heartbeat_at": "2026-10-29 17:34:26.687042+00:00",
+        "created_at": "2026-10-29 17:34:26.687042+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [],
+    "dnd": [],
+    "leads": [],
+    "tools": [],
+    "assessments": []
+  },
+  "metadata": {
+    "call_id": "f4fe0c1f-a203-4566-952a-92838f4d621f",
+    "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+    "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+    "session_id": "adaptive-1ee704c3eda54d968a6392e6abf7e107",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_ce356842dc55",
+    "started_at": "2026-10-29T17:34:26.687042+00:00",
+    "status": "active",
+    "storage_path": "data/calls/f4fe0c1f-a203-4566-952a-92838f4d621f/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550115",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "hangup_reason": "agent_hangup",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 47,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": true,
+    "callback_close_phase": "idle",
+    "contact_preference": "none",
+    "disconnected_at": "2026-10-29T17:34:49.863988+00:00",
+    "ended_at": "2026-10-29T17:34:49.863988+00:00",
+    "end_reason": "agent_hangup",
+    "duration_sec": 23.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 23.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.004791666666666667,
+      "telephony_inr": 0.45650208333333336,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.004791666666666667,
+      "telnyx_inr": 0.45650208333333336,
+      "telnyx_voice_api_usd": 0.0007666666666666667,
+      "telnyx_sip_usd": 0.0019166666666666668,
+      "telnyx_media_stream_usd": 0.0013416666666666668,
+      "telnyx_call_recording_usd": 0.0007666666666666667,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.27,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-29",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.0125,
+      "telephony_inr_per_min": 1.190875,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.0125,
+      "telnyx_inr_per_min": 1.190875,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_0785b8c11d48dbbc016ae383bac4ec87d1ac776df6f1adb87b": {
+          "input_tokens": 1004,
+          "output_tokens": 118,
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.0003424
+        }
+      },
+      "post_call_analysis_usd": 0.0003424,
+      "post_call_analysis_inr": 0.032620447999999996
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "దయచేసి ఈ నంబర్‌కి మళ్ళీ ఎప్పటికీ కాల్ చేయకండి. నాకు మీ నుండి ఎలాంటి కాల్స్ రాకూడదు, ఇది పర్మినెంట్.",
+      "ts": "2026-10-29T17:34:29.267973Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T17:34:48.794729Z"
+    }
+  ],
+  "wall_elapsed_s": 26.344,
+  "simulated_exchange_timeline_s": 20,
+  "request_count": 3
+}

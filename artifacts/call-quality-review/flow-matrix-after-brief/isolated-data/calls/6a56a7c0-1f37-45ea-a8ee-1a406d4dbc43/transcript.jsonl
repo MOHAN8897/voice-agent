@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "నాకు పంటి నొప్పిగా ఉంది. రేపు ఉదయం 11 కి appointment కావాలి.", "ts": "2026-10-30T10:51:54.866932Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "సరే.", "ts": "2026-10-30T10:51:59.216256Z"}
+{"seq": 3, "role": "user", "text": "నా పేరు కిరణ్.", "ts": "2026-10-30T10:51:59.216256Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "సరే కిరణ్ గారు, పంటి నొప్పితో రేపు ఉదయం 11 కి appointment కావాలని note చేసుకున్నాను. consultation fee ₹300 ఉంటుంది. మీకు scaling లేదా cleaning కూడా అవసరమా?", "ts": "2026-10-30T10:52:01.789135Z"}
+{"seq": 5, "role": "user", "text": "నా appointment confirm అయిందా?", "ts": "2026-10-30T10:52:01.791186Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "కిరణ్ గారు, మీ appointment ఇంకా confirm అవ్వలేదు. మా front desk వాళ్ళు check చేసి confirm చేస్తారు.", "ts": "2026-10-30T10:52:04.461448Z"}
+{"seq": 7, "role": "user", "text": "సరే, thanks.", "ts": "2026-10-30T10:52:04.464091Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-30T10:52:05.463571Z"}

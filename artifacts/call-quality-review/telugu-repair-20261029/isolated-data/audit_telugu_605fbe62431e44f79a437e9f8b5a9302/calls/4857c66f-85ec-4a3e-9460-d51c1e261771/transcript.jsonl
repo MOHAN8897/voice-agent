@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "రేపు ఉదయం పది గంటలకు నాకు కాల్ చేయండి. కానీ ముందుగా Python కోర్సు ఫీజు ఎంత చెప్పండి?", "ts": "2026-10-29T16:31:36.288471Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Python with Data Analytics course మొత్తం fee eight thousand nine hundred ninety nine rupees అవుతుంది. రేపు ఉదయం పది గంటలకు call చేయమని note చేసుకున్నాను. మీకు demo session గురించి ఏమైనా details కావాలా?", "ts": "2026-10-29T16:31:39.811502Z"}
+{"seq": 3, "role": "user", "text": "నేనే తర్వాత మీకు కాల్ చేస్తాను. మీరు నాకు callback చేయవద్దు. SQL కోర్సు ఫీజు ఎంత?", "ts": "2026-10-29T16:31:39.867507Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "SQL కోర్సు వివరాలు మాకు తెలియవు. మాది Python with Data Analytics కోర్సు, దీని ఫీజు eight thousand nine hundred ninety nine rupees మాత్రమే. మీకు ఇంకేమైనా వివరాలు కావాలా?", "ts": "2026-10-29T16:31:43.293517Z"}
+{"seq": 5, "role": "user", "text": "అంతే, నాకు కావాల్సిన వివరాలు వచ్చాయి. ధన్యవాదాలు, కాల్ ముగించండి.", "ts": "2026-10-29T16:31:43.362728Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-29T16:31:45.641371Z"}

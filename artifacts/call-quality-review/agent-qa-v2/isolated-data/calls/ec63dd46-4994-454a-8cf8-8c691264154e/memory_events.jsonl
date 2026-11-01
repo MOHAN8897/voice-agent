@@ -1,0 +1,7 @@
+{"turn_seq": 1, "ts": "2026-10-31T13:44:00.372227Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T13:44:30.048280Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T13:44:48.777638Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T13:44:48.794825Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: अच्छा, कोई बात नहीं जी। फिर मैं दो बॉटल्स हेयर ऑयल और एक फेस क्रीम का ऑर्डर देना चाहती हूँ।\nassistant: ठीक है। दो bottles Herbal Hair Oil और एक Herbal Face Cream का order करना है।\nuser: हाँ, ठीक है। आप मुझे बता सकते हैं कि टोटल प्राइस कितना हुआ?\nassistant: दो bottles Hair Oil का total ₹998 और एक Face Cream का ₹599 हुआ, तो पूरे order की कीमत ₹1,597 बन रही है। बताइए, क्या आप इस order को place करना चाहती हैं?"}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T13:45:10.527607Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T13:45:33.698421Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-31T13:45:59.565713Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

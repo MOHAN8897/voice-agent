@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "મેં simple question પૂછ્યો છે, fridge inspection feeનો straight answer આપો.", "ts": "2026-10-29T19:33:12.350373Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Fridge inspection નો ખર્ચ ₹250 છે, પણ જો તમે repair કરાવવાનું નક્કી કરો તો આ inspection charge માફ થઈ જશે. તમારે અત્યારે કોઈ service બુક કરાવવી છે?", "ts": "2026-10-29T19:33:12.929311Z", "brain_latency_ms": 581}

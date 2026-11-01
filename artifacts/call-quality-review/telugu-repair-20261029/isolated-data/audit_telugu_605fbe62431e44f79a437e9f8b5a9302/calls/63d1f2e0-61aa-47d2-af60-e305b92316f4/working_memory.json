@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "delivery_locality": "మాదాపూర్",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "email": "sravani.audit@example.invalid",
+    "caller_name": "సురేష్"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: సురేష్, మీరు చెప్పిన details అన్నీ నాకిప్పుడు clear గా లేవు. GST, itemized bill, spare parts bill, confirmation, spare part time, warranty conditions ఇవన్నీ లేకుండా నేను ఎలా decide అవ్వాలి? కనీసం ఈ servicing కి warranty లేదా guarantee ఏమైనా ఇస్తారా, ఉంటే దాని conditions ఏంటో చెప్పండి.\nassistant: ఈ servicing కి warranty లేదా guarantee గురించి ప్రస్తుతం నా దగ్గర వివరాలు లేవు, ఆ conditions కూడా నేను ఇప్పుడే చెప్పలేను. GST, itemized bill, spare parts bill, confirmation process గురించి కూడా ప్రస్తుతం నా దగ్గర వివరాలు లేవు. మీరు ఎలా decide అవ్వాలి అనేది నాకు అర్థం అవుతోంది."
+}

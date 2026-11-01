@@ -1,0 +1,12 @@
+{
+  "language": "gu-IN",
+  "tenant_id": "640b9d77-91e6-462a-bf9d-924d9eb81bd7",
+  "agent_id": "d0b530de-067b-4c30-b03a-f9dc4581ddcf",
+  "user_id": "6ab9fc37-5090-4aff-9900-2897cd82e7b8",
+  "brain_version": "cb_qa_093b9c33ba5440c9",
+  "brain_chars": 19192,
+  "brain_source": "retargeted:en-IN",
+  "direction": "outbound",
+  "name": "Priya",
+  "brain_path": "artifacts\\call-quality-review\\agent-qa-v5\\agents\\gu-IN-brain.txt"
+}

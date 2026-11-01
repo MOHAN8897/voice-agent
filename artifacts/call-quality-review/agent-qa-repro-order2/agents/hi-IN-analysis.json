@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "body": {
+    "ok": true,
+    "status": "needs_user_input",
+    "questions": [
+      {
+        "field": "payment_methods",
+        "question": "What payment methods are accepted for placing orders?",
+        "reason": "Payment options are needed to successfully guide customers through placing orders.",
+        "required": false
+      },
+      {
+        "field": "refund_policy",
+        "question": "What is the return or refund policy for the products?",
+        "reason": "Refund rules are helpful for customer support regarding orders.",
+        "required": false
+      }
+    ]
+  }
+}

@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "स्प्लिट एसी की सर्विस का कितना शुल्क है?", "ts": "2026-10-29T19:11:08.447033Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Split AC servicing का charge 599 rupees है। क्या आपको visit book करवानी है?", "ts": "2026-10-29T19:11:09.448320Z", "brain_latency_ms": 1003}
+{"seq": 3, "role": "user", "text": "माफ़ कीजिए, यह स्प्लिट नहीं, विंडो एसी है। इसकी सर्विस का कितना शुल्क है?", "ts": "2026-10-29T19:11:09.763910Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Window AC servicing का charge 499 rupees है। क्या मैं आपकी visit arrange करवा दूँ?", "ts": "2026-10-29T19:11:10.434489Z", "brain_latency_ms": 677}

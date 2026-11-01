@@ -1,0 +1,70 @@
+{
+  "call_id": "d082ca88-f9fc-471e-86a1-7423d1e13f5e",
+  "language_callback": {
+    "status": "requested",
+    "kind": "language_switch",
+    "id": "50c68b89-bf72-4ff1-8d25-28b29166e476",
+    "caller_language": "hi-IN",
+    "configured_language": "ml-IN",
+    "summary": "Caller asked to continue in Hindi; call back in Hindi with the same agent."
+  },
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "ഉപഭോക്താവിനെ ഏജന്റ് വിളിച്ചു. ഉപഭോക്താവ് അലോ വേര ജ്യൂസിന്റെ വിലയും ഡിസ്കൗണ്ട് ഓഫറുകളും ചോദിച്ചു. ഏജന്റിന് ഡിസ്കൗണ്ട് വിവരങ്ങൾ നൽകാൻ കഴിഞ്ഞില്ല. അതിനാൽ ഉപഭോക്താവ് മറ്റ് ഉൽപ്പന്നങ്ങളെക്കുറിച്ച് അന്വേഷിക്കുകയും ഹെയർ ഓയിലിന്റെ വിവരങ്ങൾ മനസ്സിലാക്കുകയും ചെയ്തു. ഉപഭോക്താവിന് ഇംഗ്ലീഷിൽ സംസാരിക്കാൻ ബുദ്ധിമുട്ടുള്ളതിനാൽ നാളെ രാവിലെ 11 മണിക്ക് ഹിന്ദിയിൽ വിളിക്കാൻ ഏജന്റ് സമ്മതിച്ചു.",
+  "summary_language": "ml-IN",
+  "summary_en": "The agent called the customer to offer herbal products. The customer asked for the price of Aloe Vera Juice and requested a discount, but the agent stated they did not have that information. After hearing about the pricing, the customer inquired about other items and received details on the Herbal Hair Oil. Because the customer was more comfortable speaking in Hindi, they requested a callback for tomorrow at 11 AM. The agent agreed to call back at that scheduled time. Language handoff: Caller asked to continue in Hindi; call back in Hindi with the same agent.",
+  "next_action": "Call back in Hindi with the same agent (Callback needed in another language). No callback time has been booked.",
+  "extracted_fields": {
+    "callback_time": "Tomorrow at 11 AM",
+    "language_preference": "Hindi",
+    "phone": "+919700000021",
+    "product_interest": "Aloe Vera Juice, Herbal Hair Oil",
+    "preferred_language": "hi-IN",
+    "callback_requested": "true",
+    "requested_language": "hi-IN",
+    "language_switch": "true"
+  },
+  "facts": {
+    "callback_time": "Tomorrow at 11 AM",
+    "language_preference": "Hindi",
+    "phone": "+919700000021",
+    "product_interest": "Aloe Vera Juice, Herbal Hair Oil",
+    "preferred_language": "hi-IN",
+    "callback_requested": "true",
+    "requested_language": "hi-IN",
+    "language_switch": "true"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "contact:preferred_language",
+    "custom:herbal-products",
+    "custom:language-preference",
+    "followup:callback",
+    "followup:language_switch",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:language-preference"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Customer could not afford the product without a discount."
+  ],
+  "unanswered_questions": [
+    "Are there any discounts available on the Aloe Vera Juice?",
+    "Are there any other offers available?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T16:50:26.520806Z",
+  "generation_ok": true
+}

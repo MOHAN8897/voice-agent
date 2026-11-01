@@ -1,0 +1,46 @@
+{
+  "call_id": "5676b45f-06c5-40f8-8e8f-77e3e4ee3bcf",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "The caller asked for the price of 100 matte visiting cards and initially had not provided their name. The agent quoted ₹350 for 100 cards and explained that 100 cards is the minimum order quantity, then asked for the caller’s name and delivery area to proceed. The caller said they had received the needed information, thanked the agent, and requested to end the call. No order was placed and no follow-up was agreed.",
+  "next_action": null,
+  "extracted_fields": {
+    "minimum_order_quantity": "100 cards",
+    "phone": "+12025550105",
+    "price": "₹350",
+    "product": "Matte visiting cards",
+    "quantity": "100 cards"
+  },
+  "facts": {
+    "minimum_order_quantity": "100 cards",
+    "phone": "+12025550105",
+    "price": "₹350",
+    "product": "Matte visiting cards",
+    "quantity": "100 cards"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:100-card-order",
+    "custom:matte-visiting-cards",
+    "intent:information",
+    "intent:pricing",
+    "outcome:interested",
+    "sentiment:positive"
+  ],
+  "tags": [
+    "intent:pricing",
+    "intent:information",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards",
+    "custom:100-card-order"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T16:37:17.239272Z",
+  "generation_ok": true
+}

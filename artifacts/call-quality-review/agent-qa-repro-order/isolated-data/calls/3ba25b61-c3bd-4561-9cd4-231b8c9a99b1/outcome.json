@@ -1,0 +1,104 @@
+{
+  "disposition": "converted",
+  "disposition_confidence": 0.95,
+  "summary_te": "व्यवसाय के एजेंट ने ग्राहक को फोन किया। ग्राहक ने फेस क्रीम और हेयर ऑयल के ऑर्डर के बारे में पूछताछ की, और कुल कीमत 1,597 रुपये जानने के बाद अपना नाम और डिलीवरी पता साझा किया। एजेंट ने ऑर्डर की पुष्टि की और बताया कि आगे की जानकारी ईमेल पर भेजी जाएगी। ग्राहक ने पुष्टि स्वीकार की और कॉल समाप्त हो गई।",
+  "summary_en": "The business agent called the customer to offer products. The customer inquired about purchasing two bottles of hair oil and one face cream, and the agent calculated the total price to be 1,597 rupees. To proceed, the agent requested the customer's name and delivery address. The customer, Lakshmi Reddy, provided her details, and the agent confirmed the order before concluding the call.",
+  "next_action": "no_action_required",
+  "extracted_fields": {
+    "caller_name": "लक्ष्मी रेड्डी",
+    "delivery_address": "फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072",
+    "phone": "+919700000001",
+    "product": "2 bottles hair oil और 1 face cream",
+    "products": "2 bottles hair oil, 1 face cream",
+    "quantity": "1",
+    "total_price": "1,597 rupees"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:purchase",
+    "sentiment:positive",
+    "signal:ready_to_buy",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:order-confirmed"
+  ],
+  "unanswered_questions": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T14:45:27.039399Z",
+  "generation_ok": true,
+  "summary_language": "hi-IN",
+  "facts": {
+    "caller_name": "लक्ष्मी रेड्डी",
+    "delivery_address": "फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072",
+    "phone": "+919700000001",
+    "product": "2 bottles hair oil और 1 face cream",
+    "products": "2 bottles hair oil, 1 face cream",
+    "quantity": "1",
+    "total_price": "1,597 rupees"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:order-confirmed",
+    "followup:send_info",
+    "intent:purchase",
+    "outcome:converted",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "69ba6587-07fd-4c73-8425-5e56e4c7428e",
+    "agentId": "3fbcddd3-459e-5611-acb7-c66db20dd4f1",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "converted",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "converted"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

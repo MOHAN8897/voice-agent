@@ -1,0 +1,44 @@
+[
+  {
+    "id": "A_deep_enquiry",
+    "turns": 3,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 13.453
+  },
+  {
+    "id": "B_deep_enquiry",
+    "turns": 13,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 38.313
+  },
+  {
+    "id": "C_deep_enquiry",
+    "turns": 10,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 31.0
+  },
+  {
+    "id": "B_refusal_clean_repeat",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 5.781
+  },
+  {
+    "id": "C_self_callback",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 4.985
+  },
+  {
+    "id": "A_callback_dispatch_repeat",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 5.406
+  }
+]

@@ -1,0 +1,49 @@
+{
+  "call_id": "a1903c05-88c1-4880-aa71-3c9ed33265ea",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initially inquired about the consultation fee and clinic operating hours. The agent responded that the consultation fee is 300 rupees and the clinic is open Monday through Saturday from 10 AM to 8 PM. The caller then requested the timings in English, which the agent repeated. The caller subsequently mentioned having a toothache and asked if they could visit the next day. The agent confirmed that a visit the following day is possible within the standard operating hours, and the caller agreed and thanked the agent before ending the call.",
+  "next_action": "No immediate action required.",
+  "extracted_fields": {
+    "fee": "300 rupees",
+    "phone": "+919876500549",
+    "slot": "tomorrow"
+  },
+  "facts": {
+    "fee": "300 rupees",
+    "phone": "+919876500549",
+    "slot": "tomorrow"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:clinic-hours",
+    "custom:dental-consultation",
+    "followup:site_visit",
+    "intent:booking",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:booking",
+    "sentiment:neutral",
+    "signal:objection",
+    "followup:site_visit",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:dental-consultation",
+    "custom:clinic-hours"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:47:43.677645Z",
+  "generation_ok": true
+}

@@ -1,0 +1,6 @@
+{"turn_seq": 1, "ts": "2026-10-31T13:48:35.242753Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T13:48:59.177734Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T13:49:14.771090Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T13:49:14.784820Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: हाँ, ये अश्वगंधा कैप्सूल किस चीज़ के लिए हैं और इनका price क्या है?\nassistant: अश्वगंधा कैप्सूल एक herbal wellness supplement हैं, और इनकी कीमत 60 capsules के लिए ₹699 है।\nuser: अच्छा, मैं बीपी की दवा लेती हूँ, तो क्या यह मेरे लिए सेफ है?\nassistant: इसकी जानकारी मेरे पास नहीं है। अगर आप बीपी की दवा ले रही हैं, तो पहले अपने doctor से सलाह लेना बेहतर रहेगा।"}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T13:49:37.778557Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T13:50:01.677520Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

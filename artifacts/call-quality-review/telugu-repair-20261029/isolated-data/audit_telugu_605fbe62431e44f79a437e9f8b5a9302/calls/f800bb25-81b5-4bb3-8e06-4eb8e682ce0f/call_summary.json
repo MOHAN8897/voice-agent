@@ -1,0 +1,69 @@
+{
+  "call_id": "f800bb25-81b5-4bb3-8e06-4eb8e682ce0f",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller requested general service for a split AC and asked for a 30-minute technician appointment on 30 October 2026 from 10:00 AM to 10:30 AM, rather than the following day. The agent quoted a price of ₹599 and requested locality details before creating the appointment. The caller provided the locality as Madapur, along with the name Shravani, email address sravani.audit@example.invalid, and phone number +12025550149. The agent stated that the calendar appointment was created and confirmed for the requested time. The caller then requested an email confirmation and asked to be told to check it, but the agent explained that sending a confirmation email was not currently possible. The caller accepted this limitation, thanked the agent for confirming the appointment, and ended the call without further requests.\n\nServer check: no confirmed order was recorded for this call, so it was not marked as converted.",
+  "next_action": null,
+  "extracted_fields": {
+    "appointment_date": "30 October 2026",
+    "appointment_duration": "30 minutes",
+    "appointment_time": "10:00 AM-10:30 AM",
+    "customer_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "locality": "Madapur",
+    "phone": "+12025550149",
+    "product": "Split AC",
+    "requested_time": "30 October 2026 ఉదయం 10 AM",
+    "service_price": "₹599",
+    "service_type": "General service"
+  },
+  "facts": {
+    "appointment_date": "30 October 2026",
+    "appointment_duration": "30 minutes",
+    "appointment_time": "10:00 AM-10:30 AM",
+    "customer_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "locality": "Madapur",
+    "phone": "+12025550149",
+    "product": "Split AC",
+    "requested_time": "30 October 2026 ఉదయం 10 AM",
+    "service_price": "₹599",
+    "service_type": "General service"
+  },
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:calendar-appointment",
+    "custom:email-confirmation",
+    "custom:split-ac-service",
+    "followup:send_info",
+    "intent:booking",
+    "intent:support",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:booking",
+    "intent:support",
+    "sentiment:positive",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:split-ac-service",
+    "custom:calendar-appointment",
+    "custom:email-confirmation"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Confirmation email could not be sent because the option was unavailable."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:53:39.634504Z",
+  "generation_ok": true
+}

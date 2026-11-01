@@ -1,0 +1,12 @@
+{
+  "facts": {
+    "caller_name": "కిరణ్",
+    "email": "kiran.audit@example.invalid",
+    "caller_email": "kiran.audit@example.invalid"
+  },
+  "preferences": {
+    "product": "Python training"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "assistant: ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మీకు ఇంకా ఏమైనా details కావాలా?\nuser: సరే, మీరు దీన్ని note చేసుకుంటానని చెప్పారు కానీ system లో save చేయడానికి లేదా follow-up కి హామీ ఇవ్వలేరు అన్నారు కదా. అయితే నా enquiry ని review కి పంపమని దయచేసి note చేయండి. ఇకపై నేను call close చేస్తున్నాను.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+}

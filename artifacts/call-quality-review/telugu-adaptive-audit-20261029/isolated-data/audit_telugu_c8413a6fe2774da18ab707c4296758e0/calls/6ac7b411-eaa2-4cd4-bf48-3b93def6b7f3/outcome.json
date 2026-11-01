@@ -1,0 +1,115 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.94,
+  "summary_te": "",
+  "summary_en": "The caller asked about the cost of matte-finish visiting cards. The agent quoted ₹350 for 100 cards and stated that the minimum order quantity is 100 cards. The caller felt the price was somewhat high but said they still wanted to proceed and asked about the per-card price for 200 cards; the agent did not have that pricing available. The caller provided the name Ramesh and email ramesh.audit@example.invalid, and said the designs were not ready but would be sent later. When asked to note the order, the agent clarified that the details could be remembered during the call but could not be sent to the team or followed up on. The caller had no further questions, thanked the agent, and ended the call. No order was confirmed and no follow-up was scheduled.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "రమేష్",
+    "design_status": "Designs not ready; caller will send them later",
+    "email": "ramesh.audit@example.invalid",
+    "finish": "Matte finish",
+    "minimum_order_quantity": "100 cards",
+    "name": "Ramesh",
+    "phone": "+12025550140",
+    "product": "Visiting cards",
+    "quoted_price": "₹350 for 100 cards",
+    "requested_quantity": "200 cards"
+  },
+  "objections": [
+    "Caller considered ₹350 for 100 cards somewhat expensive.",
+    "Pricing for 200 cards was unavailable during the call.",
+    "Caller did not yet have the designs ready."
+  ],
+  "notes": "The caller expressed intent to proceed, but no order or team handoff was confirmed.",
+  "tags": [
+    "intent:purchase",
+    "intent:pricing",
+    "signal:price_sensitive",
+    "signal:objection",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:matte-finish",
+    "custom:design-pending"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:28:06.793324Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "రమేష్",
+    "design_status": "Designs not ready; caller will send them later",
+    "email": "ramesh.audit@example.invalid",
+    "finish": "Matte finish",
+    "minimum_order_quantity": "100 cards",
+    "name": "Ramesh",
+    "phone": "+12025550140",
+    "product": "Visiting cards",
+    "quoted_price": "₹350 for 100 cards",
+    "requested_quantity": "200 cards"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:design-pending",
+    "custom:matte-finish",
+    "custom:visiting-cards",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "0703d3e3-b6d1-554b-9344-7010bfcb58fc",
+    "agentId": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.94,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

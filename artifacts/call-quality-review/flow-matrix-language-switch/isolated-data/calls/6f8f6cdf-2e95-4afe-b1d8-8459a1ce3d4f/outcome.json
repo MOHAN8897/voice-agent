@@ -1,0 +1,107 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the delivery fee for a 300 rupees order. The agent responded by stating that the delivery fee would be 30 rupees. The caller then requested to speak in English. The agent acknowledged this request, stated that they would call back in English, and concluded the call by thanking the caller. Language handoff: Caller asked to continue in English; call back in English with the same agent.",
+  "next_action": "Call back in English with the same agent (Callback needed in another language). No callback time has been booked.",
+  "extracted_fields": {
+    "phone": "+919876500502",
+    "preferred_language": "en-IN",
+    "callback_requested": "true",
+    "requested_language": "en-IN",
+    "language_switch": "true"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "followup:callback",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:delivery-fee",
+    "custom:language-preference"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T12:30:32.959619Z",
+  "generation_ok": true,
+  "language_callback": {
+    "status": "requested",
+    "kind": "language_switch",
+    "id": "d88cdbcc-bcfa-4c58-a8af-d9d3d9a728fb",
+    "caller_language": "en-IN",
+    "configured_language": "te-IN",
+    "summary": "Caller asked to continue in English; call back in English with the same agent."
+  },
+  "language_switch": {
+    "requested_language": "en-IN",
+    "original_language": "te-IN"
+  },
+  "facts": {
+    "phone": "+919876500502",
+    "preferred_language": "en-IN",
+    "callback_requested": "true",
+    "requested_language": "en-IN",
+    "language_switch": "true"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "contact:preferred_language",
+    "custom:delivery-fee",
+    "custom:language-preference",
+    "followup:callback",
+    "followup:language_switch",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "f354d510-5ad7-4ebc-8c8c-93c55a3cbc85",
+    "agentId": "6240e009-cd60-4700-b623-8bd1d0e423a8",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 10,
+    "band": "cold",
+    "disposition": "callback_required",
+    "confidence": 0.85,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

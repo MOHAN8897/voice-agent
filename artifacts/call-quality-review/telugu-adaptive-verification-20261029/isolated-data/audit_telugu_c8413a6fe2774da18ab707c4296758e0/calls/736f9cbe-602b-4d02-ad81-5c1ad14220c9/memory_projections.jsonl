@@ -1,0 +1,3 @@
+{"turn_seq": 1, "ts": "2026-10-29T15:45:37.214907Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T15:45:39.343271Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_name: Madhavi\n[Preferences]\nproduct: Python training"}
+{"turn_seq": 5, "ts": "2026-10-29T15:45:41.614873Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_name: కిరణ్ | email: kiran.audit@example.invalid | caller_email: kiran.audit@example.invalid\n[Preferences]\nproduct: Python training\n[Context]\nCaller provided contact details in this call."}

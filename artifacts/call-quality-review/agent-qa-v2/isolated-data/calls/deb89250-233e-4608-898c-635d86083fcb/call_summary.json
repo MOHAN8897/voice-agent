@@ -1,0 +1,69 @@
+{
+  "call_id": "deb89250-233e-4608-898c-635d86083fcb",
+  "language_callback": {
+    "status": "requested",
+    "kind": "language_switch",
+    "id": "1ab3369a-4b39-4e99-8891-4d6ef88a389a",
+    "caller_language": "hi-IN",
+    "configured_language": "en-IN",
+    "summary": "Caller asked to continue in Hindi; call back in Hindi with the same agent."
+  },
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_language": "en-IN",
+  "summary_en": "The agent called the customer to offer information about aloe vera juice. The agent shared that the 500 ml aloe vera juice costs 399 rupees and the 200 ml hair oil costs 499 rupees, totaling 898 rupees. The customer stated that the price was acceptable but that she was still thinking about the purchase. The agent respected her hesitation and offered to let her decide later. The customer thanked the agent and ended the call without placing an order. Language handoff: Caller asked to continue in Hindi; call back in Hindi with the same agent.",
+  "next_action": "Call back in Hindi with the same agent (Callback needed in another language). No callback time has been booked.",
+  "extracted_fields": {
+    "phone": "+919700000023",
+    "price_hair_oil": "499 rupees",
+    "price_juice": "399 rupees",
+    "product": "Aloe Vera Juice and Herbal Hair Oil",
+    "total_price": "898 rupees",
+    "preferred_language": "hi-IN",
+    "callback_requested": "true",
+    "requested_language": "hi-IN",
+    "language_switch": "true"
+  },
+  "facts": {
+    "phone": "+919700000023",
+    "price_hair_oil": "499 rupees",
+    "price_juice": "399 rupees",
+    "product": "Aloe Vera Juice and Herbal Hair Oil",
+    "total_price": "898 rupees",
+    "preferred_language": "hi-IN",
+    "callback_requested": "true",
+    "requested_language": "hi-IN",
+    "language_switch": "true"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "contact:preferred_language",
+    "custom:aloe-vera",
+    "custom:hair-oil",
+    "followup:callback",
+    "followup:language_switch",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:aloe-vera",
+    "custom:hair-oil"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Still thinking about it"
+  ],
+  "unanswered_questions": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T14:09:43.328418Z",
+  "generation_ok": true
+}

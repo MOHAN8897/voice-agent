@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "product": "fridge",
+    "requested_time": "రేపు ఉదయం 10 గంటలకే",
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్"
+  },
+  "preferences": {},
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "assistant: లేదు, మీరు live electrical panel లేదా wiring ని స్వయంగా touch చేయకూడదు. Safety reasons వల్ల అది మా technicians మాత్రమే చూస్తారు. రేపు ఉదయం 10 కి appointment confirm చేయడానికి మీ పేరు, locality చెప్తారా?\nuser: సరే, safety reasons అర్థం చేసుకున్నాను. మరి fridge inspection కి ఎంత charge అవుతుంది? నా పేరు శ్రావణి, నేను మాదాపూర్ లో ఉంటాను.\nassistant: Fridge inspection కి two hundred fifty rupees అవుతుంది శ్రావణి గారు. మాదాపూర్ మా service area లోనే ఉంది. రేపు ఉదయం 10 కి slot confirm చేయడానికి మీ fridge లో exact గా ఏ issue ఉందో చెప్తారా?"
+}

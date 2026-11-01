@@ -1,0 +1,2277 @@
+[
+  {
+    "id": "te-IN/language_switch",
+    "scenario": "language_switch",
+    "language": "te-IN",
+    "tenant_id": "1df21547-c6a7-46b7-b01c-f621c22bfc62",
+    "agent_id": "06c8aaa5-31d0-5af7-b146-80b4313329c2",
+    "call_id": "27476e23-292a-4d72-b2a7-bed6cef1da6c",
+    "phone": "+919700000001",
+    "opening": "నమస్కారం, నేను నేచర్‌వేద హెర్బల్స్ నుండి ప్రియను. మీరు మా హెర్బల్ ఉత్పత్తులు, వాటి పదార్థాలు, ధరలు లేదా డెలివరీ ఎంపికల గురించి తెలుసుకోవడానికి సహాయం చేయవచ్చా?",
+    "turn_index": 6,
+    "turns": [
+      {
+        "turn": 1,
+        "elapsed_s": 24.3,
+        "caller": "నమస్తే అండి. మీ దగ్గర అలోవెరా జ్యూస్ ఉందా? దాని ప్రైస్ మరియు సైజ్ ఎంత అండి?",
+        "caller_ending": false,
+        "reply": "అవును, మా దగ్గర అలోవెరా జ్యూస్ ఉంది. దీని ధర ₹399 మరియు సైజ్ 500 ml ఉంటుంది.",
+        "farewell": "",
+        "first_chunk_s": 2.188,
+        "turn_s": 2.188,
+        "chunks": 1,
+        "max_chunk_gap_s": 0.0,
+        "tts_languages": [
+          "te-IN"
+        ],
+        "active_language_before": "te-IN",
+        "active_language": "te-IN",
+        "llm": {
+          "count": 5,
+          "requests": [
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3785,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3216,
+              "messages": 2,
+              "max_tokens": 384,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 2028,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 22485,
+              "messages": 6,
+              "max_tokens": 1280,
+              "packs": [
+                "te-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3453,
+              "messages": 2,
+              "max_tokens": 768,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            }
+          ]
+        },
+        "tools": [],
+        "memory_facts": {},
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "elapsed_s": 39.6,
+        "caller": "సరేనండి. ఈ అలోవెరా జ్యూస్ ఎలా తీసుకోవాలి? రోజుకి ఎంత డోసేజ్ వాడాలి?",
+        "caller_ending": false,
+        "reply": "రోజుకి ఎంత డోసేజ్ వాడాలి అనే సమాచారం మాకు అందుబాటులో లేదు. దయచేసి దీని వాడకం గురించి అర్హత కలిగిన ఆరోగ్య సంరక్షణ నిపుణులను సంప్రదించండి.",
+        "farewell": "",
+        "first_chunk_s": 2.032,
+        "turn_s": 2.032,
+        "chunks": 2,
+        "max_chunk_gap_s": 0.0,
+        "tts_languages": [
+          "te-IN"
+        ],
+        "active_language_before": "te-IN",
+        "active_language": "te-IN",
+        "llm": {
+          "count": 5,
+          "requests": [
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3785,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3216,
+              "messages": 2,
+              "max_tokens": 384,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 2028,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 21969,
+              "messages": 8,
+              "max_tokens": 1280,
+              "packs": [
+                "te-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3453,
+              "messages": 2,
+              "max_tokens": 768,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            }
+          ]
+        },
+        "tools": [],
+        "memory_facts": {},
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 3,
+        "elapsed_s": 84.8,
+        "caller": "Okay, thank you. Actually, I would prefer to continue in English now. Could you please repeat the price of the aloe vera juice?",
+        "caller_ending": false,
+        "reply": "Sure, the aloe vera juice is priced at ₹399 for 500 ml.",
+        "farewell": "",
+        "first_chunk_s": 1.672,
+        "turn_s": 1.672,
+        "chunks": 1,
+        "max_chunk_gap_s": 0.0,
+        "tts_languages": [
+          "en-IN"
+        ],
+        "active_language_before": "te-IN",
+        "active_language": "en-IN",
+        "llm": {
+          "count": 5,
+          "requests": [
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3785,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3216,
+              "messages": 2,
+              "max_tokens": 384,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 2028,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 26257,
+              "messages": 11,
+              "max_tokens": 1280,
+              "packs": [
+                "te-IN",
+                "en-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own.",
+                "ACTIVE LANGUAGE note says. Acknowledge the switch in a few words, then continue from where the conversation was and answer anything they asked. Do not repeat the opening and do not ask them to speak Telugu.",
+                "ACTIVE LANGUAGE (en-IN) ---"
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3453,
+              "messages": 2,
+              "max_tokens": 768,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            }
+          ]
+        },
+        "tools": [],
+        "memory_facts": {},
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 4,
+        "elapsed_s": 101.5,
+        "caller": "Okay, got it. Can you also tell me about the ingredients in your hair oil?",
+        "caller_ending": false,
+        "reply": "Our Herbal Hair Oil contains Amla, Bhringraj, Hibiscus, and Coconut Oil. It is priced at ₹499 for 200 ml and is meant for routine hair and scalp care.",
+        "farewell": "",
+        "first_chunk_s": 1.734,
+        "turn_s": 1.734,
+        "chunks": 2,
+        "max_chunk_gap_s": 0.0,
+        "tts_languages": [
+          "en-IN"
+        ],
+        "active_language_before": "en-IN",
+        "active_language": "en-IN",
+        "llm": {
+          "count": 5,
+          "requests": [
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3785,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3216,
+              "messages": 2,
+              "max_tokens": 384,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 2028,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 26011,
+              "messages": 14,
+              "max_tokens": 1280,
+              "packs": [
+                "te-IN",
+                "en-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own.",
+                "ACTIVE LANGUAGE (en-IN) ---",
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3453,
+              "messages": 2,
+              "max_tokens": 768,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            }
+          ]
+        },
+        "tools": [],
+        "memory_facts": {},
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 5,
+        "elapsed_s": 154.1,
+        "caller": "Thank you for that. So, what would be the total price if I order one aloe vera juice and one hair oil together?",
+        "caller_ending": false,
+        "reply": "The aloe vera juice is ₹399 and the hair oil is ₹499, so the total would be ₹898.",
+        "farewell": "",
+        "first_chunk_s": 1.922,
+        "turn_s": 1.922,
+        "chunks": 1,
+        "max_chunk_gap_s": 0.0,
+        "tts_languages": [
+          "en-IN"
+        ],
+        "active_language_before": "en-IN",
+        "active_language": "en-IN",
+        "llm": {
+          "count": 5,
+          "requests": [
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3785,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3216,
+              "messages": 2,
+              "max_tokens": 384,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 2028,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 26521,
+              "messages": 16,
+              "max_tokens": 1280,
+              "packs": [
+                "te-IN",
+                "en-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own.",
+                "ACTIVE LANGUAGE (en-IN) ---",
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3453,
+              "messages": 2,
+              "max_tokens": 768,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            }
+          ]
+        },
+        "tools": [],
+        "memory_facts": {},
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 6,
+        "elapsed_s": 241.4,
+        "caller": "Alright, thank you so much for the details. That is all I needed to know today. Have a good evening!",
+        "caller_ending": true,
+        "reply": "",
+        "farewell": "Thank you for your time. Goodbye.",
+        "first_chunk_s": 0.703,
+        "turn_s": 1.813,
+        "chunks": 1,
+        "max_chunk_gap_s": 0.0,
+        "tts_languages": [
+          "en-IN"
+        ],
+        "active_language_before": "en-IN",
+        "active_language": "en-IN",
+        "llm": {
+          "count": 2,
+          "requests": [
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3785,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3216,
+              "messages": 2,
+              "max_tokens": 384,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            }
+          ]
+        },
+        "tools": [],
+        "memory_facts": {},
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "అవును, మా దగ్గర అలోవెరా జ్యూస్ ఉంది. దీని ధర ₹399 మరియు సైజ్ 500 ml ఉంటుంది.",
+        "at": 105830.234,
+        "tts_language": "te-IN",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "రోజుకి ఎంత డోసేజ్ వాడాలి అనే సమాచారం మాకు అందుబాటులో లేదు.",
+        "at": 105845.328,
+        "tts_language": "te-IN",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "దయచేసి దీని వాడకం గురించి అర్హత కలిగిన ఆరోగ్య సంరక్షణ నిపుణులను సంప్రదించండి.",
+        "at": 105845.328,
+        "tts_language": "te-IN",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "Sure, the aloe vera juice is priced at ₹399 for 500 ml.",
+        "at": 105890.125,
+        "tts_language": "en-IN",
+        "farewell": false
+      },
+      {
+        "turn": 4,
+        "text": "Our Herbal Hair Oil contains Amla, Bhringraj, Hibiscus, and Coconut Oil.",
+        "at": 105906.984,
+        "tts_language": "en-IN",
+        "farewell": false
+      },
+      {
+        "turn": 4,
+        "text": "It is priced at ₹499 for 200 ml and is meant for routine hair and scalp care.",
+        "at": 105906.984,
+        "tts_language": "en-IN",
+        "farewell": false
+      },
+      {
+        "turn": 5,
+        "text": "The aloe vera juice is ₹399 and the hair oil is ₹499, so the total would be ₹898.",
+        "at": 105959.718,
+        "tts_language": "en-IN",
+        "farewell": false
+      },
+      {
+        "turn": 6,
+        "text": "Thank you for your time. Goodbye.",
+        "at": 106045.843,
+        "tts_language": "en-IN",
+        "farewell": true
+      }
+    ],
+    "tts_events": [
+      {
+        "turn": 3,
+        "event": "outage_clip_prewarm_requested"
+      }
+    ],
+    "tool_calls": [],
+    "errors": [],
+    "carrier": [
+      {
+        "turn": 6,
+        "at": 106046.859
+      }
+    ],
+    "available_tools": [
+      "GMAIL_SEND_EMAIL",
+      "SAVE_ENQUIRY",
+      "REQUEST_HUMAN_HANDOFF",
+      "CONFIRM_ORDER"
+    ],
+    "duration_s": 245.5,
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "interested",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "contact:phone_known",
+        "custom:aloe-vera",
+        "custom:hair-oil",
+        "followup:send_quote",
+        "intent:information",
+        "outcome:interested",
+        "sentiment:neutral"
+      ],
+      "facts": {
+        "combined_total": "₹898",
+        "phone": "+919700000001",
+        "price_product_1": "₹399",
+        "price_product_2": "₹499",
+        "product_1": "aloe vera juice",
+        "product_2": "herbal hair oil",
+        "size_product_1": "500 ml"
+      }
+    },
+    "db": {
+      "call": [
+        {
+          "call_id": "27476e23-292a-4d72-b2a7-bed6cef1da6c",
+          "tenant_id": "1df21547-c6a7-46b7-b01c-f621c22bfc62",
+          "agent_id": "06c8aaa5-31d0-5af7-b146-80b4313329c2",
+          "session_id": "qa-f9165bb93cae4f1c8d2d052d24635eb3",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_v20261031_c7036f738bee",
+          "started_at": "2026-10-31 12:51:10.709703+00:00",
+          "ended_at": "2026-10-31 12:55:14.061411+00:00",
+          "duration_sec": 243,
+          "disposition": "interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/27476e23-292a-4d72-b2a7-bed6cef1da6c/",
+          "end_reason": "goodbye",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "contact:phone_known",
+            "custom:aloe-vera",
+            "custom:hair-oil",
+            "followup:send_quote",
+            "intent:information",
+            "outcome:interested",
+            "sentiment:neutral"
+          ],
+          "last_heartbeat_at": "2026-10-31 12:51:10.717714+00:00",
+          "created_at": "2026-10-31 12:51:10.719724+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "63eb8332-13d2-4477-b6a4-d4980836708c",
+          "tenant_id": "1df21547-c6a7-46b7-b01c-f621c22bfc62",
+          "agent_id": "06c8aaa5-31d0-5af7-b146-80b4313329c2",
+          "name": "New lead",
+          "phone": "+919700000001",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: 27476e23-292a-4d72-b2a7-bed6cef1da6c]\nThe agent called the customer to provide product information. The customer asked about the price, size, dosage, and ingredients of the aloe vera juice and hair oil, and inquired about a combined order total. The agent shared the pricing details, but explained that dosage guidance was unavailable. The customer accepted the information and concluded the call without placing an order.\n\nCall outcome: interested (95% confidence)",
+          "created_at": "2026-10-31 12:55:15.733669+00:00",
+          "updated_at": "2026-10-31 12:55:15.733669+00:00"
+        }
+      ],
+      "tools": [],
+      "language_switch": []
+    },
+    "meta": {
+      "language_switches": [
+        {
+          "from": "te-IN",
+          "to": "en-IN",
+          "reason": "asked",
+          "at": "2026-10-31T12:52:35+00:00"
+        }
+      ],
+      "contact_preference": "end_call",
+      "end_reason": "goodbye"
+    },
+    "judge_model": "gemini-3.5-flash",
+    "checks": [
+      {
+        "id": "no_runtime_error",
+        "passed": true,
+        "evidence": "",
+        "kind": "server"
+      },
+      {
+        "id": "min_duration_90s",
+        "passed": true,
+        "evidence": "245.5s",
+        "kind": "server"
+      },
+      {
+        "id": "responsive_every_turn",
+        "passed": true,
+        "evidence": "silent turns []",
+        "kind": "server"
+      },
+      {
+        "id": "first_chunk_latency",
+        "passed": true,
+        "evidence": "slow turns []",
+        "kind": "server"
+      },
+      {
+        "id": "speech_clean",
+        "passed": true,
+        "evidence": "",
+        "kind": "server"
+      },
+      {
+        "id": "no_unproven_action_claim",
+        "passed": true,
+        "evidence": "turns []",
+        "kind": "server"
+      },
+      {
+        "id": "no_false_dnd",
+        "passed": true,
+        "evidence": "0",
+        "kind": "server"
+      },
+      {
+        "id": "switched_live_to_english",
+        "passed": true,
+        "evidence": "active languages ['en-IN', 'en-IN', 'en-IN', 'en-IN']",
+        "kind": "server"
+      },
+      {
+        "id": "pack_replaced_not_stacked",
+        "passed": false,
+        "evidence": "[[], [], [], ['te-IN', 'en-IN']]",
+        "kind": "server"
+      },
+      {
+        "id": "tts_followed_switch",
+        "passed": true,
+        "evidence": "[['en-IN'], ['en-IN']]",
+        "kind": "server"
+      },
+      {
+        "id": "answered_what_was_asked",
+        "passed": true,
+        "evidence": "Sure, the aloe vera juice is priced at ₹399 for 500 ml.",
+        "kind": "judge"
+      },
+      {
+        "id": "short_one_question",
+        "passed": true,
+        "evidence": "The aloe vera juice is ₹399 and the hair oil is ₹499, so the total would be ₹898.",
+        "kind": "judge"
+      },
+      {
+        "id": "catalog_facts_accurate",
+        "passed": true,
+        "evidence": "The aloe vera juice is ₹399 and the hair oil is ₹499, so the total would be ₹898.",
+        "kind": "judge"
+      },
+      {
+        "id": "no_invented_business_facts",
+        "passed": true,
+        "evidence": "Sure, the aloe vera juice is priced at ₹399 for 500 ml.",
+        "kind": "judge"
+      },
+      {
+        "id": "no_health_claims",
+        "passed": true,
+        "evidence": "దయచేసి దీని వాడకం గురించి అర్హత కలిగిన ఆరోగ్య సంరక్షణ నిపుణులను సంప్రదించండి.",
+        "kind": "judge"
+      },
+      {
+        "id": "no_pressure",
+        "passed": true,
+        "evidence": "The aloe vera juice is ₹399 and the hair oil is ₹499, so the total would be ₹898.",
+        "kind": "judge"
+      },
+      {
+        "id": "context_retained",
+        "passed": true,
+        "evidence": "Sure, the aloe vera juice is priced at ₹399 for 500 ml.",
+        "kind": "judge"
+      },
+      {
+        "id": "language_followed",
+        "passed": true,
+        "evidence": "Sure, the aloe vera juice is priced at ₹399 for 500 ml.",
+        "kind": "judge"
+      },
+      {
+        "id": "switch_kept_context",
+        "passed": true,
+        "evidence": "Sure, the aloe vera juice is priced at ₹399 for 500 ml.",
+        "kind": "judge"
+      }
+    ],
+    "failures": [
+      "pack_replaced_not_stacked"
+    ],
+    "passed": false
+  },
+  {
+    "id": "te-IN/integration",
+    "scenario": "integration",
+    "language": "te-IN",
+    "tenant_id": "1df21547-c6a7-46b7-b01c-f621c22bfc62",
+    "agent_id": "06c8aaa5-31d0-5af7-b146-80b4313329c2",
+    "call_id": "daa69287-51ad-4059-8d2a-fbd0613856b8",
+    "phone": "+919700000002",
+    "opening": "నమస్కారం, నేను నేచర్‌వేద హెర్బల్స్ నుండి ప్రియను. మీరు మా హెర్బల్ ఉత్పత్తులు, వాటి పదార్థాలు, ధరలు లేదా డెలివరీ ఎంపికల గురించి తెలుసుకోవడానికి సహాయం చేయవచ్చా?",
+    "turn_index": 6,
+    "turns": [
+      {
+        "turn": 1,
+        "elapsed_s": 23.5,
+        "caller": "నమస్తే అండి, నాకు మీ ఫేస్ క్రీమ్ మరియు హెయిర్ ఆయిల్ మీద ఆసక్తి ఉంది. ఈ రెండింటి price ఎంత అండి?",
+        "caller_ending": false,
+        "reply": "హెయిర్ ఆయిల్ 200 మి. లీ కి 499 రూపాయలు, ఫేస్ క్రీమ్ 50 గ్రాములకు 599 రూపాయలు అవుతుంది.",
+        "farewell": "",
+        "first_chunk_s": 2.063,
+        "turn_s": 2.063,
+        "chunks": 1,
+        "max_chunk_gap_s": 0.0,
+        "tts_languages": [
+          "te-IN"
+        ],
+        "active_language_before": "te-IN",
+        "active_language": "te-IN",
+        "llm": {
+          "count": 6,
+          "requests": [
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3785,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 1092,
+              "messages": 2,
+              "max_tokens": 128,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3216,
+              "messages": 2,
+              "max_tokens": 384,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 2028,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 22527,
+              "messages": 6,
+              "max_tokens": 1280,
+              "packs": [
+                "te-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3453,
+              "messages": 2,
+              "max_tokens": 768,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            }
+          ]
+        },
+        "tools": [],
+        "memory_facts": {},
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "elapsed_s": 58.7,
+        "caller": "సరేనండి, ఈ product details మరియు prices నాకు ఒకసారి email చేస్తారా? నా email address mohansaiteja.99@gmail.com.",
+        "caller_ending": false,
+        "reply": "మీ email mohansaiteja.99@gmail. com కి details పంపించాను.",
+        "farewell": "",
+        "first_chunk_s": 5.187,
+        "turn_s": 5.187,
+        "chunks": 1,
+        "max_chunk_gap_s": 0.0,
+        "tts_languages": [
+          "te-IN"
+        ],
+        "active_language_before": "te-IN",
+        "active_language": "te-IN",
+        "llm": {
+          "count": 7,
+          "requests": [
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3785,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 1092,
+              "messages": 2,
+              "max_tokens": 128,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3216,
+              "messages": 2,
+              "max_tokens": 384,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 2028,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 19733,
+              "messages": 7,
+              "max_tokens": 1280,
+              "packs": [
+                "te-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 23279,
+              "messages": 12,
+              "max_tokens": 1280,
+              "packs": [
+                "te-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3453,
+              "messages": 2,
+              "max_tokens": 768,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            }
+          ]
+        },
+        "tools": [
+          {
+            "action": "GMAIL_SEND_EMAIL",
+            "params": {
+              "to": "mohansaiteja.99@gmail.com",
+              "subject": "NatureVeda Product Details and Prices",
+              "body": "Hello,\n\nHere are the details and prices for NatureVeda products:\n\n1. NatureVeda Herbal Hair Oil - 499 rupees for 200 ml. Contains Amla, Bhringraj, Hibiscus, and Coconut Oil. Intended for routine hair and scalp care.\n\n2. NatureVeda Herbal Face Cream - 599 rupees for 50 g. Contains Neem, Turmeric, and Aloe Vera. Intended for moisturizing and routine skin care.\n\nLet us know if you would like to place an order or need more information.\n\nThank you,\nPriya\nNatureVeda Herbals"
+            },
+            "turn": 2,
+            "at": 106133.218,
+            "result": {
+              "status": "sent",
+              "message_id": "1a19208a2885615a",
+              "to": "mohansaiteja.99@gmail.com",
+              "subject": "NatureVeda Product Details and Prices",
+              "message": "Confirmation email sent to mohansaiteja.99@gmail.com."
+            },
+            "elapsed_s": 1.453
+          }
+        ],
+        "memory_facts": {},
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 3,
+        "elapsed_s": 87.5,
+        "caller": "సరేనండి, ఫేస్ క్రీమ్ stock లో ఉందా? కూకట్‌పల్లికి delivery ఎప్పటికి అవుతుంది?",
+        "caller_ending": false,
+        "reply": "ఫేస్ క్రీమ్ స్టాక్ మరియు కూకట్‌పల్లికి డెలివరీ ఎప్పటికి అవుతుంది అనే వివరాలు ప్రస్తుతం మా దగ్గర అందుబాటులో లేవు. team దీన్ని confirm చేస్తారు.",
+        "farewell": "",
+        "first_chunk_s": 2.078,
+        "turn_s": 2.078,
+        "chunks": 2,
+        "max_chunk_gap_s": 0.0,
+        "tts_languages": [
+          "te-IN"
+        ],
+        "active_language_before": "te-IN",
+        "active_language": "te-IN",
+        "llm": {
+          "count": 5,
+          "requests": [
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3785,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3216,
+              "messages": 2,
+              "max_tokens": 384,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 2028,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 22015,
+              "messages": 11,
+              "max_tokens": 1280,
+              "packs": [
+                "te-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3453,
+              "messages": 2,
+              "max_tokens": 768,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            }
+          ]
+        },
+        "tools": [],
+        "memory_facts": {
+          "email": "mohansaiteja.99@gmail.com"
+        },
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 4,
+        "elapsed_s": 110.4,
+        "caller": "అయితే రేపు ఉదయం 11 గంటలకి మీ team తో ఒక short call book చేస్తారా? నా order place చేయడానికి అనుకూలంగా ఉంటుంది.",
+        "caller_ending": false,
+        "reply": "సరే, రేపు ఉదయం 11 గంటలకి team తో ఒక short call కావాలని note చేసుకున్నాను.",
+        "farewell": "",
+        "first_chunk_s": 2.062,
+        "turn_s": 2.062,
+        "chunks": 1,
+        "max_chunk_gap_s": 0.0,
+        "tts_languages": [
+          "te-IN"
+        ],
+        "active_language_before": "te-IN",
+        "active_language": "te-IN",
+        "llm": {
+          "count": 6,
+          "requests": [
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3785,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3216,
+              "messages": 2,
+              "max_tokens": 384,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 2028,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 19215,
+              "messages": 13,
+              "max_tokens": 1280,
+              "packs": [
+                "te-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 22737,
+              "messages": 18,
+              "max_tokens": 1280,
+              "packs": [
+                "te-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3453,
+              "messages": 2,
+              "max_tokens": 768,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            }
+          ]
+        },
+        "tools": [],
+        "memory_facts": {
+          "email": "mohansaiteja.99@gmail.com"
+        },
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 5,
+        "elapsed_s": 135.4,
+        "caller": "సరేనండి, మరి ఆ call confirm గా book అయిపోయినట్లేనా అండి?",
+        "caller_ending": false,
+        "reply": "ఆ call ఇంకా confirm కాలేదు. team వాళ్లు దాన్ని confirm చేస్తారు.",
+        "farewell": "",
+        "first_chunk_s": 1.813,
+        "turn_s": 1.813,
+        "chunks": 1,
+        "max_chunk_gap_s": 0.0,
+        "tts_languages": [
+          "te-IN"
+        ],
+        "active_language_before": "te-IN",
+        "active_language": "te-IN",
+        "llm": {
+          "count": 6,
+          "requests": [
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3785,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3216,
+              "messages": 2,
+              "max_tokens": 384,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 2028,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 19118,
+              "messages": 15,
+              "max_tokens": 1280,
+              "packs": [
+                "te-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 21977,
+              "messages": 16,
+              "max_tokens": 1280,
+              "packs": [
+                "te-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3453,
+              "messages": 2,
+              "max_tokens": 768,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            }
+          ]
+        },
+        "tools": [],
+        "memory_facts": {
+          "email": "mohansaiteja.99@gmail.com"
+        },
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 6,
+        "elapsed_s": 207.2,
+        "caller": "సరేనండి, అర్థమైంది. రేపు మీ team నుండి call కోసం చూస్తాను. ధన్యవాదాలు అండి, బాయ్.",
+        "caller_ending": true,
+        "reply": "",
+        "farewell": "సరే, మీ callback note చేసుకున్నాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "first_chunk_s": 1.016,
+        "turn_s": 2.141,
+        "chunks": 1,
+        "max_chunk_gap_s": 0.0,
+        "tts_languages": [
+          "te-IN"
+        ],
+        "active_language_before": "te-IN",
+        "active_language": "te-IN",
+        "llm": {
+          "count": 3,
+          "requests": [
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3785,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3216,
+              "messages": 2,
+              "max_tokens": 384,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 524,
+              "messages": 2,
+              "max_tokens": 64,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            }
+          ]
+        },
+        "tools": [],
+        "memory_facts": {
+          "email": "mohansaiteja.99@gmail.com"
+        },
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "హెయిర్ ఆయిల్ 200 మి. లీ కి 499 రూపాయలు, ఫేస్ క్రీమ్ 50 గ్రాములకు 599 రూపాయలు అవుతుంది.",
+        "at": 106097.0,
+        "tts_language": "te-IN",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "మీ email mohansaiteja.99@gmail. com కి details పంపించాను.",
+        "at": 106135.343,
+        "tts_language": "te-IN",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "ఫేస్ క్రీమ్ స్టాక్ మరియు కూకట్‌పల్లికి డెలివరీ ఎప్పటికి అవుతుంది అనే వివరాలు ప్రస్తుతం మా దగ్గర అందుబాటులో లేవు.",
+        "at": 106161.046,
+        "tts_language": "te-IN",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "team దీన్ని confirm చేస్తారు.",
+        "at": 106161.046,
+        "tts_language": "te-IN",
+        "farewell": false
+      },
+      {
+        "turn": 4,
+        "text": "సరే, రేపు ఉదయం 11 గంటలకి team తో ఒక short call కావాలని note చేసుకున్నాను.",
+        "at": 106183.921,
+        "tts_language": "te-IN",
+        "farewell": false
+      },
+      {
+        "turn": 5,
+        "text": "ఆ call ఇంకా confirm కాలేదు. team వాళ్లు దాన్ని confirm చేస్తారు.",
+        "at": 106208.656,
+        "tts_language": "te-IN",
+        "farewell": false
+      },
+      {
+        "turn": 6,
+        "text": "సరే, మీ callback note చేసుకున్నాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "at": 106279.625,
+        "tts_language": "te-IN",
+        "farewell": true
+      }
+    ],
+    "tts_events": [],
+    "tool_calls": [
+      {
+        "action": "GMAIL_SEND_EMAIL",
+        "params": {
+          "to": "mohansaiteja.99@gmail.com",
+          "subject": "NatureVeda Product Details and Prices",
+          "body": "Hello,\n\nHere are the details and prices for NatureVeda products:\n\n1. NatureVeda Herbal Hair Oil - 499 rupees for 200 ml. Contains Amla, Bhringraj, Hibiscus, and Coconut Oil. Intended for routine hair and scalp care.\n\n2. NatureVeda Herbal Face Cream - 599 rupees for 50 g. Contains Neem, Turmeric, and Aloe Vera. Intended for moisturizing and routine skin care.\n\nLet us know if you would like to place an order or need more information.\n\nThank you,\nPriya\nNatureVeda Herbals"
+        },
+        "turn": 2,
+        "at": 106133.218,
+        "result": {
+          "status": "sent",
+          "message_id": "1a19208a2885615a",
+          "to": "mohansaiteja.99@gmail.com",
+          "subject": "NatureVeda Product Details and Prices",
+          "message": "Confirmation email sent to mohansaiteja.99@gmail.com."
+        },
+        "elapsed_s": 1.453
+      }
+    ],
+    "errors": [],
+    "carrier": [
+      {
+        "turn": 6,
+        "at": 106280.671
+      }
+    ],
+    "available_tools": [
+      "GMAIL_SEND_EMAIL",
+      "SAVE_ENQUIRY",
+      "REQUEST_HUMAN_HANDOFF",
+      "CONFIRM_ORDER"
+    ],
+    "duration_s": 215.1,
+    "ended_by_agent": true,
+    "contact_preference": "callback",
+    "outcome": {
+      "disposition": "callback_required",
+      "contact_preference": "callback",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:email_known",
+        "contact:phone_known",
+        "custom:delivery-inquiry",
+        "custom:face-cream",
+        "custom:hair-oil",
+        "followup:callback",
+        "intent:information",
+        "outcome:callback_required",
+        "sentiment:positive"
+      ],
+      "facts": {
+        "email": "mohansaiteja.99@gmail.com",
+        "phone": "+919700000002",
+        "slot": "Tomorrow at 11:00 AM"
+      }
+    },
+    "db": {
+      "call": [
+        {
+          "call_id": "daa69287-51ad-4059-8d2a-fbd0613856b8",
+          "tenant_id": "1df21547-c6a7-46b7-b01c-f621c22bfc62",
+          "agent_id": "06c8aaa5-31d0-5af7-b146-80b4313329c2",
+          "session_id": "qa-f7ba011a207248ac98e8328f76474ade",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_v20261031_c7036f738bee",
+          "started_at": "2026-10-31 12:55:38.581091+00:00",
+          "ended_at": "2026-10-31 12:59:07.877733+00:00",
+          "duration_sec": 209,
+          "disposition": "callback_required",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/daa69287-51ad-4059-8d2a-fbd0613856b8/",
+          "end_reason": "goal_complete",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:email_known",
+            "contact:phone_known",
+            "custom:delivery-inquiry",
+            "custom:face-cream",
+            "custom:hair-oil",
+            "followup:callback",
+            "intent:information",
+            "outcome:callback_required",
+            "sentiment:positive"
+          ],
+          "last_heartbeat_at": "2026-10-31 12:55:38.581091+00:00",
+          "created_at": "2026-10-31 12:55:38.585848+00:00"
+        }
+      ],
+      "callbacks": [
+        {
+          "callback_id": "53ba4ab5-dd45-4b2f-8478-75b7cc576164",
+          "tenant_id": "1df21547-c6a7-46b7-b01c-f621c22bfc62",
+          "user_id": null,
+          "original_call_id": "daa69287-51ad-4059-8d2a-fbd0613856b8",
+          "original_attempt_id": null,
+          "agent_id": "06c8aaa5-31d0-5af7-b146-80b4313329c2",
+          "to_e164": "+919700000002",
+          "from_e164": null,
+          "dial_request_id": "requested:daa69287-51ad-4059-8d2a-fbd0613856b8",
+          "mode": "requested",
+          "status": "requested",
+          "provider": null,
+          "provider_call_control_id": null,
+          "error": null,
+          "created_at": "2026-10-31 12:59:06.748765+00:00",
+          "updated_at": "2026-10-31 12:59:06.749707+00:00"
+        }
+      ],
+      "jobs": [
+        {
+          "id": "e3f3306e-a2b9-4410-8bd0-81008bc2cdd2",
+          "tenant_id": "1df21547-c6a7-46b7-b01c-f621c22bfc62",
+          "agent_id": "06c8aaa5-31d0-5af7-b146-80b4313329c2",
+          "origin_key": "callback:53ba4ab5-dd45-4b2f-8478-75b7cc576164",
+          "source_id": "daa69287-51ad-4059-8d2a-fbd0613856b8",
+          "kind": "callback",
+          "phone": "+919700000002",
+          "status": "scheduled",
+          "reason": "requested_window_resolved",
+          "payload": {
+            "requestText": "సరేనండి, అర్థమైంది. రేపు మీ team నుండి call కోసం చూస్తాను. ధన్యవాదాలు అండి, బాయ్.",
+            "requestedWhen": "రేపు ఉదయం 11 గంటలకి",
+            "recentTurns": [
+              {
+                "role": "assistant",
+                "text": "మీ email mohansaiteja.99@gmail. com కి details పంపించాను.",
+                "at": "2026-10-31T12:56:42.535573Z"
+              },
+              {
+                "role": "user",
+                "text": "సరేనండి, ఫేస్ క్రీమ్ stock లో ఉందా? కూకట్‌పల్లికి delivery ఎప్పటికి అవుతుంది?",
+                "at": "2026-10-31T12:57:06.171193Z"
+              },
+              {
+                "role": "assistant",
+                "text": "ఫేస్ క్రీమ్ స్టాక్ మరియు కూకట్‌పల్లికి డెలివరీ ఎప్పటికి అవుతుంది అనే వివరాలు ప్రస్తుతం మా దగ్గర అందుబాటులో లేవు. team దీన్ని confirm చేస్తారు.",
+                "at": "2026-10-31T12:57:08.236132Z"
+              },
+              {
+                "role": "user",
+                "text": "అయితే రేపు ఉదయం 11 గంటలకి మీ team తో ఒక short call book చేస్తారా? నా order place చేయడానికి అనుకూలంగా ఉంటుంది.",
+                "at": "2026-10-31T12:57:29.051029Z"
+              },
+              {
+                "role": "assistant",
+                "text": "సరే, రేపు ఉదయం 11 గంటలకి team తో ఒక short call కావాలని note చేసుకున్నాను.",
+                "at": "2026-10-31T12:57:31.109745Z"
+              },
+              {
+                "role": "user",
+                "text": "సరేనండి, మరి ఆ call confirm గా book అయిపోయినట్లేనా అండి?",
+                "at": "2026-10-31T12:57:54.042963Z"
+              },
+              {
+                "role": "assistant",
+                "text": "ఆ call ఇంకా confirm కాలేదు. team వాళ్లు దాన్ని confirm చేస్తారు.",
+                "at": "2026-10-31T12:57:55.840689Z"
+              },
+              {
+                "role": "user",
+                "text": "సరేనండి, అర్థమైంది. రేపు మీ team నుండి call కోసం చూస్తాను. ధన్యవాదాలు అండి, బాయ్.",
+                "at": "2026-10-31T12:59:05.801865Z"
+              }
+            ],
+            "callbackId": "53ba4ab5-dd45-4b2f-8478-75b7cc576164",
+            "timezone": "Asia/Kolkata",
+            "llm": {
+              "provider": "openai",
+              "model": "gpt-5.6-luna",
+              "options": {},
+              "purpose": "configured_post_call_analysis"
+            },
+            "requestedAt": "2026-10-31T12:59:06.763382+00:00",
+            "resolvedWindow": {
+              "dayPart": "morning",
+              "day": "tomorrow",
+              "label": "tomorrow morning",
+              "timezone": "Asia/Kolkata",
+              "start": "2026-11-01T04:30:00+00:00",
+              "end": "2026-11-01T06:30:00+00:00",
+              "scheduledAt": "2026-11-01T04:42:00+00:00",
+              "display": "Sun 1 Nov, 10:00 am–12:00 pm",
+              "summary": "tomorrow morning → Sun 1 Nov, 10:00 am–12:00 pm",
+              "phrase": "రేపు ఉదయం 11 గంటలకి"
+            }
+          },
+          "due_at": "2026-11-01 04:42:00+00:00",
+          "expires_at": "2026-11-07 12:59:06.763382+00:00",
+          "attempts": 0,
+          "lease_token": null,
+          "lease_until": null,
+          "control_id": null,
+          "authorized_by": "d972916f-3b5f-4406-87ef-f4afb92f27e5",
+          "billing_tenant_id": "1df21547-c6a7-46b7-b01c-f621c22bfc62",
+          "created_at": "2026-10-31 12:59:06.786757+00:00",
+          "updated_at": "2026-10-31 12:59:06.786757+00:00"
+        }
+      ],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "228d0b72-62d6-5650-b2b9-307405ea401e",
+          "tenant_id": "1df21547-c6a7-46b7-b01c-f621c22bfc62",
+          "agent_id": "06c8aaa5-31d0-5af7-b146-80b4313329c2",
+          "name": "Mohan Sai Teja",
+          "phone": "+919700000002",
+          "email": "mohansaiteja.99@gmail.com",
+          "stage": "qualified",
+          "notes": "Caller enquiry — call daa69287-51ad-4059-8d2a-fbd0613856b8\n{\"request\": \"Book a short call with the team for tomorrow at 11 AM to place the order.\", \"customer_name\": \"Mohan Sai Teja\", \"product\": \"NatureVeda Herbal Face Cream\", \"delivery_address\": \"Kokkatpally\"}\n\n---\n[Call reference: daa69287-51ad-4059-8d2a-fbd0613856b8]\nThe agent called the customer to share pricing information for face cream and hair oil. The customer requested that product details and prices be emailed to mohansaiteja.99@gmail.com, which the agent confirmed. When the customer asked about face cream stock and delivery to Kukatpally, the agent stated that this information was not currently available. The customer requested a short team call tomorrow at 11:00 AM to place an order, which the agent noted but clarified was not yet confirmed. The customer agreed to wait for the team's confirmation, and the call ended on a positive note.\n\nNext step: Team to confirm the callback scheduled for tomorrow at 11:00 AM.\n\nCall outcome: callback required (95% confidence)",
+          "created_at": "2026-10-31 12:57:30.538432+00:00",
+          "updated_at": "2026-10-31 12:59:09.454843+00:00"
+        }
+      ],
+      "tools": [
+        {
+          "id": "2724f161-9444-47da-8118-7c3fcecf6ee1",
+          "tenant_id": "1df21547-c6a7-46b7-b01c-f621c22bfc62",
+          "agent_id": "06c8aaa5-31d0-5af7-b146-80b4313329c2",
+          "call_id": "daa69287-51ad-4059-8d2a-fbd0613856b8",
+          "action": "GMAIL_SEND_EMAIL",
+          "action_type": "write",
+          "idempotency_key": "tool:9a8191dd2bdf3cc824c5298636a68dd54c91031e431e6e6490bf039efbea6f07",
+          "status": "succeeded",
+          "parameters": {
+            "to": "mohansaiteja.99@gmail.com",
+            "body": "Hello,\n\nHere are the details and prices for NatureVeda products:\n\n1. NatureVeda Herbal Hair Oil - 499 rupees for 200 ml. Contains Amla, Bhringraj, Hibiscus, and Coconut Oil. Intended for routine hair and scalp care.\n\n2. NatureVeda Herbal Face Cream - 599 rupees for 50 g. Contains Neem, Turmeric, and Aloe Vera. Intended for moisturizing and routine skin care.\n\nLet us know if you would like to place an order or need more information.\n\nThank you,\nPriya\nNatureVeda Herbals",
+            "subject": "NatureVeda Product Details and Prices"
+          },
+          "result": {
+            "to": "mohansaiteja.99@gmail.com",
+            "status": "sent",
+            "message": "Confirmation email sent to mohansaiteja.99@gmail.com.",
+            "subject": "NatureVeda Product Details and Prices",
+            "message_id": "1a19208a2885615a"
+          },
+          "external_reference": null,
+          "error": null,
+          "started_at": "2026-10-31 12:56:40.405569+00:00",
+          "completed_at": "2026-10-31 12:56:41.860530+00:00"
+        }
+      ],
+      "language_switch": []
+    },
+    "meta": {
+      "callback_request": {
+        "id": "53ba4ab5-dd45-4b2f-8478-75b7cc576164",
+        "status": "requested",
+        "requestedWhen": "రేపు ఉదయం 11 గంటలకి",
+        "requestText": "సరేనండి, అర్థమైంది. రేపు మీ team నుండి call కోసం చూస్తాను. ధన్యవాదాలు అండి, బాయ్.",
+        "resolvedWindow": {
+          "dayPart": "morning",
+          "day": "tomorrow",
+          "label": "tomorrow morning",
+          "timezone": "Asia/Kolkata",
+          "start": "2026-11-01T04:30:00+00:00",
+          "end": "2026-11-01T06:30:00+00:00",
+          "scheduledAt": "2026-11-01T04:42:00+00:00",
+          "display": "Sun 1 Nov, 10:00 am–12:00 pm",
+          "summary": "tomorrow morning → Sun 1 Nov, 10:00 am–12:00 pm",
+          "phrase": "రేపు ఉదయం 11 గంటలకి"
+        }
+      },
+      "contact_preference": "callback",
+      "end_reason": "goal_complete"
+    },
+    "judge_model": "gemini-3.5-flash-lite",
+    "checks": [
+      {
+        "id": "no_runtime_error",
+        "passed": true,
+        "evidence": "",
+        "kind": "server"
+      },
+      {
+        "id": "min_duration_90s",
+        "passed": true,
+        "evidence": "215.1s",
+        "kind": "server"
+      },
+      {
+        "id": "responsive_every_turn",
+        "passed": true,
+        "evidence": "silent turns []",
+        "kind": "server"
+      },
+      {
+        "id": "first_chunk_latency",
+        "passed": true,
+        "evidence": "slow turns []",
+        "kind": "server"
+      },
+      {
+        "id": "speech_clean",
+        "passed": true,
+        "evidence": "",
+        "kind": "server"
+      },
+      {
+        "id": "no_unproven_action_claim",
+        "passed": true,
+        "evidence": "turns []",
+        "kind": "server"
+      },
+      {
+        "id": "no_false_dnd",
+        "passed": true,
+        "evidence": "0",
+        "kind": "server"
+      },
+      {
+        "id": "tool_gmail_send_email_succeeded",
+        "passed": true,
+        "evidence": "[('GMAIL_SEND_EMAIL', 'sent')]",
+        "kind": "server"
+      },
+      {
+        "id": "answered_what_was_asked",
+        "passed": true,
+        "evidence": "The agent directly addressed the customer's inquiries regarding prices, email sending, stock availability, and callback scheduling.",
+        "kind": "judge"
+      },
+      {
+        "id": "short_one_question",
+        "passed": true,
+        "evidence": "Agent responses were concise and did not ask multiple questions in a single reply.",
+        "kind": "judge"
+      },
+      {
+        "id": "catalog_facts_accurate",
+        "passed": true,
+        "evidence": "హెయిర్ ఆయిల్ 200 మి. లీ కి 499 రూపాయలు, ఫేస్ క్రీమ్ 50 గ్రాములకు 599 రూపాయలు అవుతుంది.",
+        "kind": "judge"
+      },
+      {
+        "id": "no_invented_business_facts",
+        "passed": true,
+        "evidence": "The agent did not invent discounts, stock availability, or delivery timelines.",
+        "kind": "judge"
+      },
+      {
+        "id": "no_health_claims",
+        "passed": true,
+        "evidence": "The agent made no disease cure claims, side effect guarantees, or result promises.",
+        "kind": "judge"
+      },
+      {
+        "id": "no_pressure",
+        "passed": true,
+        "evidence": "The agent never pressured the customer to purchase.",
+        "kind": "judge"
+      },
+      {
+        "id": "context_retained",
+        "passed": true,
+        "evidence": "The agent remembered the requested email and products throughout the conversation.",
+        "kind": "judge"
+      },
+      {
+        "id": "language_followed",
+        "passed": true,
+        "evidence": "The agent communicated naturally in Telugu.",
+        "kind": "judge"
+      },
+      {
+        "id": "email_claim_matches_tool",
+        "passed": true,
+        "evidence": "మీ email mohansaiteja.99@gmail. com కి details పంపించాను.",
+        "kind": "judge"
+      },
+      {
+        "id": "asked_for_email_or_used_given",
+        "passed": true,
+        "evidence": "The agent correctly used the exact email address provided by the caller: mohansaiteja.99@gmail.com.",
+        "kind": "judge"
+      },
+      {
+        "id": "honest_about_unknowns",
+        "passed": true,
+        "evidence": "ఫేస్ క్రీమ్ స్టాక్ మరియు కూకట్‌పల్లికి డెలివరీ ఎప్పటికి అవుతుంది అనే వివరాలు ప్రస్తుతం మా దగ్గర అందుబాటులో లేవు.",
+        "kind": "judge"
+      }
+    ],
+    "failures": [],
+    "passed": true
+  },
+  {
+    "id": "kn-IN/language_switch",
+    "scenario": "language_switch",
+    "language": "kn-IN",
+    "tenant_id": "09623916-1297-4f27-ab5f-cee8718215d4",
+    "agent_id": "1eecf08c-4fb7-5531-9c1f-40de4d064ac8",
+    "call_id": "d519f312-cd11-4772-806f-e63cd122b35d",
+    "phone": "+919700000003",
+    "opening": "ನಮಸ್ಕಾರ, ನಾನು NatureVeda Herbals ಇಂದ Priya. ಒಂದು ನಿಮಿಷ ಮಾತನಾಡಬಹುದಾ?",
+    "turn_index": 3,
+    "turns": [
+      {
+        "turn": 1,
+        "elapsed_s": 19.8,
+        "caller": "ಹೌದು, ಹೇಳಿ. ನಿಮ್ಮ aloe vera juice ಬಗ್ಗೆ ತಿಳಿದುಕೊಳ್ಳಬೇಕಿತ್ತು, ಅದರ price ಮತ್ತು size ಎಷ್ಟು?",
+        "caller_ending": false,
+        "reply": "ಖಂಡಿತ, NatureVeda Aloe Vera Juice ಬೆಲೆ ₹399 ಮತ್ತು ಇದರ size 500 ml ಇದೆ. ಇದರ ಬಗ್ಗೆ ಇನ್ನು ಏನಾದರೂ details ಬೇಕಾ?",
+        "farewell": "",
+        "first_chunk_s": 1.797,
+        "turn_s": 1.797,
+        "chunks": 1,
+        "max_chunk_gap_s": 0.0,
+        "tts_languages": [
+          "kn-IN"
+        ],
+        "active_language_before": "kn-IN",
+        "active_language": "kn-IN",
+        "llm": {
+          "count": 5,
+          "requests": [
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3785,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3216,
+              "messages": 2,
+              "max_tokens": 384,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 2028,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 21802,
+              "messages": 6,
+              "max_tokens": 1280,
+              "packs": [
+                "kn-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3453,
+              "messages": 2,
+              "max_tokens": 768,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            }
+          ]
+        },
+        "tools": [],
+        "memory_facts": {},
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "elapsed_s": 97.6,
+        "caller": "ಓಕೆ, ಇದನ್ನು daily ಹೇಗೆ consume ಮಾಡಬೇಕು? ಎಷ್ಟು quantity ತಗೋಬೇಕು?",
+        "caller_ending": false,
+        "reply": "ಕ್ಷಮಿಸಿ, ಇದರ daily consumption quantity ಬಗ್ಗೆ exact details ನನ್ನ ಬಳಿ ಇಲ್ಲ. General ಆಗಿ wellness beverage ಆಗಿ ಬಳಸಬಹುದು, ಆದ್ರೆ ಎಷ್ಟು ತಗೋಬೇಕು ಅಂತ label ಮೇಲೆ ಇರೋ instructions ನೋಡಿ ಅಥವಾ doctor ಹತ್ರ ಕೇಳಿ confirm ಮಾಡ್ಕೊಳ್ಳಿ.",
+        "farewell": "",
+        "first_chunk_s": 1.969,
+        "turn_s": 1.969,
+        "chunks": 2,
+        "max_chunk_gap_s": 0.0,
+        "tts_languages": [
+          "kn-IN"
+        ],
+        "active_language_before": "kn-IN",
+        "active_language": "kn-IN",
+        "llm": {
+          "count": 5,
+          "requests": [
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3785,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3216,
+              "messages": 2,
+              "max_tokens": 384,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 2028,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 21468,
+              "messages": 8,
+              "max_tokens": 1280,
+              "packs": [
+                "kn-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3453,
+              "messages": 2,
+              "max_tokens": 768,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            }
+          ]
+        },
+        "tools": [],
+        "memory_facts": {},
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 3,
+        "elapsed_s": 163.1,
+        "caller": "Okay, no problem. Actually, I would prefer to continue in English now. Could you please repeat the price of the aloe vera juice you mentioned earlier?",
+        "caller_ending": false,
+        "reply": "Sure, the NatureVeda Aloe Vera Juice is priced at ₹399 for 500 ml.",
+        "farewell": "",
+        "first_chunk_s": 1.672,
+        "turn_s": 1.672,
+        "chunks": 1,
+        "max_chunk_gap_s": 0.0,
+        "tts_languages": [
+          "en-IN"
+        ],
+        "active_language_before": "kn-IN",
+        "active_language": "en-IN",
+        "llm": {
+          "count": 5,
+          "requests": [
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3785,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3216,
+              "messages": 2,
+              "max_tokens": 384,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 2028,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 25721,
+              "messages": 11,
+              "max_tokens": 1280,
+              "packs": [
+                "kn-IN",
+                "en-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own.",
+                "ACTIVE LANGUAGE note says. Acknowledge the switch in a few words, then continue from where the conversation was and answer anything they asked. Do not repeat the opening and do not ask them to speak Kannada.",
+                "ACTIVE LANGUAGE (en-IN) ---"
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3453,
+              "messages": 2,
+              "max_tokens": 768,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            }
+          ]
+        },
+        "tools": [],
+        "memory_facts": {},
+        "armed": false,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "ಖಂಡಿತ, NatureVeda Aloe Vera Juice ಬೆಲೆ ₹399 ಮತ್ತು ಇದರ size 500 ml ಇದೆ. ಇದರ ಬಗ್ಗೆ ಇನ್ನು ಏನಾದರೂ details ಬೇಕಾ?",
+        "at": 106331.25,
+        "tts_language": "kn-IN",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "ಕ್ಷಮಿಸಿ, ಇದರ daily consumption quantity ಬಗ್ಗೆ exact details ನನ್ನ ಬಳಿ ಇಲ್ಲ.",
+        "at": 106409.203,
+        "tts_language": "kn-IN",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "General ಆಗಿ wellness beverage ಆಗಿ ಬಳಸಬಹುದು, ಆದ್ರೆ ಎಷ್ಟು ತಗೋಬೇಕು ಅಂತ label ಮೇಲೆ ಇರೋ instructions ನೋಡಿ ಅಥವಾ doctor ಹತ್ರ ಕೇಳಿ confirm ಮಾಡ್ಕೊಳ್ಳಿ.",
+        "at": 106409.203,
+        "tts_language": "kn-IN",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "Sure, the NatureVeda Aloe Vera Juice is priced at ₹399 for 500 ml.",
+        "at": 106474.39,
+        "tts_language": "en-IN",
+        "farewell": false
+      }
+    ],
+    "tts_events": [
+      {
+        "turn": 3,
+        "event": "outage_clip_prewarm_requested"
+      }
+    ],
+    "tool_calls": [],
+    "errors": [
+      "RuntimeError: caller model failed: RuntimeError: Gemini request failed (HTTP 429)"
+    ],
+    "carrier": [],
+    "available_tools": [
+      "GMAIL_SEND_EMAIL",
+      "SAVE_ENQUIRY",
+      "REQUEST_HUMAN_HANDOFF",
+      "CONFIRM_ORDER"
+    ],
+    "duration_s": 221.2,
+    "judge_model": "gemini-3.5-flash-lite",
+    "checks": [
+      {
+        "id": "no_runtime_error",
+        "passed": false,
+        "evidence": "RuntimeError: caller model failed: RuntimeError: Gemini request failed (HTTP 429)",
+        "kind": "server"
+      },
+      {
+        "id": "min_duration_90s",
+        "passed": true,
+        "evidence": "221.2s",
+        "kind": "server"
+      },
+      {
+        "id": "responsive_every_turn",
+        "passed": true,
+        "evidence": "silent turns []",
+        "kind": "server"
+      },
+      {
+        "id": "first_chunk_latency",
+        "passed": true,
+        "evidence": "slow turns []",
+        "kind": "server"
+      },
+      {
+        "id": "speech_clean",
+        "passed": true,
+        "evidence": "",
+        "kind": "server"
+      },
+      {
+        "id": "no_unproven_action_claim",
+        "passed": true,
+        "evidence": "turns []",
+        "kind": "server"
+      },
+      {
+        "id": "no_false_dnd",
+        "passed": true,
+        "evidence": "0",
+        "kind": "server"
+      },
+      {
+        "id": "switched_live_to_english",
+        "passed": true,
+        "evidence": "active languages ['kn-IN', 'en-IN']",
+        "kind": "server"
+      },
+      {
+        "id": "pack_replaced_not_stacked",
+        "passed": true,
+        "evidence": "[]",
+        "kind": "server"
+      },
+      {
+        "id": "tts_followed_switch",
+        "passed": true,
+        "evidence": "[]",
+        "kind": "server"
+      },
+      {
+        "id": "answered_what_was_asked",
+        "passed": true,
+        "evidence": "The agent directly answered the price and size, explained usage or suggested checking the label, and correctly repeated the price in English when asked.",
+        "kind": "judge"
+      },
+      {
+        "id": "short_one_question",
+        "passed": true,
+        "evidence": "The agent kept responses brief and asked at most one question per turn.",
+        "kind": "judge"
+      },
+      {
+        "id": "catalog_facts_accurate",
+        "passed": true,
+        "evidence": "The agent stated ₹399 and 500 ml for the Aloe Vera Juice, matching the catalog.",
+        "kind": "judge"
+      },
+      {
+        "id": "no_invented_business_facts",
+        "passed": true,
+        "evidence": "The agent did not invent any extra business facts, discounts, or delivery timelines.",
+        "kind": "judge"
+      },
+      {
+        "id": "no_health_claims",
+        "passed": true,
+        "evidence": "The agent correctly avoided health claims and suggested checking the label or consulting a doctor.",
+        "kind": "judge"
+      },
+      {
+        "id": "no_pressure",
+        "passed": true,
+        "evidence": "The agent never pressured the caller to make a purchase.",
+        "kind": "judge"
+      },
+      {
+        "id": "context_retained",
+        "passed": true,
+        "evidence": "The agent remembered the product and details previously discussed when transitioning to English.",
+        "kind": "judge"
+      },
+      {
+        "id": "language_followed",
+        "passed": true,
+        "evidence": "The agent started in Kannada as required and successfully switched to English when the caller requested it.",
+        "kind": "judge"
+      },
+      {
+        "id": "switch_kept_context",
+        "passed": true,
+        "evidence": "After switching to English, the agent seamlessly repeated the price of the Aloe Vera Juice without restarting the introduction.",
+        "kind": "judge"
+      }
+    ],
+    "failures": [
+      "no_runtime_error"
+    ],
+    "passed": false
+  },
+  {
+    "id": "kn-IN/integration",
+    "scenario": "integration",
+    "language": "kn-IN",
+    "tenant_id": "09623916-1297-4f27-ab5f-cee8718215d4",
+    "agent_id": "1eecf08c-4fb7-5531-9c1f-40de4d064ac8",
+    "call_id": "3ab462f5-9acc-45db-9eab-8e5f47c98129",
+    "phone": "+919700000004",
+    "opening": "ನಮಸ್ಕಾರ, ನಾನು NatureVeda Herbals ಇಂದ Priya. ಒಂದು ನಿಮಿಷ ಮಾತನಾಡಬಹುದಾ?",
+    "turn_index": 0,
+    "turns": [],
+    "speech": [],
+    "tts_events": [],
+    "tool_calls": [],
+    "errors": [
+      "RuntimeError: caller model failed: RuntimeError: Gemini request failed (HTTP 429)"
+    ],
+    "carrier": [],
+    "available_tools": [
+      "GMAIL_SEND_EMAIL",
+      "SAVE_ENQUIRY",
+      "REQUEST_HUMAN_HANDOFF",
+      "CONFIRM_ORDER"
+    ],
+    "duration_s": 56.2,
+    "judge_model": "gemini-3.5-flash-lite",
+    "checks": [
+      {
+        "id": "no_runtime_error",
+        "passed": false,
+        "evidence": "RuntimeError: caller model failed: RuntimeError: Gemini request failed (HTTP 429)",
+        "kind": "server"
+      },
+      {
+        "id": "min_duration_90s",
+        "passed": false,
+        "evidence": "56.2s",
+        "kind": "server"
+      },
+      {
+        "id": "responsive_every_turn",
+        "passed": true,
+        "evidence": "silent turns []",
+        "kind": "server"
+      },
+      {
+        "id": "first_chunk_latency",
+        "passed": true,
+        "evidence": "slow turns []",
+        "kind": "server"
+      },
+      {
+        "id": "speech_clean",
+        "passed": true,
+        "evidence": "",
+        "kind": "server"
+      },
+      {
+        "id": "no_unproven_action_claim",
+        "passed": true,
+        "evidence": "turns []",
+        "kind": "server"
+      },
+      {
+        "id": "no_false_dnd",
+        "passed": true,
+        "evidence": "0",
+        "kind": "server"
+      },
+      {
+        "id": "tool_gmail_send_email_succeeded",
+        "passed": false,
+        "evidence": "[]",
+        "kind": "server"
+      },
+      {
+        "id": "answered_what_was_asked",
+        "passed": true,
+        "evidence": "AGENT (opening): ನಮಸ್ಕಾರ, ನಾನು NatureVeda Herbals ಇಂದ Priya. ಒಂದು ನಿಮಿಷ ಮಾತನಾಡಬಹುದಾ?",
+        "kind": "judge"
+      },
+      {
+        "id": "short_one_question",
+        "passed": true,
+        "evidence": "AGENT (opening): ನಮಸ್ಕಾರ, ನಾನು NatureVeda Herbals ಇಂದ Priya. ಒಂದು ನಿಮಿಷ ಮಾತನಾಡಬಹುದಾ?",
+        "kind": "judge"
+      },
+      {
+        "id": "catalog_facts_accurate",
+        "passed": true,
+        "evidence": "AGENT (opening): ನಮಸ್ಕಾರ, ನಾನು NatureVeda Herbals ಇಂದ Priya. ಒಂದು ನಿಮಿಷ ಮಾತನಾಡಬಹುದಾ?",
+        "kind": "judge"
+      },
+      {
+        "id": "no_invented_business_facts",
+        "passed": true,
+        "evidence": "AGENT (opening): ನಮಸ್ಕಾರ, ನಾನು NatureVeda Herbals ಇಂದ Priya. ಒಂದು ನಿಮಿಷ ಮಾತನಾಡಬಹುದಾ?",
+        "kind": "judge"
+      },
+      {
+        "id": "no_health_claims",
+        "passed": true,
+        "evidence": "AGENT (opening): ನಮಸ್ಕಾರ, ನಾನು NatureVeda Herbals ಇಂದ Priya. ಒಂದು ನಿಮಿಷ ಮಾತನಾಡಬಹುದಾ?",
+        "kind": "judge"
+      },
+      {
+        "id": "no_pressure",
+        "passed": true,
+        "evidence": "AGENT (opening): ನಮಸ್ಕಾರ, ನಾನು NatureVeda Herbals ಇಂದ Priya. ಒಂದು ನಿಮಿಷ ಮಾತನಾಡಬಹುದಾ?",
+        "kind": "judge"
+      },
+      {
+        "id": "context_retained",
+        "passed": true,
+        "evidence": "AGENT (opening): ನಮಸ್ಕಾರ, ನಾನು NatureVeda Herbals ಇಂದ Priya. ಒಂದು ನಿಮಿಷ ಮಾತನಾಡಬಹುದಾ?",
+        "kind": "judge"
+      },
+      {
+        "id": "language_followed",
+        "passed": true,
+        "evidence": "AGENT (opening): ನಮಸ್ಕಾರ, ನಾನು NatureVeda Herbals ಇಂದ Priya. ಒಂದು ನಿಮಿಷ ಮಾತನಾಡಬಹುದಾ?",
+        "kind": "judge"
+      },
+      {
+        "id": "email_claim_matches_tool",
+        "passed": true,
+        "evidence": "AGENT (opening): ನಮಸ್ಕಾರ, ನಾನು NatureVeda Herbals ಇಂದ Priya. ಒಂದು ನಿಮಿಷ ಮಾತನಾಡಬಹುದಾ?",
+        "kind": "judge"
+      },
+      {
+        "id": "asked_for_email_or_used_given",
+        "passed": true,
+        "evidence": "AGENT (opening): ನಮಸ್ಕಾರ, ನಾನು NatureVeda Herbals ಇಂದ Priya. ಒಂದು ನಿಮಿಷ ಮಾತನಾಡಬಹುದಾ?",
+        "kind": "judge"
+      },
+      {
+        "id": "honest_about_unknowns",
+        "passed": true,
+        "evidence": "AGENT (opening): ನಮಸ್ಕಾರ, ನಾನು NatureVeda Herbals ಇಂದ Priya. ಒಂದು ನಿಮಿಷ ಮಾತನಾಡಬಹುದಾ?",
+        "kind": "judge"
+      }
+    ],
+    "failures": [
+      "no_runtime_error",
+      "min_duration_90s",
+      "tool_gmail_send_email_succeeded"
+    ],
+    "passed": false
+  }
+]

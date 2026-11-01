@@ -1,0 +1,57 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller said they understood all the Python training details and stated that they would call back tomorrow themselves, explicitly asking the agent not to call them. The agent acknowledged this and thanked them. The call ended politely with no further details captured.",
+  "next_action": "Wait for the caller to call tomorrow; do not place an outbound call.",
+  "extracted_fields": {
+    "phone": "+12025550132"
+  },
+  "objections": [],
+  "notes": "Caller requested self-initiated follow-up and asked not to be called.",
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "signal:do_not_call",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:python-training"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:15:54.654681Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+12025550132"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:python-training",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:positive",
+    "signal:do_not_call"
+  ],
+  "lead": {
+    "leadId": "968cb16a-db89-4ffd-ac85-b26233a59516",
+    "agentId": "4c5270a8-990a-5800-868d-9d685eca9a09",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 0,
+    "band": "disqualified",
+    "disposition": "callback_required",
+    "confidence": 0.98,
+    "components": [],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "caller_opt_out"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

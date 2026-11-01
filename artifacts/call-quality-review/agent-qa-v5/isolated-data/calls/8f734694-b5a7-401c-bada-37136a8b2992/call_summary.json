@@ -1,0 +1,64 @@
+{
+  "call_id": "8f734694-b5a7-401c-bada-37136a8b2992",
+  "language_callback": null,
+  "disposition": "converted",
+  "disposition_confidence": 0.95,
+  "summary_te": "व्यवसाय के एजेंट ने ग्राहक को फोन किया। ग्राहक ने फेस क्रीम के अवयवों और बालों के तेल के साथ ऑर्डर करने में रुचि दिखाई। एजेंट ने मूल्य और मात्रा स्पष्ट की, और डिलीवरी समय तथा छूट के बारे में जानकारी न होने पर भी ग्राहक ने अपना नाम, पता, फोन नंबर और ईमेल साझा किया। अंततः एजेंट ने 1,497 रुपये के ऑर्डर की पुष्टि की और कॉल समाप्त हो गई।",
+  "summary_language": "hi-IN",
+  "summary_en": "The business agent called the customer, who expressed interest in purchasing one face cream and two bottles of hair oil. The agent shared the item prices and calculated a total of 1,497 rupees, though they could not provide delivery timelines or discount details. The customer provided her name, address, phone number, and email to proceed. After clarifying the quantity, the agent confirmed the order, and the call concluded.",
+  "next_action": null,
+  "extracted_fields": {
+    "budget": "1497 रुपये",
+    "caller_name": "लक्ष्मी रेड्डी",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919779677867",
+    "product": "1 face cream और 2 hair oil",
+    "quantity": "2"
+  },
+  "facts": {
+    "budget": "1497 रुपये",
+    "caller_name": "लक्ष्मी रेड्डी",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919779677867",
+    "product": "1 face cream और 2 hair oil",
+    "quantity": "2"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:hair-oil",
+    "custom:herbal-face-cream",
+    "followup:send_quote",
+    "intent:purchase",
+    "outcome:converted",
+    "sentiment:positive",
+    "signal:price_sensitive",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:purchase",
+    "sentiment:positive",
+    "followup:send_quote",
+    "action:required",
+    "signal:ready_to_buy",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:herbal-face-cream",
+    "custom:hair-oil",
+    "custom:order-confirmed"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [
+    "How long will delivery take?",
+    "Is there any discount available?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T17:22:55.994402Z",
+  "generation_ok": true
+}

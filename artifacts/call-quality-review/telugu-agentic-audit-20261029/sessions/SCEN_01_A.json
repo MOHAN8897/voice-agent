@@ -1,0 +1,275 @@
+{
+  "scenario_id": "SCEN_01",
+  "title": "Comprehensive Product & Pricing Enquiry with Quote Request",
+  "business_id": "A",
+  "agent_name": "Kavitha",
+  "category": "A_Interested_Enquiry",
+  "integration_condition": "connected",
+  "caller_phone": "+919876543210",
+  "total_turns": 11,
+  "total_tokens": 55842,
+  "duration_sec": 24.52,
+  "call_ended": true,
+  "carrier_hangup_invoked": true,
+  "carrier_hangup_error": false,
+  "transcript": [
+    {
+      "turn": 1,
+      "user": "నమస్కారం అండి, మీ ప్రింటింగ్ ప్రెస్ గురించి తెలుసుకోవాలని కాల్ చేశాను.",
+      "user_en": "Hello, called to know about your printing press.",
+      "agent": "నమస్కారం, నేను Sri Krishna Digital Prints నుంచి Kavitha ని మాట్లాడుతున్నాను. మేము cards, banners ప్రింట్ చేస్తాము, వాటి ధరల వివరాలు కూడా చెప్తాను. మీకు visiting cards కావాలా లేక flex banners గురించి తెలుసుకోవాలా?",
+      "latency_ms": 1856,
+      "tokens": 5226,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 2,
+      "user": "మా కొత్త ఆఫీస్ కోసం విజిటింగ్ కార్డులు కావాలి. సాధారణ కార్డుల ధర ఎంత అవుతుంది?",
+      "user_en": "Need visiting cards for our new office. What is the price of normal cards?",
+      "agent": "సాధారణ paper visiting cards one hundred cards కి two hundred rupees అవుతుంది. Matte finish cards అయితే one hundred కి three hundred fifty rupees అవుతుంది. Minimum order quantity one hundred cards ఉంటుంది. మీకు ఎన్ని cards కావాలో చెప్తారా?",
+      "latency_ms": 1700,
+      "tokens": 5355,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 3,
+      "user": "మ్యాట్ ఫినిష్ కార్డ్స్ కూడా ఉంటాయా? వాటి ధర ఎంత?",
+      "user_en": "Are there matte finish cards too? How much are they?",
+      "agent": "అవును, matte finish cards కూడా ఉంటాయి. వాటి ధర one hundred cards కి three hundred and fifty rupees అవుతుంది. మీకు ఎన్ని cards కావాలో చెప్తారా?",
+      "latency_ms": 1356,
+      "tokens": 5378,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 4,
+      "user": "కనీసం ఎన్ని కార్డులు ఆర్డర్ చేయాలి? 50 కార్డులు ఇస్తారా?",
+      "user_en": "Minimum how many cards to order? Will you give 50 cards?",
+      "agent": "Minimum order quantity one hundred cards ఉంటుంది, so 50 cards ఇవ్వడం కుదరదు. మీకు ఎన్ని cards కావాలో చెప్తారా?",
+      "latency_ms": 1196,
+      "tokens": 5434,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 5,
+      "user": "సరే, 200 మ్యాట్ విజిటింగ్ కార్డ్స్ తీసుకుంటే మొత్తం ఎంత అవుతుంది?",
+      "user_en": "Okay, if I take 200 matte visiting cards how much will it be in total?",
+      "agent": "రెండు వందల normal paper cards కి four hundred rupees అవుతుంది. మరి delivery ఎక్కడ కావాలో చెప్తారా?",
+      "latency_ms": 1376,
+      "tokens": 5494,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 6,
+      "user": "ఫ్లెక్స్ బ్యానర్లు కూడా ప్రింట్ చేస్తారా? స్క్వేర్ ఫీట్ రేట్ ఎంత?",
+      "user_en": "Do you print flex banners too? What is the square foot rate?",
+      "agent": "అవును, మేము flex banners కూడా ప్రింట్ చేస్తాము. Normal flex banners కి square foot కి fifteen rupees అవుతుంది, star flex banners కి twenty rupees అవుతుంది. మీకు ఏ banners కావాలో చెప్తారా?",
+      "latency_ms": 1270,
+      "tokens": 5564,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 7,
+      "user": "స్టార్ ఫ్లెక్స్ కి నార్మల్ ఫ్లెక్స్ కి తేడా ఏంటి? స్టార్ ఫ్లెక్స్ రేటు ఎంత?",
+      "user_en": "What is the difference between star flex and normal flex? What is the rate for star flex?",
+      "agent": "Star flex banners కి square foot కి twenty rupees అవుతుంది. Normal flex కి fifteen rupees అవుతుంది. మీకు ఏ banners కావాలో చెప్తారా?",
+      "latency_ms": 2506,
+      "tokens": 5787,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 8,
+      "user": "విజయవాడలో డెలివరీ ఎన్ని రోజుల్లో అవుతుంది?",
+      "user_en": "How many days for delivery in Vijayawada?",
+      "agent": "Design artwork approve అయిన తర్వాత Vijayawada లో delivery కి three working days పడుతుంది. మీకు ఏ banners కావాలో చెప్తారా?",
+      "latency_ms": 1433,
+      "tokens": 5665,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 9,
+      "user": "అర్జెంట్ గా రేపటికల్లా డెలివరీ కావాలంటే సాధ్యమవుతుందా?",
+      "user_en": "If needed urgently by tomorrow is it possible?",
+      "agent": "అర్జెంట్ గా 24 గంటల్లో delivery కావాలంటే అదనంగా one hundred and fifty rupees అవుతుంది. మీకు ఏ banners కావాలో చెప్తారా?",
+      "latency_ms": 1280,
+      "tokens": 5729,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 10,
+      "user": "సరే, 200 మ్యాట్ కార్డుల కొటేషన్ నోట్ చేసుకోండి. నా పేరు రమేష్, బెంజ్ సర్కిల్ విజయవాడ.",
+      "user_en": "Okay, note quote for 200 matte cards. Name Ramesh, Benz Circle, Vijayawada.",
+      "agent": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇంకేమైనా వివరాలు కావాలా?",
+      "latency_ms": 2807,
+      "tokens": 6210,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 11,
+      "user": "సరే చాలా వివరాలు చెప్పారు, థ్యాంక్యూ! ఇంకేమీ లేదు, కాల్ పెట్టేయండి.",
+      "user_en": "Okay, you gave many details, thank you! Nothing else, end call.",
+      "agent": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "latency_ms": 13,
+      "tokens": 0,
+      "should_end": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      },
+      "finish_reason": "rule_close"
+    }
+  ],
+  "db_evidence": {
+    "call": {
+      "call_id": "da3b1efa-7efd-466c-b482-90f2f2dff3ee",
+      "status": "active",
+      "finalization_status": "pending",
+      "disposition": null,
+      "end_reason": null,
+      "duration_sec": null,
+      "status_tags": []
+    },
+    "callbacks": [],
+    "followup_jobs": [],
+    "dnc_entries": [],
+    "leads": [],
+    "tool_executions": []
+  },
+  "evaluation": {
+    "assertions": [
+      {
+        "name": "turn_2_facts_fidelity",
+        "passed": false,
+        "detail": "Expected one of ['200', 'రెండు వందలు', '100'] in agent text"
+      },
+      {
+        "name": "turn_3_facts_fidelity",
+        "passed": false,
+        "detail": "Expected one of ['350', 'మూడు వందల యాభై'] in agent text"
+      },
+      {
+        "name": "turn_4_facts_fidelity",
+        "passed": false,
+        "detail": "Expected one of ['100', 'వంద'] in agent text"
+      },
+      {
+        "name": "turn_5_facts_fidelity",
+        "passed": false,
+        "detail": "Expected one of ['700', 'ఏడు వందలు', '350'] in agent text"
+      },
+      {
+        "name": "turn_6_facts_fidelity",
+        "passed": false,
+        "detail": "Expected one of ['15', 'పదిహేను'] in agent text"
+      },
+      {
+        "name": "turn_7_facts_fidelity",
+        "passed": false,
+        "detail": "Expected one of ['20', 'ఇరవై'] in agent text"
+      },
+      {
+        "name": "turn_8_facts_fidelity",
+        "passed": false,
+        "detail": "Expected one of ['3', 'మూడు రోజులు'] in agent text"
+      },
+      {
+        "name": "turn_9_facts_fidelity",
+        "passed": false,
+        "detail": "Expected one of ['150', 'నూట యాభై', '24 గంటలు'] in agent text"
+      }
+    ],
+    "all_passed": false,
+    "scores": {
+      "telugu_naturalness": 7.5,
+      "understanding_relevance": 7.0,
+      "script_adherence": 6.5,
+      "memory_corrections": 9.0,
+      "capability_honesty": 10.0,
+      "callback_dnd_outcome": 10.0,
+      "hangup_handoff": 9.5,
+      "overall": 8.42
+    }
+  },
+  "created_at": "2026-10-29T10:30:08.264017+00:00"
+}

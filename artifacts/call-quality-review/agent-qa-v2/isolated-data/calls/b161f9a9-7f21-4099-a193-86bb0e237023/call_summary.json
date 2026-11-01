@@ -1,0 +1,54 @@
+{
+  "call_id": "b161f9a9-7f21-4099-a193-86bb0e237023",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_language": "en-IN",
+  "summary_en": "The agent called the customer to offer details on the NatureVeda Herbal Hair Oil. The customer inquired about the price, ingredients, and weekly application frequency, but the agent could only confirm the price of 499 rupees and the listed components, admitting that the usage frequency was unavailable. After the agent suggested consulting a professional for personalized advice and asked to place an order, the customer explained they were busy at work and requested a callback tomorrow at 6:30 PM on the same number. The agent agreed to the callback and ended the call.",
+  "next_action": "Callback customer tomorrow at 6:30 PM",
+  "extracted_fields": {
+    "callback_time": "tomorrow at 6:30 PM",
+    "ingredients": "Amla, Bhringraj, Hibiscus, Coconut Oil",
+    "phone": "+919700000018",
+    "price": "499 rupees",
+    "product": "NatureVeda Herbal Hair Oil",
+    "volume": "200 ml"
+  },
+  "facts": {
+    "callback_time": "tomorrow at 6:30 PM",
+    "ingredients": "Amla, Bhringraj, Hibiscus, Coconut Oil",
+    "phone": "+919700000018",
+    "price": "499 rupees",
+    "product": "NatureVeda Herbal Hair Oil",
+    "volume": "200 ml"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:herbal-hair-oil",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:herbal-hair-oil"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Customer was busy at work and requested a callback instead of continuing the conversation."
+  ],
+  "unanswered_questions": [
+    "How many times per week should the herbal hair oil be applied?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T13:58:02.602499Z",
+  "generation_ok": true
+}

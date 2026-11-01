@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "I have tooth pain. I want an appointment tomorrow at 11 AM.", "ts": "2026-10-30T10:35:55.285175Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I understand you have tooth pain. I can note your preferred time for tomorrow at 11 AM for the front desk to confirm. To proceed, I will need your name.", "ts": "2026-10-30T10:35:58.462808Z"}
+{"seq": 3, "role": "user", "text": "My name is Kiran.", "ts": "2026-10-30T10:35:58.463831Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Thank you, Kiran. I have noted your preferred time for tomorrow at 11 AM for the front desk to confirm.", "ts": "2026-10-30T10:36:02.294275Z"}
+{"seq": 5, "role": "user", "text": "Is my appointment confirmed?", "ts": "2026-10-30T10:36:02.297149Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "Your appointment is not confirmed yet. I have noted your preferred time for tomorrow at 11 AM.", "ts": "2026-10-30T10:36:05.341377Z"}
+{"seq": 7, "role": "user", "text": "Okay, thanks.", "ts": "2026-10-30T10:36:05.342389Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "I have noted your preferred time for tomorrow at 11 AM for the front desk to confirm.", "ts": "2026-10-30T10:36:07.208771Z"}

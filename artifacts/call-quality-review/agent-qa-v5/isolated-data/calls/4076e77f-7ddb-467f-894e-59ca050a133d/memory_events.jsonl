@@ -1,0 +1,8 @@
+{"turn_seq": 1, "ts": "2026-10-31T16:05:03.518957Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T16:05:15.458036Z", "source": "model", "operations": [{"op": "set_fact", "key": "quantity", "value": "500"}], "applied": true, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T16:05:36.584352Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T16:05:36.593041Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "assistant: NatureVeda Aloe Vera Juice ₹399 का है और इसकी size 500 ml आती है।\nuser: ठीक है, 500 ml के लिए ₹399। और इसको लेना कैसे सही रहेगा?\nassistant: ये general wellness beverage के लिए है, तो आप इसे daily routine में drink कर सकते हैं। अगर आप इसे लेना चाहें तो बता दीजिए।\nuser: ठीक है, daily drink करने का idea अच्छा है। वैसे, क्या आपको पता है कि हमारे यहाँ Kukatpally, Hyderabad में delivery कितने दिन में हो जाएगी?\nassistant: माफ़ कीजिए, Kukatpally, Hyderabad में delivery कितने दिन में हो जाएगी, इसकी जानकारी मेरे पास उपलब्ध नहीं है। अगर आप order place करना चाहें तो बता दीजिए।"}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T16:05:59.253471Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T16:06:14.402839Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-31T16:06:39.272430Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 13, "ts": "2026-10-31T16:06:53.389707Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

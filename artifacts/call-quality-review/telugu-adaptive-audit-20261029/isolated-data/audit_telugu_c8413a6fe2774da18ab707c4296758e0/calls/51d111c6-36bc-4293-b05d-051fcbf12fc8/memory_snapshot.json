@@ -1,0 +1,16 @@
+{
+  "facts": {
+    "caller_name": "రమణ",
+    "delivery_locality": "విజయవాడ",
+    "product": "విజిటింగ్ కార్డ్స్",
+    "quantity": "200",
+    "delivery_time": "ఎప్పటికి అవుతుంది",
+    "payment_method": "తర్వాత చూసుకుంటాను"
+  },
+  "preferences": {
+    "finish": "matte finish",
+    "delivery_time": "త్రీ వర్కింగ్ డేస్"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "assistant: Matte finish cards అయితే one hundred కి three hundred and fifty rupees అవుతుంది. Vijayawada లో artwork approval తర్వాత delivery కి 3 working days పడుతుంది. మీరు designs తర్వాత పంపిస్తాం అన్నారు కదా, మరి మీ పేరు confirm చేస్తారా?\nuser: అవును, నా పేరు రమణ. 200 matte visiting cards కావాలి. మరి delivery ఎప్పటికి అవుతుంది?\nassistant: రమణ గారు, artwork approval తర్వాత Vijayawada లో delivery కి three working days పడుతుంది. Urgent గా కావాలంటే 24 hours కి extra one hundred fifty rupees అవుతుంది. మరి మీకు ఏది కావాలి?"
+}

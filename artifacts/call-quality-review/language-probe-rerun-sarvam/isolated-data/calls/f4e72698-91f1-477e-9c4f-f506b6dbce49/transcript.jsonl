@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "ಸ್ಪ್ಲಿಟ್ ಎಸಿಯ ಸರ್ವಿಸ್ ಬೆಲೆ ಎಷ್ಟು?", "ts": "2026-10-29T19:10:49.830541Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ಸ್ಪ್ಲಿಟ್ AC servicing-ಗೆ 599 rupees ಆಗುತ್ತೆ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಿತ್ತಾ?", "ts": "2026-10-29T19:10:50.335884Z", "brain_latency_ms": 508}
+{"seq": 3, "role": "user", "text": "ಇಲ್ಲ, ಕ್ಷಮಿಸಿ, ಅದು ವಿಂಡೋ ಎಸಿ. ಅದಕ್ಕೆ ಸರ್ವಿಸ್ ಬೆಲೆ ಎಷ್ಟು?", "ts": "2026-10-29T19:10:50.361159Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಓಹ್ ಸರಿ, ವಿಂಡೋ AC servicing-ಗೆ 499 rupees ಆಗುತ್ತೆ. ಬೇರೆ ಏನಾದ್ರೂ ಮಾಹಿತಿ ಬೇಕಿತ್ತಾ?", "ts": "2026-10-29T19:10:51.070496Z", "brain_latency_ms": 712}

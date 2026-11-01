@@ -1,0 +1,84 @@
+{
+  "disposition": "new_lead",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the delivery fee for a 300-rupee order. They shared the order value, but no specific details regarding delivery charges or other preferences were captured. The agent did not provide a response during the interaction. The call concluded without resolving the inquiry or agreeing on any next steps.",
+  "next_action": null,
+  "extracted_fields": {
+    "budget": "300",
+    "phone": "+919876500533"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:delivery-fee",
+    "custom:order-value"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T11:05:46.025996Z",
+  "generation_ok": true,
+  "facts": {
+    "budget": "300",
+    "phone": "+919876500533"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:delivery-fee",
+    "custom:order-value",
+    "intent:information",
+    "outcome:new_lead",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "735158a8-cf67-4c38-b3a6-0669b02a6d43",
+    "agentId": "3dc9a635-0642-47c5-9160-b8c02b56beeb",
+    "stage": "new",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 35,
+    "band": "cold",
+    "disposition": "new_lead",
+    "confidence": 0.85,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "budget"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

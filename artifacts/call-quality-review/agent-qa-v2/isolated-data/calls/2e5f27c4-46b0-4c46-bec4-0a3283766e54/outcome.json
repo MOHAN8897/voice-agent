@@ -1,0 +1,45 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The agent called the customer to present a selection of herbal products, including prices for Hair Oil, Aloe Vera Juice, Face Cream, and Ashwagandha Capsules. The customer inquired about the ingredients in the Hair Oil, the manufacturing location, and its suitability for different hair types. The agent explained that the origin details were unavailable and clarified that the oil is meant for routine scalp care. Although the customer initially asked several questions, they ultimately declined to proceed, stating they already use other products. The call concluded with mutual goodbyes after the customer confirmed they were not interested at this time.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919700000021"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "custom_tags": [],
+  "unanswered_questions": [
+    "Where are the products manufactured?",
+    "Are the products suitable for all hair types or specifically for hair fall?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T14:05:24.981873Z",
+  "generation_ok": true,
+  "summary_language": "en-IN",
+  "facts": {
+    "phone": "+919700000021"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

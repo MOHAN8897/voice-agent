@@ -1,0 +1,37 @@
+[
+  {
+    "id": "B_deep_enquiry",
+    "turns": 13,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 55.875
+  },
+  {
+    "id": "C_deep_enquiry",
+    "turns": 10,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 41.734
+  },
+  {
+    "id": "A_memory_probe",
+    "turns": 4,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 15.484
+  },
+  {
+    "id": "B_booking_success",
+    "turns": 3,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 15.671
+  },
+  {
+    "id": "C_crm_success",
+    "turns": 4,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 19.047
+  }
+]

@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "రెండు split ACలు, ఒక window AC service చేస్తే total ఎంత అవుతుంది?", "ts": "2026-10-29T19:09:29.209712Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Split AC service కి 599 rupees, window AC కి 499 rupees అవుతుంది. So, రెండు split ACలు, ఒక window AC కి total 1,697 rupees అవుతుంది. మీకు మా team ని visit కి పంపించాలా?", "ts": "2026-10-29T19:09:32.637134Z", "brain_latency_ms": 3439}

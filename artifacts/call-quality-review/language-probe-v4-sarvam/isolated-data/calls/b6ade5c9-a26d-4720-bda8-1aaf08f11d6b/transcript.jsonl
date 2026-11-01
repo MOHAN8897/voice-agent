@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "என் fridgeக்கு new compressor exact price எவ்வளவு", "ts": "2026-10-29T19:37:26.921278Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Sorry, அந்த exact price-அ phone-ல சொல்ல முடியாதுங்க. Technician வந்து inspection பண்ணிட்டு, actual MRP படி parts price எவ்ளோன்னு சொல்லுவாரு. Inspection charge ₹250 வரும், ஆனா நீங்க repair பண்ணிக்கிறீங்கன்னா அந்த charge waive பண்ணிடுவோம்.", "ts": "2026-10-29T19:37:27.634221Z", "brain_latency_ms": 715}

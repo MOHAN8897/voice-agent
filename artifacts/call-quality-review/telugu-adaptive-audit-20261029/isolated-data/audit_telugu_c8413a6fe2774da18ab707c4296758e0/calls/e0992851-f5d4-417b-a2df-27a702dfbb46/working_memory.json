@@ -1,0 +1,15 @@
+{
+  "facts": {
+    "caller_name": "కిరణ్",
+    "product": "Python మరియు data training",
+    "email": "kiran.audit@example.invalid",
+    "qualification": "B.Com",
+    "caller_email": "kiran.audit@example.invalid"
+  },
+  "preferences": {
+    "requested_time": "వీకెండ్స్",
+    "batch_preference": "వీకెండ్ batch"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": ""
+}

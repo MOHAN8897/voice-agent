@@ -1,0 +1,57 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి లక్ష్మి రెడ్డిని సంప్రదించి, నాలుగు హెర్బల్ ఉత్పత్తుల గురించి వివరించారు, అందులో నేచర్వేద హెర్బల్ హెయిర్ ఆయిల్ ధర ₹499 అని చెప్పారు. అయితే, తయారీ స్థలం, పదార్థాల నిష్పత్తులు, డెలివరీ సమయం మరియు డిస్కౌంట్ల గురించి అడిగిన ప్రశ్నలకు ఏజెంట్ వద్ద సమాచారం లేదు. తగినంత వివరాలు లేకపోవడం వల్ల మరియు ప్రస్తుతం వేరే ఉత్పత్తులను వాడుతున్నందున, కాలర్ ఆసక్తిని కోల్పోయారు. చివరగా, కాలర్ తనకు ఆసక్తి లేదని తెలిపారు మరియు కాల్ ముగిసింది.",
+  "summary_en": "The agent called Lakshmi Reddy and described four herbal products, highlighting the NatureVeda Herbal Hair Oil priced at ₹499. The caller asked several questions regarding manufacturing locations, ingredient proportions, delivery timelines, and discounts, but the agent could not provide any of these details because the information was unavailable in the system. Consequently, the caller expressed that there was insufficient information and stated they were currently using other products and had no interest. The caller clearly rejected further contact, and the agent ended the call politely.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_name": "Lakshmi Reddy",
+    "phone": "+919700000005"
+  },
+  "objections": [
+    "Caller stated there was insufficient information about the products."
+  ],
+  "notes": null,
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:hair-oil"
+  ],
+  "unanswered_questions": [
+    "Where are the products manufactured?",
+    "What are the proportions of Amla and Bhringraj in the hair oil?",
+    "How long does delivery take?",
+    "Are there any discounts available on the oil?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T15:10:19.244066Z",
+  "generation_ok": true,
+  "summary_language": "te-IN",
+  "facts": {
+    "caller_name": "Lakshmi Reddy",
+    "phone": "+919700000005"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:hair-oil",
+    "custom:herbal-products",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,51 @@
+{
+  "call_id": "6b2bc0f5-ac06-4df1-b1a3-0cbd3b9ab55a",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "ഉപഭോക്താവ് വിളിച്ച ഏജന്റ്, നേച്ചർവേദ ആലോവേര ജ്യൂസിന്റെ വിലയും ഹെയർ ഓയിലിന്റെ വിലയും ചോദിക്കുകയും മൊത്തം തുകയായ ₹898 മനസ്സിലാക്കുകയും ചെയ്തു. മറ്റ് വലുപ്പങ്ങളെക്കുറിച്ചും ഉപയോഗിക്കേണ്ട രീതിയെക്കുറിച്ചും ഏജന്റിന് വിവരമില്ലായിരുന്നു. ഉപഭോക്താവ് ഈ വിവരങ്ങൾ പരിഗണിച്ച ശേഷം തീരുമാനമെടുക്കാമെന്ന് പറയുകയും സംഭാഷണം അവസാനിപ്പിക്കുകയും ചെയ്തു.",
+  "summary_language": "ml-IN",
+  "summary_en": "The agent called the customer to provide product details. The customer inquired about the price of aloe vera juice and hair oil, and the agent shared that a 500 ml aloe vera juice costs ₹399 and a 200 ml hair oil costs ₹499, totaling ₹898. When asked about other sizes or exact usage instructions, the agent stated they did not have that information. The customer agreed to think it over, and the call ended with no immediate purchase or follow-up scheduled.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919700000024",
+    "price_aloe_vera_juice": "₹399 for 500 ml",
+    "price_hair_oil": "₹499 for 200 ml",
+    "product": "Aloe Vera Juice and Herbal Hair Oil",
+    "total_price": "₹898"
+  },
+  "facts": {
+    "phone": "+919700000024",
+    "price_aloe_vera_juice": "₹399 for 500 ml",
+    "price_hair_oil": "₹499 for 200 ml",
+    "product": "Aloe Vera Juice and Herbal Hair Oil",
+    "total_price": "₹898"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:aloe-vera-juice",
+    "custom:hair-oil",
+    "followup:send_info",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:aloe-vera-juice",
+    "custom:hair-oil"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [
+    "Are there other size options available for the aloe vera juice?",
+    "What are the exact usage instructions for the aloe vera juice?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T17:17:29.873856Z",
+  "generation_ok": true
+}

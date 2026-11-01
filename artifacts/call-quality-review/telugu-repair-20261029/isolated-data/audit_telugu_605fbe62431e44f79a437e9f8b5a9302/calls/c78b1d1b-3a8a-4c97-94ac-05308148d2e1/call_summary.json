@@ -1,0 +1,40 @@
+{
+  "call_id": "c78b1d1b-3a8a-4c97-94ac-05308148d2e1",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller initially asked about split AC servicing and its price, then corrected the request to window AC servicing. The agent quoted ₹499 for basic window AC servicing and asked whether to book an appointment. The caller confirmed that the window AC request was understood, said their questions were finished, thanked the agent, and ended the call without booking an appointment.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+12025550116",
+    "price": "₹499",
+    "service": "Basic Window AC servicing"
+  },
+  "facts": {
+    "phone": "+12025550116",
+    "price": "₹499",
+    "service": "Basic Window AC servicing"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:window-ac-service",
+    "intent:information",
+    "intent:pricing",
+    "outcome:interested",
+    "sentiment:positive"
+  ],
+  "tags": [
+    "intent:pricing",
+    "intent:information",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:window-ac-service"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:49:14.080496Z",
+  "generation_ok": true
+}

@@ -1,0 +1,49 @@
+{
+  "call_id": "e8cb56f3-d748-437c-9eb2-5cf59792dc0b",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Kiran called to inquire about a Python course and asked about the eligibility requirements. Kiran also explicitly requested a callback tomorrow morning. The agent acknowledged and recorded the details and callback request, but the eligibility information was not provided during this call. The call ended with thanks and a greeting.",
+  "next_action": "Call Kiran tomorrow morning and provide the Python course eligibility details.",
+  "extracted_fields": {
+    "caller_name": "కిరణ్",
+    "course": "Python course",
+    "name": "Kiran",
+    "phone": "+12025550135",
+    "requested_callback": "Tomorrow morning"
+  },
+  "facts": {
+    "caller_name": "కిరణ్",
+    "course": "Python course",
+    "name": "Kiran",
+    "phone": "+12025550135",
+    "requested_callback": "Tomorrow morning"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:eligibility-inquiry",
+    "custom:python-course",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "action:required",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-course",
+    "custom:eligibility-inquiry"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T11:17:45.335869Z",
+  "generation_ok": true
+}

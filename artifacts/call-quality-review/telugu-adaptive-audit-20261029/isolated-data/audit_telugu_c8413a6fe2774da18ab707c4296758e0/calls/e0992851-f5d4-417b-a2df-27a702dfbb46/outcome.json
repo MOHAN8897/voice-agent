@@ -1,0 +1,109 @@
+{
+  "disposition": "new_lead",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Kiran called looking for part-time Python and data training, preferably in weekend classes, and asked about the fee and whether his details could be registered. The agent quoted a weekend batch fee of ₹8,999 and requested his name, email, qualification, and batch preference for registration. Kiran provided the name Kiran, email kiran.audit@example.invalid, qualification B.Com, and confirmed a weekend batch preference. He then requested that the contact be created in the CRM. The agent thanked him and ended the call; the transcript does not confirm that the CRM record was actually created.",
+  "next_action": "Create the caller’s CRM contact using the provided details and follow up with weekend batch information if needed.",
+  "extracted_fields": {
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "email": "kiran.audit@example.invalid",
+    "fee_quoted": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550148",
+    "product": "Python మరియు data training",
+    "program_interest": "Python and data training",
+    "qualification": "B.Com",
+    "schedule_preference": "Weekend batch"
+  },
+  "objections": [],
+  "notes": "Caller provided contact details and expressed interest in part-time weekend training. CRM creation was requested but not confirmed in the call.",
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "followup:send_info",
+    "action:required",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:python-training",
+    "custom:data-training",
+    "custom:weekend-batch"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:29:47.405778Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "email": "kiran.audit@example.invalid",
+    "fee_quoted": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550148",
+    "product": "Python మరియు data training",
+    "program_interest": "Python and data training",
+    "qualification": "B.Com",
+    "schedule_preference": "Weekend batch"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:data-training",
+    "custom:python-training",
+    "custom:weekend-batch",
+    "followup:send_info",
+    "intent:information",
+    "intent:purchase",
+    "outcome:new_lead",
+    "sentiment:positive"
+  ],
+  "lead": {
+    "leadId": "e49401b9-1c35-4800-b098-0719c36e2693",
+    "agentId": "4c5270a8-990a-5800-868d-9d685eca9a09",
+    "stage": "new",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 35,
+    "band": "cold",
+    "disposition": "new_lead",
+    "confidence": 0.98,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 1,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

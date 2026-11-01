@@ -1,0 +1,12 @@
+{
+  "facts": {
+    "product": "విజిటింగ్ కార్డ్స్",
+    "email": "ramesh.audit@example.invalid",
+    "quantity": "200",
+    "caller_name": "రమేష్",
+    "delivery_locality": "విజయవాడ"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: సరే కవిత గారు, 200 మ్యాట్ కార్డ్స్ కి 700 rupees అవుతుంది కదా. నా email ramesh.audit@example.invalid. ఒకవేళ నేను wedding cards కూడా చేయించుకోవాలంటే దానికి price ఎంత ఉంటుంది? అలాగే rush order ఏమైనా చేస్తే extra charges ఏమైనా పడతాయా?\nassistant: వివాహ కార్డుల ధర డిజైన్, పేపర్ శాంపిల్ మరియు క్వాంటిటీ మీద ఆధారపడి ఉంటుంది, కాబట్టి ఫోన్లో ఫిక్స్‌డ్ ధర చెప్పలేము. రష్ ఆర్డర్ అంటే 24 గంటల డెలివరీకి అదనంగా one hundred fifty rupees పడుతుంది. మీ ఇమెయిల్ ramesh. audit@example. invalid గా నోట్ చేసుకున్నాను."
+}

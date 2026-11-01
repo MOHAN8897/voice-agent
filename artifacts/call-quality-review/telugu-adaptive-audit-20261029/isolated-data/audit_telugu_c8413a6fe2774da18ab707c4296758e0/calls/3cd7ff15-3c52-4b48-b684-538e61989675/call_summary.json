@@ -1,0 +1,64 @@
+{
+  "call_id": "3cd7ff15-3c52-4b48-b684-538e61989675",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "Shravani called requesting window AC service in Madhapur and asked whether a slot was available for tomorrow at 10:00 AM. She provided her email address, sravani.audit@example.invalid, and asked to book the appointment while specifically requesting confirmation of whether the booking was genuinely confirmed. The agent could not verify or confirm the booking and cautioned her not to assume it was completed. Shravani acknowledged that an unconfirmed booking should not be represented as confirmed, said that was all for now, thanked the agent, and the call ended. No appointment was confirmed.",
+  "next_action": "Verify availability and contact Shravani to confirm whether the requested window AC service slot can be booked for tomorrow at 10:00 AM.",
+  "extracted_fields": {
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "location": "Madhapur",
+    "name": "Shravani",
+    "phone": "+12025550136",
+    "product": "window AC service",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు ఉదయం 10 గంటలకు",
+    "service": "Window AC service"
+  },
+  "facts": {
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "location": "Madhapur",
+    "name": "Shravani",
+    "phone": "+12025550136",
+    "product": "window AC service",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు ఉదయం 10 గంటలకు",
+    "service": "Window AC service"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:madhapur",
+    "custom:morning-slot",
+    "custom:window-ac-service",
+    "followup:callback",
+    "intent:booking",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:booking",
+    "followup:callback",
+    "action:required",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:window-ac-service",
+    "custom:madhapur",
+    "custom:morning-slot"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T11:17:54.535845Z",
+  "generation_ok": true
+}

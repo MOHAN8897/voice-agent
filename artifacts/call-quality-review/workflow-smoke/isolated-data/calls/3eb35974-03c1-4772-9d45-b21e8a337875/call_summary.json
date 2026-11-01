@@ -1,0 +1,35 @@
+{
+  "call_id": "3eb35974-03c1-4772-9d45-b21e8a337875",
+  "language_callback": null,
+  "disposition": "no_outcome",
+  "disposition_confidence": 0.0,
+  "summary_te": "",
+  "summary_en": "Automatic summary generation failed. Transcript review: User: నాకు 200 matte visiting cards కావాలి. Assistant: సరే, 200 matte finish visiting cards కి మొత్తం ₹700 అవుతుంది. Minimum order 100 cards కాబట్టి ఇది కుదురుతుంది. మీ పేరు, delivery address చెప్తారా? Order confirm చేస్తాను. User: నా పేరు Ravi Kumar. Vijayawada లోని 12 MG Road కి deliver చేయండి. Assistant: మీ order confirm అయింది. 200 matte finish visiting cards, delivery address 12 MG Road, Vijayawada. Artwork approval తర్వాత 3 working days లో delivery అవుతుంది. Cash on delivery ఉంటుంది. User: అవును, order confirm చేయండి. Assistant: మీ order confirm అయింది. ఇంకేమైనా సహాయం కావాలా? User: Thanks, అంతే. Assistant: సరే, మీ order already confirm అయింది. ఇంకేమైనా వివరాలు కావాలా? లేదంటే ఇక్కడితో ముగిద్దామా?",
+  "next_action": "Review the transcript and captured facts.",
+  "extracted_fields": {
+    "caller_name": "Ravi Kumar",
+    "phone": "+919876500003",
+    "product": "matte visiting cards",
+    "quantity": "200"
+  },
+  "facts": {
+    "caller_name": "Ravi Kumar",
+    "phone": "+919876500003",
+    "product": "matte visiting cards",
+    "quantity": "200"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "outcome:no_outcome",
+    "quality:inconclusive"
+  ],
+  "tags": [],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:03:12.475260Z",
+  "generation_ok": false
+}

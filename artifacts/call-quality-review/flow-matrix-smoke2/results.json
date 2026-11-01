@@ -1,0 +1,169 @@
+[
+  {
+    "id": "en-IN/objective_followthrough/solar",
+    "scenario": "objective_followthrough",
+    "language": "en-IN",
+    "business": "solar",
+    "tenant_id": "44bb1be6-a951-4ee2-bfad-59a2ee04d39b",
+    "agent_id": "534be142-20ca-4158-8ed0-bcdd5bf2f1ae",
+    "call_id": "f04f325b-20a8-407c-9243-0820f6e95f7c",
+    "phone": "+919876500501",
+    "opening": "Hello, my name is Priya calling from SunPeak Solar, a rooftop solar installer in Chennai. I am calling because you recently requested a solar quote on our website. Is now a good time to speak?",
+    "turn_index": 3,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "How much does it cost and is there any subsidy?",
+        "caller_en": "How much does it cost and is there any subsidy?",
+        "reply": "A 3 kW rooftop system costs 1,95,000 rupees before the government subsidy of 78,000 rupees, so the customer pays 1,17,000 rupees. EMI is available from 2,999 rupees per month for 48 months. Regarding other charges or terms, those details are unknown.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "Okay, that sounds reasonable.",
+        "caller_en": "Okay, that sounds reasonable.",
+        "reply": "The draft does not fully answer the caller's implicit question about whether proceeding is reasonable.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 3,
+        "caller": "Hmm, okay.",
+        "caller_en": "Hmm, okay.",
+        "reply": "I understand. Since the pricing and subsidy details have already been shared and you find them reasonable, would you like to book a free site survey? For that, may I please take your name, your area, and your preferred day?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "A 3 kW rooftop system costs 1,95,000 rupees before the government subsidy of 78,000 rupees, so the customer pays 1,17,000 rupees. EMI is available from 2,999 rupees per month for 48 months. Regarding other charges or terms, those details are unknown.",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "The draft does not fully answer the caller's implicit question about whether proceeding is reasonable.",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "I understand. Since the pricing and subsidy details have already been shared and you find them reasonable, would you like to book a free site survey? For that, may I please take your name, your area, and your preferred day?",
+        "farewell": false
+      }
+    ],
+    "carrier": [],
+    "errors": [],
+    "ended_by_agent": false,
+    "contact_preference": "none",
+    "outcome": {
+      "disposition": "interested",
+      "contact_preference": "none",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:phone_known",
+        "custom:rooftop-system",
+        "custom:subsidy-query",
+        "followup:callback",
+        "intent:pricing",
+        "outcome:interested",
+        "sentiment:neutral"
+      ],
+      "facts": {
+        "phone": "+919876500501"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "f04f325b-20a8-407c-9243-0820f6e95f7c",
+          "tenant_id": "44bb1be6-a951-4ee2-bfad-59a2ee04d39b",
+          "agent_id": "534be142-20ca-4158-8ed0-bcdd5bf2f1ae",
+          "session_id": "wf-0d5d8d1d647a4b52a6bd00e4a922c210",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_6e44cb7464494183",
+          "started_at": "2026-10-30 10:29:51.259226+00:00",
+          "ended_at": "2026-10-30 10:30:03.188156+00:00",
+          "duration_sec": 11,
+          "disposition": "interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/f04f325b-20a8-407c-9243-0820f6e95f7c/",
+          "end_reason": "user_stop",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:phone_known",
+            "custom:rooftop-system",
+            "custom:subsidy-query",
+            "followup:callback",
+            "intent:pricing",
+            "outcome:interested",
+            "sentiment:neutral"
+          ],
+          "last_heartbeat_at": "2026-10-30 10:29:51.259226+00:00",
+          "created_at": "2026-10-30 10:29:51.268784+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "aac917b5-a71e-48e6-931e-1dc546ddc79e",
+          "tenant_id": "44bb1be6-a951-4ee2-bfad-59a2ee04d39b",
+          "agent_id": "534be142-20ca-4158-8ed0-bcdd5bf2f1ae",
+          "name": "New lead",
+          "phone": "+919876500501",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: f04f325b-20a8-407c-9243-0820f6e95f7c]\nThe caller initiated the call to inquire about the cost of a 3 kW rooftop system and whether any government subsidies were available. The agent explained that the total system cost is 1,95,000 rupees before a government subsidy of 78,000 rupees, leaving a customer payment of 1,17,000 rupees, with EMI options starting at 2,999 rupees per month for 48 months. The caller responded that the pricing sounded reasonable. The agent then proposed booking a free site survey and requested the caller's name, location, and preferred day to schedule it. The caller did not object but only responded with hesitation ('Hmm, okay'), and did not provide any personal details or confirm a schedule. The call concluded without the caller agreeing to the next step or providing the requested information.\n\nNext step: Agent to follow up with the caller to collect their name, area, and preferred survey date.\n\nCall outcome: interested (85% confidence)",
+          "created_at": "2026-10-30 10:30:04.968809+00:00",
+          "updated_at": "2026-10-30 10:30:04.968809+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "end_reason": "user_stop"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "interested"
+    },
+    "judge": [
+      {
+        "id": "answered_question_with_facts",
+        "passed": null,
+        "evidence": "judge_error:RateLimitError"
+      },
+      {
+        "id": "offered_survey_objective",
+        "passed": null,
+        "evidence": "judge_error:RateLimitError"
+      }
+    ],
+    "all_failures": [
+      "judge:answered_question_with_facts:unknown",
+      "judge:offered_survey_objective:unknown"
+    ],
+    "passed": false
+  }
+]

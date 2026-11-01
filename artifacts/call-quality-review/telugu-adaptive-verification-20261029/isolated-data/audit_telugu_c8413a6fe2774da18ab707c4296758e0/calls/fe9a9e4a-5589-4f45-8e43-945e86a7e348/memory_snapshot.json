@@ -1,0 +1,15 @@
+{
+  "facts": {
+    "caller_name": "రమేష్",
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "budget": "900 rupees",
+    "delivery_locality": "విజయవాడ",
+    "payment_method": "cash on delivery"
+  },
+  "preferences": {
+    "payment_method": "cash on delivery"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "user: సరే, విజయవాడ. మీరు గుర్తుంచుకున్న product, quantity, ఇంకా budget ఏంటో ఒకసారి మళ్ళీ చెప్తారా? అలాగే payment ఎలా చేయాలి?\nassistant: మీరు రెండు వందల matte visiting cards, తొమ్మిది వందల rupees budget తో విజయవాడలో అడుగుతున్నారు. Payment విషయానికి వస్తే, one thousand rupees పైన orders కి 50% advance payment చేయాలి, thousand rupees లోపు అయితే cash on delivery తీసుకోవచ్చు. మీకు ఈ order తో ముందుకు వెళ్లాలా?"
+}

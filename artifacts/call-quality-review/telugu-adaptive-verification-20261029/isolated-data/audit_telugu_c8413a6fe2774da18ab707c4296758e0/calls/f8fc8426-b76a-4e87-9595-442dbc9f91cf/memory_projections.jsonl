@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-29T15:45:04.866563Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T15:45:07.107531Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: visiting cards\n[Preferences]\nfinish: matte finish"}
+{"turn_seq": 5, "ts": "2026-10-29T15:45:09.295921Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: visiting cards | quantity: 200\n[Preferences]\nfinish: matte finish"}
+{"turn_seq": 7, "ts": "2026-10-29T15:45:11.512082Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: visiting cards | quantity: 200 | caller_name: రమేష్ | email: ramesh.audit@example.invalid | caller_email: ramesh.audit@example.invalid\n[Preferences]\nfinish: matte finish\n[Context]\nCaller provided contact details in this call."}

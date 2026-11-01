@@ -1,0 +1,72 @@
+{
+  "call_id": "055c55b2-256b-4a00-a81f-9bc7bc6ef132",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.86,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, inquired about Python training suitable for a working professional, initially asking about evening or weekend options and the course fee. The agent quoted ₹8,999 for an eight-week Python with Data Analytics course, including online live classes and hands-on projects, and described weekday evening and weekend batch timings. Kiran said the fee was higher than their budget and asked what was included. Kiran provided an email address and repeatedly asked whether the enquiry had been saved in the CRM or forwarded to a supervisor for review. The agent clarified that they could remember the conversation but could not save the details in the system, forward them to the team or supervisor, or guarantee follow-up. Kiran preferred the weekend batch, specifically Saturday and Sunday from 10 AM to 1 PM, but later requested not to be called for now and asked whether the enquiry could be forwarded by someone else. No booking or follow-up was arranged, and the call ended politely after the agent thanked Kiran.",
+  "next_action": "If system access becomes available, review and forward Kiran's enquiry to the appropriate supervisor or team; do not call unless Kiran requests contact.",
+  "extracted_fields": {
+    "budget": "Lower than ₹8,999",
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "contact_preference": "Do not call for now",
+    "course_duration": "8 weeks",
+    "course_fee": "₹8,999",
+    "email": "kiran.audit@example.invalid",
+    "included": "Online live classes and hands-on projects",
+    "name": "Kiran",
+    "phone": "+12025550127",
+    "preferred_batch": "Weekend batch",
+    "preferred_schedule": "Saturday and Sunday, 10 AM to 1 PM",
+    "product": "Python with Data Analytics course"
+  },
+  "facts": {
+    "budget": "Lower than ₹8,999",
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "contact_preference": "Do not call for now",
+    "course_duration": "8 weeks",
+    "course_fee": "₹8,999",
+    "email": "kiran.audit@example.invalid",
+    "included": "Online live classes and hands-on projects",
+    "name": "Kiran",
+    "phone": "+12025550127",
+    "preferred_batch": "Weekend batch",
+    "preferred_schedule": "Saturday and Sunday, 10 AM to 1 PM",
+    "product": "Python with Data Analytics course"
+  },
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:python-training",
+    "intent:information",
+    "intent:pricing",
+    "outcome:callback_required",
+    "sentiment:frustrated",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "tags": [
+    "action:required",
+    "signal:do_not_call",
+    "followup:callback",
+    "intent:information",
+    "intent:pricing",
+    "sentiment:frustrated"
+  ],
+  "custom_tags": [
+    "custom:python-training",
+    "custom:weekend-batch",
+    "custom:budget-sensitive"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Course fee of ₹8,999 is higher than the caller's budget.",
+    "Caller was not confident that the enquiry details had been saved and requested confirmation or supervisor review."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T11:11:16.502284Z",
+  "generation_ok": true
+}

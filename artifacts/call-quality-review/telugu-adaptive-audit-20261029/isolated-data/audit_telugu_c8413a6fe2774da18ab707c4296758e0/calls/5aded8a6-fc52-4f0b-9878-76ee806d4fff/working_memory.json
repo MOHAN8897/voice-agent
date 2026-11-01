@@ -1,0 +1,17 @@
+{
+  "facts": {
+    "product": "Python/data training",
+    "caller_name": "కిరణ్",
+    "email": "kiran.audit@example.invalid",
+    "caller_email": "kiran.audit@example.invalid",
+    "qualification": "B.Com",
+    "preferred_time": "weekend"
+  },
+  "preferences": {
+    "requested_time": "weekend",
+    "qualification": "B.Com",
+    "confirm_save": "నా details అన్నీ మీరు system లో save చేసేయండి. ఆ record సరిగ్గా save అయిందో లేదో ఒకసారి check చేసి చెప్పండి."
+  },
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "assistant: సరే, అర్థమైంది. మీ వివరాలను system లో create చేయడానికి ముందుగా, ఇంకేమైనా వివరాలు clarify చేయాలా?\nuser: లేదు, ఇంకేమీ clarify చేయాల్సిన అవసరం లేదు. నా details అన్నీ మీరు system లో save చేసేయండి. ఆ record సరిగ్గా save అయిందో లేదో ఒకసారి check చేసి చెప్పండి.\nassistant: అర్థమైంది, కానీ నేను వివరాలు save చేయలేను లేదా check చేయలేను. మీరు ఏ సహాయం కావాలనుకుంటున్నారో దయచేసి చెప్పండి."
+}

@@ -1,0 +1,57 @@
+{
+  "call_id": "a99950ac-2fc0-4aa8-8aef-4db1e876ad87",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "ಏಜೆಂಟ್ NatureVeda ಕಡೆಯಿಂದ ಕಸ್ಟಮರ್ ಗಳಿಗೆ ಕರೆ ಮಾಡಿ ಪ್ರಾಡಕ್ಟ್ ಗಳ ಬೆಲೆ ಮತ್ತು ವಿವರಗಳನ್ನು ತಿಳಿಸಿದರು. ಕಸ್ಟಮರ್ ಫೇಸ್ ಕ್ರೀಮ್ ಮತ್ತು ಹೇರ್ ಆಯಿಲ್ ಖರೀದಿಸಲು ಆಸಕ್ತಿ ತೋರಿಸಿದರು ಮತ್ತು ಆರ್ಡರ್ ವಿವರಗಳನ್ನು ಹಂಚಿಕೊಂಡರು. ಆದರೆ ಡಿಸ್ಕೌಂಟ್ ಮತ್ತು ಡೆಲಿವರಿ ಸಮಯದ ಬಗ್ಗೆ ಏಜೆಂಟ್ ಬಳಿ ಮಾಹಿತಿ ಇರಲಿಲ್ಲ. ಕಸ್ಟಮರ್ ತನ್ನ ಹೆಸರು, ವಿಳಾಸ ಮತ್ತು ಫೋನ್ ಸಂಖ್ಯೆಯನ್ನು ನೀಡಿದರು ಮತ್ತು ಮುಂದಿನ ಹಂತದ ಬಗ್ಗೆ ತಿಳಿಯಲು ಸಮ್ಮತಿಸಿದರು. ಏಜೆಂಟ್ ವಿವರಗಳನ್ನು ಬರೆದುಕೊಂಡ ನಂತರ ಆರ್ಡರ್ ಅನ್ನು ಖಚಿತಪಡಿಸಲು ಕಾಯುತ್ತಿದ್ದಾರೆ.",
+  "summary_language": "kn-IN",
+  "summary_en": "The agent called the customer to offer NatureVeda products and shared pricing details for the Herbal Hair Oil and Face Cream. The customer expressed interest and requested a total of two hair oil bottles and one face cream, calculating a total of ₹1597. When asked about discounts and delivery times, the agent stated they did not have that information and offered to note the details instead. The customer, Lakshmi Reddy, provided her address and phone number, and agreed to wait for the team to process the order and provide an update, leaving the call unresolved.",
+  "next_action": "Agent to confirm the order using the captured details.",
+  "extracted_fields": {
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "items": "2x Herbal Hair Oil, 1x Herbal Face Cream",
+    "phone_number": "9949012345",
+    "total_amount": "₹1597"
+  },
+  "facts": {
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "items": "2x Herbal Hair Oil, 1x Herbal Face Cream",
+    "phone_number": "9949012345",
+    "total_amount": "₹1597"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:herbal-products",
+    "followup:callback",
+    "intent:purchase",
+    "outcome:callback_required",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:purchase",
+    "followup:callback",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:face-cream",
+    "custom:hair-oil"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Discount availability"
+  ],
+  "unanswered_questions": [
+    "Is there any discount available for this order?",
+    "How long will the delivery take?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T16:34:17.712389Z",
+  "generation_ok": true
+}

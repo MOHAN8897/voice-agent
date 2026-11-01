@@ -1,0 +1,95 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "The caller asked for 100 visiting cards and requested the price. The agent explained that 100 normal-paper cards cost ₹200 and that 100 cards is the minimum order, then asked whether the caller wanted a matte finish. The caller clarified that they wanted visiting cards, not mugs, and asked what choice had been recorded. The agent confirmed that visiting cards were noted but stated that the enquiry had not yet been saved. The caller said their questions were answered and ended the call. No order was placed or follow-up agreed.",
+  "next_action": null,
+  "extracted_fields": {
+    "finish_discussed": "Matte finish",
+    "minimum_order": "100 cards",
+    "phone": "+12025550106",
+    "price": "₹200 for 100 normal-paper cards",
+    "product": "Visiting cards",
+    "quantity": "100"
+  },
+  "objections": [],
+  "notes": "The caller expressed interest in purchasing visiting cards but did not place an order.",
+  "tags": [
+    "intent:purchase",
+    "intent:pricing",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:100-cards",
+    "custom:normal-paper"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T16:37:29.463572Z",
+  "generation_ok": true,
+  "facts": {
+    "finish_discussed": "Matte finish",
+    "minimum_order": "100 cards",
+    "phone": "+12025550106",
+    "price": "₹200 for 100 normal-paper cards",
+    "product": "Visiting cards",
+    "quantity": "100"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:100-cards",
+    "custom:normal-paper",
+    "custom:visiting-cards",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive"
+  ],
+  "lead": {
+    "leadId": "39dd3bee-46b2-4ae7-9802-57bbe865e288",
+    "agentId": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.97,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

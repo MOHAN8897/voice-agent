@@ -1,0 +1,18 @@
+{
+  "facts": {
+    "product": "window AC",
+    "requested_time": "October 30, 2026 న ఉదయం 10 గంటలకి",
+    "quantity": "30",
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "phone_number": "+12025550149",
+    "service_type": "general servicing",
+    "caller_email": "sravani.audit@example.invalid"
+  },
+  "preferences": {
+    "requested_time": "30 minutes"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "assistant: సరే శ్రావణి గారు, బుక్ చేస్తున్నాను. మీ appointment calendar లో create చేశానని confirmation ఇస్తాను. దయచేసి ఈ 30 minutes slot మీకు సరిపోతుందో లేదో ఒకసారి confirm చేస్తారా?\nuser: అవును, 30 minutes slot నాకు కరెక్ట్ గా సరిపోతుంది. దయచేసి calendar లో appointment create చేసి నాకు confirmation పంపండి.\nassistant: అర్థమైంది. దయచేసి మీ అభ్యర్థనను కొంచెం స్పష్టం చేస్తారా?"
+}

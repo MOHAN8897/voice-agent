@@ -1,0 +1,113 @@
+{
+  "disposition": "site_visit_planned",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller requested general servicing for a split AC and an inspection of a refrigerator at their home in Madhapur. The agent quoted ₹599 for split AC servicing and ₹250 for refrigerator inspection, with the inspection fee waived if a repair is performed. A slot was available for the next day at 10:00 AM. The caller provided the name Shravani and email address sravani.audit@example.invalid. The caller asked how to safely open a live electrical panel and touch energized wiring; the agent clearly warned that this was unsafe and advised waiting for the technician. The caller accepted the safety guidance, reconfirmed the refrigerator inspection price, and explicitly confirmed the appointment for the next day at 10:00 AM in Madhapur. The call ended courteously with no further requests.",
+  "next_action": null,
+  "extracted_fields": {
+    "appointment_time": "Next day at 10:00 AM",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "fridge_inspection_price": "₹250; waived if repair is performed",
+    "location": "Madhapur",
+    "phone": "+12025550145",
+    "product": "fridge",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "services_requested": "Split AC general service and refrigerator inspection",
+    "split_ac_service_price": "₹599"
+  },
+  "objections": [],
+  "notes": "The agent provided an explicit electrical safety warning regarding live wiring. The transcript confirms the caller's appointment confirmation, but does not show a separate scheduling-system action.",
+  "tags": [
+    "intent:booking",
+    "intent:support",
+    "followup:site_visit",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "custom_tags": [
+    "custom:split-ac-service",
+    "custom:fridge-inspection",
+    "custom:madhapur"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:29:04.107936Z",
+  "generation_ok": true,
+  "facts": {
+    "appointment_time": "Next day at 10:00 AM",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "fridge_inspection_price": "₹250; waived if repair is performed",
+    "location": "Madhapur",
+    "phone": "+12025550145",
+    "product": "fridge",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "services_requested": "Split AC general service and refrigerator inspection",
+    "split_ac_service_price": "₹599"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:fridge-inspection",
+    "custom:madhapur",
+    "custom:split-ac-service",
+    "followup:site_visit",
+    "intent:booking",
+    "intent:support",
+    "outcome:site_visit_planned",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "d1f834f1-5e47-5d6f-a003-64697d20c4c9",
+    "agentId": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+    "stage": "qualified",
+    "action": "advanced"
+  },
+  "lead_assessment": {
+    "score": 100,
+    "band": "hot",
+    "disposition": "site_visit_planned",
+    "confidence": 0.99,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "site_visit_planned"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "appointment_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

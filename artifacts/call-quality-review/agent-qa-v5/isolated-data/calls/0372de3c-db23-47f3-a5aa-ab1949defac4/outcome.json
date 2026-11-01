@@ -1,0 +1,111 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.9,
+  "summary_te": "ವ್ಯವಹಾರದ ಪ್ರತಿನಿಧಿಯು ಲಕ್ಶ್ಮೀ ಅವರಿಗೆ ನೇಚರ್‌ವೇದಾ ಅಲೋವೆರಾ ಜ್ಯೂಸ್ ಮತ್ತು ಹರ್ಬಲ್ ಹೇರ್ ಆಯಿಲ್ ಬೆಲೆಗಳನ್ನು ತಿಳಿಸಿದರು. ಅವರು ಪ್ರತಿದಿನ ಎಷ್ಟು ಕುಡಿಯಬೇಕು ಮತ್ತು ಹೇರ್ ಆಯಿಲ್‌ನ ಪದಾರ್ಥಗಳ ಬಗ್ಗೆ ವಿಚಾರಿಸಿದರು, ಆದರೆ ಪ್ರತಿನಿಧಿಯು ವೈದ್ಯಕೀಯ ಸಲಹೆಗಾಗಿ ವೃತ್ತಿಪರರನ್ನು ಸಂಪರ್ಕಿಸಲು ಸೂಚಿಸಿದರು. ಲಕ್ಶ್ಮೀ ಅವರು ಒಟ್ಟು ₹898 ಮೊತ್ತಕ್ಕೆ ಎರಡೂ ವಸ್ತುಗಳನ್ನು ಖರೀದಿಸಲು ಆಸಕ್ತಿ ವ್ಯಕ್ತಪಡಿಸಿದರು, ಆದರೆ ಆದೇಶವನ್ನು ಅಂತಿಮಗೊಳಿಸಲು ಅವರು ನಿರ್ಧರಿಸಲಿಲ್ಲ ಮತ್ತು ಕರೆ ಮುಕ್ತಾಯವಾಯಿತು.",
+  "summary_en": "The agent called Lakshmi to provide details about the company's aloe vera juice and hair oil. Lakshmi inquired about the daily dosage of the juice, and the agent stated they did not have that information and advised consulting a healthcare professional. Lakshmi then requested to continue the conversation in Kannada, which the agent agreed to do. Lakshmi asked for the combined total of one aloe vera juice and one hair oil, and the agent confirmed the price of ₹898. Although Lakshmi indicated this total was acceptable, she did not confirm the order, and the call ended without a concrete next step being agreed upon.",
+  "next_action": "callback_required",
+  "extracted_fields": {
+    "caller_name": "Lakshmi",
+    "phone": "+919700000015",
+    "product": "aloe vera juice",
+    "product_1": "aloe vera juice",
+    "product_1_price": "₹399",
+    "product_1_size": "500 ml",
+    "product_2": "Herbal Hair Oil",
+    "product_2_price": "₹499",
+    "quantity": "500",
+    "total_price": "₹898"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:aloe-vera-juice",
+    "custom:herbal-hair-oil"
+  ],
+  "unanswered_questions": [
+    "How much should I drink daily?",
+    "What are the ingredients in the hair oil?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T16:36:23.558810Z",
+  "generation_ok": true,
+  "summary_language": "kn-IN",
+  "facts": {
+    "caller_name": "Lakshmi",
+    "phone": "+919700000015",
+    "product": "aloe vera juice",
+    "product_1": "aloe vera juice",
+    "product_1_price": "₹399",
+    "product_1_size": "500 ml",
+    "product_2": "Herbal Hair Oil",
+    "product_2_price": "₹499",
+    "quantity": "500",
+    "total_price": "₹898"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:aloe-vera-juice",
+    "custom:herbal-hair-oil",
+    "followup:callback",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "06d6c15f-8766-4b8b-86a2-f029143905f8",
+    "agentId": "80b7a84a-5580-4938-a8be-046c62acb6cf",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.9,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

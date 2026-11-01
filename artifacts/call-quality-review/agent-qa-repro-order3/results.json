@@ -1,0 +1,2771 @@
+[
+  {
+    "id": "hi-IN/repro_order",
+    "scenario": "repro_order",
+    "language": "hi-IN",
+    "tenant_id": "b504974d-f3bc-4afc-b87a-9181c56fc54e",
+    "agent_id": "3e614939-d21e-5874-909c-bda138e75b9f",
+    "call_id": "fce4c60f-a0f6-4207-b41f-bed81feea587",
+    "phone": "+919700000001",
+    "opening": "नमस्ते। मैं प्रिया बोल रही हूँ नेचरवेदा हर्बल्स से। क्या आप हमारे हर्बल प्रोडक्ट्स, जैसे कि हेयर ऑयल, एलोवेरा जूस, फेस क्रीम, या अश्वगंधा कैप्सूल के बारे में जानकारी चाहेंगे?",
+    "turn_index": 6,
+    "turns": [
+      {
+        "turn": 1,
+        "elapsed_s": 18.0,
+        "caller": "नमस्ते प्रिया जी। हाँ, बताइए, आपके पास face cream के बारे में क्या है?",
+        "caller_ending": false,
+        "reply": "हमारी NatureVeda Herbal Face Cream ₹599 में 50 ग्राम की आती है। इसमें Neem, Turmeric, और Aloe Vera हैं, जो moisturizing और routine skin care के लिए अच्छी है। बताइए, आपको इसका order करना है या delivery के बारे में जानना है?",
+        "farewell": "",
+        "first_chunk_s": 2.047,
+        "turn_s": 2.047,
+        "chunks": 2,
+        "max_chunk_gap_s": 0.0,
+        "tts_languages": [
+          "hi-IN"
+        ],
+        "active_language_before": "hi-IN",
+        "active_language": "hi-IN",
+        "llm": {
+          "count": 5,
+          "requests": [
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3785,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3216,
+              "messages": 2,
+              "max_tokens": 384,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 2028,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 21542,
+              "messages": 6,
+              "max_tokens": 1280,
+              "packs": [
+                "hi-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 4201,
+              "messages": 2,
+              "max_tokens": 768,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            }
+          ]
+        },
+        "tools": [],
+        "memory_facts": {},
+        "memory_preferences": {},
+        "memory_summary": "",
+        "armed": false,
+        "error": null,
+        "events": [
+          {
+            "turn": 1,
+            "event": "TURN_START",
+            "turn_id": "6be5d380ed34"
+          },
+          {
+            "turn": 1,
+            "event": "contact.review",
+            "decision": "continue",
+            "contact": "none"
+          },
+          {
+            "turn": 1,
+            "event": "close.classifier",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "decision": "continue",
+            "reason": "none",
+            "evidence_chars": "0",
+            "output_tokens": "143"
+          },
+          {
+            "turn": 1,
+            "event": "business.answer_lookup",
+            "terms": "1",
+            "unknown": "0"
+          },
+          {
+            "turn": 1,
+            "event": "llm.request",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "requested_max_tokens": "0",
+            "effective_max_tokens": "1280",
+            "reasoning_effort": "None",
+            "temperature": "None",
+            "has_schema": "False"
+          },
+          {
+            "turn": 1,
+            "event": "hold.prewarm_failed"
+          },
+          {
+            "turn": 1,
+            "event": "speech.fact_review",
+            "unchanged": "False"
+          },
+          {
+            "turn": 1,
+            "event": "speech.fact_corrected",
+            "input_chars": "218",
+            "output_chars": "222"
+          },
+          {
+            "turn": 1,
+            "event": "text_queued",
+            "chars": "63"
+          },
+          {
+            "turn": 1,
+            "event": "tts_heard_promoted",
+            "chars": "63"
+          },
+          {
+            "turn": 1,
+            "event": "text_queued",
+            "chars": "158"
+          },
+          {
+            "turn": 1,
+            "event": "tts_heard_promoted",
+            "chars": "158"
+          },
+          {
+            "turn": 1,
+            "event": "llm.finish",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "finish_reason": "stop",
+            "requested_max_tokens": "0",
+            "effective_max_tokens": "1280",
+            "reasoning_effort": "None",
+            "retry_count": "0",
+            "input_tokens": "5004",
+            "output_tokens": "59",
+            "cached_tokens": "1024",
+            "schema_valid": "True"
+          },
+          {
+            "turn": 1,
+            "event": "voice_audio_complete",
+            "turn_id": "6be5d380ed34"
+          },
+          {
+            "turn": 1,
+            "event": "TURN_END",
+            "turn_id": "6be5d380ed34"
+          }
+        ],
+        "reviews": [
+          {
+            "turn": 1,
+            "draft": "हमारी NatureVeda Herbal Face Cream ₹599 में 50 g की आती है। इसमें Neem, Turmeric, और Aloe Vera हैं, जो moisturizing और routine skin care के लिए अच्छी है। बताइए, आपको इसका order करना है या delivery के बारे में जानना है?",
+            "output": "हमारी NatureVeda Herbal Face Cream ₹599 में 50 ग्राम की आती है। इसमें Neem, Turmeric, और Aloe Vera हैं, जो moisturizing और routine skin care के लिए अच्छी है। बताइए, आपको इसका order करना है या delivery के बारे में जानना है?",
+            "changed": true
+          }
+        ],
+        "raw_streams": [
+          {
+            "turn": 1,
+            "fields": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"decision\": \"continue\",\n  \"intent\": \"question\",\n  \"reason\": \"none\",\n  \"explicit_end\": false,\n  \"evidence\": \"हाँ, बताइए, आपके पास face cream के बारे में क्या है?\",\n  \"remaining_request\": \"face cream के बारे में जानकारी\",\n  \"contact_intent\": \"none\",\n  \"contact_evidence\": \"\",\n  \"callback_time\": \"\",\n  \"memory_operations\": [],\n  \"wait_for_caller\": true,\n  \"wait_evidence\": \"बताइए, आपके पास face cream के बारे में क्या है?\"\n}\n```"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 1,
+            "fields": {
+              "role": "assistant",
+              "content": "{\n  \"contact_action\": \"keep\",\n  \"contact_evidence\": \"\",\n  \"when\": \"\",\n  \"finish\": false,\n  \"finish_evidence\": \"\",\n  \"open_request\": \"face cream के बारे में जानकारी\",\n  \"action_request\": \"none\",\n  \"agent_asked_time\": false\n}"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 1,
+            "fields": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"answers\": [\n    {\n      \"domain\": \"business_terms\",\n      \"question\": \"face cream\",\n      \"subject\": \"NatureVeda Herbal Face Cream\",\n      \"row_id\": \"4\",\n      \"topic_quote\": \"NatureVeda Herbal Face Cream costs 599 rupees for 50 g\",\n      \"value_quote\": \"599 rupees for 50 g\",\n      \"unit_price_quote\": \"599\",\n      \"unit_quantity_quote\": \"50\"\n    }\n  ]\n}\n```"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 1,
+            "fields": {
+              "role": "assistant",
+              "content": "हमारी NatureVeda Herbal Face Cream 599 rupees में 50 g की आती है। इसमें Neem, Turmeric, और Aloe Vera हैं, जो moisturizing और routine skin care के लिए अच्छी है। बताइए, आपको इसका order करना है या delivery के बारे में जानना है?"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 1,
+            "fields": {
+              "role": "assistant",
+              "content": "हमारी NatureVeda Herbal Face Cream ₹599 में 50 ग्राम की आती है। इसमें Neem, Turmeric, और Aloe Vera हैं, जो moisturizing और routine skin care के लिए अच्छी है। बताइए, आपको इसका order करना है या delivery के बारे में जानना है? __OK__"
+            },
+            "finish": "stop",
+            "closed": true
+          }
+        ]
+      },
+      {
+        "turn": 2,
+        "elapsed_s": 41.9,
+        "caller": "ठीक है, मैं 2 bottles hair oil और 1 face cream लेना चाहती हूँ, total price कितना हुआ?",
+        "caller_ending": false,
+        "reply": "देखिए, 2 bottles hair oil और 1 face cream का total ₹1497 होगा। Hair oil 499 रुपये per bottle है और face cream 599 रुपये की है। बताइए, order place करना है या delivery details जाननी हैं?",
+        "farewell": "",
+        "first_chunk_s": 2.156,
+        "turn_s": 2.156,
+        "chunks": 2,
+        "max_chunk_gap_s": 0.0,
+        "tts_languages": [
+          "hi-IN"
+        ],
+        "active_language_before": "hi-IN",
+        "active_language": "hi-IN",
+        "llm": {
+          "count": 6,
+          "requests": [
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3785,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 1092,
+              "messages": 2,
+              "max_tokens": 128,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3216,
+              "messages": 2,
+              "max_tokens": 384,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 2028,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 21942,
+              "messages": 8,
+              "max_tokens": 1280,
+              "packs": [
+                "hi-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 4201,
+              "messages": 2,
+              "max_tokens": 768,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            }
+          ]
+        },
+        "tools": [],
+        "memory_facts": {},
+        "memory_preferences": {},
+        "memory_summary": "",
+        "armed": false,
+        "error": null,
+        "events": [
+          {
+            "turn": 2,
+            "event": "TURN_START",
+            "turn_id": "cd78ab131e95"
+          },
+          {
+            "turn": 2,
+            "event": "contact.review",
+            "decision": "continue",
+            "contact": "none"
+          },
+          {
+            "turn": 2,
+            "event": "close.classifier",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "decision": "continue",
+            "reason": "none",
+            "evidence_chars": "0",
+            "output_tokens": "293"
+          },
+          {
+            "turn": 2,
+            "event": "business.answer_lookup",
+            "terms": "2",
+            "unknown": "0"
+          },
+          {
+            "turn": 2,
+            "event": "llm.request",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "requested_max_tokens": "0",
+            "effective_max_tokens": "1280",
+            "reasoning_effort": "None",
+            "temperature": "None",
+            "has_schema": "False"
+          },
+          {
+            "turn": 2,
+            "event": "hold.prewarm_failed"
+          },
+          {
+            "turn": 2,
+            "event": "speech.fact_review",
+            "unchanged": "False"
+          },
+          {
+            "turn": 2,
+            "event": "speech.fact_corrected",
+            "input_chars": "184",
+            "output_chars": "184"
+          },
+          {
+            "turn": 2,
+            "event": "text_queued",
+            "chars": "62"
+          },
+          {
+            "turn": 2,
+            "event": "tts_heard_promoted",
+            "chars": "62"
+          },
+          {
+            "turn": 2,
+            "event": "text_queued",
+            "chars": "121"
+          },
+          {
+            "turn": 2,
+            "event": "tts_heard_promoted",
+            "chars": "121"
+          },
+          {
+            "turn": 2,
+            "event": "llm.finish",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "finish_reason": "stop",
+            "requested_max_tokens": "0",
+            "effective_max_tokens": "1280",
+            "reasoning_effort": "None",
+            "retry_count": "0",
+            "input_tokens": "5217",
+            "output_tokens": "56",
+            "cached_tokens": "1024",
+            "schema_valid": "True"
+          },
+          {
+            "turn": 2,
+            "event": "voice_audio_complete",
+            "turn_id": "cd78ab131e95"
+          },
+          {
+            "turn": 2,
+            "event": "TURN_END",
+            "turn_id": "cd78ab131e95"
+          }
+        ],
+        "reviews": [
+          {
+            "turn": 2,
+            "draft": "देखिए, 2 bottles hair oil और 1 face cream का total ₹1497 होगा। Hair oil 499 रुपये per bottle है और face cream 599 रुपये की है। बताइए, order place करना है या delivery details जाननी हैं?",
+            "output": "देखिए, 2 bottles hair oil और 1 face cream का total ₹1497 होगा। Hair oil 499 रुपये per bottle है और face cream 599 रुपये की है। बताइए, order place करना है या delivery details जाननी हैं?",
+            "changed": false
+          }
+        ],
+        "raw_streams": [
+          {
+            "turn": 2,
+            "fields": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"decision\": \"continue\",\n  \"intent\": \"question\",\n  \"reason\": \"none\",\n  \"explicit_end\": false,\n  \"evidence\": \"ठीक है, मैं 2 bottles hair oil और 1 face cream लेना चाहती हूँ, total price कितना हुआ?\",\n  \"remaining_request\": \"total price calculation for 2 bottles hair oil and 1 face cream\",\n  \"contact_intent\": \"none\",\n  \"contact_evidence\": \"\",\n  \"callback_time\": \"\",\n  \"memory_operations\": [\n    {\n      \"op\": \"set_fact\",\n      \"key\": \"product\",\n      \"value\": \"hair oil, face cream\",\n      \"evidence\": \"2 bottles hair oil और 1 face cream\",\n      \"assertion\": \"caller_asserted\",\n      \"polarity\": \"positive\"\n    },\n    {\n      \"op\": \"set_fact\",\n      \"key\": \"quantity\",\n      \"value\": \"3\",\n      \"evidence\": \"2 bottles hair oil और 1 face cream\",\n      \"assertion\": \"caller_asserted\",\n      \"p"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 2,
+            "fields": {
+              "role": "assistantassistant",
+              "content": "```json\n{\n  \"{accepted\": [\n    0\n  \"contact_action\n  \": \"keep\",\n  ]\n}\n```"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 2,
+            "fields": {
+              "content": "\"contact_evidence\": \"\",\n  \"when\": \"\",\n  \"finish\": false,\n  \"finish_evidence\": \"\",\n  \"open_request\": \"total price कितना हुआ?\",\n  \"action_request\": \"none\",\n  \"agent_asked_time\": false\n}"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 2,
+            "fields": {
+              "role": "assistant",
+              "content": "{\n  \"answers\": [\n    {\n      \"domain\": \"business_terms\",\n      \"question\": \"total price for 2 bottles hair oil and 1 face cream\",\n      \"subject\": \"NatureVeda Herbal Hair Oil\",\n      \"row_id\": 2,\n      \"topic_quote\": \"NatureVeda Herbal Hair Oil costs 499 rupees for 200 ml\",\n      \"value_quote\": \"499 rupees for 200 ml\",\n      \"unit_price_quote\": \"499\",\n      \"unit_quantity_quote\": \"200 ml\",\n      \"requested_quantity_quote\": \"2\"\n    },\n    {\n      \"domain\": \"business_terms\",\n      \"question\": \"total price for 2 bottles hair oil and 1 face cream\",\n      \"subject\": \"NatureVeda Herbal Face Cream\",\n      \"row_id\": 4,\n      \"topic_quote\": \"NatureVeda Herbal Face Cream costs 599 rupees for 50 g\",\n      \"value_quote\": \"599 rupees for 50 g\",\n      \"unit_price_quote\": \"599\",\n      \"unit_quantity_quot"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 2,
+            "fields": {
+              "role": "assistant",
+              "content": "देखिए, 2 bottles hair oil और 1 face cream का total ₹1497 होगा। Hair oil 499 रुपये per bottle है और face cream 599 रुपये की है। बताइए, order place करना है या delivery details जाननी हैं?"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 2,
+            "fields": {
+              "role": "assistant",
+              "content": "देखिए, 2 bottles hair oil और 1 face cream का total ₹1497 होगा। Hair oil 499 रुपये per bottle है और face cream 599 रुपये की है। बताइए, order place करना है या delivery details जाननी हैं?\n__OK__"
+            },
+            "finish": "stop",
+            "closed": true
+          }
+        ]
+      },
+      {
+        "turn": 3,
+        "elapsed_s": 61.9,
+        "caller": "ठीक है, फिर आप order confirm कर दीजिए, आगे क्या करना होगा?",
+        "caller_ending": false,
+        "reply": "order confirm करने के लिए मुझे आपका नाम और delivery address चाहिए होगा। आप details बता दीजिए, फिर आगे process कर देते हैं।",
+        "farewell": "",
+        "first_chunk_s": 2.125,
+        "turn_s": 2.14,
+        "chunks": 2,
+        "max_chunk_gap_s": 0.015,
+        "tts_languages": [
+          "hi-IN"
+        ],
+        "active_language_before": "hi-IN",
+        "active_language": "hi-IN",
+        "llm": {
+          "count": 5,
+          "requests": [
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3785,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3216,
+              "messages": 2,
+              "max_tokens": 384,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 2028,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 18736,
+              "messages": 10,
+              "max_tokens": 1280,
+              "packs": [
+                "hi-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 21228,
+              "messages": 11,
+              "max_tokens": 1280,
+              "packs": [
+                "hi-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            }
+          ]
+        },
+        "tools": [],
+        "memory_facts": {
+          "quantity": "1"
+        },
+        "memory_preferences": {},
+        "memory_summary": "",
+        "armed": false,
+        "error": null,
+        "events": [
+          {
+            "turn": 3,
+            "event": "TURN_START",
+            "turn_id": "af49b7163548"
+          },
+          {
+            "turn": 3,
+            "event": "contact.review",
+            "decision": "continue",
+            "contact": "none"
+          },
+          {
+            "turn": 3,
+            "event": "close.classifier",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "decision": "continue",
+            "reason": "none",
+            "evidence_chars": "0",
+            "output_tokens": "139"
+          },
+          {
+            "turn": 3,
+            "event": "business.answer_lookup",
+            "terms": "0",
+            "unknown": "0"
+          },
+          {
+            "turn": 3,
+            "event": "llm.request",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "requested_max_tokens": "0",
+            "effective_max_tokens": "1280",
+            "reasoning_effort": "None",
+            "temperature": "None",
+            "has_schema": "False"
+          },
+          {
+            "turn": 3,
+            "event": "hold.prewarm_failed"
+          },
+          {
+            "turn": 3,
+            "event": "llm.finish",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "finish_reason": "stop",
+            "retry_count": "0",
+            "requested_max_tokens": "0",
+            "effective_max_tokens": "1280",
+            "output_tokens": "29"
+          },
+          {
+            "turn": 3,
+            "event": "llm.request",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "requested_max_tokens": "0",
+            "effective_max_tokens": "1280",
+            "reasoning_effort": "None",
+            "temperature": "None",
+            "has_schema": "False"
+          },
+          {
+            "turn": 3,
+            "event": "speech.fact_review_skipped"
+          },
+          {
+            "turn": 3,
+            "event": "reply.guard"
+          },
+          {
+            "turn": 3,
+            "event": "text_queued",
+            "chars": "71"
+          },
+          {
+            "turn": 3,
+            "event": "tts_heard_promoted",
+            "chars": "71"
+          },
+          {
+            "turn": 3,
+            "event": "text_queued",
+            "chars": "50"
+          },
+          {
+            "turn": 3,
+            "event": "tts_heard_promoted",
+            "chars": "50"
+          },
+          {
+            "turn": 3,
+            "event": "llm.finish",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "finish_reason": "stop",
+            "requested_max_tokens": "0",
+            "effective_max_tokens": "1280",
+            "reasoning_effort": "None",
+            "retry_count": "0",
+            "input_tokens": "5121",
+            "output_tokens": "30",
+            "cached_tokens": "4064",
+            "schema_valid": "True"
+          },
+          {
+            "turn": 3,
+            "event": "voice_audio_complete",
+            "turn_id": "af49b7163548"
+          },
+          {
+            "turn": 3,
+            "event": "TURN_END",
+            "turn_id": "af49b7163548"
+          }
+        ],
+        "reviews": [
+          {
+            "turn": 3,
+            "draft": "ठीक है, order confirm करने के लिए मुझे आपका नाम और delivery address चाहिए होगा। आप details बता दीजिए, फिर आगे process कर देते हैं।",
+            "output": "ठीक है, order confirm करने के लिए मुझे आपका नाम और delivery address चाहिए होगा। आप details बता दीजिए, फिर आगे process कर देते हैं।",
+            "changed": false
+          }
+        ],
+        "raw_streams": [
+          {
+            "turn": 3,
+            "fields": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"decision\": \"continue\",\n  \"intent\": \"question\",\n  \"reason\": \"none\",\n  \"explicit_end\": false,\n  \"evidence\": \"ठीक है, फिर आप order confirm कर दीजिए, आगे क्या करना होगा?\",\n  \"remaining_request\": \"What are the next steps to confirm the order?\",\n  \"contact_intent\": \"none\",\n  \"contact_evidence\": \"\",\n  \"callback_time\": \"\",\n  \"memory_operations\": [],\n  \"wait_for_caller\": true,\n  \"wait_evidence\": \"आगे क्या करना होगा?\"\n}\n```"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 3,
+            "fields": {
+              "role": "assistant",
+              "content": "{\n  \"contact_action\": \"keep\",\n  \"contact_evidence\": \"\",\n  \"when\": \"\",\n  \"finish\": false,\n  \"finish_evidence\": \"\",\n  \"open_request\": \"आगे क्या करना होगा?\",\n  \"action_request\": \"write\",\n  \"agent_asked_time\": false\n}"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 3,
+            "fields": {
+              "role": "assistant",
+              "content": "{\n  \"answers\": []\n}"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 3,
+            "fields": {
+              "role": "assistant",
+              "content": "ठीक है। Order confirm करने के लिए बस मुझे आपका पूरा नाम और delivery address बता दीजिए। उसके बाद मैं आगे process कर देती हूँ।"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 3,
+            "fields": {
+              "role": "assistant",
+              "content": "ठीक है, order confirm करने के लिए मुझे आपका नाम और delivery address चाहिए होगा। आप details बता दीजिए, फिर आगे process कर देते हैं।"
+            },
+            "finish": "stop",
+            "closed": true
+          }
+        ]
+      },
+      {
+        "turn": 4,
+        "elapsed_s": 79.3,
+        "caller": "मेरा नाम लक्ष्मी रेड्डी है और मेरा एड्रेस है फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072।",
+        "caller_ending": false,
+        "reply": "मैंने note कर लिया है। तो confirm कर दूँ — 2 bottles NatureVeda Herbal Hair Oil और 1 NatureVeda Herbal Face Cream, total ₹1497, delivery address flat 302, Sai Residency, Kukatpally, Hyderabad 500072। क्या मैं order place कर दूँ?",
+        "farewell": "",
+        "first_chunk_s": 3.422,
+        "turn_s": 3.422,
+        "chunks": 2,
+        "max_chunk_gap_s": 0.0,
+        "tts_languages": [
+          "hi-IN"
+        ],
+        "active_language_before": "hi-IN",
+        "active_language": "hi-IN",
+        "llm": {
+          "count": 7,
+          "requests": [
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3785,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 1092,
+              "messages": 2,
+              "max_tokens": 128,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3216,
+              "messages": 2,
+              "max_tokens": 384,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 2028,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 19572,
+              "messages": 13,
+              "max_tokens": 1280,
+              "packs": [
+                "hi-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 22064,
+              "messages": 14,
+              "max_tokens": 1280,
+              "packs": [
+                "hi-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 19572,
+              "messages": 13,
+              "max_tokens": 1280,
+              "packs": [
+                "hi-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            }
+          ]
+        },
+        "tools": [],
+        "memory_facts": {
+          "quantity": "1"
+        },
+        "memory_preferences": {},
+        "memory_summary": "user: ठीक है, मैं 2 bottles hair oil और 1 face cream लेना चाहती हूँ, total price कितना हुआ?\nassistant: देखिए, 2 bottles hair oil और 1 face cream का total ₹1497 होगा। Hair oil 499 रुपये per bottle है और face cream 599 रुपये की है। बताइए, order place करना है या delivery details जाननी हैं?\nuser: ठीक है, फिर आप order confirm कर दीजिए, आगे क्या करना होगा?\nassistant: order confirm करने के लिए मुझे आपका ",
+        "armed": false,
+        "error": null,
+        "events": [
+          {
+            "turn": 4,
+            "event": "TURN_START",
+            "turn_id": "e8e64b9b697c"
+          },
+          {
+            "turn": 4,
+            "event": "contact.review",
+            "decision": "continue",
+            "contact": "none"
+          },
+          {
+            "turn": 4,
+            "event": "close.classifier",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "decision": "continue",
+            "reason": "none",
+            "evidence_chars": "0",
+            "output_tokens": "294"
+          },
+          {
+            "turn": 4,
+            "event": "hold.prewarm_failed"
+          },
+          {
+            "turn": 4,
+            "event": "business.answer_lookup",
+            "terms": "2",
+            "unknown": "0"
+          },
+          {
+            "turn": 4,
+            "event": "llm.request",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "requested_max_tokens": "0",
+            "effective_max_tokens": "1280",
+            "reasoning_effort": "None",
+            "temperature": "None",
+            "has_schema": "False"
+          },
+          {
+            "turn": 4,
+            "event": "llm.finish",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "finish_reason": "stop",
+            "retry_count": "0",
+            "requested_max_tokens": "0",
+            "effective_max_tokens": "1280",
+            "output_tokens": "79"
+          },
+          {
+            "turn": 4,
+            "event": "llm.request",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "requested_max_tokens": "0",
+            "effective_max_tokens": "1280",
+            "reasoning_effort": "None",
+            "temperature": "None",
+            "has_schema": "False"
+          },
+          {
+            "turn": 4,
+            "event": "llm.incomplete",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "finish_reason": "stop",
+            "finish_reason_raw": "stop",
+            "requested_max_tokens": "0",
+            "effective_max_tokens": "1280",
+            "reasoning_effort": "None",
+            "retry_count": "0",
+            "retry_used": "False",
+            "partial_chars": "0",
+            "output_tokens": "63"
+          },
+          {
+            "turn": 4,
+            "event": "composed.speech_empty_reselect",
+            "provider": "sarvam"
+          },
+          {
+            "turn": 4,
+            "event": "llm.request",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "requested_max_tokens": "0",
+            "effective_max_tokens": "1280",
+            "reasoning_effort": "None",
+            "temperature": "None",
+            "has_schema": "False"
+          },
+          {
+            "turn": 4,
+            "event": "speech.fact_review_skipped"
+          },
+          {
+            "turn": 4,
+            "event": "reply.guard"
+          },
+          {
+            "turn": 4,
+            "event": "text_queued",
+            "chars": "22"
+          },
+          {
+            "turn": 4,
+            "event": "tts_heard_promoted",
+            "chars": "22"
+          },
+          {
+            "turn": 4,
+            "event": "text_queued",
+            "chars": "205"
+          },
+          {
+            "turn": 4,
+            "event": "tts_heard_promoted",
+            "chars": "205"
+          },
+          {
+            "turn": 4,
+            "event": "llm.finish",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "finish_reason": "selection_prose",
+            "requested_max_tokens": "0",
+            "effective_max_tokens": "1280",
+            "reasoning_effort": "None",
+            "retry_count": "0",
+            "input_tokens": "5582",
+            "output_tokens": "63",
+            "cached_tokens": "1024",
+            "schema_valid": "True"
+          },
+          {
+            "turn": 4,
+            "event": "voice_audio_complete",
+            "turn_id": "e8e64b9b697c"
+          },
+          {
+            "turn": 4,
+            "event": "TURN_END",
+            "turn_id": "e8e64b9b697c"
+          }
+        ],
+        "reviews": [
+          {
+            "turn": 4,
+            "draft": "ठीक है, मैंने note कर लिया है। तो confirm कर दूँ — 2 bottles NatureVeda Herbal Hair Oil और 1 NatureVeda Herbal Face Cream, total ₹1497, delivery address flat 302, Sai Residency, Kukatpally, Hyderabad 500072। क्या मैं order place कर दूँ?",
+            "output": "ठीक है, मैंने note कर लिया है। तो confirm कर दूँ — 2 bottles NatureVeda Herbal Hair Oil और 1 NatureVeda Herbal Face Cream, total ₹1497, delivery address flat 302, Sai Residency, Kukatpally, Hyderabad 500072। क्या मैं order place कर दूँ?",
+            "changed": false
+          }
+        ],
+        "raw_streams": [
+          {
+            "turn": 4,
+            "fields": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"decision\": \"continue\",\n  \"intent\": \"question\",\n  \"reason\": \"none\",\n  \"explicit_end\": false,\n  \"evidence\": \"\",\n  \"remaining_request\": \"\",\n  \"contact_intent\": \"none\",\n  \"contact_evidence\": \"\",\n  \"callback_time\": \"\",\n  \"memory_operations\": [\n    {\n      \"op\": \"set_fact\",\n      \"key\": \"caller_name\",\n      \"value\": \"लक्ष्मी रेड्डी\",\n      \"evidence\": \"मेरा नाम लक्ष्मी रेड्डी है\",\n      \"assertion\": \"caller_asserted\",\n      \"polarity\": \"positive\"\n    },\n    {\n      \"op\": \"set_fact\",\n      \"key\": \"delivery_address\",\n      \"value\": \"फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072\",\n      \"evidence\": \"मेरा एड्रेस है फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072\",\n      \"assertion\": \"caller_asserted\",\n      \"polarity\": \"positive\"\n    }\n  ],\n  \"wait_for_caller\": false,\n  \"wai"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 4,
+            "fields": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"accepted\": [\n    0,\n    1\n  ]\n}\n```"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 4,
+            "fields": {
+              "role": "assistant",
+              "content": "{\n  \"contact_action\": \"keep\",\n  \"contact_evidence\": \"\",\n  \"when\": \"\",\n  \"finish\": false,\n  \"finish_evidence\": \"\",\n  \"open_request\": \"order confirm करने के लिए मुझे आपका नाम और delivery address चाहिए होगा। आप details बता दीजिए, फिर आगे process कर देते हैं.\",\n  \"action_request\": \"write\",\n  \"agent_asked_time\": false\n}"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 4,
+            "fields": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"answers\": [\n    {\n      \"domain\": \"business_terms\",\n      \"question\": \"total price\",\n      \"subject\": \"NatureVeda Herbal Hair Oil, NatureVeda Herbal Face Cream\",\n      \"row_id\": 2,\n      \"topic_quote\": \"NatureVeda Herbal Hair Oil costs 499 rupees for 200 ml\",\n      \"value_quote\": \"499 rupees\",\n      \"unit_price_quote\": \"499\",\n      \"unit_quantity_quote\": \"1\",\n      \"requested_quantity_quote\": \"2\"\n    },\n    {\n      \"domain\": \"business_terms\",\n      \"question\": \"total price\",\n      \"subject\": \"NatureVeda Herbal Face Cream\",\n      \"row_id\": 4,\n      \"topic_quote\": \"NatureVeda Herbal Face Cream costs 599 rupees for 50 g\",\n      \"value_quote\": \"599 rupees\",\n      \"unit_price_quote\": \"599\",\n      \"unit_quantity_quote\": \"1\",\n      \"requested_quantity_quote\": \"1\"\n    }\n  ]\n}\n```"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 4,
+            "fields": {
+              "role": "assistant",
+              "content": "ठीक है, मैंने note कर लिया है। तो confirm कर रही हूँ, 2 bottles NatureVeda Herbal Hair Oil और 1 face cream, कुल ₹1497, delivery address फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072। एक बार हाँ बोल दीजिए, तो मैं order process कर देती हूँ।"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 4,
+            "fields": {
+              "role": "assistant"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 4,
+            "fields": {
+              "role": "assistant",
+              "content": "ठीक है, मैंने note कर लिया है। तो confirm कर दूँ — 2 bottles NatureVeda Herbal Hair Oil और 1 NatureVeda Herbal Face Cream, total ₹1497, delivery address flat 302, Sai Residency, Kukatpally, Hyderabad 500072। क्या मैं order place कर दूँ?"
+            },
+            "finish": "stop",
+            "closed": true
+          }
+        ]
+      },
+      {
+        "turn": 5,
+        "elapsed_s": 100.8,
+        "caller": "हाँ, सब सही है, order confirm कर दीजिए।",
+        "caller_ending": false,
+        "reply": "आपका order confirm हो गया है। अब बस delivery के लिए team आपसे जल्दी ही संपर्क करेगी।",
+        "farewell": "",
+        "first_chunk_s": 2.063,
+        "turn_s": 2.063,
+        "chunks": 1,
+        "max_chunk_gap_s": 0.0,
+        "tts_languages": [
+          "hi-IN"
+        ],
+        "active_language_before": "hi-IN",
+        "active_language": "hi-IN",
+        "llm": {
+          "count": 6,
+          "requests": [
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3785,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 1092,
+              "messages": 2,
+              "max_tokens": 128,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3216,
+              "messages": 2,
+              "max_tokens": 384,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 18717,
+              "messages": 15,
+              "max_tokens": 1280,
+              "packs": [
+                "hi-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 21722,
+              "messages": 20,
+              "max_tokens": 1280,
+              "packs": [
+                "hi-IN"
+              ],
+              "active_notes": [
+                "ACTIVE LANGUAGE note names another language; then follow that note. Never switch on your own."
+              ],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 4201,
+              "messages": 2,
+              "max_tokens": 768,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            }
+          ]
+        },
+        "tools": [],
+        "memory_facts": {
+          "quantity": "1",
+          "caller_name": "लक्ष्मी रेड्डी",
+          "delivery_address": "फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072"
+        },
+        "memory_preferences": {},
+        "memory_summary": "user: ठीक है, मैं 2 bottles hair oil और 1 face cream लेना चाहती हूँ, total price कितना हुआ?\nassistant: देखिए, 2 bottles hair oil और 1 face cream का total ₹1497 होगा। Hair oil 499 रुपये per bottle है और face cream 599 रुपये की है। बताइए, order place करना है या delivery details जाननी हैं?\nuser: ठीक है, फिर आप order confirm कर दीजिए, आगे क्या करना होगा?\nassistant: order confirm करने के लिए मुझे आपका ",
+        "armed": false,
+        "error": null,
+        "events": [
+          {
+            "turn": 5,
+            "event": "TURN_START",
+            "turn_id": "0ed5107234a3"
+          },
+          {
+            "turn": 5,
+            "event": "contact.review",
+            "decision": "continue",
+            "contact": "none"
+          },
+          {
+            "turn": 5,
+            "event": "close.classifier",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "decision": "continue",
+            "reason": "none",
+            "evidence_chars": "0",
+            "output_tokens": "388"
+          },
+          {
+            "turn": 5,
+            "event": "llm.request",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "requested_max_tokens": "0",
+            "effective_max_tokens": "1280",
+            "reasoning_effort": "None",
+            "temperature": "None",
+            "has_schema": "False"
+          },
+          {
+            "turn": 5,
+            "event": "llm.finish",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "finish_reason": "tool_calls",
+            "retry_count": "0",
+            "requested_max_tokens": "0",
+            "effective_max_tokens": "1280",
+            "output_tokens": "88"
+          },
+          {
+            "turn": 5,
+            "event": "hold.prewarm_failed"
+          },
+          {
+            "turn": 5,
+            "event": "order.tool",
+            "status": "ok"
+          },
+          {
+            "turn": 5,
+            "event": "llm.request",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "requested_max_tokens": "0",
+            "effective_max_tokens": "1280",
+            "reasoning_effort": "None",
+            "temperature": "None",
+            "has_schema": "False"
+          },
+          {
+            "turn": 5,
+            "event": "speech.fact_review",
+            "unchanged": "False"
+          },
+          {
+            "turn": 5,
+            "event": "speech.fact_corrected",
+            "input_chars": "84",
+            "output_chars": "84"
+          },
+          {
+            "turn": 5,
+            "event": "text_queued",
+            "chars": "84"
+          },
+          {
+            "turn": 5,
+            "event": "tts_heard_promoted",
+            "chars": "84"
+          },
+          {
+            "turn": 5,
+            "event": "llm.finish",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "finish_reason": "stop",
+            "requested_max_tokens": "0",
+            "effective_max_tokens": "1280",
+            "reasoning_effort": "None",
+            "retry_count": "0",
+            "input_tokens": "6890",
+            "output_tokens": "20",
+            "cached_tokens": "4736",
+            "schema_valid": "True"
+          },
+          {
+            "turn": 5,
+            "event": "voice_audio_complete",
+            "turn_id": "0ed5107234a3"
+          },
+          {
+            "turn": 5,
+            "event": "TURN_END",
+            "turn_id": "0ed5107234a3"
+          }
+        ],
+        "reviews": [
+          {
+            "turn": 5,
+            "draft": "आपका order confirm हो गया है। अब बस delivery के लिए team आपसे जल्दी ही संपर्क करेगी।",
+            "output": "आपका order confirm हो गया है। अब बस delivery के लिए team आपसे जल्दी ही संपर्क करेगी।",
+            "changed": false
+          }
+        ],
+        "raw_streams": [
+          {
+            "turn": 5,
+            "fields": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"decision\": \"close\",\n  \"intent\": \"done\",\n  \"reason\": \"done\",\n  \"explicit_end\": true,\n  \"evidence\": \"हाँ, सब सही है, order confirm कर दीजिए।\",\n  \"remaining_request\": \"\",\n  \"contact_intent\": \"end_this_call\",\n  \"contact_evidence\": \"\",\n  \"callback_time\": \"\",\n  \"memory_operations\": [\n    {\n      \"op\": \"set_fact\",\n      \"key\": \"product\",\n      \"value\": \"NatureVeda Herbal Hair Oil, NatureVeda Herbal Face Cream\",\n      \"evidence\": \"2 bottles NatureVeda Herbal Hair Oil और 1 NatureVeda Herbal Face Cream\",\n      \"assertion\": \"caller_asserted\",\n      \"polarity\": \"positive\"\n    },\n    {\n      \"op\": \"set_fact\",\n      \"key\": \"quantity\",\n      \"value\": \"3\",\n      \"evidence\": \"2 bottles NatureVeda Herbal Hair Oil और 1 NatureVeda Herbal Face Cream\",\n      \"assertion\": \"caller_asserted\",\n      \"p"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 5,
+            "fields": {
+              "role": "assistantassistant",
+              "content": "{\n  \"contact_action{\n  \"accepted\": []\n}"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 5,
+            "fields": {
+              "content": "\": \"keep\",\n  \"contact_evidence\": \"\",\n  \"when\": \"\",\n  \"finish\": false,\n  \"finish_evidence\": \"\",\n  \"open_request\": \"\",\n  \"action_request\": \"write\",\n  \"agent_asked_time\": false\n}"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 5,
+            "fields": {
+              "role": "assistant",
+              "tool_calls": "[{\"index\": 0, \"id\": \"chatcmpl-tool-9280b5d21d58b9dd\", \"function\": {\"arguments\": null, \"name\": \"CONFIRM_ORDER\"}, \"type\": \"function\"}][{\"index\": 0, \"id\": null, \"function\": {\"arguments\": \"{\\\"product\\\": \\\"2 x\", \"name\": null}, \"type\": null}][{\"index\": 0, \"id\": null, \"function\": {\"arguments\": \" NatureVeda Herbal Hair Oil\", \"name\": null}, \"type\": null}][{\"index\": 0, \"id\": null, \"function\": {\"arguments\": \", 1 x NatureV\", \"name\": null}, \"type\": null}][{\"index\": 0, \"id\": null, \"function\": {\"arguments\": \"eda Herbal Face Cream\", \"name\": null}, \"type\": null}][{\"index\": 0, \"id\": null, \"function\": {\"arguments\": \"\\\", \\\"quantity\\\": \", \"name\": null}, \"type\": null}][{\"index\": 0, \"id\": null, \"function\": {\"arguments\": \"3, \\\"customer_name\\\": \\\"लक्ष्मी\", \"name\": null}, \"type\": null}][{\"index\": 0, \"id\": null, \"fu"
+            },
+            "finish": "tool_calls",
+            "closed": true
+          },
+          {
+            "turn": 5,
+            "fields": {
+              "role": "assistant",
+              "content": "आपका order confirm हो गया है। अब बस delivery के लिए team आपसे जल्दी ही संपर्क करेगी।"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 5,
+            "fields": {
+              "role": "assistant",
+              "content": "आपका order confirm हो गया है। अब बस delivery के लिए team आपसे जल्दी ही संपर्क करेगी।\n__OK__"
+            },
+            "finish": "stop",
+            "closed": true
+          }
+        ]
+      },
+      {
+        "turn": 6,
+        "elapsed_s": 110.7,
+        "caller": "ठीक है, धन्यवाद।",
+        "caller_ending": true,
+        "reply": "",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "first_chunk_s": 0.625,
+        "turn_s": 1.75,
+        "chunks": 1,
+        "max_chunk_gap_s": 0.0,
+        "tts_languages": [
+          "hi-IN"
+        ],
+        "active_language_before": "hi-IN",
+        "active_language": "hi-IN",
+        "llm": {
+          "count": 2,
+          "requests": [
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3785,
+              "messages": 2,
+              "max_tokens": 512,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            },
+            {
+              "model": "sarvam-105b-conversations",
+              "system_chars": 3216,
+              "messages": 2,
+              "max_tokens": 384,
+              "packs": [],
+              "active_notes": [],
+              "kind": "turn"
+            }
+          ]
+        },
+        "tools": [],
+        "memory_facts": {
+          "quantity": "1",
+          "caller_name": "लक्ष्मी रेड्डी",
+          "delivery_address": "फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072"
+        },
+        "memory_preferences": {},
+        "memory_summary": "user: ठीक है, मैं 2 bottles hair oil और 1 face cream लेना चाहती हूँ, total price कितना हुआ?\nassistant: देखिए, 2 bottles hair oil और 1 face cream का total ₹1497 होगा। Hair oil 499 रुपये per bottle है और face cream 599 रुपये की है। बताइए, order place करना है या delivery details जाननी हैं?\nuser: ठीक है, फिर आप order confirm कर दीजिए, आगे क्या करना होगा?\nassistant: order confirm करने के लिए मुझे आपका ",
+        "armed": true,
+        "error": null,
+        "events": [
+          {
+            "turn": 6,
+            "event": "TURN_START",
+            "turn_id": "decb695635d1"
+          },
+          {
+            "turn": 6,
+            "event": "contact.review",
+            "decision": "close",
+            "contact": "none"
+          },
+          {
+            "turn": 6,
+            "event": "close.classifier",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "decision": "close",
+            "reason": "goodbye",
+            "evidence_chars": "16",
+            "output_tokens": "110"
+          },
+          {
+            "turn": 6,
+            "event": "text_queued",
+            "chars": "33"
+          },
+          {
+            "turn": 6,
+            "event": "tts_heard_promoted",
+            "chars": "33"
+          },
+          {
+            "turn": 6,
+            "event": "llm.finish",
+            "provider": "sarvam",
+            "model": "sarvam-105b-conversations",
+            "finish_reason": "stop",
+            "requested_max_tokens": "None",
+            "effective_max_tokens": "None",
+            "reasoning_effort": "None",
+            "retry_count": "0",
+            "input_tokens": "0",
+            "output_tokens": "0",
+            "cached_tokens": "0",
+            "schema_valid": "True"
+          },
+          {
+            "turn": 6,
+            "event": "voice_audio_complete",
+            "turn_id": "decb695635d1"
+          },
+          {
+            "turn": 6,
+            "event": "hangup.playback_idle",
+            "heard": "False"
+          },
+          {
+            "turn": 6,
+            "event": "hangup.disconnect",
+            "reason": "goodbye",
+            "initiator": "agent",
+            "outcome": "agent_ended",
+            "heard_playback": "False",
+            "spoke_farewell": "True",
+            "playback_wait_ms": "0",
+            "trail_ms": "1000"
+          },
+          {
+            "turn": 6,
+            "event": "TURN_END",
+            "turn_id": "decb695635d1"
+          }
+        ],
+        "reviews": [],
+        "raw_streams": [
+          {
+            "turn": 6,
+            "fields": {
+              "role": "assistant",
+              "content": "```json\n{\n  \"decision\": \"close\",\n  \"intent\": \"done\",\n  \"reason\": \"done\",\n  \"explicit_end\": false,\n  \"evidence\": \"ठीक है, धन्यवाद।\",\n  \"remaining_request\": \"\",\n  \"contact_intent\": \"end_this_call\",\n  \"contact_evidence\": \"\",\n  \"callback_time\": \"\",\n  \"memory_operations\": [],\n  \"wait_for_caller\": false\n}\n```"
+            },
+            "finish": "stop",
+            "closed": true
+          },
+          {
+            "turn": 6,
+            "fields": {
+              "role": "assistant",
+              "content": "{\n  \"contact_action\": \"keep\",\n  \"contact_evidence\": \"\",\n  \"when\": \"\",\n  \"finish\": true,\n  \"finish_evidence\": \"ठीक है, धन्यवाद।\",\n  \"open_request\": \"\",\n  \"action_request\": \"none\",\n  \"agent_asked_time\": false\n}"
+            },
+            "finish": "stop",
+            "closed": true
+          }
+        ]
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "हमारी NatureVeda Herbal Face Cream ₹599 में 50 ग्राम की आती है।",
+        "at": 113299.328,
+        "tts_language": "hi-IN",
+        "farewell": false
+      },
+      {
+        "turn": 1,
+        "text": "इसमें Neem, Turmeric, और Aloe Vera हैं, जो moisturizing और routine skin care के लिए अच्छी है। बताइए, आपको इसका order करना है या delivery के बारे में जानना है?",
+        "at": 113299.328,
+        "tts_language": "hi-IN",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "देखिए, 2 bottles hair oil और 1 face cream का total ₹1497 होगा।",
+        "at": 113323.343,
+        "tts_language": "hi-IN",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "Hair oil 499 रुपये per bottle है और face cream 599 रुपये की है। बताइए, order place करना है या delivery details जाननी हैं?",
+        "at": 113323.343,
+        "tts_language": "hi-IN",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "order confirm करने के लिए मुझे आपका नाम और delivery address चाहिए होगा।",
+        "at": 113343.375,
+        "tts_language": "hi-IN",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "आप details बता दीजिए, फिर आगे process कर देते हैं।",
+        "at": 113343.39,
+        "tts_language": "hi-IN",
+        "farewell": false
+      },
+      {
+        "turn": 4,
+        "text": "मैंने note कर लिया है।",
+        "at": 113362.093,
+        "tts_language": "hi-IN",
+        "farewell": false
+      },
+      {
+        "turn": 4,
+        "text": "तो confirm कर दूँ — 2 bottles NatureVeda Herbal Hair Oil और 1 NatureVeda Herbal Face Cream, total ₹1497, delivery address flat 302, Sai Residency, Kukatpally, Hyderabad 500072। क्या मैं order place कर दूँ?",
+        "at": 113362.093,
+        "tts_language": "hi-IN",
+        "farewell": false
+      },
+      {
+        "turn": 5,
+        "text": "आपका order confirm हो गया है। अब बस delivery के लिए team आपसे जल्दी ही संपर्क करेगी।",
+        "at": 113382.203,
+        "tts_language": "hi-IN",
+        "farewell": false
+      },
+      {
+        "turn": 6,
+        "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "at": 113390.656,
+        "tts_language": "hi-IN",
+        "farewell": true
+      }
+    ],
+    "tts_events": [],
+    "tool_calls": [],
+    "errors": [],
+    "carrier": [
+      {
+        "turn": 6,
+        "at": 113391.671
+      }
+    ],
+    "events": [
+      {
+        "turn": 1,
+        "event": "TURN_START",
+        "turn_id": "6be5d380ed34"
+      },
+      {
+        "turn": 1,
+        "event": "contact.review",
+        "decision": "continue",
+        "contact": "none"
+      },
+      {
+        "turn": 1,
+        "event": "close.classifier",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "decision": "continue",
+        "reason": "none",
+        "evidence_chars": "0",
+        "output_tokens": "143"
+      },
+      {
+        "turn": 1,
+        "event": "business.answer_lookup",
+        "terms": "1",
+        "unknown": "0"
+      },
+      {
+        "turn": 1,
+        "event": "llm.request",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "requested_max_tokens": "0",
+        "effective_max_tokens": "1280",
+        "reasoning_effort": "None",
+        "temperature": "None",
+        "has_schema": "False"
+      },
+      {
+        "turn": 1,
+        "event": "hold.prewarm_failed"
+      },
+      {
+        "turn": 1,
+        "event": "speech.fact_review",
+        "unchanged": "False"
+      },
+      {
+        "turn": 1,
+        "event": "speech.fact_corrected",
+        "input_chars": "218",
+        "output_chars": "222"
+      },
+      {
+        "turn": 1,
+        "event": "text_queued",
+        "chars": "63"
+      },
+      {
+        "turn": 1,
+        "event": "tts_heard_promoted",
+        "chars": "63"
+      },
+      {
+        "turn": 1,
+        "event": "text_queued",
+        "chars": "158"
+      },
+      {
+        "turn": 1,
+        "event": "tts_heard_promoted",
+        "chars": "158"
+      },
+      {
+        "turn": 1,
+        "event": "llm.finish",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "finish_reason": "stop",
+        "requested_max_tokens": "0",
+        "effective_max_tokens": "1280",
+        "reasoning_effort": "None",
+        "retry_count": "0",
+        "input_tokens": "5004",
+        "output_tokens": "59",
+        "cached_tokens": "1024",
+        "schema_valid": "True"
+      },
+      {
+        "turn": 1,
+        "event": "voice_audio_complete",
+        "turn_id": "6be5d380ed34"
+      },
+      {
+        "turn": 1,
+        "event": "TURN_END",
+        "turn_id": "6be5d380ed34"
+      },
+      {
+        "turn": 2,
+        "event": "TURN_START",
+        "turn_id": "cd78ab131e95"
+      },
+      {
+        "turn": 2,
+        "event": "contact.review",
+        "decision": "continue",
+        "contact": "none"
+      },
+      {
+        "turn": 2,
+        "event": "close.classifier",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "decision": "continue",
+        "reason": "none",
+        "evidence_chars": "0",
+        "output_tokens": "293"
+      },
+      {
+        "turn": 2,
+        "event": "business.answer_lookup",
+        "terms": "2",
+        "unknown": "0"
+      },
+      {
+        "turn": 2,
+        "event": "llm.request",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "requested_max_tokens": "0",
+        "effective_max_tokens": "1280",
+        "reasoning_effort": "None",
+        "temperature": "None",
+        "has_schema": "False"
+      },
+      {
+        "turn": 2,
+        "event": "hold.prewarm_failed"
+      },
+      {
+        "turn": 2,
+        "event": "speech.fact_review",
+        "unchanged": "False"
+      },
+      {
+        "turn": 2,
+        "event": "speech.fact_corrected",
+        "input_chars": "184",
+        "output_chars": "184"
+      },
+      {
+        "turn": 2,
+        "event": "text_queued",
+        "chars": "62"
+      },
+      {
+        "turn": 2,
+        "event": "tts_heard_promoted",
+        "chars": "62"
+      },
+      {
+        "turn": 2,
+        "event": "text_queued",
+        "chars": "121"
+      },
+      {
+        "turn": 2,
+        "event": "tts_heard_promoted",
+        "chars": "121"
+      },
+      {
+        "turn": 2,
+        "event": "llm.finish",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "finish_reason": "stop",
+        "requested_max_tokens": "0",
+        "effective_max_tokens": "1280",
+        "reasoning_effort": "None",
+        "retry_count": "0",
+        "input_tokens": "5217",
+        "output_tokens": "56",
+        "cached_tokens": "1024",
+        "schema_valid": "True"
+      },
+      {
+        "turn": 2,
+        "event": "voice_audio_complete",
+        "turn_id": "cd78ab131e95"
+      },
+      {
+        "turn": 2,
+        "event": "TURN_END",
+        "turn_id": "cd78ab131e95"
+      },
+      {
+        "turn": 3,
+        "event": "TURN_START",
+        "turn_id": "af49b7163548"
+      },
+      {
+        "turn": 3,
+        "event": "contact.review",
+        "decision": "continue",
+        "contact": "none"
+      },
+      {
+        "turn": 3,
+        "event": "close.classifier",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "decision": "continue",
+        "reason": "none",
+        "evidence_chars": "0",
+        "output_tokens": "139"
+      },
+      {
+        "turn": 3,
+        "event": "business.answer_lookup",
+        "terms": "0",
+        "unknown": "0"
+      },
+      {
+        "turn": 3,
+        "event": "llm.request",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "requested_max_tokens": "0",
+        "effective_max_tokens": "1280",
+        "reasoning_effort": "None",
+        "temperature": "None",
+        "has_schema": "False"
+      },
+      {
+        "turn": 3,
+        "event": "hold.prewarm_failed"
+      },
+      {
+        "turn": 3,
+        "event": "llm.finish",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "finish_reason": "stop",
+        "retry_count": "0",
+        "requested_max_tokens": "0",
+        "effective_max_tokens": "1280",
+        "output_tokens": "29"
+      },
+      {
+        "turn": 3,
+        "event": "llm.request",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "requested_max_tokens": "0",
+        "effective_max_tokens": "1280",
+        "reasoning_effort": "None",
+        "temperature": "None",
+        "has_schema": "False"
+      },
+      {
+        "turn": 3,
+        "event": "speech.fact_review_skipped"
+      },
+      {
+        "turn": 3,
+        "event": "reply.guard"
+      },
+      {
+        "turn": 3,
+        "event": "text_queued",
+        "chars": "71"
+      },
+      {
+        "turn": 3,
+        "event": "tts_heard_promoted",
+        "chars": "71"
+      },
+      {
+        "turn": 3,
+        "event": "text_queued",
+        "chars": "50"
+      },
+      {
+        "turn": 3,
+        "event": "tts_heard_promoted",
+        "chars": "50"
+      },
+      {
+        "turn": 3,
+        "event": "llm.finish",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "finish_reason": "stop",
+        "requested_max_tokens": "0",
+        "effective_max_tokens": "1280",
+        "reasoning_effort": "None",
+        "retry_count": "0",
+        "input_tokens": "5121",
+        "output_tokens": "30",
+        "cached_tokens": "4064",
+        "schema_valid": "True"
+      },
+      {
+        "turn": 3,
+        "event": "voice_audio_complete",
+        "turn_id": "af49b7163548"
+      },
+      {
+        "turn": 3,
+        "event": "TURN_END",
+        "turn_id": "af49b7163548"
+      },
+      {
+        "turn": 4,
+        "event": "TURN_START",
+        "turn_id": "e8e64b9b697c"
+      },
+      {
+        "turn": 4,
+        "event": "contact.review",
+        "decision": "continue",
+        "contact": "none"
+      },
+      {
+        "turn": 4,
+        "event": "close.classifier",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "decision": "continue",
+        "reason": "none",
+        "evidence_chars": "0",
+        "output_tokens": "294"
+      },
+      {
+        "turn": 4,
+        "event": "hold.prewarm_failed"
+      },
+      {
+        "turn": 4,
+        "event": "business.answer_lookup",
+        "terms": "2",
+        "unknown": "0"
+      },
+      {
+        "turn": 4,
+        "event": "llm.request",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "requested_max_tokens": "0",
+        "effective_max_tokens": "1280",
+        "reasoning_effort": "None",
+        "temperature": "None",
+        "has_schema": "False"
+      },
+      {
+        "turn": 4,
+        "event": "llm.finish",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "finish_reason": "stop",
+        "retry_count": "0",
+        "requested_max_tokens": "0",
+        "effective_max_tokens": "1280",
+        "output_tokens": "79"
+      },
+      {
+        "turn": 4,
+        "event": "llm.request",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "requested_max_tokens": "0",
+        "effective_max_tokens": "1280",
+        "reasoning_effort": "None",
+        "temperature": "None",
+        "has_schema": "False"
+      },
+      {
+        "turn": 4,
+        "event": "llm.incomplete",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "finish_reason": "stop",
+        "finish_reason_raw": "stop",
+        "requested_max_tokens": "0",
+        "effective_max_tokens": "1280",
+        "reasoning_effort": "None",
+        "retry_count": "0",
+        "retry_used": "False",
+        "partial_chars": "0",
+        "output_tokens": "63"
+      },
+      {
+        "turn": 4,
+        "event": "composed.speech_empty_reselect",
+        "provider": "sarvam"
+      },
+      {
+        "turn": 4,
+        "event": "llm.request",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "requested_max_tokens": "0",
+        "effective_max_tokens": "1280",
+        "reasoning_effort": "None",
+        "temperature": "None",
+        "has_schema": "False"
+      },
+      {
+        "turn": 4,
+        "event": "speech.fact_review_skipped"
+      },
+      {
+        "turn": 4,
+        "event": "reply.guard"
+      },
+      {
+        "turn": 4,
+        "event": "text_queued",
+        "chars": "22"
+      },
+      {
+        "turn": 4,
+        "event": "tts_heard_promoted",
+        "chars": "22"
+      },
+      {
+        "turn": 4,
+        "event": "text_queued",
+        "chars": "205"
+      },
+      {
+        "turn": 4,
+        "event": "tts_heard_promoted",
+        "chars": "205"
+      },
+      {
+        "turn": 4,
+        "event": "llm.finish",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "finish_reason": "selection_prose",
+        "requested_max_tokens": "0",
+        "effective_max_tokens": "1280",
+        "reasoning_effort": "None",
+        "retry_count": "0",
+        "input_tokens": "5582",
+        "output_tokens": "63",
+        "cached_tokens": "1024",
+        "schema_valid": "True"
+      },
+      {
+        "turn": 4,
+        "event": "voice_audio_complete",
+        "turn_id": "e8e64b9b697c"
+      },
+      {
+        "turn": 4,
+        "event": "TURN_END",
+        "turn_id": "e8e64b9b697c"
+      },
+      {
+        "turn": 5,
+        "event": "TURN_START",
+        "turn_id": "0ed5107234a3"
+      },
+      {
+        "turn": 5,
+        "event": "contact.review",
+        "decision": "continue",
+        "contact": "none"
+      },
+      {
+        "turn": 5,
+        "event": "close.classifier",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "decision": "continue",
+        "reason": "none",
+        "evidence_chars": "0",
+        "output_tokens": "388"
+      },
+      {
+        "turn": 5,
+        "event": "llm.request",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "requested_max_tokens": "0",
+        "effective_max_tokens": "1280",
+        "reasoning_effort": "None",
+        "temperature": "None",
+        "has_schema": "False"
+      },
+      {
+        "turn": 5,
+        "event": "llm.finish",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "finish_reason": "tool_calls",
+        "retry_count": "0",
+        "requested_max_tokens": "0",
+        "effective_max_tokens": "1280",
+        "output_tokens": "88"
+      },
+      {
+        "turn": 5,
+        "event": "hold.prewarm_failed"
+      },
+      {
+        "turn": 5,
+        "event": "order.tool",
+        "status": "ok"
+      },
+      {
+        "turn": 5,
+        "event": "llm.request",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "requested_max_tokens": "0",
+        "effective_max_tokens": "1280",
+        "reasoning_effort": "None",
+        "temperature": "None",
+        "has_schema": "False"
+      },
+      {
+        "turn": 5,
+        "event": "speech.fact_review",
+        "unchanged": "False"
+      },
+      {
+        "turn": 5,
+        "event": "speech.fact_corrected",
+        "input_chars": "84",
+        "output_chars": "84"
+      },
+      {
+        "turn": 5,
+        "event": "text_queued",
+        "chars": "84"
+      },
+      {
+        "turn": 5,
+        "event": "tts_heard_promoted",
+        "chars": "84"
+      },
+      {
+        "turn": 5,
+        "event": "llm.finish",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "finish_reason": "stop",
+        "requested_max_tokens": "0",
+        "effective_max_tokens": "1280",
+        "reasoning_effort": "None",
+        "retry_count": "0",
+        "input_tokens": "6890",
+        "output_tokens": "20",
+        "cached_tokens": "4736",
+        "schema_valid": "True"
+      },
+      {
+        "turn": 5,
+        "event": "voice_audio_complete",
+        "turn_id": "0ed5107234a3"
+      },
+      {
+        "turn": 5,
+        "event": "TURN_END",
+        "turn_id": "0ed5107234a3"
+      },
+      {
+        "turn": 6,
+        "event": "TURN_START",
+        "turn_id": "decb695635d1"
+      },
+      {
+        "turn": 6,
+        "event": "contact.review",
+        "decision": "close",
+        "contact": "none"
+      },
+      {
+        "turn": 6,
+        "event": "close.classifier",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "decision": "close",
+        "reason": "goodbye",
+        "evidence_chars": "16",
+        "output_tokens": "110"
+      },
+      {
+        "turn": 6,
+        "event": "text_queued",
+        "chars": "33"
+      },
+      {
+        "turn": 6,
+        "event": "tts_heard_promoted",
+        "chars": "33"
+      },
+      {
+        "turn": 6,
+        "event": "llm.finish",
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "finish_reason": "stop",
+        "requested_max_tokens": "None",
+        "effective_max_tokens": "None",
+        "reasoning_effort": "None",
+        "retry_count": "0",
+        "input_tokens": "0",
+        "output_tokens": "0",
+        "cached_tokens": "0",
+        "schema_valid": "True"
+      },
+      {
+        "turn": 6,
+        "event": "voice_audio_complete",
+        "turn_id": "decb695635d1"
+      },
+      {
+        "turn": 6,
+        "event": "hangup.playback_idle",
+        "heard": "False"
+      },
+      {
+        "turn": 6,
+        "event": "hangup.disconnect",
+        "reason": "goodbye",
+        "initiator": "agent",
+        "outcome": "agent_ended",
+        "heard_playback": "False",
+        "spoke_farewell": "True",
+        "playback_wait_ms": "0",
+        "trail_ms": "1000"
+      },
+      {
+        "turn": 6,
+        "event": "TURN_END",
+        "turn_id": "decb695635d1"
+      },
+      {
+        "turn": 6,
+        "event": "CLEANUP"
+      },
+      {
+        "turn": 6,
+        "event": "LLM_CANCEL"
+      }
+    ],
+    "reviews": [
+      {
+        "turn": 1,
+        "draft": "हमारी NatureVeda Herbal Face Cream ₹599 में 50 g की आती है। इसमें Neem, Turmeric, और Aloe Vera हैं, जो moisturizing और routine skin care के लिए अच्छी है। बताइए, आपको इसका order करना है या delivery के बारे में जानना है?",
+        "output": "हमारी NatureVeda Herbal Face Cream ₹599 में 50 ग्राम की आती है। इसमें Neem, Turmeric, और Aloe Vera हैं, जो moisturizing और routine skin care के लिए अच्छी है। बताइए, आपको इसका order करना है या delivery के बारे में जानना है?",
+        "changed": true
+      },
+      {
+        "turn": 2,
+        "draft": "देखिए, 2 bottles hair oil और 1 face cream का total ₹1497 होगा। Hair oil 499 रुपये per bottle है और face cream 599 रुपये की है। बताइए, order place करना है या delivery details जाननी हैं?",
+        "output": "देखिए, 2 bottles hair oil और 1 face cream का total ₹1497 होगा। Hair oil 499 रुपये per bottle है और face cream 599 रुपये की है। बताइए, order place करना है या delivery details जाननी हैं?",
+        "changed": false
+      },
+      {
+        "turn": 3,
+        "draft": "ठीक है, order confirm करने के लिए मुझे आपका नाम और delivery address चाहिए होगा। आप details बता दीजिए, फिर आगे process कर देते हैं।",
+        "output": "ठीक है, order confirm करने के लिए मुझे आपका नाम और delivery address चाहिए होगा। आप details बता दीजिए, फिर आगे process कर देते हैं।",
+        "changed": false
+      },
+      {
+        "turn": 4,
+        "draft": "ठीक है, मैंने note कर लिया है। तो confirm कर दूँ — 2 bottles NatureVeda Herbal Hair Oil और 1 NatureVeda Herbal Face Cream, total ₹1497, delivery address flat 302, Sai Residency, Kukatpally, Hyderabad 500072। क्या मैं order place कर दूँ?",
+        "output": "ठीक है, मैंने note कर लिया है। तो confirm कर दूँ — 2 bottles NatureVeda Herbal Hair Oil और 1 NatureVeda Herbal Face Cream, total ₹1497, delivery address flat 302, Sai Residency, Kukatpally, Hyderabad 500072। क्या मैं order place कर दूँ?",
+        "changed": false
+      },
+      {
+        "turn": 5,
+        "draft": "आपका order confirm हो गया है। अब बस delivery के लिए team आपसे जल्दी ही संपर्क करेगी।",
+        "output": "आपका order confirm हो गया है। अब बस delivery के लिए team आपसे जल्दी ही संपर्क करेगी।",
+        "changed": false
+      }
+    ],
+    "raw_streams": [
+      {
+        "turn": 1,
+        "fields": {
+          "role": "assistant",
+          "content": "```json\n{\n  \"decision\": \"continue\",\n  \"intent\": \"question\",\n  \"reason\": \"none\",\n  \"explicit_end\": false,\n  \"evidence\": \"हाँ, बताइए, आपके पास face cream के बारे में क्या है?\",\n  \"remaining_request\": \"face cream के बारे में जानकारी\",\n  \"contact_intent\": \"none\",\n  \"contact_evidence\": \"\",\n  \"callback_time\": \"\",\n  \"memory_operations\": [],\n  \"wait_for_caller\": true,\n  \"wait_evidence\": \"बताइए, आपके पास face cream के बारे में क्या है?\"\n}\n```"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 1,
+        "fields": {
+          "role": "assistant",
+          "content": "{\n  \"contact_action\": \"keep\",\n  \"contact_evidence\": \"\",\n  \"when\": \"\",\n  \"finish\": false,\n  \"finish_evidence\": \"\",\n  \"open_request\": \"face cream के बारे में जानकारी\",\n  \"action_request\": \"none\",\n  \"agent_asked_time\": false\n}"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 1,
+        "fields": {
+          "role": "assistant",
+          "content": "```json\n{\n  \"answers\": [\n    {\n      \"domain\": \"business_terms\",\n      \"question\": \"face cream\",\n      \"subject\": \"NatureVeda Herbal Face Cream\",\n      \"row_id\": \"4\",\n      \"topic_quote\": \"NatureVeda Herbal Face Cream costs 599 rupees for 50 g\",\n      \"value_quote\": \"599 rupees for 50 g\",\n      \"unit_price_quote\": \"599\",\n      \"unit_quantity_quote\": \"50\"\n    }\n  ]\n}\n```"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 1,
+        "fields": {
+          "role": "assistant",
+          "content": "हमारी NatureVeda Herbal Face Cream 599 rupees में 50 g की आती है। इसमें Neem, Turmeric, और Aloe Vera हैं, जो moisturizing और routine skin care के लिए अच्छी है। बताइए, आपको इसका order करना है या delivery के बारे में जानना है?"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 1,
+        "fields": {
+          "role": "assistant",
+          "content": "हमारी NatureVeda Herbal Face Cream ₹599 में 50 ग्राम की आती है। इसमें Neem, Turmeric, और Aloe Vera हैं, जो moisturizing और routine skin care के लिए अच्छी है। बताइए, आपको इसका order करना है या delivery के बारे में जानना है? __OK__"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 2,
+        "fields": {
+          "role": "assistant",
+          "content": "```json\n{\n  \"decision\": \"continue\",\n  \"intent\": \"question\",\n  \"reason\": \"none\",\n  \"explicit_end\": false,\n  \"evidence\": \"ठीक है, मैं 2 bottles hair oil और 1 face cream लेना चाहती हूँ, total price कितना हुआ?\",\n  \"remaining_request\": \"total price calculation for 2 bottles hair oil and 1 face cream\",\n  \"contact_intent\": \"none\",\n  \"contact_evidence\": \"\",\n  \"callback_time\": \"\",\n  \"memory_operations\": [\n    {\n      \"op\": \"set_fact\",\n      \"key\": \"product\",\n      \"value\": \"hair oil, face cream\",\n      \"evidence\": \"2 bottles hair oil और 1 face cream\",\n      \"assertion\": \"caller_asserted\",\n      \"polarity\": \"positive\"\n    },\n    {\n      \"op\": \"set_fact\",\n      \"key\": \"quantity\",\n      \"value\": \"3\",\n      \"evidence\": \"2 bottles hair oil और 1 face cream\",\n      \"assertion\": \"caller_asserted\",\n      \"p"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 2,
+        "fields": {
+          "role": "assistantassistant",
+          "content": "```json\n{\n  \"{accepted\": [\n    0\n  \"contact_action\n  \": \"keep\",\n  ]\n}\n```"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 2,
+        "fields": {
+          "content": "\"contact_evidence\": \"\",\n  \"when\": \"\",\n  \"finish\": false,\n  \"finish_evidence\": \"\",\n  \"open_request\": \"total price कितना हुआ?\",\n  \"action_request\": \"none\",\n  \"agent_asked_time\": false\n}"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 2,
+        "fields": {
+          "role": "assistant",
+          "content": "{\n  \"answers\": [\n    {\n      \"domain\": \"business_terms\",\n      \"question\": \"total price for 2 bottles hair oil and 1 face cream\",\n      \"subject\": \"NatureVeda Herbal Hair Oil\",\n      \"row_id\": 2,\n      \"topic_quote\": \"NatureVeda Herbal Hair Oil costs 499 rupees for 200 ml\",\n      \"value_quote\": \"499 rupees for 200 ml\",\n      \"unit_price_quote\": \"499\",\n      \"unit_quantity_quote\": \"200 ml\",\n      \"requested_quantity_quote\": \"2\"\n    },\n    {\n      \"domain\": \"business_terms\",\n      \"question\": \"total price for 2 bottles hair oil and 1 face cream\",\n      \"subject\": \"NatureVeda Herbal Face Cream\",\n      \"row_id\": 4,\n      \"topic_quote\": \"NatureVeda Herbal Face Cream costs 599 rupees for 50 g\",\n      \"value_quote\": \"599 rupees for 50 g\",\n      \"unit_price_quote\": \"599\",\n      \"unit_quantity_quot"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 2,
+        "fields": {
+          "role": "assistant",
+          "content": "देखिए, 2 bottles hair oil और 1 face cream का total ₹1497 होगा। Hair oil 499 रुपये per bottle है और face cream 599 रुपये की है। बताइए, order place करना है या delivery details जाननी हैं?"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 2,
+        "fields": {
+          "role": "assistant",
+          "content": "देखिए, 2 bottles hair oil और 1 face cream का total ₹1497 होगा। Hair oil 499 रुपये per bottle है और face cream 599 रुपये की है। बताइए, order place करना है या delivery details जाननी हैं?\n__OK__"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 3,
+        "fields": {
+          "role": "assistant",
+          "content": "```json\n{\n  \"decision\": \"continue\",\n  \"intent\": \"question\",\n  \"reason\": \"none\",\n  \"explicit_end\": false,\n  \"evidence\": \"ठीक है, फिर आप order confirm कर दीजिए, आगे क्या करना होगा?\",\n  \"remaining_request\": \"What are the next steps to confirm the order?\",\n  \"contact_intent\": \"none\",\n  \"contact_evidence\": \"\",\n  \"callback_time\": \"\",\n  \"memory_operations\": [],\n  \"wait_for_caller\": true,\n  \"wait_evidence\": \"आगे क्या करना होगा?\"\n}\n```"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 3,
+        "fields": {
+          "role": "assistant",
+          "content": "{\n  \"contact_action\": \"keep\",\n  \"contact_evidence\": \"\",\n  \"when\": \"\",\n  \"finish\": false,\n  \"finish_evidence\": \"\",\n  \"open_request\": \"आगे क्या करना होगा?\",\n  \"action_request\": \"write\",\n  \"agent_asked_time\": false\n}"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 3,
+        "fields": {
+          "role": "assistant",
+          "content": "{\n  \"answers\": []\n}"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 3,
+        "fields": {
+          "role": "assistant",
+          "content": "ठीक है। Order confirm करने के लिए बस मुझे आपका पूरा नाम और delivery address बता दीजिए। उसके बाद मैं आगे process कर देती हूँ।"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 3,
+        "fields": {
+          "role": "assistant",
+          "content": "ठीक है, order confirm करने के लिए मुझे आपका नाम और delivery address चाहिए होगा। आप details बता दीजिए, फिर आगे process कर देते हैं।"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 4,
+        "fields": {
+          "role": "assistant",
+          "content": "```json\n{\n  \"decision\": \"continue\",\n  \"intent\": \"question\",\n  \"reason\": \"none\",\n  \"explicit_end\": false,\n  \"evidence\": \"\",\n  \"remaining_request\": \"\",\n  \"contact_intent\": \"none\",\n  \"contact_evidence\": \"\",\n  \"callback_time\": \"\",\n  \"memory_operations\": [\n    {\n      \"op\": \"set_fact\",\n      \"key\": \"caller_name\",\n      \"value\": \"लक्ष्मी रेड्डी\",\n      \"evidence\": \"मेरा नाम लक्ष्मी रेड्डी है\",\n      \"assertion\": \"caller_asserted\",\n      \"polarity\": \"positive\"\n    },\n    {\n      \"op\": \"set_fact\",\n      \"key\": \"delivery_address\",\n      \"value\": \"फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072\",\n      \"evidence\": \"मेरा एड्रेस है फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072\",\n      \"assertion\": \"caller_asserted\",\n      \"polarity\": \"positive\"\n    }\n  ],\n  \"wait_for_caller\": false,\n  \"wai"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 4,
+        "fields": {
+          "role": "assistant",
+          "content": "```json\n{\n  \"accepted\": [\n    0,\n    1\n  ]\n}\n```"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 4,
+        "fields": {
+          "role": "assistant",
+          "content": "{\n  \"contact_action\": \"keep\",\n  \"contact_evidence\": \"\",\n  \"when\": \"\",\n  \"finish\": false,\n  \"finish_evidence\": \"\",\n  \"open_request\": \"order confirm करने के लिए मुझे आपका नाम और delivery address चाहिए होगा। आप details बता दीजिए, फिर आगे process कर देते हैं.\",\n  \"action_request\": \"write\",\n  \"agent_asked_time\": false\n}"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 4,
+        "fields": {
+          "role": "assistant",
+          "content": "```json\n{\n  \"answers\": [\n    {\n      \"domain\": \"business_terms\",\n      \"question\": \"total price\",\n      \"subject\": \"NatureVeda Herbal Hair Oil, NatureVeda Herbal Face Cream\",\n      \"row_id\": 2,\n      \"topic_quote\": \"NatureVeda Herbal Hair Oil costs 499 rupees for 200 ml\",\n      \"value_quote\": \"499 rupees\",\n      \"unit_price_quote\": \"499\",\n      \"unit_quantity_quote\": \"1\",\n      \"requested_quantity_quote\": \"2\"\n    },\n    {\n      \"domain\": \"business_terms\",\n      \"question\": \"total price\",\n      \"subject\": \"NatureVeda Herbal Face Cream\",\n      \"row_id\": 4,\n      \"topic_quote\": \"NatureVeda Herbal Face Cream costs 599 rupees for 50 g\",\n      \"value_quote\": \"599 rupees\",\n      \"unit_price_quote\": \"599\",\n      \"unit_quantity_quote\": \"1\",\n      \"requested_quantity_quote\": \"1\"\n    }\n  ]\n}\n```"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 4,
+        "fields": {
+          "role": "assistant",
+          "content": "ठीक है, मैंने note कर लिया है। तो confirm कर रही हूँ, 2 bottles NatureVeda Herbal Hair Oil और 1 face cream, कुल ₹1497, delivery address फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072। एक बार हाँ बोल दीजिए, तो मैं order process कर देती हूँ।"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 4,
+        "fields": {
+          "role": "assistant"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 4,
+        "fields": {
+          "role": "assistant",
+          "content": "ठीक है, मैंने note कर लिया है। तो confirm कर दूँ — 2 bottles NatureVeda Herbal Hair Oil और 1 NatureVeda Herbal Face Cream, total ₹1497, delivery address flat 302, Sai Residency, Kukatpally, Hyderabad 500072। क्या मैं order place कर दूँ?"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 5,
+        "fields": {
+          "role": "assistant",
+          "content": "```json\n{\n  \"decision\": \"close\",\n  \"intent\": \"done\",\n  \"reason\": \"done\",\n  \"explicit_end\": true,\n  \"evidence\": \"हाँ, सब सही है, order confirm कर दीजिए।\",\n  \"remaining_request\": \"\",\n  \"contact_intent\": \"end_this_call\",\n  \"contact_evidence\": \"\",\n  \"callback_time\": \"\",\n  \"memory_operations\": [\n    {\n      \"op\": \"set_fact\",\n      \"key\": \"product\",\n      \"value\": \"NatureVeda Herbal Hair Oil, NatureVeda Herbal Face Cream\",\n      \"evidence\": \"2 bottles NatureVeda Herbal Hair Oil और 1 NatureVeda Herbal Face Cream\",\n      \"assertion\": \"caller_asserted\",\n      \"polarity\": \"positive\"\n    },\n    {\n      \"op\": \"set_fact\",\n      \"key\": \"quantity\",\n      \"value\": \"3\",\n      \"evidence\": \"2 bottles NatureVeda Herbal Hair Oil और 1 NatureVeda Herbal Face Cream\",\n      \"assertion\": \"caller_asserted\",\n      \"p"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 5,
+        "fields": {
+          "role": "assistantassistant",
+          "content": "{\n  \"contact_action{\n  \"accepted\": []\n}"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 5,
+        "fields": {
+          "content": "\": \"keep\",\n  \"contact_evidence\": \"\",\n  \"when\": \"\",\n  \"finish\": false,\n  \"finish_evidence\": \"\",\n  \"open_request\": \"\",\n  \"action_request\": \"write\",\n  \"agent_asked_time\": false\n}"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 5,
+        "fields": {
+          "role": "assistant",
+          "tool_calls": "[{\"index\": 0, \"id\": \"chatcmpl-tool-9280b5d21d58b9dd\", \"function\": {\"arguments\": null, \"name\": \"CONFIRM_ORDER\"}, \"type\": \"function\"}][{\"index\": 0, \"id\": null, \"function\": {\"arguments\": \"{\\\"product\\\": \\\"2 x\", \"name\": null}, \"type\": null}][{\"index\": 0, \"id\": null, \"function\": {\"arguments\": \" NatureVeda Herbal Hair Oil\", \"name\": null}, \"type\": null}][{\"index\": 0, \"id\": null, \"function\": {\"arguments\": \", 1 x NatureV\", \"name\": null}, \"type\": null}][{\"index\": 0, \"id\": null, \"function\": {\"arguments\": \"eda Herbal Face Cream\", \"name\": null}, \"type\": null}][{\"index\": 0, \"id\": null, \"function\": {\"arguments\": \"\\\", \\\"quantity\\\": \", \"name\": null}, \"type\": null}][{\"index\": 0, \"id\": null, \"function\": {\"arguments\": \"3, \\\"customer_name\\\": \\\"लक्ष्मी\", \"name\": null}, \"type\": null}][{\"index\": 0, \"id\": null, \"fu"
+        },
+        "finish": "tool_calls",
+        "closed": true
+      },
+      {
+        "turn": 5,
+        "fields": {
+          "role": "assistant",
+          "content": "आपका order confirm हो गया है। अब बस delivery के लिए team आपसे जल्दी ही संपर्क करेगी।"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 5,
+        "fields": {
+          "role": "assistant",
+          "content": "आपका order confirm हो गया है। अब बस delivery के लिए team आपसे जल्दी ही संपर्क करेगी।\n__OK__"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 6,
+        "fields": {
+          "role": "assistant",
+          "content": "```json\n{\n  \"decision\": \"close\",\n  \"intent\": \"done\",\n  \"reason\": \"done\",\n  \"explicit_end\": false,\n  \"evidence\": \"ठीक है, धन्यवाद।\",\n  \"remaining_request\": \"\",\n  \"contact_intent\": \"end_this_call\",\n  \"contact_evidence\": \"\",\n  \"callback_time\": \"\",\n  \"memory_operations\": [],\n  \"wait_for_caller\": false\n}\n```"
+        },
+        "finish": "stop",
+        "closed": true
+      },
+      {
+        "turn": 6,
+        "fields": {
+          "role": "assistant",
+          "content": "{\n  \"contact_action\": \"keep\",\n  \"contact_evidence\": \"\",\n  \"when\": \"\",\n  \"finish\": true,\n  \"finish_evidence\": \"ठीक है, धन्यवाद।\",\n  \"open_request\": \"\",\n  \"action_request\": \"none\",\n  \"agent_asked_time\": false\n}"
+        },
+        "finish": "stop",
+        "closed": true
+      }
+    ],
+    "available_tools": [
+      "GOOGLECALENDAR_CREATE_EVENT",
+      "GOOGLECALENDAR_FIND_FREE_SLOTS",
+      "GMAIL_SEND_EMAIL",
+      "SAVE_ENQUIRY",
+      "REQUEST_HUMAN_HANDOFF",
+      "CONFIRM_ORDER"
+    ],
+    "duration_s": 114.7,
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "converted",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:name_known",
+        "contact:phone_known",
+        "custom:face-cream",
+        "custom:hair-oil",
+        "custom:order-placed",
+        "followup:send_info",
+        "intent:purchase",
+        "outcome:converted",
+        "sentiment:positive"
+      ],
+      "facts": {
+        "caller_name": "लक्ष्मी रेड्डी",
+        "delivery_address": "फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072",
+        "phone": "+919700000001",
+        "quantity": "1",
+        "quantity_face_cream": "1",
+        "quantity_hair_oil": "2 bottles",
+        "total_price": "₹1497"
+      }
+    },
+    "db": {
+      "call": [
+        {
+          "call_id": "fce4c60f-a0f6-4207-b41f-bed81feea587",
+          "tenant_id": "b504974d-f3bc-4afc-b87a-9181c56fc54e",
+          "agent_id": "3e614939-d21e-5874-909c-bda138e75b9f",
+          "session_id": "qa-717092928f594992872734a22eb7cf11",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_v20261031_06e94a2188ee",
+          "started_at": "2026-10-31 14:55:46.391806+00:00",
+          "ended_at": "2026-10-31 14:57:38.883672+00:00",
+          "duration_sec": 112,
+          "disposition": "converted",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/fce4c60f-a0f6-4207-b41f-bed81feea587/",
+          "end_reason": "goodbye",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:name_known",
+            "contact:phone_known",
+            "custom:face-cream",
+            "custom:hair-oil",
+            "custom:order-placed",
+            "followup:send_info",
+            "intent:purchase",
+            "outcome:converted",
+            "sentiment:positive"
+          ],
+          "last_heartbeat_at": "2026-10-31 14:55:46.391806+00:00",
+          "created_at": "2026-10-31 14:55:46.393907+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "8d90da39-ff72-4811-a783-900dd5294612",
+          "tenant_id": "b504974d-f3bc-4afc-b87a-9181c56fc54e",
+          "agent_id": "3e614939-d21e-5874-909c-bda138e75b9f",
+          "name": "लक्ष्मी रेड्डी",
+          "phone": "+919700000001",
+          "email": null,
+          "stage": "qualified",
+          "notes": "[Call reference: fce4c60f-a0f6-4207-b41f-bed81feea587]\nThe agent called the customer to offer products, and the customer expressed an intent to purchase two bottles of hair oil and one face cream. The agent shared the total price of ₹1497 and requested the customer's name and delivery address to proceed. The customer provided the details as Lakshmi Reddy at Flat 302, Sai Residency, Kukatpally, Hyderabad 500072. After confirming the order details, the agent confirmed the order and informed the customer that the delivery team would contact them soon. The call ended with the customer thanking the agent.\n\nNext step: Delivery team to contact the customer regarding the shipment.\n\nCall outcome: converted (95% confidence)",
+          "created_at": "2026-10-31 14:57:40.496157+00:00",
+          "updated_at": "2026-10-31 14:57:40.496157+00:00"
+        }
+      ],
+      "tools": [],
+      "language_switch": []
+    },
+    "order_proof": {
+      "version": 1,
+      "call_id": "fce4c60f-a0f6-4207-b41f-bed81feea587",
+      "tenant_id": "b504974d-f3bc-4afc-b87a-9181c56fc54e",
+      "agent_id": "3e614939-d21e-5874-909c-bda138e75b9f",
+      "status": "confirmed",
+      "quantity": 3,
+      "customer_name": "लक्ष्मी रेड्डी",
+      "delivery_address": "फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072",
+      "product": "2 x NatureVeda Herbal Hair Oil, 1 x NatureVeda Herbal Face Cream",
+      "confirmed_at": "2026-10-31T14:57:28.808828Z"
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "goodbye"
+    },
+    "infra_retries": 0,
+    "judge_model": "gemini-3.5-flash-lite",
+    "checks": [
+      {
+        "id": "no_runtime_error",
+        "passed": true,
+        "evidence": "",
+        "kind": "server"
+      },
+      {
+        "id": "min_duration_90s",
+        "passed": true,
+        "evidence": "114.7s",
+        "kind": "server"
+      },
+      {
+        "id": "responsive_every_turn",
+        "passed": true,
+        "evidence": "silent turns []",
+        "kind": "server"
+      },
+      {
+        "id": "first_chunk_latency",
+        "passed": true,
+        "evidence": "slow turns []",
+        "kind": "server"
+      },
+      {
+        "id": "speech_clean",
+        "passed": true,
+        "evidence": "",
+        "kind": "server"
+      },
+      {
+        "id": "totals_consistent",
+        "passed": false,
+        "evidence": "turns [2]",
+        "kind": "server"
+      },
+      {
+        "id": "no_unproven_action_claim",
+        "passed": true,
+        "evidence": "turns []",
+        "kind": "server"
+      },
+      {
+        "id": "no_false_dnd",
+        "passed": true,
+        "evidence": "0",
+        "kind": "server"
+      },
+      {
+        "id": "order_recorded",
+        "passed": true,
+        "evidence": "{'version': 1, 'call_id': 'fce4c60f-a0f6-4207-b41f-bed81feea587', 'tenant_id': 'b504974d-f3bc-4afc-b87a-9181c56fc54e', 'agent_id': '3e614939-d21e-5874-909c-bda138e75b9f', 'status': 'confirmed', 'quant",
+        "kind": "server"
+      },
+      {
+        "id": "answered_what_was_asked",
+        "passed": true,
+        "evidence": "AGENT: हमारी NatureVeda Herbal Face Cream  599 में 50 ग्राम की आती है।",
+        "kind": "judge"
+      },
+      {
+        "id": "short_one_question",
+        "passed": true,
+        "evidence": "AGENT: बताइए, आपको इसका order करना है या delivery के बारे में जानना है?",
+        "kind": "judge"
+      },
+      {
+        "id": "catalog_facts_accurate",
+        "passed": true,
+        "evidence": "AGENT: 2 bottles hair oil और 1 face cream का total  1497 होगा।",
+        "kind": "judge"
+      },
+      {
+        "id": "no_invented_business_facts",
+        "passed": true,
+        "evidence": "AGENT: आपका order confirm हो गया है। अब बस delivery के लिए team आपसे जल्दी ही संपर्क करेगी।",
+        "kind": "judge"
+      },
+      {
+        "id": "no_health_claims",
+        "passed": true,
+        "evidence": "AGENT: जो moisturizing और routine skin care के लिए अच्छी है।",
+        "kind": "judge"
+      },
+      {
+        "id": "no_pressure",
+        "passed": true,
+        "evidence": "AGENT: बताइए, order place करना है या delivery details जाननी हैं?",
+        "kind": "judge"
+      },
+      {
+        "id": "context_retained",
+        "passed": true,
+        "evidence": "AGENT: तो confirm कर दूँ — 2 bottles NatureVeda Herbal Hair Oil और 1 NatureVeda Herbal Face Cream, total  1497, delivery address flat 302, Sai Residency, Kukatpally, Hyderabad 500072।",
+        "kind": "judge"
+      },
+      {
+        "id": "language_followed",
+        "passed": true,
+        "evidence": "AGENT: order confirm करने के लिए मुझे आपका नाम और delivery address चाहिए होगा।",
+        "kind": "judge"
+      },
+      {
+        "id": "order_details_collected",
+        "passed": true,
+        "evidence": "AGENT: आपका order confirm हो गया है। अब बस delivery के लिए team आपसे जल्दी ही संपर्क करेगी।",
+        "kind": "judge"
+      }
+    ],
+    "failures": [
+      "totals_consistent"
+    ],
+    "passed": false,
+    "brain_path": "artifacts\\call-quality-review\\agent-qa-repro-order3\\agents\\hi-IN-brain.txt"
+  }
+]

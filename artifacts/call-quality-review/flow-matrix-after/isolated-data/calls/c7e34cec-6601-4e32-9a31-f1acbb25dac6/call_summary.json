@@ -1,0 +1,32 @@
+{
+  "call_id": "c7e34cec-6601-4e32-9a31-f1acbb25dac6",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call by expressing extreme anger, accusing the company of being useless, idiotic, and fraudulent. The agent did not engage with the accusations or attempt to resolve the issue, instead immediately thanking the caller and ending the conversation. The call concluded abruptly with the agent's goodbye.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500512"
+  },
+  "facts": {
+    "phone": "+919876500512"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "outcome:not_interested",
+    "signal:objection"
+  ],
+  "tags": [
+    "sentiment:negative",
+    "sentiment:frustrated"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [
+    "Caller accused the company of being a fraud and expressed intense frustration."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:01:02.052616Z",
+  "generation_ok": true
+}

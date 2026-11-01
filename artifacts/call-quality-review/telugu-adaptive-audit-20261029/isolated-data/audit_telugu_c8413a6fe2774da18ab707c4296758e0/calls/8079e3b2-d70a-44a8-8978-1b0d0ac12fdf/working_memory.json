@@ -1,0 +1,14 @@
+{
+  "facts": {
+    "caller_name": "కిరణ్",
+    "product": "Python, data training",
+    "email": "kiran.audit@example.invalid",
+    "caller_email": "kiran.audit@example.invalid"
+  },
+  "preferences": {
+    "requested_time": "Evening లేదా weekend",
+    "payment_method": "instalments option"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "user: సరే, అర్థమైంది. నాకు SQL లేదా PowerBI లాంటి courses కూడా ఉంటే బాగుంటుంది, వాటి details కూడా చెప్పగలరా? అలాగే, నా enquiry ని save చేసి, ఒక demo class లేదా discussion ఏమైనా arrange చేయగలరా?\nassistant: ప్రస్తుతం నేను కేవలం Python with Data Analytics course గురించే details చెప్పగలను. మీ enquiry save చేయడానికి, మీకు ఏ time కి call చేయమంటారు?"
+}

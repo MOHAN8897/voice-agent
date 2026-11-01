@@ -1,0 +1,109 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "The caller, Shravani, requested window AC service in Madhapur and asked whether a next-day 10:00 AM slot was available. The agent stated that Madhapur is within the service area and that next-day slots were generally available from 10:00 AM to 6:00 PM. Shravani provided her email address and asked to book the 10:00 AM slot, specifically asking whether the booking was truly confirmed. The agent clarified that direct booking confirmation was not possible from the current channel and that team review was required, offering to save an enquiry for the stated slot on 30 October. Shravani declined to proceed without confirmation, emphasized that an unconfirmed booking should not be represented as confirmed, and ended the call politely. No booking or enquiry was confirmed as completed.",
+  "next_action": "Team review is required if Shravani still wants the 30 October 10:00 AM window AC service slot; contact her only if a confirmed appointment can be provided.",
+  "extracted_fields": {
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "location": "Madhapur",
+    "name": "Shravani",
+    "phone": "+12025550115",
+    "product": "window AC service",
+    "requested_slot": "30 October, 10:00 AM",
+    "service": "Window AC service"
+  },
+  "objections": [
+    "The caller did not want to proceed without genuine booking confirmation."
+  ],
+  "notes": "The agent mentioned that next-day slots were generally available, but no specific slot was confirmed and no enquiry was saved during the call.",
+  "tags": [
+    "intent:booking",
+    "intent:support",
+    "signal:objection",
+    "followup:schedule_pending",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:window-ac",
+    "custom:madhapur",
+    "custom:morning-slot"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:48:55.705821Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "location": "Madhapur",
+    "name": "Shravani",
+    "phone": "+12025550115",
+    "product": "window AC service",
+    "requested_slot": "30 October, 10:00 AM",
+    "service": "Window AC service"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:window-ac",
+    "followup:schedule_pending",
+    "followup:site_visit",
+    "intent:booking",
+    "intent:support",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "f667920a-17d9-4659-b821-fb24fdf8300c",
+    "agentId": "da7e8b71-9465-55a3-b920-fae16cb86c5c",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.97,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

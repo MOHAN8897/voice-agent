@@ -1,0 +1,70 @@
+{
+  "call_id": "e780b94d-05d6-46a3-8027-ce188ea7685a",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, a working professional, asked about Python training available in the evenings or on weekends, including fees and placement support. The agent stated that the fee is INR 8,999 and that placement assistance includes resume building, interview preparation, and job referrals, but there is no job or salary guarantee. The caller accepted the fee as reasonable and later asked whether materials were included and whether there were extra charges; the agent did not know. The caller also asked unrelated questions about weather and hacking another person’s bank account; the agent declined to provide illegal hacking instructions. The caller then requested a guaranteed job promise, which the agent refused, reiterating that only placement assistance is offered. The agent provided an eight-week course duration and batch timings: weekday classes Monday–Friday, 8:00–9:00 PM, and weekend classes Saturday–Sunday, 10:00 AM–1:00 PM. The caller said the weekday evening batch suited them and asked how to register, but the agent could not provide the registration process or admission-team contact details. The caller provided the name Kiran and email kiran.audit@example.invalid, while deferring qualification details. The call ended with the agent asking for the remaining details for possible free-demo or admission-counselling follow-up; no registration or appointment was completed.",
+  "next_action": "Provide the registration process or admission-team contact details and clarify whether course materials and any extra charges are included. Collect Kiran's qualification if proceeding with counselling or a free demo.",
+  "extracted_fields": {
+    "alternative_batch": "Weekend, Saturday-Sunday, 10:00 AM-1:00 PM",
+    "caller_name": "కిరణ్",
+    "course": "Python with Data Analytics",
+    "course_duration": "8 weeks",
+    "email": "kiran.audit@example.invalid",
+    "fee": "INR 8,999",
+    "name": "Kiran",
+    "phone": "+12025550113",
+    "preferred_batch": "Weekday evening, Monday-Friday, 8:00-9:00 PM",
+    "product": "Weekday evening batch",
+    "qualification": "To be provided later"
+  },
+  "facts": {
+    "alternative_batch": "Weekend, Saturday-Sunday, 10:00 AM-1:00 PM",
+    "caller_name": "కిరణ్",
+    "course": "Python with Data Analytics",
+    "course_duration": "8 weeks",
+    "email": "kiran.audit@example.invalid",
+    "fee": "INR 8,999",
+    "name": "Kiran",
+    "phone": "+12025550113",
+    "preferred_batch": "Weekday evening, Monday-Friday, 8:00-9:00 PM",
+    "product": "Weekday evening batch",
+    "qualification": "To be provided later"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:data-analytics",
+    "custom:python-training",
+    "followup:send_info",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "signal:price_sensitive",
+    "signal:objection",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:python-training",
+    "custom:data-analytics",
+    "custom:weekday-evening-batch"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Registration process and admission-team contact details were unavailable.",
+    "Unclear whether course materials are included or whether extra charges apply.",
+    "Caller requested a job guarantee, but only placement assistance is available."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:42:35.461221Z",
+  "generation_ok": true
+}

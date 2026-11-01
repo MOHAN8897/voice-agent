@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "requested_time": "tomorrow 11 AM"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: Is it confirmed? Give me the booking number.\nassistant: ഇല്ല, ഇതുവരെ ഒന്നും confirm ആയിട്ടില്ല. ബുക്കിംഗ് number ഇപ്പോൾ തരാൻ കഴിയില്ല.\nuser: Okay, thanks.\nassistant: ഇല്ല, ഇതുവരെ ഒന്നും confirm ആയിട്ടില്ല, ബുക്കിംഗ് number ഇപ്പോൾ തരാൻ കഴിയില്ല. ഒരു visit ബുക്ക് ചെയ്യുന്നതിന് മുൻപ്, ഏത് appliance ആണ് service ചെയ്യേണ്ടത് എന്നും ഏത് area-യിലാണ് ഉള്ളത് എന്നും ഒന്ന് പറയാമോ?"
+}

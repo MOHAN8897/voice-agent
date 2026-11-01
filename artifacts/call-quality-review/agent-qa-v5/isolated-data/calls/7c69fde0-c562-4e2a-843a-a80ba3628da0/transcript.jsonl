@@ -1,0 +1,22 @@
+{"seq": 1, "role": "user", "text": "ಹೌದು ಪ್ರಿಯಾ, ಹೇಳಿ. ನಿಮ್ಮ ಹತ್ರ face cream ಮತ್ತೆ hair oil ಇದೆ ಅಂತ ಕೇಳಿದ್ದೆ, ಅದರ price ಎಷ್ಟಾಗುತ್ತೆ?", "ts": "2026-10-31T16:36:36.552191Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ಖಂಡಿತ ಹೇಳ್ತೀನಿ. ನಮ್ಮ Herbal Hair Oil 200 ml ಗೆ ₹499 ಆಗುತ್ತೆ, ಮತ್ತೆ Herbal Face Cream 50 g ಗೆ ₹599 ಇದೆ. ನಿಮಗೆ ಬೇರೆ ಯಾವುದಾದ್ರೂ details ಬೇಕಾ?", "ts": "2026-10-31T16:36:38.133485Z"}
+{"seq": 3, "role": "user", "text": "ಸರಿ, price ಕೇಳಿ ತುಂಬಾ ಖುಷಿ ಆಯ್ತು. ಇದನ್ನ ಎಲ್ಲಾ details ಮತ್ತೆ price list ನ ನನ್ನ email ಗೆ ಕಳಿಸ್ತೀರಾ? ನನ್ನ email ID mohansaiteja.99@gmail.com, ದಯವಿಟ್ಟು ಕಳಿಸಿ.", "ts": "2026-10-31T16:36:57.479420Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಕ್ಷಮಿಸಿ, ಈಗ email ಕಳಿಸೋಕೆ ಆಗಿಲ್ಲ, connection issue ಇದೆ. ನೀವು ಸ್ವಲ್ಪ ಹೊತ್ತಿನ ನಂತರ try ಮಾಡಬಹುದು, ಅಥವಾ ಬೇಕಿದ್ರೆ ನಾನು ಈ details ನ enquiry ಆಗಿ save ಮಾಡ್ತೀನಿ. ಹಾಗೆ ಮಾಡ್ಲಾ?", "ts": "2026-10-31T16:37:02.375433Z"}
+{"seq": 5, "role": "user", "text": "ಸರಿ, ತೊಂದರೆ ಇಲ್ಲ, ಹಾಗೇ ಮಾಡಿ save ಮಾಡಿ. ಆಮೇಲೆ email ಕಳಿಸ್ತೀರಾ?", "ts": "2026-10-31T16:37:18.596424Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ಆಯ್ತು, ನಿಮ್ಮ enquiry save ಆಗಿದೆ. ಆಮೇಲೆ email ಕಳಿಸೋ ಬಗ್ಗೆ ನಮ್ಮ team ನಿಮ್ಮನ್ನ contact ಮಾಡ್ತಾರೆ.", "ts": "2026-10-31T16:37:21.043897Z"}
+{"seq": 7, "role": "user", "text": "ಸರಿ, email ಕಳಿಸಿದ್ರಾ ಅಂತ ಒಂದು ಸಲ confirm ಮಾಡ್ತೀರಾ?", "ts": "2026-10-31T16:37:31.627807Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "ಇಲ್ಲ, ಈಗ email ಕಳಿಸೋಕೆ ಆಗ್ತಿಲ್ಲ. ಆದ್ರೆ ನಿಮ್ಮ enquiry ಖಂಡಿತ save ಆಗಿದೆ, ನಮ್ಮ team ಆಮೇಲೆ ನಿಮ್ಮನ್ನ contact ಮಾಡ್ತಾರೆ.", "ts": "2026-10-31T16:37:34.833626Z"}
+{"seq": 9, "role": "user", "text": "ಸರಿ, team ಕಡೆಯಿಂದ ಯಾವಾಗ call ಬರುತ್ತೆ ಅಂತ ಹೇಳ್ತೀರಾ?", "ts": "2026-10-31T16:37:48.757393Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "ನಾನು ನಿಮ್ಮ callback time ನ note ಮಾಡ್ಕೊಳ್ತೀನಿ. ನಿಮಗೆ ಯಾವ time ಅನುಕೂಲ ಆಗುತ್ತೆ ಅಂತ ಹೇಳ್ತೀರಾ?", "ts": "2026-10-31T16:37:50.266342Z"}
+{"seq": 11, "role": "user", "text": "ನಾಳೆ ಬೆಳಿಗ್ಗೆ 11 ಗಂಟೆಗೆ ಒಂದು short call arrange ಮಾಡ್ತೀರಾ order place ಮಾಡೋಕೆ? ಅದನ್ನ book ಮಾಡಿದ್ರಾ ಅಂತ confirm ಮಾಡ್ತೀರಾ?", "ts": "2026-10-31T16:38:04.436686Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "ಆಯ್ತು, ನಿಮ್ಮ callback request ನಾಳೆ ಬೆಳಿಗ್ಗೆ 11 ಗಂಟೆಗೆ note ಮಾಡಿದ್ದೀನಿ. ನಮ್ಮ team order place ಮಾಡೋಕೆ ನಿಮಗೆ call ಮಾಡ್ತಾರೆ.", "ts": "2026-10-31T16:38:06.245957Z"}
+{"seq": 13, "role": "user", "text": "ಸರಿ, face cream stock ಅಲ್ಲಿ ಇದೆಯಾ? ಮತ್ತೆ Kukatpally ಗೆ ಯಾವಾಗ delivery ಆಗುತ್ತೆ ಅಂತ ಹೇಳ್ತೀರಾ?", "ts": "2026-10-31T16:38:20.963848Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "Face cream stock ಬಗ್ಗೆ ಮಾಹಿತಿ ಸದ್ಯಕ್ಕೆ ಲಭ್ಯವಿಲ್ಲ. Kukatpally ಗೆ delivery ಯಾವಾಗ ಆಗುತ್ತೆ ಅನ್ನೋದು ಕೂಡ ಈಗ ತಿಳಿದಿಲ್ಲ.", "ts": "2026-10-31T16:38:22.783038Z"}
+{"seq": 15, "role": "user", "text": "ಅಯ್ಯೋ, stock details ಇಲ್ಲ ಅಂದ್ರೆ ಹೇಗೆ? ನಂಗೆ order ಮಾಡೋಕೆ ಮುಂಚೆ ಇದು ಬೇಕಾಗುತ್ತೆ ಅಲ್ವಾ. ದಯವಿಟ್ಟು team ಹತ್ರ ಕೇಳಿ ಹೇಳ್ತೀರಾ?", "ts": "2026-10-31T16:38:38.527945Z", "partial": false}
+{"seq": 16, "role": "assistant", "text": "ಸರಿ, ನಾನು ನಮ್ಮ team ಗೆ stock details ಬಗ್ಗೆ ಕೇಳಿ ತಿಳಿಸ್ತೀನಿ. ಅವರು ನಿಮಗೆ ವಾಪಸ್ ತಿಳಿಸ್ತಾರೆ.", "ts": "2026-10-31T16:38:40.806516Z"}
+{"seq": 17, "role": "user", "text": "ಸರಿ, ಹಾಗಾದ್ರೆ team ಹತ್ರ ಕೇಳಿ ನನಗೆ stock ಮತ್ತೆ delivery ಬಗ್ಗೆ confirm ಮಾಡ್ತೀರಾ ಅಲ್ವಾ?", "ts": "2026-10-31T16:38:52.968336Z", "partial": false}
+{"seq": 18, "role": "assistant", "text": "ಹೌದು, ಖಂಡಿತ. ನಾನು team ಹತ್ರ ಕೇಳಿ ನಿಮಗೆ stock ಮತ್ತೆ delivery ಬಗ್ಗೆ confirm ಮಾಡಿಸ್ತೀನಿ.", "ts": "2026-10-31T16:38:54.680897Z"}
+{"seq": 19, "role": "user", "text": "ಸರಿ, ತುಂಬಾ ಧನ್ಯವಾದಗಳು. ದಯವಿಟ್ಟು team ಕಡೆಯಿಂದ ನನಗೆ confirm ಮಾಡಿಸಿ.", "ts": "2026-10-31T16:39:05.114493Z", "partial": false}
+{"seq": 20, "role": "assistant", "text": "ನಾನು note ಮಾಡ್ಕೊಂಡಿದ್ದೀನಿ. ನಮ್ಮ team ನಿಮ್ಮನ್ನ contact ಮಾಡಿ stock ಮತ್ತೆ delivery ಬಗ್ಗೆ confirm ಮಾಡ್ತಾರೆ.", "ts": "2026-10-31T16:39:06.919491Z"}
+{"seq": 21, "role": "user", "text": "ಸರಿ, ತುಂಬಾ ಧನ್ಯವಾದಗಳು ಪ್ರಿಯಾ. ನಾನು wait ಮಾಡ್ತೀನಿ, team ಕಡೆಯಿಂದ ನನಗೆ ಖಂಡಿತ update ಕೊಡಿ.", "ts": "2026-10-31T16:39:20.253750Z", "partial": false}
+{"seq": 22, "role": "assistant", "text": "ಖಂಡಿತ, ನಾನು ಎಲ್ಲವನ್ನೂ note ಮಾಡ್ಕೊಂಡಿದ್ದೀನಿ. ನಮ್ಮ team ನಿಮ್ಮನ್ನ contact ಮಾಡ್ತಾರೆ.", "ts": "2026-10-31T16:39:21.366276Z"}

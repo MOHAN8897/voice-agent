@@ -1,0 +1,5 @@
+{"turn_seq": 1, "ts": "2026-10-29T11:10:15.979541Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T11:10:18.037490Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-29T11:10:20.079427Z", "include_summary": true, "projection": ""}
+{"turn_seq": 7, "ts": "2026-10-29T11:10:22.355028Z", "include_summary": true, "projection": ""}
+{"turn_seq": 9, "ts": "2026-10-29T11:10:23.126134Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: split AC | requested_time: రేపు ఉదయం 10 గంటలకి | delivery_locality: మాదాపూర్ | caller_name: శ్రావణి\n[Preferences]\nrequested_time: రేపు 10 గంటలకి\n[Context]\nCaller provided contact details in this call."}

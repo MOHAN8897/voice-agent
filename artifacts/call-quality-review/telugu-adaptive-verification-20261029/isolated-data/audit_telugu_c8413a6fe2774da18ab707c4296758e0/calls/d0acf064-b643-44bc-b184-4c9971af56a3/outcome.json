@@ -1,0 +1,115 @@
+{
+  "disposition": "site_visit_planned",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "Shravani from Madhapur called to arrange general servicing for her split AC and asked about the ₹599 service cost, inspection-fee waiver, possible parts replacement, and technician availability. The agent explained that servicing costs ₹599, the ₹250 inspection charge is waived if the technician performs a repair, and parts are billed at actual MRP after inspection. Next-day slots were offered for 10:00 AM or 2:00 PM. Shravani selected the next day at 10:00 AM, and the agent stated that the appointment was confirmed. The agent also said parts cannot be predicted before inspection and claimed an event invite was sent to her email, while noting that a separate confirmation message could not be sent. The call ended courteously after Shravani confirmed her questions were answered.",
+  "next_action": null,
+  "extracted_fields": {
+    "appointment_time": "Next day at 10:00 AM",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "inspection_fee": "₹250, waived if repair is performed",
+    "locality": "Madhapur",
+    "parts_pricing": "Actual MRP after technician inspection",
+    "phone": "+12025550108",
+    "product": "Split AC",
+    "requested_time": "రేపు 10 గంటలకి",
+    "service": "General servicing",
+    "service_cost": "₹599"
+  },
+  "objections": [],
+  "notes": "The transcript confirms the agent stated the appointment was confirmed. It does not independently verify whether the event invite was actually delivered.",
+  "tags": [
+    "intent:booking",
+    "intent:support",
+    "followup:site_visit",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "custom_tags": [
+    "custom:split-ac",
+    "custom:general-service",
+    "custom:madhapur"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:40:20.498617Z",
+  "generation_ok": true,
+  "facts": {
+    "appointment_time": "Next day at 10:00 AM",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "inspection_fee": "₹250, waived if repair is performed",
+    "locality": "Madhapur",
+    "parts_pricing": "Actual MRP after technician inspection",
+    "phone": "+12025550108",
+    "product": "Split AC",
+    "requested_time": "రేపు 10 గంటలకి",
+    "service": "General servicing",
+    "service_cost": "₹599"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:general-service",
+    "custom:split-ac",
+    "followup:callback",
+    "followup:site_visit",
+    "intent:booking",
+    "intent:support",
+    "outcome:site_visit_planned",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "099cd33a-8514-40c7-85df-e86f2fde610a",
+    "agentId": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+    "stage": "qualified",
+    "action": "advanced"
+  },
+  "lead_assessment": {
+    "score": 100,
+    "band": "hot",
+    "disposition": "site_visit_planned",
+    "confidence": 0.99,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "site_visit_planned"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "appointment_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "300 रुपये के order की delivery fee कितनी है?", "ts": "2026-10-30T10:43:13.808408Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "₹300 के order पर ₹30 delivery fee लगेगी, क्योंकि ₹499 से ऊपर के orders पर ही free delivery मिलती है। क्या मैं आपकी कोई और सहायता कर सकता हूँ?", "ts": "2026-10-30T10:43:17.069201Z"}

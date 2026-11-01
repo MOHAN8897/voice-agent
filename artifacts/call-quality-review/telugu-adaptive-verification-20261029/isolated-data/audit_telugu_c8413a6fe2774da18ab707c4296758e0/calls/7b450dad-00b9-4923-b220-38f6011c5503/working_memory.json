@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "caller_name": "Madhavi",
+    "requested_time": "రేపు ఉదయం 11 గంటలకి",
+    "product": "Python, SQL, PowerBI courses"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: సరే, SQL, PowerBI details ఇప్పుడు లేకపోతే పర్వాలేదు. నా enquiry ని save చేస్తారా? అలాగే demo లేదా discussion ఏమైనా arrange చేయగలరా? ఇప్పటివరకు నా details ఏమైనా note చేసుకున్నారా?\nassistant: మీ details ఇప్పటి వరకు note చేయలేదు. నేను ఇప్పుడు మీ enquiry save చేస్తాను, అలాగే demo లేదా discussion కోసం మీరు ఏ time కి available గా ఉంటారో చెప్తారా?"
+}

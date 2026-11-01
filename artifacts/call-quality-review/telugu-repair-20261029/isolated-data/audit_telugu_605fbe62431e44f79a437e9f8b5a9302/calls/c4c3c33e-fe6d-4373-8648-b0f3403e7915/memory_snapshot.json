@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "caller_name": "రమణ",
+    "product": "matte visiting cards",
+    "quantity": "200"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: Visiting cards నే కావాలి. Wedding cards ధరలు ఎలా ఉంటాయో కేవలం తెలుసుకోవడానికి అడుగుతున్నాను. Wedding cards ఆర్డర్ చేయడం లేదు.\nassistant: Wedding invitation cards design, paper sample మరియు quantity బట్టి customized గా ఉంటాయి, కాబట్టి వాటికి fixed price ఉండదు. మీరు ప్రస్తుతం visiting cards గురించి మాత్రమే అడుగుతున్నారు కదా.\nuser: ఇప్పటివరకు నా పేరు, నాకు కావాల్సిన product, quantity ఏం గుర్తు పెట్టుకున్నారు?\nassistant: మీ పేరు రమణ గారు, two hundred matte visiting cards వివరాలు నేను note చేసుకున్నాను. మీ delivery locality చెప్తే నేను quote ready చేస్తాను."
+}

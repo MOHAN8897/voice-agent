@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_name": "Kiran"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: My name is Kiran.\nassistant: Your order ID FC and your name Kiran have been noted. I cannot see live order status on the phone, so our support team will check it and call you back.\nuser: Okay, thanks.\nassistant: Your name is not Kiran in the supplied data; the known caller memory lists the name as Kiran, but the draft addresses the caller as Kiran. The draft is acceptable as it uses the name from known_caller_memory."
+}

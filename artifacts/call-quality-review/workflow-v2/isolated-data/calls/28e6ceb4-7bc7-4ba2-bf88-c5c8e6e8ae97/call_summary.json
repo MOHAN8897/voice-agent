@@ -1,0 +1,39 @@
+{
+  "call_id": "28e6ceb4-7bc7-4ba2-bf88-c5c8e6e8ae97",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller requested an 11 AM appointment for the next day and demanded an immediate booking confirmation along with a booking number. The agent explained that the booking was not yet confirmed and requested the caller's name and details of the issue to forward to the front desk for verification. The caller did not provide their name or details and simply said 'Okay, thanks,' after which the call ended.",
+  "next_action": "Call back the caller to collect their name and issue details to send to the front desk for booking confirmation.",
+  "extracted_fields": {
+    "phone": "+919876500031",
+    "slot": "Tomorrow 11 AM"
+  },
+  "facts": {
+    "phone": "+919876500031",
+    "slot": "Tomorrow 11 AM"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:appointment-booking",
+    "followup:callback",
+    "followup:schedule_pending",
+    "intent:booking",
+    "outcome:callback_required"
+  ],
+  "tags": [
+    "intent:booking",
+    "followup:callback",
+    "followup:schedule_pending"
+  ],
+  "custom_tags": [
+    "custom:appointment-booking"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:36:08.259404Z",
+  "generation_ok": true
+}

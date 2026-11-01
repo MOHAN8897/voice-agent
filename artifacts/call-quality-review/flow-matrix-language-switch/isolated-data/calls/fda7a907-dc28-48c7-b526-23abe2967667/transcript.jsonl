@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "300 ரூவா order-க்கு delivery fee எவ்ளோ?", "ts": "2026-10-30T12:30:46.530108Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "நானூற்று தொண்ணூறு ரூபாய்க்கு குறைவான ஆர்டர்களுக்கு முப்பது ரூபாய் delivery fee வரும்.", "ts": "2026-10-30T12:30:49.276427Z"}
+{"seq": 3, "role": "user", "text": "Can you please speak in English? I want to talk in English.", "ts": "2026-10-30T12:30:49.276427Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "கண்டிப்பா, உங்களுக்கு Englishல மறுபடியும் call பண்றோம். உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.", "ts": "2026-10-30T12:30:49.306843Z", "brain_latency_ms": 0}

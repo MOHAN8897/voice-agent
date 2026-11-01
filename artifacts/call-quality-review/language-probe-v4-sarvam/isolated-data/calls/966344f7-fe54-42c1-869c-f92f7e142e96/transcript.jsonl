@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "ரெண்டு ACக்கு annual maintenance contract AMC எவ்வளவு ஆகும்", "ts": "2026-10-29T19:37:18.264511Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Sorry, நாங்க phone-ல AMC rates எதுவும் சொல்ல முடியாதுங்க. Window AC servicing ₹499, அப்புறம் split AC servicing ₹599 வரும். மேற்கொண்டு details வேணும்னா சொல்லுங்க.", "ts": "2026-10-29T19:37:19.148457Z", "brain_latency_ms": 890}

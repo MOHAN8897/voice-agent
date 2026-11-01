@@ -1,0 +1,14 @@
+{"seq": 1, "role": "user", "text": "నమస్తే అండి, నేను మాట్లాడొచ్చు. ఆ అలోవెరా జ్యూస్ price ఎంతండి, bottle size ఎంత వస్తుంది?", "ts": "2026-10-31T13:34:44.859514Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ఆ అలోవెరా జ్యూస్ 500 ml బాటిల్‌కు 399 రూపాయలు ఉంటుంది.", "ts": "2026-10-31T13:34:46.719819Z"}
+{"seq": 3, "role": "user", "text": "అది ఎలా తీసుకోవాలి అండి, రోజుకి ఎన్ని సార్లు తాగాలి?", "ts": "2026-10-31T13:34:55.925849Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ప్రస్తుతం ఆ నిర్దిష్ట సమాచారం నా వద్ద అందుబాటులో లేదు.", "ts": "2026-10-31T13:34:57.441332Z"}
+{"seq": 5, "role": "user", "text": "ఓహ్ పర్వాలేదు లేండి, అది ఉదయాన్నే పరగడుపున తీసుకోవచ్చా?", "ts": "2026-10-31T13:35:07.080297Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ఆ విషయం నాకు ప్రస్తుతం తెలియదు. వైద్య పరిస్థితులు లేదా మందుల విషయమై అయితే అర్హత కలిగిన ఆరోగ్య సంరక్షణ నిపుణులను సంప్రదించమని మేము సిఫార్సు చేస్తున్నాము.", "ts": "2026-10-31T13:35:08.692703Z"}
+{"seq": 7, "role": "user", "text": "Actually, I think I would prefer to continue in Indian English now if that is okay with you.", "ts": "2026-10-31T13:35:28.041747Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Sure, we can continue in Indian English. Which product would you like to know more about? We have Herbal Hair Oil at 499 rupees for 200 ml, Aloe Vera Juice at 399 rupees for 500 ml, Face Cream at 599 rupees for 50 g, and Ashwagandha Capsules at 699 rupees for 60 capsules.", "ts": "2026-10-31T13:35:29.593628Z"}
+{"seq": 9, "role": "user", "text": "Could you please repeat the price of the aloe vera juice that you told me earlier?", "ts": "2026-10-31T13:35:51.904993Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "The Aloe Vera Juice is priced at ₹399 for 500 ml.", "ts": "2026-10-31T13:35:53.408116Z"}
+{"seq": 11, "role": "user", "text": "Okay, thank you. Could you tell me what ingredients are there in the hair oil?", "ts": "2026-10-31T13:36:04.871660Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "The Herbal Hair Oil contains Amla, Bhringraj, Hibiscus, and Coconut Oil. It comes in 200 ml and is priced at ₹499.", "ts": "2026-10-31T13:36:06.438378Z"}
+{"seq": 13, "role": "user", "text": "Alright, so how much will the total be for one aloe vera juice and one hair oil together?", "ts": "2026-10-31T13:36:23.273051Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "The total for one Aloe Vera Juice at ₹399 and one Herbal Hair Oil at ₹499 is ₹898.", "ts": "2026-10-31T13:36:25.372004Z"}

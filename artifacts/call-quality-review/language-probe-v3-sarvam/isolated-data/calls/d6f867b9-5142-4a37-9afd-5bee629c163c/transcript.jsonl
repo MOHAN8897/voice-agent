@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "મારું ફ્રિજ કૂલિંગ નથી કરતું ટેકનિશિયન કાલે મોર્નિંગ દસ ત્રીસે આવી શકે", "ts": "2026-10-29T19:29:10.198578Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "સારું, ફ્રિજનું cooling નથી થતું એટલે કાલે સવારે 10:30 આસપાસ technician visit કરી લેશે. તમે કયા areaમાં રહો છો, Madhapur, Gachibowli, Kondapur કે Kukatpally?", "ts": "2026-10-29T19:29:10.907080Z", "brain_latency_ms": 710}

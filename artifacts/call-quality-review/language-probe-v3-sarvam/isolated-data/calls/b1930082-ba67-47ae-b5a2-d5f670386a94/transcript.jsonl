@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Cooling இல்லாத fridgeக்கு நாளை morning பத்து முப்பதுக்கு technician வர முடியுமா", "ts": "2026-10-29T19:28:14.515933Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Sorry, எங்க service area வந்து Madhapur, Gachibowli, Kondapur அப்புறம் Kukatpally மட்டும் தான். Secunderabad அப்புறம் Old City cover ஆகாது. உங்க area இதுல வருதா?", "ts": "2026-10-29T19:28:15.510419Z", "brain_latency_ms": 1000}

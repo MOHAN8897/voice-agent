@@ -1,0 +1,10 @@
+{"seq": 1, "role": "user", "text": "నమస్తే సురేష్ గారు, నా split AC కి general service కావాలి. దీనికి ఎంత charge అవుతుంది? అలాగే రేపు ఉదయం 10 గంటల area లో technician వస్తారా?", "ts": "2026-10-29T15:45:19.062271Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Split AC servicing కి five hundred ninety nine rupees అవుతుంది. రేపు ఉదయం 10 నుండి 6 మధ్యలో మా దగ్గర next-day slots ఉన్నాయి. మీ locality ఏంటో చెప్తారా?", "ts": "2026-10-29T15:45:20.399439Z"}
+{"seq": 3, "role": "user", "text": "నేను మాదాపూర్ లో ఉంటున్నాను సురేష్ గారు. ఈ price okay, మరి service కి వచ్చే technician ఏమైనా పాత parts ఏమైనా replace చేయాల్సి వస్తే extra charge పడుతుందా?", "ts": "2026-10-29T15:45:21.096222Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "అవును, replacement parts cost actual MRP ప్రకారమే ఉంటుంది. Technician వచ్చి inspection చేశాక parts ఎంత అవుతుందో చెప్తారు, phone లో మేము fixed quotes ఇవ్వలేము. మరి రేపు morning 10 నుండి 6 మధ్యలో appointment book చేయమంటారా?", "ts": "2026-10-29T15:45:22.664681Z"}
+{"seq": 5, "role": "user", "text": "సరే సురేష్ గారు, parts extra అవుతాయని అర్థమైంది. నా questions అన్నీ clear అయ్యాయి, thank you.", "ts": "2026-10-29T15:45:23.227959Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-29T15:45:24.731470Z"}
+{"seq": 7, "role": "user", "text": "ఆగండి, ఇంకో ప్రశ్న ఉంది. ఇన్‌స్పెక్షన్ ఫీజు ఎంత?", "ts": "2026-10-29T15:45:24.731470Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Fridge inspection charge two hundred fifty rupees ఉంటుంది. ఒకవేళ మా technician repair చేస్తే ఆ inspection charge పూర్తిగా waive చేస్తాము. Split AC కి inspection charge ఉండదు. మరి appointment confirm చేయమంటారా?", "ts": "2026-10-29T15:45:26.057600Z"}
+{"seq": 9, "role": "user", "text": "ఓహో, fridge inspection charge కూడా ఉంటుందా! సరే సురేష్ గారు, నా AC service కి సంబంధించి నా questions అన్నీ clear అయ్యాయి, thank you.", "ts": "2026-10-29T15:45:26.683801Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-29T15:45:27.981570Z"}

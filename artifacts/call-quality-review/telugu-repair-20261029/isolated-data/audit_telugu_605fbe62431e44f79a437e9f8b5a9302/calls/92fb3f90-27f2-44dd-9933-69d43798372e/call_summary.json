@@ -1,0 +1,36 @@
+{
+  "call_id": "92fb3f90-27f2-44dd-9933-69d43798372e",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller said they were busy and explicitly requested a callback after six hours at the same number. The agent acknowledged and recorded the request. No other details were discussed, and the call ended with thanks and a goodbye.",
+  "next_action": "Call the caller again after six hours using the same number.",
+  "extracted_fields": {
+    "callback_number": "Same number",
+    "callback_timing": "After six hours",
+    "phone": "+12025550104"
+  },
+  "facts": {
+    "callback_number": "Same number",
+    "callback_timing": "After six hours",
+    "phone": "+12025550104"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "followup:callback",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T16:28:36.884751Z",
+  "generation_ok": true
+}

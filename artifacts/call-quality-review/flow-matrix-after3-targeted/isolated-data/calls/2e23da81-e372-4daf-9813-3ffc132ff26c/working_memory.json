@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "caller_name": "किरण",
+    "delivery_locality": "Velachery",
+    "requested_time": "शनिवार"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "assistant: ठीक है, मैं समझ रही हूँ। 3 kW का system ₹1,95,000 का है, लेकिन ₹78,000 की government subsidy के बाद आपको सिर्फ ₹1,17,000 देने होंगे। अगर आप चाहें तो हम आपके घर पर एक free site survey करवा सकते हैं, इसके लिए क्या मैं आपका नाम, area और preferred day जान सकती हूँ?\nuser: ठीक है, monthly EMI फिर से कितनी है?\nassistant: Monthly EMI ₹2,999 से शुरू होती है, 48 months के लिए। बताइए, क्या हम आपके घर पर free site survey बुक कर सकते हैं? इसके लिए आपका नाम, area और preferred day बता दीजिए।\nuser: ठीक है, free survey book कर दो। मेरा नाम किरण है, मैं Velachery में रहता हूँ, शनिवार सही रहेगा।"
+}

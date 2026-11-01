@@ -1,0 +1,114 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Kiran called to learn about Python and data training while working a job, preferring evening or weekend attendance. The agent explained that the weekday batch runs from 8:00 PM to 9:00 PM, the weekend batch runs Saturday and Sunday from 10:00 AM to 1:00 PM, and the total fee is ₹8,999. Kiran felt the fee was somewhat high and requested a callback tomorrow morning after the team reviews the details. The agent recorded the request and ended the call politely.",
+  "next_action": "Arrange a callback to Kiran tomorrow morning after team review.",
+  "extracted_fields": {
+    "availability": "Evenings or weekends",
+    "callback_time": "Tomorrow morning",
+    "caller_name": "కిరణ్",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550120",
+    "product": "Python ఇంకా data training",
+    "program": "Python and data training",
+    "requested_time": "evenings లేదా weekends",
+    "weekday_batch": "8:00 PM-9:00 PM",
+    "weekend_batch": "Saturday and Sunday, 10:00 AM-1:00 PM"
+  },
+  "objections": [
+    "The fee of ₹8,999 seemed somewhat high."
+  ],
+  "notes": "Caller also asked about placement details; no placement information was provided during the call.",
+  "tags": [
+    "intent:information",
+    "intent:pricing",
+    "followup:callback",
+    "signal:objection",
+    "signal:price_sensitive",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-training",
+    "custom:data-training",
+    "custom:evening-weekend-batch"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:09:07.964695Z",
+  "generation_ok": true,
+  "facts": {
+    "availability": "Evenings or weekends",
+    "callback_time": "Tomorrow morning",
+    "caller_name": "కిరణ్",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550120",
+    "product": "Python ఇంకా data training",
+    "program": "Python and data training",
+    "requested_time": "evenings లేదా weekends",
+    "weekday_batch": "8:00 PM-9:00 PM",
+    "weekend_batch": "Saturday and Sunday, 10:00 AM-1:00 PM"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:data-training",
+    "custom:python-training",
+    "followup:callback",
+    "intent:information",
+    "intent:pricing",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "0713313e-d45f-49b0-bd97-a504fac4e702",
+    "agentId": "4c5270a8-990a-5800-868d-9d685eca9a09",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 100,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.98,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "callback_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

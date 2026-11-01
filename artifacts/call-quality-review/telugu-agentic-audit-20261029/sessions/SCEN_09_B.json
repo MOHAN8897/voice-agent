@@ -1,0 +1,83 @@
+{
+  "scenario_id": "SCEN_09",
+  "title": "Explicit DND for Appliance Services",
+  "business_id": "B",
+  "agent_name": "Suresh",
+  "category": "D_Explicit_DND",
+  "integration_condition": "none",
+  "caller_phone": "+919876543223",
+  "total_turns": 1,
+  "total_tokens": 0,
+  "duration_sec": 4.52,
+  "call_ended": true,
+  "carrier_hangup_invoked": true,
+  "carrier_hangup_error": false,
+  "transcript": [
+    {
+      "turn": 1,
+      "user": "నాకు ఏ సర్వీస్ వద్దు. నా నంబర్ డిలీట్ చేయండి, మళ్లీ ఎప్పుడూ ఫోన్ చేయొద్దు.",
+      "user_en": "I do not want any service. Delete my number, never phone again.",
+      "agent": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "latency_ms": 38,
+      "tokens": 0,
+      "should_end": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "do_not_call"
+      },
+      "finish_reason": "rule_close"
+    }
+  ],
+  "db_evidence": {
+    "call": {
+      "call_id": "e808b4d8-eea0-49de-afb0-fd347de5b7e1",
+      "status": "active",
+      "finalization_status": "pending",
+      "disposition": null,
+      "end_reason": null,
+      "duration_sec": null,
+      "status_tags": []
+    },
+    "callbacks": [],
+    "followup_jobs": [],
+    "dnc_entries": [
+      {
+        "id": "c8268e25-1eb6-41a4-9ada-a32e05434ce5",
+        "phone": "+919876543223",
+        "active": true,
+        "source": "live_call_opt_out",
+        "reason": "verbal_opt_out_live_call"
+      }
+    ],
+    "leads": [],
+    "tool_executions": []
+  },
+  "evaluation": {
+    "assertions": [
+      {
+        "name": "turn_2_executed",
+        "passed": false,
+        "detail": "Turn not reached"
+      },
+      {
+        "name": "dnd_persisted_in_database",
+        "passed": true,
+        "detail": "DncEntry active count: 1"
+      }
+    ],
+    "all_passed": false,
+    "scores": {
+      "telugu_naturalness": 7.5,
+      "understanding_relevance": 7.0,
+      "script_adherence": 6.5,
+      "memory_corrections": 9.0,
+      "capability_honesty": 10.0,
+      "callback_dnd_outcome": 10.0,
+      "hangup_handoff": 9.5,
+      "overall": 8.42
+    }
+  },
+  "created_at": "2026-10-29T10:31:12.691496+00:00"
+}

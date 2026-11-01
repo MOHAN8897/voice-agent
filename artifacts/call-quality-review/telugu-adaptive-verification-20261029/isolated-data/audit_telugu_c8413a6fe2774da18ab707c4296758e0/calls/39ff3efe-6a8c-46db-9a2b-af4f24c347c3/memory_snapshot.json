@@ -1,0 +1,13 @@
+{
+  "facts": {
+    "caller_name": "రమేష్",
+    "product": "visiting cards",
+    "quantity": "200",
+    "delivery_locality": "Vijayawada"
+  },
+  "preferences": {
+    "payment_method": "cash on delivery"
+  },
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "assistant: ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మీరు తర్వాత artwork approval పంపిస్తానని చెప్పారు కదా, అది మాకు note చేసుకున్నాము. ఇంకేమైనా help కావాలా?\nuser: సరే, ఇంకేమీ అవసరం లేదు. ఇకపై నేను call చేయను. ధన్యవాదాలు.\nassistant: ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇకపై calls రాకుండా note చేసుకున్నాము. మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\nuser: సరే, నమస్కారం.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+}

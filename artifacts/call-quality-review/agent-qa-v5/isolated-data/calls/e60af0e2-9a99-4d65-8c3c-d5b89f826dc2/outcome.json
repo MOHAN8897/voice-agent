@@ -1,0 +1,108 @@
+{
+  "disposition": "converted",
+  "disposition_confidence": 0.95,
+  "summary_te": "ബിസിനസ് ഏജന്റ് കസ്റ്റമറെ വിളിച്ചു. കസ്റ്റമർ ഫേസ് ക്രീമും രണ്ട് ഹെയർ ഓയിലും വാങ്ങാൻ താല്പര്യം പ്രകടിപ്പിച്ചു. ഏജന്റ് വിലയും അളവും വ്യക്തമാക്കിയ ശേഷം കസ്റ്റമറുടെ പേരും വിലാസവും ഇമെയിലും ശേഖരിച്ചു. ഡെലിവറി സമയത്തെക്കുറിച്ചും ഡിസ്കൗണ്ടുകളെക്കുറിച്ചുമുള്ള കസ്റ്റമറുടെ ചോദ്യങ്ങൾക്ക് ഏജന്റിന് കൃത്യമായ മറുപടി നൽകാൻ കഴിഞ്ഞില്ല. ഒടുവിൽ കസ്റ്റമർ ഓർഡർ സ്ഥിരീകരിക്കാൻ സമ്മതിക്കുകയും ഓർഡർ കൺഫേം ചെയ്തുവെന്ന് ഏജന്റ് അറിയിക്കുകയും ചെയ്തു.",
+  "summary_en": "The business agent called the customer, who expressed intent to purchase Herbal Hair Oil and Face Cream. The agent shared the product ingredients, pricing, and quantities, which the customer accepted. When the customer asked about delivery timelines and discounts, the agent stated that this information was unavailable. The customer then provided their name, address, and email, and agreed to proceed. The agent confirmed the order placement, and the call ended after the customer accepted this outcome.",
+  "next_action": "No further action required",
+  "extracted_fields": {
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919787898149",
+    "product": "Herbal Hair Oil, Herbal Face Cream",
+    "quantity": "2 Herbal Hair Oil, 1 Face Cream",
+    "total_price": "₹1597"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:purchase",
+    "sentiment:neutral",
+    "signal:ready_to_buy",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:face-cream",
+    "custom:hair-oil"
+  ],
+  "unanswered_questions": [
+    "How long will the delivery take?",
+    "Is there any discount available?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T17:29:52.292545Z",
+  "generation_ok": true,
+  "summary_language": "ml-IN",
+  "facts": {
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919787898149",
+    "product": "Herbal Hair Oil, Herbal Face Cream",
+    "quantity": "2 Herbal Hair Oil, 1 Face Cream",
+    "total_price": "₹1597"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:herbal-products",
+    "followup:send_info",
+    "intent:purchase",
+    "outcome:converted",
+    "sentiment:neutral",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "81dc1f2f-334e-48d7-a72b-067fdac8e5ba",
+    "agentId": "a3e5b2a7-8d8c-422d-925b-c137d41bebc5",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "converted",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "converted"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

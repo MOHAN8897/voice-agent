@@ -1,0 +1,197 @@
+{
+  "scenario_id": "SCEN_11",
+  "title": "Course Enquiry & Demo Booking with Connected CRM Integration",
+  "business_id": "C",
+  "agent_name": "Madhavi",
+  "category": "A_Interested_Enquiry_Connected",
+  "integration_condition": "connected",
+  "caller_phone": "+919876543230",
+  "total_turns": 7,
+  "total_tokens": 36230,
+  "duration_sec": 17.11,
+  "call_ended": true,
+  "carrier_hangup_invoked": true,
+  "carrier_hangup_error": false,
+  "transcript": [
+    {
+      "turn": 1,
+      "user": "నమస్కారం మేడమ్, మీ పైథాన్ డేటా అనలిటిక్స్ కోర్స్ గురించి వివరాలు కావాలి.",
+      "user_en": "Hello madam, need details about your Python Data Analytics course.",
+      "agent": "నమస్కారం, నేను Madhavi, Teja Data Academy నుంచి మాట్లాడుతున్నాను. తప్పకుండా చెప్తాను, మన Python with Data Analytics course 8 weeks online live classes మరియు hands-on projects తో ఉంటుంది. మీకు ఏ details కావాలి?",
+      "latency_ms": 1617,
+      "tokens": 4894,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 2,
+      "user": "కోర్స్ ఎన్ని వారాలు ఉంటుంది? క్లాస్ టైమింగ్స్ ఏమిటి?",
+      "user_en": "How many weeks is the course? What are the class timings?",
+      "agent": "ఈ course 8 weeks online live classes తో పాటు hands-on projects ఉంటాయి. Weekday batch రాత్రి eight PM నుంచి nine PM వరకు, weekend batch ఉదయం ten AM నుంచి మధ్యాహ్నం one PM వరకు నడుస్తుంది. మీకు ఏ batch బాగా set అవుతుంది?",
+      "latency_ms": 1468,
+      "tokens": 5040,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 3,
+      "user": "కోర్స్ ఫీజు ఎంతండి? పాత బ్రోచర్‌లో 12000 అని ఉంది.",
+      "user_en": "What is the course fee? Old brochure says 12000.",
+      "agent": "ఆ పాత బ్రోచర్ లో ఉన్న prices ఇప్పుడు లేవు. ప్రస్తుతానికి course fee మొత్తం eight thousand nine hundred ninety nine rupees మాత్రమే. మీకు ఏ batch వీలవుతుందో చెప్తారా? Weekday ఆ లేక weekend ఆ?",
+      "latency_ms": 1437,
+      "tokens": 5075,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 4,
+      "user": "డిగ్రీ చదివిన వాళ్ళు ఎలిజిబుల్ లేక కోడింగ్ బ్యాక్‌గ్రౌండ్ ఉండాలా?",
+      "user_en": "Are degree graduates eligible or is a coding background required?",
+      "agent": "ఏ graduate అయినా లేదా final year college student అయినా eligible. Basic computer knowledge ఉంటే చాలు, prior coding అవసరం లేదు. మీకు ఏ batch set అవుతుందో చెప్తారా?",
+      "latency_ms": 1390,
+      "tokens": 5124,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 5,
+      "user": "కోర్స్ అయ్యాక జాబ్ గ్యారెంటీ ఇస్తారా?",
+      "user_en": "Do you give a job guarantee after the course?",
+      "agent": "Strictly job guarantee ఏమీ ఉండదు, కానీ one hundred% placement assistance మాత్రం ఇస్తాము. ఇందులో resume building, interview preparation, job referrals ఉంటాయి. మీకు ఈ course గురించి ఇంకేమైనా details కావాలా?",
+      "latency_ms": 1545,
+      "tokens": 5180,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 6,
+      "user": "ఉచిత డెమో క్లాస్ ఉందా? నేను అటెండ్ అవ్వవచ్చా?",
+      "user_en": "Is there a free demo class? Can I attend?",
+      "agent": "అవును, free demo session ఉంది. మీరు తప్పకుండా attend అవ్వొచ్చు. మీ పేరు, email, qualification మరియు మీకు ఏ batch కావాలో చెప్తారా?",
+      "latency_ms": 1332,
+      "tokens": 5224,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 7,
+      "user": "నా పేరు శ్రీనివాస్, ఈమెయిల్ srinivas.audit@example.com. ఈవెనింగ్ బ్యాచ్ డెమో రిజిస్టర్ చేయండి.",
+      "user_en": "My name Srinivas, email srinivas.audit@example.com. Register evening batch demo.",
+      "agent": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "latency_ms": 1274,
+      "tokens": 5693,
+      "should_end": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "db_evidence": {
+    "call": {
+      "call_id": "f2dca063-4f59-44c3-b682-9434f340ebbe",
+      "status": "active",
+      "finalization_status": "pending",
+      "disposition": null,
+      "end_reason": null,
+      "duration_sec": null,
+      "status_tags": []
+    },
+    "callbacks": [],
+    "followup_jobs": [],
+    "dnc_entries": [],
+    "leads": [],
+    "tool_executions": []
+  },
+  "evaluation": {
+    "assertions": [
+      {
+        "name": "turn_2_facts_fidelity",
+        "passed": true,
+        "detail": "Expected one of ['8', 'ఎనిమిది వారాలు', '8:00'] in agent text"
+      },
+      {
+        "name": "turn_3_facts_fidelity",
+        "passed": false,
+        "detail": "Expected one of ['8,999', '8999', 'ఎనిమిది వేల'] in agent text"
+      },
+      {
+        "name": "turn_4_facts_fidelity",
+        "passed": false,
+        "detail": "Expected one of ['గ్రాడ్యుయేట్', 'డిగ్రీ'] in agent text"
+      },
+      {
+        "name": "turn_5_facts_fidelity",
+        "passed": false,
+        "detail": "Expected one of ['అసిస్టెన్స్', 'గ్యారెంటీ లేదు'] in agent text"
+      },
+      {
+        "name": "turn_8_executed",
+        "passed": false,
+        "detail": "Turn not reached"
+      },
+      {
+        "name": "turn_9_executed",
+        "passed": false,
+        "detail": "Turn not reached"
+      }
+    ],
+    "all_passed": false,
+    "scores": {
+      "telugu_naturalness": 7.5,
+      "understanding_relevance": 7.0,
+      "script_adherence": 6.5,
+      "memory_corrections": 9.0,
+      "capability_honesty": 10.0,
+      "callback_dnd_outcome": 10.0,
+      "hangup_handoff": 9.5,
+      "overall": 8.42
+    }
+  },
+  "created_at": "2026-10-29T10:31:35.075620+00:00"
+}

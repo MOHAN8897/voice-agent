@@ -1,0 +1,14 @@
+{
+  "facts": {
+    "email": "ramesh.audit@example.invalid",
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "రమేష్",
+    "delivery_locality": "విజయవాడ",
+    "quantity": "100"
+  },
+  "preferences": {
+    "email": "ramesh.audit@example.invalid"
+  },
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "assistant: ఆ price details నాకు ఇక్కడ అందుబాటులో లేవు. Minimum order మాత్రం వంద cards ఉంటుంది. మీకు ఇంకేమైనా details కావాలా?\nuser: 500 cards కి price చెప్పలేకపోతే ఎలా అండి? 100 cards కి 350 rupees అంటే మరీ ఎక్కువ కదా... అయినా సరే, కనీసం ఆ 100 cards కి ఎంత అవుతుందో ఒకసారి మళ్ళీ confirm చేస్తారా? నా email ramesh.audit@example.invalid కి details పంపండి.\nassistant: ఒక వంద matte finish cards కి three hundred fifty rupees అవుతుంది, ఇది confirm. నేను email పంపలేను, కానీ మా team మీకు call చేసి quote చెప్తారు. మీ పేరు చెప్పగలరా?"
+}

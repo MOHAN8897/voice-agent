@@ -1,0 +1,37 @@
+{
+  "call_id": "8118c0c2-1660-4875-999e-6b1698a5f578",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller stated they were busy and requested to be called back later. The agent acknowledged this and offered to schedule a callback. The caller expressed uncertainty about when they would be available, only saying 'sometime later.' The agent recorded the callback request and ended the call.",
+  "next_action": "Schedule a callback at an unspecified later time as requested by the caller.",
+  "extracted_fields": {
+    "callback_timing": "बाद में कभी",
+    "phone": "+919876500508"
+  },
+  "facts": {
+    "callback_timing": "बाद में कभी",
+    "phone": "+919876500508"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "followup:callback",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [
+    "Caller was busy"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:22:50.715815Z",
+  "generation_ok": true
+}

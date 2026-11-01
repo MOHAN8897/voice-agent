@@ -1,0 +1,65 @@
+{
+  "call_id": "9b6fee8c-d58b-4956-a8fc-c4584a824d83",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller asked about matte-finish visiting cards, including pricing and minimum quantity. The agent quoted ₹350 for 100 cards and set the minimum order at 100 cards. The caller indicated they wanted to increase the quantity to 200 and asked about design approval, delivery time, wedding card pricing, advance payment, and rush charges. The agent explained that delivery in Vijayawada takes 3 working days after design artwork approval; wedding card pricing depends on the design, paper sample, and quantity; orders above ₹1,000 require 50% advance payment; and there is no rush surcharge for 200 cards, although 24-hour delivery costs an additional ₹150. The caller provided ramesh.audit@example.invalid and requested an internal order request for 200 matte visiting cards. The agent stated that the request was noted for team review but was not a confirmed order. The caller confirmed that the recorded quantity was 200, reconfirmed the delivery time, received answers to all questions, and ended the call politely.",
+  "next_action": "Internal team review of the request for 200 matte-finish visiting cards and follow-up with the caller using the provided email; confirm pricing and order status.",
+  "extracted_fields": {
+    "advance_payment": "50% for orders above ₹1,000",
+    "delivery_location": "Vijayawada",
+    "delivery_time": "3 working days after design artwork approval",
+    "email": "ramesh.audit@example.invalid",
+    "initial_price_reference": "₹350 for 100 cards",
+    "minimum_quantity": "100 cards",
+    "phone": "+12025550109",
+    "product": "Matte-finish visiting cards",
+    "quantity": "200",
+    "rush_delivery": "24-hour delivery available for an extra ₹150; no rush surcharge for 200 cards otherwise"
+  },
+  "facts": {
+    "advance_payment": "50% for orders above ₹1,000",
+    "delivery_location": "Vijayawada",
+    "delivery_time": "3 working days after design artwork approval",
+    "email": "ramesh.audit@example.invalid",
+    "initial_price_reference": "₹350 for 100 cards",
+    "minimum_quantity": "100 cards",
+    "phone": "+12025550109",
+    "product": "Matte-finish visiting cards",
+    "quantity": "200",
+    "rush_delivery": "24-hour delivery available for an extra ₹150; no rush surcharge for 200 cards otherwise"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:phone_known",
+    "custom:matte-visiting-cards",
+    "custom:wedding-cards",
+    "followup:callback",
+    "followup:send_quote",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:purchase",
+    "intent:pricing",
+    "followup:callback",
+    "followup:send_quote",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards",
+    "custom:wedding-cards",
+    "custom:vijayawada-delivery"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:25:44.557512Z",
+  "generation_ok": true
+}

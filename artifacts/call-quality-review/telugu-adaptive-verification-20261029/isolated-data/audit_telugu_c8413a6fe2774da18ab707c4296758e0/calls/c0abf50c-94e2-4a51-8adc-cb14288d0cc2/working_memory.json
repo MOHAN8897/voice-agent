@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "email": "ramesh.audit@example.invalid",
+    "caller_email": "ramesh.audit@example.invalid"
+  },
+  "preferences": {
+    "product": "matte finish visiting cards"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "assistant: సరే, మళ్లీ కాల్ చేయను. విజిటింగ్ కార్డ్స్ కోసం matte finish కావాలని అర్థమైంది. దీని గురించి ఇంకేమైనా వివరాలు కావాలా?\nuser: సరే, ఇకపై ఈ నంబర్‌కు ఎప్పటికీ కాల్ చేయకండి. నాకు matte finish visiting cards కావాలి, డిజైన్స్ తర్వాత పంపిస్తాను. నా email ramesh.audit@example.invalid కి details పంపండి.\nassistant: సరే, మీ enquiry save అయింది.\nuser: సరే, నా enquiry save అయింది కదా. ఇకపై ఈ నంబర్‌కు ఎప్పటికీ కాల్ చేయకండి. ఇది permanent opt-out. నాకు ఇంకేమీ అవసరం లేదు, call end చేయండి.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+}

@@ -1,0 +1,53 @@
+{
+  "call_id": "a76df4fd-ecf3-4d31-975f-e9df8b93cb16",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Raman asked about ordering 200 matte visiting cards and requested pricing and delivery details. The agent quoted ₹700 total, based on ₹350 per 100 cards, with delivery in Vijayawada within 3 working days after design artwork approval; urgent delivery would cost an additional ₹150. Raman clarified that he only wanted general information about wedding card pricing and was not placing a wedding card order. The agent explained that customized wedding card pricing depends on the design, paper sample, and quantity, and that an exact price could not be provided over the phone. Raman then asked what details had been noted, and the agent incorrectly stated that the name, product, and quantity had not been recorded, despite Raman having provided them. The call ended politely with no confirmed order or further follow-up arranged.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_name": "రమణ",
+    "name": "Raman",
+    "phone": "+12025550134",
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "standard_delivery": "3 working days in Vijayawada after design artwork approval",
+    "urgent_delivery_fee": "₹150 extra",
+    "visiting_card_price": "₹700 total"
+  },
+  "facts": {
+    "caller_name": "రమణ",
+    "name": "Raman",
+    "phone": "+12025550134",
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "standard_delivery": "3 working days in Vijayawada after design artwork approval",
+    "urgent_delivery_fee": "₹150 extra",
+    "visiting_card_price": "₹700 total"
+  },
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:matte-visiting-cards",
+    "custom:vijayawada-delivery",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:purchase",
+    "intent:pricing",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards",
+    "custom:vijayawada-delivery"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T16:29:02.919792Z",
+  "generation_ok": true
+}

@@ -1,0 +1,84 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller requested to book a service visit for tomorrow at 11:00 AM and immediately asked for a booking confirmation and number. The agent explained that the booking was not yet confirmed because the caller's locality needed to be verified against the service areas (Madhapur, Gachibowli, Kondapur, Kukatpally), and requested the caller's name, appliance details, issue description, locality, and preferred time. The caller agreed to provide these details, and the call ended with the agent reiterating the need for this information to proceed with the booking.",
+  "next_action": "Agent to receive caller details (name, appliance, issue, locality) to finalize the booking.",
+  "extracted_fields": {
+    "phone": "+919876500027"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:booking",
+    "followup:callback",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:service-visit",
+    "custom:morning-slot"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T20:46:15.592716Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500027"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:morning-slot",
+    "custom:service-visit",
+    "followup:callback",
+    "intent:booking",
+    "outcome:callback_required"
+  ],
+  "lead": {
+    "leadId": "38b7f8b7-2202-444a-894a-2f3dadeb04ab",
+    "agentId": "b1cee0be-c9e4-47d4-9416-ec3f1b3c5d4f",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 10,
+    "band": "cold",
+    "disposition": "callback_required",
+    "confidence": 0.85,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,3 @@
+{"turn_seq": 1, "ts": "2026-10-29T15:48:04.187796Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T15:48:05.566004Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_name: కిరణ్ | product: Python course\n[Preferences]\nrequested_time: రేపు ఉదయం\n[Context]\nCaller provided contact details in this call."}
+{"turn_seq": 5, "ts": "2026-10-29T15:48:07.075703Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_name: కిరణ్ | product: Python course\n[Preferences]\nrequested_time: రేపు ఉదయం\n[Context]\nCaller provided contact details in this call."}

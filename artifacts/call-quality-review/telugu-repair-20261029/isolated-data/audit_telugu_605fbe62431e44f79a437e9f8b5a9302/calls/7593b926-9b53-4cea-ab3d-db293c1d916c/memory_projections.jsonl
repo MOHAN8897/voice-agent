@@ -1,0 +1,8 @@
+{"turn_seq": 1, "ts": "2026-10-29T17:38:08.502717Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T17:38:12.658245Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-29T17:38:18.278921Z", "include_summary": true, "projection": ""}
+{"turn_seq": 7, "ts": "2026-10-29T17:38:23.384584Z", "include_summary": false, "projection": ""}
+{"turn_seq": 9, "ts": "2026-10-29T17:38:29.742474Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: కిరణ్ | qualification: B.Com | email: kiran.audit@example.invalid"}
+{"turn_seq": 11, "ts": "2026-10-29T17:38:35.346357Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: కిరణ్ | qualification: B.Com | email: kiran.audit@example.invalid"}
+{"turn_seq": 13, "ts": "2026-10-29T17:38:39.350181Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: కిరణ్ | qualification: B.Com | email: kiran.audit@example.invalid"}
+{"turn_seq": 15, "ts": "2026-10-29T17:38:41.345913Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: కిరణ్ | qualification: B.Com | email: kiran.audit@example.invalid"}

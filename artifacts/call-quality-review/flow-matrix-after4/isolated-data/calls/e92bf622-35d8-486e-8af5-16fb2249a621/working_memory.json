@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "caller_name": "किरण",
+    "delivery_locality": "Velachery",
+    "requested_time": "शनिवार"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: नहीं, ये अभी भी हमारे लिए बहुत महँगा है।\nassistant: मैं समझ सकती हूँ। 78,000 रुपये की सरकारी सब्सिडी और 48 महीनों के लिए 2,999 रुपये महीने की EMI से काफी मदद मिल जाती है। अगर आप चाहें तो हम किस समय call back करें, वो बता दीजिए।\nuser: ठीक है, monthly EMI फिर से कितनी है?\nassistant: 48 महीनों के लिए monthly EMI 2,999 रुपये से शुरू होती है।\nuser: ठीक है, free survey book कर दो। मेरा नाम किरण है, मैं Velachery में रहता हूँ, शनिवार सही रहेगा।"
+}

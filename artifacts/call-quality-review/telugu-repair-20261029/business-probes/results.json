@@ -1,0 +1,63 @@
+[
+  {
+    "name": "ac_inspection_unknown",
+    "caller": "Split AC servicing 599 అని చెప్పారు. AC inspection charge ఎంత? అది servicing లో include అయిందా?",
+    "draft": "AC inspection charge సున్నా; servicing లోనే included.",
+    "expected": "not_stated",
+    "plan": [
+      {
+        "question": "AC inspection charge ఎంత?",
+        "status": "not_stated"
+      },
+      {
+        "question": "అది servicing లో include అయిందా?",
+        "status": "not_stated"
+      }
+    ],
+    "spoken": "Split AC servicing కి 599 రూపాయలు అవుతుంది. AC inspection charge ఎంత, అది servicing లో కలిసి ఉందా అనే వివరాలు ప్రస్తుతం మా దగ్గర లేవు."
+  },
+  {
+    "name": "course_extras_unknown",
+    "caller": "Python course fee కాకుండా study material, certificate charges కూడా included ఆ? Hidden charges లేవు కదా?",
+    "draft": "అన్నీ included, hidden charges లేవు.",
+    "expected": "not_stated",
+    "plan": [
+      {
+        "question": "study material included",
+        "status": "not_stated"
+      },
+      {
+        "question": "certificate charges",
+        "status": "not_stated"
+      },
+      {
+        "question": "hidden charges",
+        "status": "not_stated"
+      }
+    ],
+    "spoken": "Study material, certificate charges గురించి సమాచారం మాకు తెలియదు. అలాగే hidden charges ఉన్నాయా లేదా అనేది కూడా తెలియదు. కోర్సు మొత్తం ఫీజు 8,999 రూపాయలు మాత్రమే."
+  },
+  {
+    "name": "cards_total",
+    "caller": "నాకు 200 matte visiting cards కావాలి. మొత్తం ఎంత?",
+    "draft": "మొత్తం 350 రూపాయలు.",
+    "expected": "700",
+    "plan": [
+      {
+        "question": "matte visiting cards",
+        "status": "stated",
+        "source": "Matte finish cards cost 350 rupees for 100 cards.",
+        "topic": "Matte finish cards cost 350 rupees for 100 cards.",
+        "value": "350 rupees for 100 cards"
+      },
+      {
+        "question": "total",
+        "status": "stated",
+        "source": "Matte finish cards cost 350 rupees for 100 cards.",
+        "topic": "Matte finish cards cost 350 rupees for 100 cards.",
+        "value": "350 rupees for 100 cards"
+      }
+    ],
+    "spoken": "మొత్తం 700 రూపాయలు. 200 matte visiting cards కి 350 రూపాయల చొప్పున 700 రూపాయలు అవుతుంది. కనీస ఆర్డర్ 100 cards."
+  }
+]

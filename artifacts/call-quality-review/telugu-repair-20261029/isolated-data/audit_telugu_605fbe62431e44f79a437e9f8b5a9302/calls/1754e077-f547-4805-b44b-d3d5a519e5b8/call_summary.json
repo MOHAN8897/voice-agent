@@ -1,0 +1,77 @@
+{
+  "call_id": "1754e077-f547-4805-b44b-d3d5a519e5b8",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Kiran, a working professional with a BSc background, inquired about Python, SQL, and PowerBI courses and asked specifically about evening or weekend availability, duration, fees, instalments, placement support, and job guarantees. The agent explained that only a Python with Data Analytics course is currently offered, lasting 8 weeks and costing ₹8,999 as a one-time payment, with weekday classes from 8–9 PM and weekend classes from 10 AM–1 PM. Eligibility includes graduates or final-year students with basic computer knowledge, and prior coding is not required. The agent clarified that placement assistance is provided but there is no job guarantee or salary promise. Kiran provided his name, email, BSc qualification, and preferred evening batch, and repeatedly asked whether the enquiry had been saved and whether a demo or counselling session could be arranged. The agent stated that no save confirmation had been received and requested these details, but did not confirm that the enquiry was saved or that a demo was arranged. Kiran said his questions were answered and ended the call politely.",
+  "next_action": "Follow up to confirm whether Kiran's enquiry was saved and arrange a demo or counselling session for the 8–9 PM weekday batch.",
+  "extracted_fields": {
+    "caller_name": "కిరణ్",
+    "course_duration": "8 weeks",
+    "course_interest": "Python with Data Analytics",
+    "eligibility": "Graduates or final-year students with basic computer knowledge; no prior coding required",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "payment_terms": "One-time payment; no instalment option",
+    "phone": "+12025550108",
+    "placement_support": "100% placement assistance stated; no job guarantee or salary promise",
+    "preferred_batch": "Weekday evenings, 8:00 PM–9:00 PM",
+    "qualification": "BSc",
+    "requested_time": "evenings, అంటే రాత్రి 8 to 9 PM",
+    "weekend_batch": "10:00 AM–1:00 PM"
+  },
+  "facts": {
+    "caller_name": "కిరణ్",
+    "course_duration": "8 weeks",
+    "course_interest": "Python with Data Analytics",
+    "eligibility": "Graduates or final-year students with basic computer knowledge; no prior coding required",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "payment_terms": "One-time payment; no instalment option",
+    "phone": "+12025550108",
+    "placement_support": "100% placement assistance stated; no job guarantee or salary promise",
+    "preferred_batch": "Weekday evenings, 8:00 PM–9:00 PM",
+    "qualification": "BSc",
+    "requested_time": "evenings, అంటే రాత్రి 8 to 9 PM",
+    "weekend_batch": "10:00 AM–1:00 PM"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:python-data-analytics",
+    "followup:send_info",
+    "intent:demo",
+    "intent:information",
+    "intent:pricing",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:demo",
+    "intent:pricing",
+    "followup:send_info",
+    "action:required",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:python-data-analytics",
+    "custom:evening-batch",
+    "custom:placement-assistance"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "No instalment option; full ₹8,999 fee must be paid upfront.",
+    "Enquiry save status and demo/counselling arrangement were not confirmed.",
+    "No job guarantee or salary promise."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:40:00.933866Z",
+  "generation_ok": true
+}

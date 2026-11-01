@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_name": "కిరణ్"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: నా order ఎక్కడ ఉంది? Order ID FC10234, అది ఇంకా రాలేదు.\nassistant: క్షమించండి, మేము ఫోన్‌లో live order status చూడలేము. మీ order ID FC10234 మరియు మీ పేరు తీసుకుని మా support team కి note చేస్తాను, వాళ్ళు చెక్ చేసి మీకు తిరిగి call చేస్తారు. మీ పేరు చెప్పగలరా?\nuser: నా పేరు కిరణ్.\nassistant: మీ order ID FC10234 మరియు మీ పేరు కిరణ్ అని note చేశాను. మా support team చెక్ చేసి మీకు తిరిగి call చేస్తారు.\nuser: సరే, thanks.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+}

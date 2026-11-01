@@ -1,0 +1,129 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "Ramesh inquired about visiting cards, initially considering 100 and then confirming interest in 200 matte-finish cards. The agent quoted ₹350 for 100 matte cards, stated the minimum order is 100, and said the 200-card price would differ but could not provide the exact amount. Ramesh asked about design approval, wedding cards, rush delivery, advance payment, hidden charges, and the details recorded for an internal enquiry. The agent said design approval has no extra charge, Vijayawada delivery takes 3 working days, 24-hour rush delivery costs an additional ₹150, orders above ₹1,000 require 50% advance payment, and no other hidden charges apply. Ramesh provided his name, email, quantity of 200, and Vijayawada delivery location, and agreed to have the enquiry recorded. He explicitly said he is still deciding, will not place an order now, and does not want a callback. He repeatedly requested confirmation of the recorded details and the exact standard-finish price for 200 cards, but the agent could not provide that price. The call ended without an order or scheduled follow-up.",
+  "next_action": null,
+  "extracted_fields": {
+    "advance_payment": "50% advance required for orders above ₹1,000",
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "కవిత",
+    "delivery_locality": "విజయవాడ",
+    "delivery_location": "Vijayawada",
+    "design_approval_charge": "No extra charge stated",
+    "email": "ramesh.audit@example.invalid",
+    "finish": "Matte finish discussed; standard finish price also requested",
+    "hidden_charges": "None stated apart from rush delivery surcharge",
+    "matte_price_100": "₹350",
+    "minimum_quantity": "100 cards",
+    "name": "Ramesh",
+    "phone": "+12025550128",
+    "product": "Visiting cards",
+    "quantity": "200 cards",
+    "rush_delivery_surcharge": "₹150 for 24-hour delivery",
+    "standard_delivery_time": "3 working days"
+  },
+  "objections": [
+    "Exact price for 200 matte-finish cards was unavailable.",
+    "Exact price for 200 standard-finish cards was unavailable.",
+    "Caller is undecided and declined a callback.",
+    "Caller did not place an order."
+  ],
+  "notes": "The agent repeatedly asked when to call despite the caller clearly declining a callback. The recorded caller name is Ramesh; the working-memory caller_name value of Kavita appears to be incorrect.",
+  "tags": [
+    "intent:information",
+    "intent:pricing",
+    "intent:purchase",
+    "signal:objection",
+    "signal:do_not_call",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:matte-finish",
+    "custom:vijayawada-delivery"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:46:26.589151Z",
+  "generation_ok": true,
+  "facts": {
+    "advance_payment": "50% advance required for orders above ₹1,000",
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "కవిత",
+    "delivery_locality": "విజయవాడ",
+    "delivery_location": "Vijayawada",
+    "design_approval_charge": "No extra charge stated",
+    "email": "ramesh.audit@example.invalid",
+    "finish": "Matte finish discussed; standard finish price also requested",
+    "hidden_charges": "None stated apart from rush delivery surcharge",
+    "matte_price_100": "₹350",
+    "minimum_quantity": "100 cards",
+    "name": "Ramesh",
+    "phone": "+12025550128",
+    "product": "Visiting cards",
+    "quantity": "200 cards",
+    "rush_delivery_surcharge": "₹150 for 24-hour delivery",
+    "standard_delivery_time": "3 working days"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:matte-finish",
+    "custom:vijayawada-delivery",
+    "custom:visiting-cards",
+    "intent:information",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "d1235792-fd5c-42d8-a885-739ee077a828",
+    "agentId": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.99,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

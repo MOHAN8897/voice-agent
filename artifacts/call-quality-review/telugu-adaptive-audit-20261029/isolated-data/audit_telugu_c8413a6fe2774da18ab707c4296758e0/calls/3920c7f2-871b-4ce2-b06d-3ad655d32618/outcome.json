@@ -1,0 +1,60 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.93,
+  "summary_te": "",
+  "summary_en": "The caller, a working professional, asked about the fee for Python training. The agent quoted ₹8,999 for the Python with Data Analytics course and asked whether the caller preferred a weekday or weekend batch. The caller said the fee was acceptable but requested a guaranteed high-salary job in exchange for paying that day, which the agent did not confirm. The agent thanked the caller and ended the call without scheduling enrollment or follow-up.",
+  "next_action": null,
+  "extracted_fields": {
+    "batch_preference": "Not specified",
+    "customer_type": "Working professional",
+    "fee": "₹8,999",
+    "phone": "+12025550144",
+    "product": "Python with Data Analytics course"
+  },
+  "objections": [
+    "Caller requested a guaranteed high-salary job before making payment."
+  ],
+  "notes": "The call ended after the caller requested a job guarantee; no payment, enrollment, or callback was agreed.",
+  "tags": [
+    "intent:pricing",
+    "intent:information",
+    "signal:objection",
+    "signal:price_sensitive",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-training",
+    "custom:data-analytics",
+    "custom:job-guarantee"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:28:47.811202Z",
+  "generation_ok": true,
+  "facts": {
+    "batch_preference": "Not specified",
+    "customer_type": "Working professional",
+    "fee": "₹8,999",
+    "phone": "+12025550144",
+    "product": "Python with Data Analytics course"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:data-analytics",
+    "custom:job-guarantee",
+    "custom:python-training",
+    "intent:information",
+    "intent:pricing",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

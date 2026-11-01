@@ -1,0 +1,8 @@
+{
+  "facts": {},
+  "preferences": {
+    "callback_time": "कल सुबह 11 बजे"
+  },
+  "important_context": "",
+  "summary": "assistant: ప్రస్తుతం ఆ product మీద ఎటువంటి discounts లేవు.\nuser: సరే, ఇందులో ఏదైనా sugar-free ఆప్షన్ ఉంటుందా?\nassistant: ఆ విషయం నాకు తెలియదు. ప్రస్తుతానికి మా దగ్గర ఉన్న details ఇవి మాత్రమే. మీకు ఏ details కావాలి?\nuser: సరే, వేరే ఫ్లేవర్స్ ఏమైనా ఉన్నాయా?\nassistant: ప్రస్తుతం మా దగ్గర ఉన్న details ప్రకారం అలోవెరా జ్యూస్ లో వేరే flavors ఏమీ లేవు.\nuser: సరే, బాటిల్ సైజ్ ఎంత వస్తుంది?\nassistant: బాటిల్ సైజ్ 500 ml వస్తుంది.\nuser: సరే, దాని Ingredients ఏంటో చెప్పగలరా?\nassistant: ఇందులో కేవలం Aloe Vera మాత్రమే ఉంటుంది. మీరు order ఏమైనా place చేయాలనుకుంటున్నారా?"
+}

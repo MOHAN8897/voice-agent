@@ -1,0 +1,7 @@
+{"turn_seq": 1, "ts": "2026-10-31T16:46:18.718634Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-31T16:46:44.388883Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-31T16:47:07.469472Z", "include_summary": true, "projection": ""}
+{"turn_seq": 7, "ts": "2026-10-31T16:47:25.853404Z", "include_summary": false, "projection": ""}
+{"turn_seq": 9, "ts": "2026-10-31T16:47:42.048857Z", "include_summary": false, "projection": ""}
+{"turn_seq": 11, "ts": "2026-10-31T16:48:07.738678Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ndelivery_locality: Kukatpally, Hyderabad"}
+{"turn_seq": 13, "ts": "2026-10-31T16:48:27.116169Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ndelivery_locality: Kukatpally, Hyderabad | delivery_address: Flat 302, Sai Residency, Kukatpally, Hyderabad 500072"}

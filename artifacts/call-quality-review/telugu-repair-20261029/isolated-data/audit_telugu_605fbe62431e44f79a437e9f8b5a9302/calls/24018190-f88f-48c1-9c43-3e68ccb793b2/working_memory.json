@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "requested_time": "రేపు ఉదయం 10 AM",
+    "caller_email": "sravani.audit@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "user: సురేష్, మీరు calendar లో create చేశాను అన్నారు కానీ అది confirm అయిందో లేదో నాకు తెలియాలి. నా appointment నిజంగా calendar లో confirm అయిందో లేదో ఒకసారి చెక్ చేసి చెప్పండి.\nassistant: మీ appointment confirm అయింది, system లో కూడా record అయింది. మీ calendar event create చేయబడింది. ఇంకేమైనా help కావాలా?\nuser: సరే సురేష్, నా appointment confirm అయిందని తెలిసి సంతోషం. ఇంకేమీ అవసరం లేదు, కాల్ ముగిస్తున్నాను.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+}

@@ -1,0 +1,35 @@
+{
+  "call_id": "a494b3c0-8fd9-49a2-8fb7-a8a2e3dec295",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call while driving and requested not to have their number blocked because they had an interest in the offering. They specified a preference to be called back next Monday morning. The agent acknowledged the request and ended the call.",
+  "next_action": "Call the customer back next Monday morning as requested.",
+  "extracted_fields": {
+    "callback_time": "next Monday morning",
+    "phone": "+919876500045"
+  },
+  "facts": {
+    "callback_time": "next Monday morning",
+    "phone": "+919876500045"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "followup:callback",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral",
+    "action:required"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:37:43.759050Z",
+  "generation_ok": true
+}

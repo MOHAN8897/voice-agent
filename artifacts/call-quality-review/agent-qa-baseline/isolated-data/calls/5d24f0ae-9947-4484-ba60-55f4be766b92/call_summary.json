@@ -1,0 +1,55 @@
+{
+  "call_id": "5d24f0ae-9947-4484-ba60-55f4be766b92",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి లక్ష్మి రెడ్డి గారికి కాల్ చేసి హెర్బల్ ఫేస్ క్రీమ్ లోని పదార్థాలు, ధరల గురించి వివరించారు. లక్ష్మి రెడ్డి గారు రెండు హెయిర్ ఆయిల్ బాటిల్స్, ఒక ఫేస్ క్రీమ్ ఆర్డర్ చేయాలనుకున్నారు, అలాగే తన పేరు, చిరునామా (Flat 302, Sai Residency, Kukatpally, Hyderabad 500072) అందించారు. డెలివరీ సమయం, డిస్కౌంట్ల గురించి అడిగిన ప్రశ్నలకు ఏజెంట్ వద్ద సమాచారం లేదు. లక్ష్మి రెడ్డి గారు ఆర్డర్ తో ముందుకు వెళ్లడానికి సిద్ధంగా ఉన్నారు, తదుపరి దశ కోసం ఏజెంట్ వివరాలను సేకరించి ఫాలో అప్ చేయాల్సి ఉంది.",
+  "summary_language": "te-IN",
+  "summary_en": "The agent called Lakshmi Reddy to provide product information, sharing that the herbal face cream contains neem, turmeric, and aloe vera for 599 rupees. Lakshmi Reddy requested two bottles of hair oil and one face cream, and she provided her name and delivery address in Kukatpally, Hyderabad. When she asked about delivery time and discounts, the agent stated it did not have that information. Lakshmi Reddy expressed her willingness to proceed with the order, and the call ended with the agent needing to follow up to complete the booking.",
+  "next_action": "Call Lakshmi Reddy back to confirm the order and provide delivery details.",
+  "extracted_fields": {
+    "address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "caller_name": "లక్ష్మి రెడ్డి",
+    "order_items": "2 hair oil bottles, 1 face cream",
+    "order_total": "1497",
+    "phone": "+919700000004"
+  },
+  "facts": {
+    "address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "caller_name": "లక్ష్మి రెడ్డి",
+    "order_items": "2 hair oil bottles, 1 face cream",
+    "order_total": "1497",
+    "phone": "+919700000004"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:order-placement",
+    "followup:callback",
+    "intent:purchase",
+    "outcome:callback_required",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:purchase",
+    "signal:ready_to_buy"
+  ],
+  "custom_tags": [
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:order-placement"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [
+    "How long does delivery take?",
+    "Are there any discounts available?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T13:14:12.121162Z",
+  "generation_ok": true
+}

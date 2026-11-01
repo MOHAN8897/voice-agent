@@ -1,0 +1,2954 @@
+[
+  {
+    "id": "en-IN/booking/clinic",
+    "scenario": "booking",
+    "language": "en-IN",
+    "business": "clinic",
+    "tenant_id": "1055d719-cdb4-4dff-aefb-2ae921823605",
+    "agent_id": "984372ff-211f-4161-b9d2-8b092c090dd9",
+    "call_id": "97611b72-d785-4fc4-84f1-50bd52a0e8df",
+    "phone": "+919876500507",
+    "opening": "Hi, this is Anjali calling from Sunrise Dental Clinic. How can I help you today?",
+    "turn_index": 4,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "I have tooth pain. I want an appointment tomorrow at 11 AM.",
+        "caller_en": "I have tooth pain. I want an appointment tomorrow at 11 AM.",
+        "reply": "I understand you have tooth pain and want an appointment tomorrow at 11 AM. Before the front desk can confirm it, I will need your name.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "My name is Kiran.",
+        "caller_en": "My name is Kiran.",
+        "reply": "Hi, this is Anjali calling from Sunrise Dental Clinic. Noted, Kiran. Could you tell me what specific problem you are facing so I can pass that along?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 3,
+        "caller": "Is my appointment confirmed?",
+        "caller_en": "Is my appointment confirmed?",
+        "reply": "I do not have a confirmed booking yet, Kiran. I have noted your name, the tooth pain, and tomorrow at 11 AM for the front desk to confirm.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 4,
+        "caller": "Okay, thanks.",
+        "caller_en": "Okay, thanks.",
+        "reply": "",
+        "farewell": "Thank you for your time. Goodbye.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "I understand you have tooth pain and want an appointment tomorrow at 11 AM. Before the front desk can confirm it, I will need your name.",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "Hi, this is Anjali calling from Sunrise Dental Clinic. Noted, Kiran. Could you tell me what specific problem you are facing so I can pass that along?",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "I do not have a confirmed booking yet, Kiran. I have noted your name, the tooth pain, and tomorrow at 11 AM for the front desk to confirm.",
+        "farewell": false
+      },
+      {
+        "turn": 4,
+        "text": "Thank you for your time. Goodbye.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 4
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "callback_required",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:name_known",
+        "contact:phone_known",
+        "custom:appointment-request",
+        "custom:tooth-pain",
+        "followup:callback",
+        "followup:site_visit",
+        "intent:booking",
+        "outcome:callback_required",
+        "sentiment:neutral"
+      ],
+      "facts": {
+        "caller_name": "Kiran",
+        "name": "Kiran",
+        "phone": "+919876500507",
+        "requested_time": "tomorrow at 11 AM",
+        "slot": "tomorrow at 11 AM"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "97611b72-d785-4fc4-84f1-50bd52a0e8df",
+          "tenant_id": "1055d719-cdb4-4dff-aefb-2ae921823605",
+          "agent_id": "984372ff-211f-4161-b9d2-8b092c090dd9",
+          "session_id": "wf-4c192134bae34524af09fbb9a9aec10d",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_312d06dfef5048aa",
+          "started_at": "2026-10-30 10:49:52.930432+00:00",
+          "ended_at": "2026-10-30 10:50:04.949107+00:00",
+          "duration_sec": 12,
+          "disposition": "callback_required",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/97611b72-d785-4fc4-84f1-50bd52a0e8df/",
+          "end_reason": "goodbye",
+          "status": "answered",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:name_known",
+            "contact:phone_known",
+            "custom:appointment-request",
+            "custom:tooth-pain",
+            "followup:callback",
+            "followup:site_visit",
+            "intent:booking",
+            "outcome:callback_required",
+            "sentiment:neutral"
+          ],
+          "last_heartbeat_at": "2026-10-30 10:49:52.930432+00:00",
+          "created_at": "2026-10-30 10:49:52.930432+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "1edc3a00-f18c-4de6-830f-ccb61952db51",
+          "tenant_id": "1055d719-cdb4-4dff-aefb-2ae921823605",
+          "agent_id": "984372ff-211f-4161-b9d2-8b092c090dd9",
+          "name": "Kiran",
+          "phone": "+919876500507",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: 97611b72-d785-4fc4-84f1-50bd52a0e8df]\nThe caller contacted the dental clinic reporting tooth pain and requested an appointment for the following day at 11 AM. The agent asked for the caller's name, which the caller provided as Kiran. The agent explained that the request had been noted but not yet confirmed by the front desk. When the caller asked if the appointment was confirmed, the agent clarified that it was not confirmed yet and that the front desk would need to finalize it. The caller accepted this, thanked the agent, and the call concluded.\n\nNext step: Await front desk confirmation and follow up with Kiran to finalize the appointment.\n\nCall outcome: callback required (85% confidence)",
+          "created_at": "2026-10-30 10:50:06.111359+00:00",
+          "updated_at": "2026-10-30 10:50:06.111359+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "goodbye"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "callback_required"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "no_false_booking_confirmation",
+        "passed": true,
+        "evidence": "I do not have a confirmed booking yet, Kiran. I have noted your name, the tooth pain, and tomorrow at 11 AM for the front desk to confirm."
+      },
+      {
+        "id": "collected_booking_details",
+        "passed": true,
+        "evidence": "I have noted your name, the tooth pain, and tomorrow at 11 AM for the front desk to confirm."
+      }
+    ],
+    "all_failures": [],
+    "passed": true
+  },
+  {
+    "id": "en-IN/callback_no_time/shop",
+    "scenario": "callback_no_time",
+    "language": "en-IN",
+    "business": "shop",
+    "tenant_id": "f5f21a04-6c14-4203-93cc-0b52d88e5c7e",
+    "agent_id": "e1608d73-b8a2-4793-a3f9-375e04153beb",
+    "call_id": "21d6fccb-e169-4c19-b638-564c3d9e1ee4",
+    "phone": "+919876500504",
+    "opening": "Hi, this is Arjun calling from FreshCart. How can I help you today?",
+    "turn_index": 3,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "I am busy right now, call me later.",
+        "caller_en": "I am busy right now, call me later.",
+        "reply": "No problem at all. I have noted that you would like a callback when you are free.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "I don't know, sometime later.",
+        "caller_en": "I don't know, sometime later.",
+        "reply": "Understood. I will arrange for a callback at a later time.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 3,
+        "caller": "Okay, bye.",
+        "caller_en": "Okay, bye.",
+        "reply": "",
+        "farewell": "I've saved your details and your request for a follow-up call. Thank you for your time. Goodbye.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "No problem at all. I have noted that you would like a callback when you are free.",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "Understood. I will arrange for a callback at a later time.",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "I've saved your details and your request for a follow-up call. Thank you for your time. Goodbye.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 3
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "callback",
+    "outcome": {
+      "disposition": "callback_required",
+      "contact_preference": "callback",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:phone_known",
+        "followup:callback",
+        "outcome:callback_required",
+        "sentiment:neutral",
+        "signal:objection"
+      ],
+      "facts": {
+        "phone": "+919876500504"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "21d6fccb-e169-4c19-b638-564c3d9e1ee4",
+          "tenant_id": "f5f21a04-6c14-4203-93cc-0b52d88e5c7e",
+          "agent_id": "e1608d73-b8a2-4793-a3f9-375e04153beb",
+          "session_id": "wf-da2618f3285548aa896c108f3b4e36e8",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_87d5d339edce4974",
+          "started_at": "2026-10-30 10:48:33.640626+00:00",
+          "ended_at": "2026-10-30 10:48:41.506411+00:00",
+          "duration_sec": 7,
+          "disposition": "callback_required",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/21d6fccb-e169-4c19-b638-564c3d9e1ee4/",
+          "end_reason": "goodbye",
+          "status": "answered",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:phone_known",
+            "followup:callback",
+            "outcome:callback_required",
+            "sentiment:neutral",
+            "signal:objection"
+          ],
+          "last_heartbeat_at": "2026-10-30 10:48:33.640626+00:00",
+          "created_at": "2026-10-30 10:48:33.640626+00:00"
+        }
+      ],
+      "callbacks": [
+        {
+          "callback_id": "a7973a90-2469-4b01-83cc-6c8d81e0d4e3",
+          "tenant_id": "f5f21a04-6c14-4203-93cc-0b52d88e5c7e",
+          "user_id": null,
+          "original_call_id": "21d6fccb-e169-4c19-b638-564c3d9e1ee4",
+          "original_attempt_id": null,
+          "agent_id": "e1608d73-b8a2-4793-a3f9-375e04153beb",
+          "to_e164": "+919876500504",
+          "from_e164": null,
+          "dial_request_id": "requested:21d6fccb-e169-4c19-b638-564c3d9e1ee4",
+          "mode": "requested",
+          "status": "requested",
+          "provider": null,
+          "provider_call_control_id": null,
+          "error": null,
+          "created_at": "2026-10-30 10:48:40.388422+00:00",
+          "updated_at": "2026-10-30 10:48:40.388422+00:00"
+        }
+      ],
+      "jobs": [
+        {
+          "id": "4e3040e0-7b28-47e8-b8d4-d2ce6ca14568",
+          "tenant_id": "f5f21a04-6c14-4203-93cc-0b52d88e5c7e",
+          "agent_id": "e1608d73-b8a2-4793-a3f9-375e04153beb",
+          "origin_key": "callback:a7973a90-2469-4b01-83cc-6c8d81e0d4e3",
+          "source_id": "21d6fccb-e169-4c19-b638-564c3d9e1ee4",
+          "kind": "callback",
+          "phone": "+919876500504",
+          "status": "planning",
+          "reason": "resolve_requested_time",
+          "payload": {
+            "requestText": "I am busy right now, call me later.",
+            "requestedWhen": "",
+            "recentTurns": [
+              {
+                "role": "user",
+                "text": "I am busy right now, call me later.",
+                "at": "2026-10-30T10:48:33.668306Z"
+              },
+              {
+                "role": "assistant",
+                "text": "No problem at all. I have noted that you would like a callback when you are free.",
+                "at": "2026-10-30T10:48:36.571770Z"
+              },
+              {
+                "role": "user",
+                "text": "I don't know, sometime later.",
+                "at": "2026-10-30T10:48:36.571770Z"
+              },
+              {
+                "role": "assistant",
+                "text": "Understood. I will arrange for a callback at a later time.",
+                "at": "2026-10-30T10:48:39.310397Z"
+              },
+              {
+                "role": "user",
+                "text": "Okay, bye.",
+                "at": "2026-10-30T10:48:39.312403Z"
+              }
+            ],
+            "callbackId": "a7973a90-2469-4b01-83cc-6c8d81e0d4e3",
+            "timezone": "Asia/Kolkata",
+            "llm": {
+              "provider": "openai",
+              "model": "gpt-5.6-luna",
+              "options": {},
+              "purpose": "configured_post_call_analysis"
+            },
+            "requestedAt": "2026-10-30T10:48:40.398751+00:00"
+          },
+          "due_at": "2026-10-30 10:48:40.398751+00:00",
+          "expires_at": "2026-11-06 10:48:40.398751+00:00",
+          "attempts": 0,
+          "lease_token": null,
+          "lease_until": null,
+          "control_id": null,
+          "authorized_by": "35549cb4-6110-4989-b412-0e62038d9275",
+          "billing_tenant_id": "f5f21a04-6c14-4203-93cc-0b52d88e5c7e",
+          "created_at": "2026-10-30 10:48:40.398751+00:00",
+          "updated_at": "2026-10-30 10:48:40.398751+00:00"
+        }
+      ],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "a407e49e-47e6-4119-ac81-2059c3c44522",
+          "tenant_id": "f5f21a04-6c14-4203-93cc-0b52d88e5c7e",
+          "agent_id": "e1608d73-b8a2-4793-a3f9-375e04153beb",
+          "name": "New lead",
+          "phone": "+919876500504",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: 21d6fccb-e169-4c19-b638-564c3d9e1ee4]\nThe caller stated they were busy and asked to be called back later. The agent acknowledged this and confirmed that a callback would be arranged for a later time. The caller expressed uncertainty about when exactly but agreed to the callback by saying okay and ending the call. The agent confirmed saving the caller's details and request for a follow-up call before saying goodbye.\n\nNext step: Callback the caller at a later time as requested.\n\nObjections: Caller stated they were busy and did not want to speak at that moment.\n\nCall outcome: callback required (95% confidence)",
+          "created_at": "2026-10-30 10:48:42.593041+00:00",
+          "updated_at": "2026-10-30 10:48:42.593041+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "callback_request": {
+        "id": "a7973a90-2469-4b01-83cc-6c8d81e0d4e3",
+        "status": "requested",
+        "requestedWhen": "I am busy right now, call me later.",
+        "requestText": "I am busy right now, call me later."
+      },
+      "contact_preference": "callback",
+      "end_reason": "goodbye"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "callback_required"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "asked_for_callback_time_once",
+        "passed": true,
+        "evidence": "AGENT: No problem at all. I have noted that you would like a callback when you are free."
+      },
+      {
+        "id": "no_invented_callback_time",
+        "passed": true,
+        "evidence": "AGENT: Understood. I will arrange for a callback at a later time."
+      }
+    ],
+    "all_failures": [],
+    "passed": true
+  },
+  {
+    "id": "en-IN/callback_no_time/solar",
+    "scenario": "callback_no_time",
+    "language": "en-IN",
+    "business": "solar",
+    "tenant_id": "efb39942-9a8b-40a6-8c95-5ebd576e375c",
+    "agent_id": "6f60434e-61c5-4e8d-906f-b2cecd74536d",
+    "call_id": "2aa12c4c-4ccd-4402-9e42-3dbda234bca4",
+    "phone": "+919876500503",
+    "opening": "Hi, this is Priya calling from SunPeak Solar. Do you have a moment?",
+    "turn_index": 2,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "I am busy right now, call me later.",
+        "caller_en": "I am busy right now, call me later.",
+        "reply": "I understand you are busy right now. I will note that you asked to be called back later. When would be a good time for us to reach you?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "I don't know, sometime later.",
+        "caller_en": "I don't know, sometime later.",
+        "reply": "",
+        "farewell": "I've saved your details and your request for a follow-up call. Thank you for your time. Goodbye.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "I understand you are busy right now. I will note that you asked to be called back later. When would be a good time for us to reach you?",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "I've saved your details and your request for a follow-up call. Thank you for your time. Goodbye.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 2
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "callback",
+    "outcome": {
+      "disposition": "callback_required",
+      "contact_preference": "callback",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:phone_known",
+        "custom:callback-request",
+        "followup:callback",
+        "outcome:callback_required",
+        "sentiment:neutral",
+        "signal:objection"
+      ],
+      "facts": {
+        "callback_time": "sometime later",
+        "phone": "+919876500503"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "2aa12c4c-4ccd-4402-9e42-3dbda234bca4",
+          "tenant_id": "efb39942-9a8b-40a6-8c95-5ebd576e375c",
+          "agent_id": "6f60434e-61c5-4e8d-906f-b2cecd74536d",
+          "session_id": "wf-8dc656281b7c454aa5cd8d4f26d3708b",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_71a44dec8b114cdd",
+          "started_at": "2026-10-30 10:48:23.951196+00:00",
+          "ended_at": "2026-10-30 10:48:28.371695+00:00",
+          "duration_sec": 4,
+          "disposition": "callback_required",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/2aa12c4c-4ccd-4402-9e42-3dbda234bca4/",
+          "end_reason": "goal_complete",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:phone_known",
+            "custom:callback-request",
+            "followup:callback",
+            "outcome:callback_required",
+            "sentiment:neutral",
+            "signal:objection"
+          ],
+          "last_heartbeat_at": "2026-10-30 10:48:23.951196+00:00",
+          "created_at": "2026-10-30 10:48:23.951196+00:00"
+        }
+      ],
+      "callbacks": [
+        {
+          "callback_id": "b47a46b7-68e9-4a24-b9ad-1ab449f5e95e",
+          "tenant_id": "efb39942-9a8b-40a6-8c95-5ebd576e375c",
+          "user_id": null,
+          "original_call_id": "2aa12c4c-4ccd-4402-9e42-3dbda234bca4",
+          "original_attempt_id": null,
+          "agent_id": "6f60434e-61c5-4e8d-906f-b2cecd74536d",
+          "to_e164": "+919876500503",
+          "from_e164": null,
+          "dial_request_id": "requested:2aa12c4c-4ccd-4402-9e42-3dbda234bca4",
+          "mode": "requested",
+          "status": "requested",
+          "provider": null,
+          "provider_call_control_id": null,
+          "error": null,
+          "created_at": "2026-10-30 10:48:27.267749+00:00",
+          "updated_at": "2026-10-30 10:48:27.269325+00:00"
+        }
+      ],
+      "jobs": [
+        {
+          "id": "c113420c-cba4-49af-ad4b-f0339f2c39fc",
+          "tenant_id": "efb39942-9a8b-40a6-8c95-5ebd576e375c",
+          "agent_id": "6f60434e-61c5-4e8d-906f-b2cecd74536d",
+          "origin_key": "callback:b47a46b7-68e9-4a24-b9ad-1ab449f5e95e",
+          "source_id": "2aa12c4c-4ccd-4402-9e42-3dbda234bca4",
+          "kind": "callback",
+          "phone": "+919876500503",
+          "status": "planning",
+          "reason": "resolve_requested_time",
+          "payload": {
+            "requestText": "I don't know, sometime later.",
+            "requestedWhen": "",
+            "recentTurns": [
+              {
+                "role": "user",
+                "text": "I am busy right now, call me later.",
+                "at": "2026-10-30T10:48:23.985343Z"
+              },
+              {
+                "role": "assistant",
+                "text": "I understand you are busy right now. I will note that you asked to be called back later. When would be a good time for us to reach you?",
+                "at": "2026-10-30T10:48:26.205280Z"
+              },
+              {
+                "role": "user",
+                "text": "I don't know, sometime later.",
+                "at": "2026-10-30T10:48:26.205280Z"
+              }
+            ],
+            "callbackId": "b47a46b7-68e9-4a24-b9ad-1ab449f5e95e",
+            "timezone": "Asia/Kolkata",
+            "llm": {
+              "provider": "openai",
+              "model": "gpt-5.6-luna",
+              "options": {},
+              "purpose": "configured_post_call_analysis"
+            },
+            "requestedAt": "2026-10-30T10:48:27.280972+00:00"
+          },
+          "due_at": "2026-10-30 10:48:27.280972+00:00",
+          "expires_at": "2026-11-06 10:48:27.280972+00:00",
+          "attempts": 0,
+          "lease_token": null,
+          "lease_until": null,
+          "control_id": null,
+          "authorized_by": "0b677ae2-ed21-4786-a7f9-a8f4731b4c75",
+          "billing_tenant_id": "efb39942-9a8b-40a6-8c95-5ebd576e375c",
+          "created_at": "2026-10-30 10:48:27.280972+00:00",
+          "updated_at": "2026-10-30 10:48:27.280972+00:00"
+        }
+      ],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "3af82be6-0125-477d-a782-aefc6615df66",
+          "tenant_id": "efb39942-9a8b-40a6-8c95-5ebd576e375c",
+          "agent_id": "6f60434e-61c5-4e8d-906f-b2cecd74536d",
+          "name": "New lead",
+          "phone": "+919876500503",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: 2aa12c4c-4ccd-4402-9e42-3dbda234bca4]\nThe caller stated they were busy and requested to be called back later. The agent acknowledged the busy status, asked for a preferred callback time, and the caller replied they did not know but wanted to be called later. The agent confirmed saving the callback request and concluded the call.\n\nNext step: Callback the caller at a later time as requested.\n\nObjections: Caller is busy and unavailable to talk.\n\nCall outcome: callback required (90% confidence)",
+          "created_at": "2026-10-30 10:48:29.422684+00:00",
+          "updated_at": "2026-10-30 10:48:29.422684+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "callback_request": {
+        "id": "b47a46b7-68e9-4a24-b9ad-1ab449f5e95e",
+        "status": "requested",
+        "requestedWhen": "I don't know, sometime later.",
+        "requestText": "I don't know, sometime later."
+      },
+      "contact_preference": "callback",
+      "end_reason": "goal_complete"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "callback_required"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "asked_for_callback_time_once",
+        "passed": true,
+        "evidence": "When would be a good time for us to reach you?"
+      },
+      {
+        "id": "no_invented_callback_time",
+        "passed": true,
+        "evidence": "(silent)"
+      }
+    ],
+    "all_failures": [],
+    "passed": true
+  },
+  {
+    "id": "en-IN/objection_twice/solar",
+    "scenario": "objection_twice",
+    "language": "en-IN",
+    "business": "solar",
+    "tenant_id": "efb39942-9a8b-40a6-8c95-5ebd576e375c",
+    "agent_id": "6f60434e-61c5-4e8d-906f-b2cecd74536d",
+    "call_id": "cfda9e88-4529-4c1c-bc67-4fe10d259db3",
+    "phone": "+919876500501",
+    "opening": "Hi, this is Priya calling from SunPeak Solar. Do you have a moment?",
+    "turn_index": 5,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "It is too expensive for me.",
+        "caller_en": "It is too expensive for me.",
+        "reply": "I understand. The 3 kW system is 1,95,000 rupees before the government subsidy of 78,000 rupees, so you pay 1,17,000 rupees. Would that help?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "No, it is still too expensive for us.",
+        "caller_en": "No, it is still too expensive for us.",
+        "reply": "We also have an EMI option from 2,999 rupees per month for 48 months. Would that make it easier for you?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 3,
+        "caller": "Okay, what is the monthly EMI again?",
+        "caller_en": "Okay, what is the monthly EMI again?",
+        "reply": "The monthly EMI is 2,999 rupees for 48 months. Would that work for you?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 4,
+        "caller": "Fine, book the free survey. My name is Kiran, I live in Velachery, Saturday works.",
+        "caller_en": "Fine, book the free survey. My name is Kiran, I live in Velachery, Saturday works.",
+        "reply": "Your enquiry is saved, Kiran. The team will reach out to confirm the Saturday survey in Velachery.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 5,
+        "caller": "Thanks.",
+        "caller_en": "Thanks.",
+        "reply": "",
+        "farewell": "Thank you for your time. Goodbye.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "I understand. The 3 kW system is 1,95,000 rupees before the government subsidy of 78,000 rupees, so you pay 1,17,000 rupees. Would that help?",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "We also have an EMI option from 2,999 rupees per month for 48 months. Would that make it easier for you?",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "The monthly EMI is 2,999 rupees for 48 months. Would that work for you?",
+        "farewell": false
+      },
+      {
+        "turn": 4,
+        "text": "Your enquiry is saved, Kiran. The team will reach out to confirm the Saturday survey in Velachery.",
+        "farewell": false
+      },
+      {
+        "turn": 5,
+        "text": "Thank you for your time. Goodbye.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 5
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "site_visit_planned",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:name_known",
+        "contact:phone_known",
+        "followup:schedule_pending",
+        "followup:site_visit",
+        "intent:information",
+        "intent:purchase",
+        "outcome:site_visit_planned",
+        "signal:budget_confirmed",
+        "signal:objection",
+        "signal:price_sensitive",
+        "signal:ready_to_buy"
+      ],
+      "facts": {
+        "budget": "Too expensive",
+        "caller_name": "Kiran",
+        "delivery_locality": "Velachery",
+        "locality": "Velachery",
+        "name": "Kiran",
+        "phone": "+919876500501",
+        "requested_time": "Saturday",
+        "slot": "Saturday"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "cfda9e88-4529-4c1c-bc67-4fe10d259db3",
+          "tenant_id": "efb39942-9a8b-40a6-8c95-5ebd576e375c",
+          "agent_id": "6f60434e-61c5-4e8d-906f-b2cecd74536d",
+          "session_id": "wf-150695707f6345559f0d703ac3bb291e",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_71a44dec8b114cdd",
+          "started_at": "2026-10-30 10:47:46.002881+00:00",
+          "ended_at": "2026-10-30 10:47:59.347933+00:00",
+          "duration_sec": 13,
+          "disposition": "site_visit_planned",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/cfda9e88-4529-4c1c-bc67-4fe10d259db3/",
+          "end_reason": "goodbye",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:name_known",
+            "contact:phone_known",
+            "followup:schedule_pending",
+            "followup:site_visit",
+            "intent:information",
+            "intent:purchase",
+            "outcome:site_visit_planned",
+            "signal:budget_confirmed",
+            "signal:objection",
+            "signal:price_sensitive",
+            "signal:ready_to_buy"
+          ],
+          "last_heartbeat_at": "2026-10-30 10:47:46.002881+00:00",
+          "created_at": "2026-10-30 10:47:46.004460+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "b0a2e76c-5042-5c0f-aafd-b675f736ea35",
+          "tenant_id": "efb39942-9a8b-40a6-8c95-5ebd576e375c",
+          "agent_id": "6f60434e-61c5-4e8d-906f-b2cecd74536d",
+          "name": "Kiran",
+          "phone": "+919876500501",
+          "email": null,
+          "stage": "qualified",
+          "notes": "Caller enquiry — call cfda9e88-4529-4c1c-bc67-4fe10d259db3\n{\"customer_name\": \"Kiran\", \"delivery_address\": \"Velachery\", \"request\": \"Book free site survey on Saturday\"}\n\n---\n[Call reference: cfda9e88-4529-4c1c-bc67-4fe10d259db3]\nThe caller initiated the call expressing that the quoted 3 kW solar system was too expensive. The agent explained the cost breakdown, noting a pre-subsidy price of 1,95,000 rupees with a government subsidy of 78,000 rupees, resulting in a net payment of 1,17,000 rupees. The caller rejected this price as still being too high. The agent then proposed an EMI option of 2,999 rupees per month for 48 months. After confirming the EMI amount, the caller agreed to proceed and requested to book a free survey. The caller provided their name as Kiran, stated they live in Velachery, and requested the survey on a Saturday. The agent confirmed that the enquiry was saved and that the team would reach out to confirm the Saturday survey in Velachery. The caller thanked the agent, and the call concluded.\n\nNext step: Team to contact Kiran to confirm the free survey in Velachery on Saturday.\n\nObjections: Price sensitivity\n\nCall outcome: site visit planned (95% confidence)",
+          "created_at": "2026-10-30 10:47:55.929872+00:00",
+          "updated_at": "2026-10-30 10:48:01.313134+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "goodbye"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "site_visit_planned"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "handled_objection_with_facts",
+        "passed": true,
+        "evidence": "I understand. The 3 kW system is 1,95,000 rupees before the government subsidy of 78,000 rupees, so you pay 1,17,000 rupees."
+      },
+      {
+        "id": "second_objection_not_verbatim_repeat",
+        "passed": true,
+        "evidence": "We also have an EMI option from 2,999 rupees per month for 48 months."
+      },
+      {
+        "id": "offered_survey_objective",
+        "passed": true,
+        "evidence": "Would that make it easier for you?"
+      },
+      {
+        "id": "no_false_booking_confirmation",
+        "passed": true,
+        "evidence": "Your enquiry is saved, Kiran. The team will reach out to confirm the Saturday survey in Velachery."
+      }
+    ],
+    "all_failures": [],
+    "passed": true
+  },
+  {
+    "id": "en-IN/objective_followthrough/solar",
+    "scenario": "objective_followthrough",
+    "language": "en-IN",
+    "business": "solar",
+    "tenant_id": "efb39942-9a8b-40a6-8c95-5ebd576e375c",
+    "agent_id": "6f60434e-61c5-4e8d-906f-b2cecd74536d",
+    "call_id": "0a9f6814-f6c3-45d2-89ec-0d2812d34093",
+    "phone": "+919876500502",
+    "opening": "Hi, this is Priya calling from SunPeak Solar. Do you have a moment?",
+    "turn_index": 3,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "How much does it cost and is there any subsidy?",
+        "caller_en": "How much does it cost and is there any subsidy?",
+        "reply": "A 3 kW rooftop system costs 1,95,000 rupees before the government subsidy of 78,000 rupees, so you would pay 1,17,000 rupees.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "Okay, that sounds reasonable.",
+        "caller_en": "Okay, that sounds reasonable.",
+        "reply": "The cost after the 78,000 rupee government subsidy is 1,17,000 rupees. EMI is available from 2,999 rupees per month for 48 months. Since that sounds reasonable to you, would you like to go ahead with a free site survey?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 3,
+        "caller": "Hmm, okay.",
+        "caller_en": "Hmm, okay.",
+        "reply": "Could you tell me if you would like to book a free site survey?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "A 3 kW rooftop system costs 1,95,000 rupees before the government subsidy of 78,000 rupees, so you would pay 1,17,000 rupees.",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "The cost after the 78,000 rupee government subsidy is 1,17,000 rupees. EMI is available from 2,999 rupees per month for 48 months. Since that sounds reasonable to you, would you like to go ahead with a free site survey?",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "Could you tell me if you would like to book a free site survey?",
+        "farewell": false
+      }
+    ],
+    "carrier": [],
+    "errors": [],
+    "ended_by_agent": false,
+    "contact_preference": "none",
+    "outcome": {
+      "disposition": "interested",
+      "contact_preference": "none",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:phone_known",
+        "custom:rooftop-solar",
+        "custom:subsidy-inquiry",
+        "followup:callback",
+        "followup:site_visit",
+        "intent:information",
+        "intent:pricing",
+        "outcome:interested",
+        "sentiment:neutral",
+        "signal:price_sensitive"
+      ],
+      "facts": {
+        "budget": "1,17,000 rupees",
+        "phone": "+919876500502"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "0a9f6814-f6c3-45d2-89ec-0d2812d34093",
+          "tenant_id": "efb39942-9a8b-40a6-8c95-5ebd576e375c",
+          "agent_id": "6f60434e-61c5-4e8d-906f-b2cecd74536d",
+          "session_id": "wf-c6ab4fd0337947d5b206896c94d0b0de",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_71a44dec8b114cdd",
+          "started_at": "2026-10-30 10:48:12.051063+00:00",
+          "ended_at": "2026-10-30 10:48:20.231489+00:00",
+          "duration_sec": 8,
+          "disposition": "interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/0a9f6814-f6c3-45d2-89ec-0d2812d34093/",
+          "end_reason": "user_stop",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:phone_known",
+            "custom:rooftop-solar",
+            "custom:subsidy-inquiry",
+            "followup:callback",
+            "followup:site_visit",
+            "intent:information",
+            "intent:pricing",
+            "outcome:interested",
+            "sentiment:neutral",
+            "signal:price_sensitive"
+          ],
+          "last_heartbeat_at": "2026-10-30 10:48:12.051063+00:00",
+          "created_at": "2026-10-30 10:48:12.051063+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "58379ecd-6e77-4e1f-a3cb-5f116615b704",
+          "tenant_id": "efb39942-9a8b-40a6-8c95-5ebd576e375c",
+          "agent_id": "6f60434e-61c5-4e8d-906f-b2cecd74536d",
+          "name": "New lead",
+          "phone": "+919876500502",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: 0a9f6814-f6c3-45d2-89ec-0d2812d34093]\nThe caller inquired about the pricing and available subsidies for a 3 kW rooftop solar system. The agent provided the details, explaining that the system costs 1,95,000 rupees before a government subsidy of 78,000 rupees, leaving a net payment of 1,17,000 rupees. The agent also mentioned an EMI option starting at 2,999 rupees per month for 48 months. The caller found the pricing reasonable. The agent then offered a free site survey, and the caller responded hesitantly with 'Hmm, okay' but did not explicitly agree to book the survey. The agent asked for confirmation again, but the call ended without a concrete agreement on scheduling.\n\nNext step: callback_required\n\nCall outcome: interested (90% confidence)",
+          "created_at": "2026-10-30 10:48:21.529918+00:00",
+          "updated_at": "2026-10-30 10:48:21.529918+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "end_reason": "user_stop"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "interested"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "answered_question_with_facts",
+        "passed": true,
+        "evidence": "A 3 kW rooftop system costs 1,95,000 rupees before the government subsidy of 78,000 rupees, so you would pay 1,17,000 rupees."
+      },
+      {
+        "id": "offered_survey_objective",
+        "passed": true,
+        "evidence": "Since that sounds reasonable to you, would you like to go ahead with a free site survey?"
+      }
+    ],
+    "all_failures": [],
+    "passed": true
+  },
+  {
+    "id": "en-IN/order_status/shop",
+    "scenario": "order_status",
+    "language": "en-IN",
+    "business": "shop",
+    "tenant_id": "f5f21a04-6c14-4203-93cc-0b52d88e5c7e",
+    "agent_id": "e1608d73-b8a2-4793-a3f9-375e04153beb",
+    "call_id": "cb0c4697-11c6-4e30-9b85-2c9189c3dd38",
+    "phone": "+919876500506",
+    "opening": "Hi, this is Arjun calling from FreshCart. How can I help you today?",
+    "turn_index": 3,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "Where is my order? The order ID is FC10234 and it has not come yet.",
+        "caller_en": "Where is my order? The order ID is FC10234 and it has not come yet.",
+        "reply": "I’m sorry, but I cannot check the live order status over the phone. I can note down your order ID FC10234 for our support team to check and call you back. May I have your name?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "My name is Kiran.",
+        "caller_en": "My name is Kiran.",
+        "reply": "I have noted your order ID FC10234 and your name Kiran for our support team. They will check the status and call you back.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 3,
+        "caller": "Okay, thanks.",
+        "caller_en": "Okay, thanks.",
+        "reply": "",
+        "farewell": "Thank you for your time. Goodbye.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "I’m sorry, but I cannot check the live order status over the phone. I can note down your order ID FC10234 for our support team to check and call you back. May I have your name?",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "I have noted your order ID FC10234 and your name Kiran for our support team. They will check the status and call you back.",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "Thank you for your time. Goodbye.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 3
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "callback_required",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:name_known",
+        "contact:phone_known",
+        "custom:order-status",
+        "followup:callback",
+        "intent:support",
+        "outcome:callback_required",
+        "sentiment:neutral"
+      ],
+      "facts": {
+        "caller_name": "Kiran",
+        "order_id": "FC10234",
+        "phone": "+919876500506"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "cb0c4697-11c6-4e30-9b85-2c9189c3dd38",
+          "tenant_id": "f5f21a04-6c14-4203-93cc-0b52d88e5c7e",
+          "agent_id": "e1608d73-b8a2-4793-a3f9-375e04153beb",
+          "session_id": "wf-2f96e1acbbe945ecbb5bd86e6c1d1faf",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_87d5d339edce4974",
+          "started_at": "2026-10-30 10:49:38.345253+00:00",
+          "ended_at": "2026-10-30 10:49:47.338736+00:00",
+          "duration_sec": 8,
+          "disposition": "callback_required",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/cb0c4697-11c6-4e30-9b85-2c9189c3dd38/",
+          "end_reason": "goodbye",
+          "status": "answered",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:name_known",
+            "contact:phone_known",
+            "custom:order-status",
+            "followup:callback",
+            "intent:support",
+            "outcome:callback_required",
+            "sentiment:neutral"
+          ],
+          "last_heartbeat_at": "2026-10-30 10:49:38.345253+00:00",
+          "created_at": "2026-10-30 10:49:38.345253+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [
+        {
+          "id": "4e3040e0-7b28-47e8-b8d4-d2ce6ca14568",
+          "tenant_id": "f5f21a04-6c14-4203-93cc-0b52d88e5c7e",
+          "agent_id": "e1608d73-b8a2-4793-a3f9-375e04153beb",
+          "origin_key": "callback:a7973a90-2469-4b01-83cc-6c8d81e0d4e3",
+          "source_id": "21d6fccb-e169-4c19-b638-564c3d9e1ee4",
+          "kind": "callback",
+          "phone": "+919876500504",
+          "status": "planning",
+          "reason": "resolve_requested_time",
+          "payload": {
+            "requestText": "I am busy right now, call me later.",
+            "requestedWhen": "",
+            "recentTurns": [
+              {
+                "role": "user",
+                "text": "I am busy right now, call me later.",
+                "at": "2026-10-30T10:48:33.668306Z"
+              },
+              {
+                "role": "assistant",
+                "text": "No problem at all. I have noted that you would like a callback when you are free.",
+                "at": "2026-10-30T10:48:36.571770Z"
+              },
+              {
+                "role": "user",
+                "text": "I don't know, sometime later.",
+                "at": "2026-10-30T10:48:36.571770Z"
+              },
+              {
+                "role": "assistant",
+                "text": "Understood. I will arrange for a callback at a later time.",
+                "at": "2026-10-30T10:48:39.310397Z"
+              },
+              {
+                "role": "user",
+                "text": "Okay, bye.",
+                "at": "2026-10-30T10:48:39.312403Z"
+              }
+            ],
+            "callbackId": "a7973a90-2469-4b01-83cc-6c8d81e0d4e3",
+            "timezone": "Asia/Kolkata",
+            "llm": {
+              "provider": "openai",
+              "model": "gpt-5.6-luna",
+              "options": {},
+              "purpose": "configured_post_call_analysis"
+            },
+            "requestedAt": "2026-10-30T10:48:40.398751+00:00"
+          },
+          "due_at": "2026-10-30 10:48:40.398751+00:00",
+          "expires_at": "2026-11-06 10:48:40.398751+00:00",
+          "attempts": 0,
+          "lease_token": null,
+          "lease_until": null,
+          "control_id": null,
+          "authorized_by": "35549cb4-6110-4989-b412-0e62038d9275",
+          "billing_tenant_id": "f5f21a04-6c14-4203-93cc-0b52d88e5c7e",
+          "created_at": "2026-10-30 10:48:40.398751+00:00",
+          "updated_at": "2026-10-30 10:48:40.398751+00:00"
+        }
+      ],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "fb422478-283d-5043-a22e-ace82c843e33",
+          "tenant_id": "f5f21a04-6c14-4203-93cc-0b52d88e5c7e",
+          "agent_id": "e1608d73-b8a2-4793-a3f9-375e04153beb",
+          "name": "Kiran",
+          "phone": "+919876500506",
+          "email": null,
+          "stage": "contacted",
+          "notes": "Caller enquiry — call cb0c4697-11c6-4e30-9b85-2c9189c3dd38\n{\"request\": \"Provide live order status for order ID FC10234. Customer name is Kiran.\", \"customer_name\": \"Kiran\", \"product\": \"FreshCart order FC10234\"}\n\n---\n[Call reference: cb0c4697-11c6-4e30-9b85-2c9189c3dd38]\nThe caller contacted support to inquire about the status of order FC10234, which had not yet arrived. The agent explained that they could not check live order status over the phone, collected the caller's name as Kiran, and promised that the support team would check the order and call back. The caller accepted this resolution, and the call concluded with mutual goodbyes.\n\nNext step: Support team to check order FC10234 and call the customer back.\n\nCall outcome: callback required (100% confidence)",
+          "created_at": "2026-10-30 10:49:44.030266+00:00",
+          "updated_at": "2026-10-30 10:49:48.590770+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "goodbye"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "callback_required"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "no_invented_order_status",
+        "passed": true,
+        "evidence": "I’m sorry, but I cannot check the live order status over the phone."
+      },
+      {
+        "id": "explained_limitation_and_noted_request",
+        "passed": true,
+        "evidence": "I can note down your order ID FC10234 for our support team to check and call you back. May I have your name?"
+      }
+    ],
+    "all_failures": [],
+    "passed": true
+  },
+  {
+    "id": "en-IN/refuse_no_dnd/solar",
+    "scenario": "refuse_no_dnd",
+    "language": "en-IN",
+    "business": "solar",
+    "tenant_id": "efb39942-9a8b-40a6-8c95-5ebd576e375c",
+    "agent_id": "6f60434e-61c5-4e8d-906f-b2cecd74536d",
+    "call_id": "3350d424-4252-4265-b48b-000c86648db5",
+    "phone": "+919876500505",
+    "opening": "Hi, this is Priya calling from SunPeak Solar. Do you have a moment?",
+    "turn_index": 1,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "We already have solar on our roof.",
+        "caller_en": "We already have solar on our roof.",
+        "reply": "",
+        "farewell": "Thank you for your time. Goodbye.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "Thank you for your time. Goodbye.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 1
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "not_interested",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "contact:phone_known",
+        "custom:solar-installation",
+        "intent:information",
+        "outcome:not_interested",
+        "sentiment:neutral",
+        "signal:objection"
+      ],
+      "facts": {
+        "phone": "+919876500505"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "3350d424-4252-4265-b48b-000c86648db5",
+          "tenant_id": "efb39942-9a8b-40a6-8c95-5ebd576e375c",
+          "agent_id": "6f60434e-61c5-4e8d-906f-b2cecd74536d",
+          "session_id": "wf-f666c020b6464c5cb46c63c65e201689",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_71a44dec8b114cdd",
+          "started_at": "2026-10-30 10:49:32.945273+00:00",
+          "ended_at": "2026-10-30 10:49:35.081774+00:00",
+          "duration_sec": 2,
+          "disposition": "not_interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/3350d424-4252-4265-b48b-000c86648db5/",
+          "end_reason": "goodbye",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "contact:phone_known",
+            "custom:solar-installation",
+            "intent:information",
+            "outcome:not_interested",
+            "sentiment:neutral",
+            "signal:objection"
+          ],
+          "last_heartbeat_at": "2026-10-30 10:49:32.945273+00:00",
+          "created_at": "2026-10-30 10:49:32.958998+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [
+        {
+          "id": "c113420c-cba4-49af-ad4b-f0339f2c39fc",
+          "tenant_id": "efb39942-9a8b-40a6-8c95-5ebd576e375c",
+          "agent_id": "6f60434e-61c5-4e8d-906f-b2cecd74536d",
+          "origin_key": "callback:b47a46b7-68e9-4a24-b9ad-1ab449f5e95e",
+          "source_id": "2aa12c4c-4ccd-4402-9e42-3dbda234bca4",
+          "kind": "callback",
+          "phone": "+919876500503",
+          "status": "planning",
+          "reason": "resolve_requested_time",
+          "payload": {
+            "requestText": "I don't know, sometime later.",
+            "requestedWhen": "",
+            "recentTurns": [
+              {
+                "role": "user",
+                "text": "I am busy right now, call me later.",
+                "at": "2026-10-30T10:48:23.985343Z"
+              },
+              {
+                "role": "assistant",
+                "text": "I understand you are busy right now. I will note that you asked to be called back later. When would be a good time for us to reach you?",
+                "at": "2026-10-30T10:48:26.205280Z"
+              },
+              {
+                "role": "user",
+                "text": "I don't know, sometime later.",
+                "at": "2026-10-30T10:48:26.205280Z"
+              }
+            ],
+            "callbackId": "b47a46b7-68e9-4a24-b9ad-1ab449f5e95e",
+            "timezone": "Asia/Kolkata",
+            "llm": {
+              "provider": "openai",
+              "model": "gpt-5.6-luna",
+              "options": {},
+              "purpose": "configured_post_call_analysis"
+            },
+            "requestedAt": "2026-10-30T10:48:27.280972+00:00"
+          },
+          "due_at": "2026-10-30 10:48:27.280972+00:00",
+          "expires_at": "2026-11-06 10:48:27.280972+00:00",
+          "attempts": 0,
+          "lease_token": null,
+          "lease_until": null,
+          "control_id": null,
+          "authorized_by": "0b677ae2-ed21-4786-a7f9-a8f4731b4c75",
+          "billing_tenant_id": "efb39942-9a8b-40a6-8c95-5ebd576e375c",
+          "created_at": "2026-10-30 10:48:27.280972+00:00",
+          "updated_at": "2026-10-30 10:48:27.280972+00:00"
+        }
+      ],
+      "dnd": [],
+      "leads": []
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "goodbye"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "not_interested"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "respected_refusal_without_pitch",
+        "passed": true,
+        "evidence": "(silent)"
+      }
+    ],
+    "all_failures": [],
+    "passed": true
+  },
+  {
+    "id": "te-IN/booking/clinic",
+    "scenario": "booking",
+    "language": "te-IN",
+    "business": "clinic",
+    "tenant_id": "2bd04c63-ddd8-4c01-aa68-90ec44bea974",
+    "agent_id": "968845c4-837d-4de2-92f7-afc56a147689",
+    "call_id": "6a56a7c0-1f37-45ea-a8ee-1a406d4dbc43",
+    "phone": "+919876500514",
+    "opening": "నమస్తే! నేను Sunrise Dental Clinic నుండి Anjali. చెప్పండి, మీకు ఎలా సహాయం చేయగలను?",
+    "turn_index": 4,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "నాకు పంటి నొప్పిగా ఉంది. రేపు ఉదయం 11 కి appointment కావాలి.",
+        "caller_en": "I have tooth pain. I want an appointment tomorrow at 11 AM.",
+        "reply": "సరే.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "నా పేరు కిరణ్.",
+        "caller_en": "My name is Kiran.",
+        "reply": "సరే కిరణ్ గారు, పంటి నొప్పితో రేపు ఉదయం 11 కి appointment కావాలని note చేసుకున్నాను. consultation fee ₹300 ఉంటుంది. మీకు scaling లేదా cleaning కూడా అవసరమా?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 3,
+        "caller": "నా appointment confirm అయిందా?",
+        "caller_en": "Is my appointment confirmed?",
+        "reply": "కిరణ్ గారు, మీ appointment ఇంకా confirm అవ్వలేదు. మా front desk వాళ్ళు check చేసి confirm చేస్తారు.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 4,
+        "caller": "సరే, thanks.",
+        "caller_en": "Okay, thanks.",
+        "reply": "",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "సరే.",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "సరే కిరణ్ గారు, పంటి నొప్పితో రేపు ఉదయం 11 కి appointment కావాలని note చేసుకున్నాను. consultation fee ₹300 ఉంటుంది. మీకు scaling లేదా cleaning కూడా అవసరమా?",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "కిరణ్ గారు, మీ appointment ఇంకా confirm అవ్వలేదు. మా front desk వాళ్ళు check చేసి confirm చేస్తారు.",
+        "farewell": false
+      },
+      {
+        "turn": 4,
+        "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 4
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "callback_required",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:name_known",
+        "contact:phone_known",
+        "custom:dental-appointment",
+        "custom:toothache",
+        "followup:callback",
+        "followup:schedule_pending",
+        "followup:site_visit",
+        "intent:booking",
+        "outcome:callback_required",
+        "sentiment:neutral",
+        "signal:objection"
+      ],
+      "facts": {
+        "caller_name": "కిరణ్",
+        "name": "Kiran",
+        "phone": "+919876500514",
+        "requested_time": "రేపు ఉదయం 11 కి",
+        "slot": "Tomorrow at 11 AM"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "6a56a7c0-1f37-45ea-a8ee-1a406d4dbc43",
+          "tenant_id": "2bd04c63-ddd8-4c01-aa68-90ec44bea974",
+          "agent_id": "968845c4-837d-4de2-92f7-afc56a147689",
+          "session_id": "wf-d19ae1ba630e4b08980ce186a10c9c69",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_ca15dcfbdeda4742",
+          "started_at": "2026-10-30 10:51:54.844480+00:00",
+          "ended_at": "2026-10-30 10:52:06.541864+00:00",
+          "duration_sec": 11,
+          "disposition": "callback_required",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/6a56a7c0-1f37-45ea-a8ee-1a406d4dbc43/",
+          "end_reason": "goodbye",
+          "status": "answered",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:name_known",
+            "contact:phone_known",
+            "custom:dental-appointment",
+            "custom:toothache",
+            "followup:callback",
+            "followup:schedule_pending",
+            "followup:site_visit",
+            "intent:booking",
+            "outcome:callback_required",
+            "sentiment:neutral",
+            "signal:objection"
+          ],
+          "last_heartbeat_at": "2026-10-30 10:51:54.844480+00:00",
+          "created_at": "2026-10-30 10:51:54.844480+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "23027ef4-da32-4132-a484-f9924f0aba05",
+          "tenant_id": "2bd04c63-ddd8-4c01-aa68-90ec44bea974",
+          "agent_id": "968845c4-837d-4de2-92f7-afc56a147689",
+          "name": "Kiran",
+          "phone": "+919876500514",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: 6a56a7c0-1f37-45ea-a8ee-1a406d4dbc43]\nThe caller contacted the service to schedule a dental appointment due to a toothache, requesting a time slot for tomorrow at 11 AM. The caller identified himself as Kiran. The agent acknowledged the request, noted the preferred time, and informed him of a ₹300 consultation fee while inquiring if he also needed scaling or cleaning. When the caller asked if the appointment was confirmed, the agent clarified that it was not yet finalized and that the front desk would need to verify and confirm it. The caller accepted this and ended the call after thanking the agent.\n\nNext step: The front desk must verify and confirm the appointment for tomorrow at 11 AM for Kiran.\n\nCall outcome: callback required (90% confidence)",
+          "created_at": "2026-10-30 10:52:07.808281+00:00",
+          "updated_at": "2026-10-30 10:52:07.808281+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "goodbye"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "callback_required"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "no_false_booking_confirmation",
+        "passed": true,
+        "evidence": "करृणृ गरु, नी अडीनीनी इंक कनीनीलेदु. नर नीनी वरलु कीके कनीनी केसीरु."
+      },
+      {
+        "id": "collected_booking_details",
+        "passed": true,
+        "evidence": "करृणृ गरु, नी नीदीकरु रेनु उदवरं 11 की appointment कवललनी note केसुकुनीनरु."
+      }
+    ],
+    "all_failures": [],
+    "passed": true
+  },
+  {
+    "id": "te-IN/callback_no_time/shop",
+    "scenario": "callback_no_time",
+    "language": "te-IN",
+    "business": "shop",
+    "tenant_id": "fafb7fb2-eeee-4312-9f31-d0e7fea14703",
+    "agent_id": "cebc027a-6eb2-4f89-9cd4-085a5d1f7eda",
+    "call_id": "beebb296-6664-47b7-abd7-77a66c065afb",
+    "phone": "+919876500511",
+    "opening": "నమస్తే! నేను FreshCart నుండి Arjun. చెప్పండి, మీకు ఎలా సహాయం చేయగలను?",
+    "turn_index": 3,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "నేను ఇప్పుడు busy గా ఉన్నాను, తర్వాత call చేయండి.",
+        "caller_en": "I am busy right now, call me later.",
+        "reply": "సరే, అర్థమైంది. మీరు busy గా ఉన్నారని note చేసుకున్నాను, తర్వాత call చేస్తాము.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "నాకు తెలియదు, తర్వాత ఎప్పుడైనా.",
+        "caller_en": "I don't know, sometime later.",
+        "reply": "మీరు తర్వాత ఎప్పుడైనా మాట్లాడొచ్చు అని note చేసుకున్నాను. మా team మీకు call back చేస్తుంది.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 3,
+        "caller": "సరే, bye.",
+        "caller_en": "Okay, bye.",
+        "reply": "",
+        "farewell": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "సరే, అర్థమైంది. మీరు busy గా ఉన్నారని note చేసుకున్నాను, తర్వాత call చేస్తాము.",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "మీరు తర్వాత ఎప్పుడైనా మాట్లాడొచ్చు అని note చేసుకున్నాను. మా team మీకు call back చేస్తుంది.",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 3
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "callback",
+    "outcome": {
+      "disposition": "callback_required",
+      "contact_preference": "callback",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:phone_known",
+        "followup:callback",
+        "outcome:callback_required",
+        "sentiment:neutral",
+        "signal:objection"
+      ],
+      "facts": {
+        "phone": "+919876500511"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "beebb296-6664-47b7-abd7-77a66c065afb",
+          "tenant_id": "fafb7fb2-eeee-4312-9f31-d0e7fea14703",
+          "agent_id": "cebc027a-6eb2-4f89-9cd4-085a5d1f7eda",
+          "session_id": "wf-d02f511ce60b4812b4b6a12e5fdf3f81",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_f8584e7309724a9a",
+          "started_at": "2026-10-30 10:51:06.111022+00:00",
+          "ended_at": "2026-10-30 10:51:12.458212+00:00",
+          "duration_sec": 6,
+          "disposition": "callback_required",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/beebb296-6664-47b7-abd7-77a66c065afb/",
+          "end_reason": "goodbye",
+          "status": "answered",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:phone_known",
+            "followup:callback",
+            "outcome:callback_required",
+            "sentiment:neutral",
+            "signal:objection"
+          ],
+          "last_heartbeat_at": "2026-10-30 10:51:06.111022+00:00",
+          "created_at": "2026-10-30 10:51:06.111022+00:00"
+        }
+      ],
+      "callbacks": [
+        {
+          "callback_id": "dacf2c45-118e-44d8-aba8-2d5a00da3721",
+          "tenant_id": "fafb7fb2-eeee-4312-9f31-d0e7fea14703",
+          "user_id": null,
+          "original_call_id": "beebb296-6664-47b7-abd7-77a66c065afb",
+          "original_attempt_id": null,
+          "agent_id": "cebc027a-6eb2-4f89-9cd4-085a5d1f7eda",
+          "to_e164": "+919876500511",
+          "from_e164": null,
+          "dial_request_id": "requested:beebb296-6664-47b7-abd7-77a66c065afb",
+          "mode": "requested",
+          "status": "requested",
+          "provider": null,
+          "provider_call_control_id": null,
+          "error": null,
+          "created_at": "2026-10-30 10:51:11.350465+00:00",
+          "updated_at": "2026-10-30 10:51:11.350465+00:00"
+        }
+      ],
+      "jobs": [
+        {
+          "id": "db2d0a14-c92d-49d9-97db-c5f20bbaa27c",
+          "tenant_id": "fafb7fb2-eeee-4312-9f31-d0e7fea14703",
+          "agent_id": "cebc027a-6eb2-4f89-9cd4-085a5d1f7eda",
+          "origin_key": "callback:dacf2c45-118e-44d8-aba8-2d5a00da3721",
+          "source_id": "beebb296-6664-47b7-abd7-77a66c065afb",
+          "kind": "callback",
+          "phone": "+919876500511",
+          "status": "planning",
+          "reason": "resolve_requested_time",
+          "payload": {
+            "requestText": "నేను ఇప్పుడు busy గా ఉన్నాను, తర్వాత call చేయండి.",
+            "requestedWhen": "",
+            "recentTurns": [
+              {
+                "role": "user",
+                "text": "నేను ఇప్పుడు busy గా ఉన్నాను, తర్వాత call చేయండి.",
+                "at": "2026-10-30T10:51:06.142952Z"
+              },
+              {
+                "role": "assistant",
+                "text": "సరే, అర్థమైంది. మీరు busy గా ఉన్నారని note చేసుకున్నాను, తర్వాత call చేస్తాము.",
+                "at": "2026-10-30T10:51:08.299338Z"
+              },
+              {
+                "role": "user",
+                "text": "నాకు తెలియదు, తర్వాత ఎప్పుడైనా.",
+                "at": "2026-10-30T10:51:08.299338Z"
+              },
+              {
+                "role": "assistant",
+                "text": "మీరు తర్వాత ఎప్పుడైనా మాట్లాడొచ్చు అని note చేసుకున్నాను. మా team మీకు call back చేస్తుంది.",
+                "at": "2026-10-30T10:51:10.289556Z"
+              },
+              {
+                "role": "user",
+                "text": "సరే, bye.",
+                "at": "2026-10-30T10:51:10.290649Z"
+              }
+            ],
+            "callbackId": "dacf2c45-118e-44d8-aba8-2d5a00da3721",
+            "timezone": "Asia/Kolkata",
+            "llm": {
+              "provider": "openai",
+              "model": "gpt-5.6-luna",
+              "options": {},
+              "purpose": "configured_post_call_analysis"
+            },
+            "requestedAt": "2026-10-30T10:51:11.352369+00:00"
+          },
+          "due_at": "2026-10-30 10:51:11.352369+00:00",
+          "expires_at": "2026-11-06 10:51:11.352369+00:00",
+          "attempts": 0,
+          "lease_token": null,
+          "lease_until": null,
+          "control_id": null,
+          "authorized_by": "8811a95d-0dac-4ad6-8064-24f86e2b409d",
+          "billing_tenant_id": "fafb7fb2-eeee-4312-9f31-d0e7fea14703",
+          "created_at": "2026-10-30 10:51:11.361094+00:00",
+          "updated_at": "2026-10-30 10:51:11.361094+00:00"
+        }
+      ],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "e88a8132-7067-409e-8267-1fb61bbb9163",
+          "tenant_id": "fafb7fb2-eeee-4312-9f31-d0e7fea14703",
+          "agent_id": "cebc027a-6eb2-4f89-9cd4-085a5d1f7eda",
+          "name": "New lead",
+          "phone": "+919876500511",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: beebb296-6664-47b7-abd7-77a66c065afb]\nThe caller initially stated they were busy and requested a call back later. When the agent confirmed they would arrange a follow-up, the caller expressed uncertainty about when to be available but agreed to a future call. The agent noted the callback request and concluded the call.\n\nNext step: Team to call the caller back at a later time as requested.\n\nObjections: Caller stated they were currently busy.\n\nCall outcome: callback required (95% confidence)",
+          "created_at": "2026-10-30 10:51:13.413950+00:00",
+          "updated_at": "2026-10-30 10:51:13.413950+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "callback_request": {
+        "id": "dacf2c45-118e-44d8-aba8-2d5a00da3721",
+        "status": "requested",
+        "requestedWhen": "నేను ఇప్పుడు busy గా ఉన్నాను, తర్వాత call చేయండి.",
+        "requestText": "నేను ఇప్పుడు busy గా ఉన్నాను, తర్వాత call చేయండి."
+      },
+      "contact_preference": "callback",
+      "end_reason": "goodbye"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "callback_required"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "asked_for_callback_time_once",
+        "passed": true,
+        "evidence": "AGENT: సరే, అర్థమైంది. మీరు busy గా ఉన్నారని note చేసుకున్నాను, తర్వాత call చేస్తాము."
+      },
+      {
+        "id": "no_invented_callback_time",
+        "passed": true,
+        "evidence": "AGENT: మీరు తర్వాత ఎప్పుడైనా మాట్లాడొచ్చు అని note చేసుకున్నాను. మా team మీకు call back చేస్తుంది."
+      }
+    ],
+    "all_failures": [],
+    "passed": true
+  },
+  {
+    "id": "te-IN/callback_no_time/solar",
+    "scenario": "callback_no_time",
+    "language": "te-IN",
+    "business": "solar",
+    "tenant_id": "ee8c5012-c159-4045-8d84-f77ca54cc926",
+    "agent_id": "d599be6d-3504-4f06-85c8-b2cfe43d662e",
+    "call_id": "ea262aaf-2446-4eb7-96d6-485262262565",
+    "phone": "+919876500510",
+    "opening": "హలో, నేను SunPeak Solar నుండి Priya. మాట్లాడటానికి ఒక moment ఉంటుందా?",
+    "turn_index": 2,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "నేను ఇప్పుడు busy గా ఉన్నాను, తర్వాత call చేయండి.",
+        "caller_en": "I am busy right now, call me later.",
+        "reply": "సరే, మీరు busy గా ఉన్నారని అర్థమైంది. మీరు free అయినప్పుడు ఏ time కి call చేయమంటారో చెప్పండి.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "నాకు తెలియదు, తర్వాత ఎప్పుడైనా.",
+        "caller_en": "I don't know, sometime later.",
+        "reply": "",
+        "farewell": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "సరే, మీరు busy గా ఉన్నారని అర్థమైంది. మీరు free అయినప్పుడు ఏ time కి call చేయమంటారో చెప్పండి.",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 2
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "callback",
+    "outcome": {
+      "disposition": "callback_required",
+      "contact_preference": "callback",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:phone_known",
+        "followup:callback",
+        "outcome:callback_required",
+        "sentiment:neutral",
+        "signal:objection"
+      ],
+      "facts": {
+        "callback_time": "Later / unspecified",
+        "phone": "+919876500510"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "ea262aaf-2446-4eb7-96d6-485262262565",
+          "tenant_id": "ee8c5012-c159-4045-8d84-f77ca54cc926",
+          "agent_id": "d599be6d-3504-4f06-85c8-b2cfe43d662e",
+          "session_id": "wf-d0e32525d55749dd966a67165ffca331",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_40ae3b5d8cda4168",
+          "started_at": "2026-10-30 10:50:57.511901+00:00",
+          "ended_at": "2026-10-30 10:51:01.822172+00:00",
+          "duration_sec": 4,
+          "disposition": "callback_required",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/ea262aaf-2446-4eb7-96d6-485262262565/",
+          "end_reason": "goal_complete",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:phone_known",
+            "followup:callback",
+            "outcome:callback_required",
+            "sentiment:neutral",
+            "signal:objection"
+          ],
+          "last_heartbeat_at": "2026-10-30 10:50:57.511901+00:00",
+          "created_at": "2026-10-30 10:50:57.511901+00:00"
+        }
+      ],
+      "callbacks": [
+        {
+          "callback_id": "3e969faf-5d25-4df4-aff5-c3f6b5876fdb",
+          "tenant_id": "ee8c5012-c159-4045-8d84-f77ca54cc926",
+          "user_id": null,
+          "original_call_id": "ea262aaf-2446-4eb7-96d6-485262262565",
+          "original_attempt_id": null,
+          "agent_id": "d599be6d-3504-4f06-85c8-b2cfe43d662e",
+          "to_e164": "+919876500510",
+          "from_e164": null,
+          "dial_request_id": "requested:ea262aaf-2446-4eb7-96d6-485262262565",
+          "mode": "requested",
+          "status": "requested",
+          "provider": null,
+          "provider_call_control_id": null,
+          "error": null,
+          "created_at": "2026-10-30 10:51:00.706871+00:00",
+          "updated_at": "2026-10-30 10:51:00.706871+00:00"
+        }
+      ],
+      "jobs": [
+        {
+          "id": "7c311d6b-90b9-4525-9707-b2ae9ad3c377",
+          "tenant_id": "ee8c5012-c159-4045-8d84-f77ca54cc926",
+          "agent_id": "d599be6d-3504-4f06-85c8-b2cfe43d662e",
+          "origin_key": "callback:3e969faf-5d25-4df4-aff5-c3f6b5876fdb",
+          "source_id": "ea262aaf-2446-4eb7-96d6-485262262565",
+          "kind": "callback",
+          "phone": "+919876500510",
+          "status": "planning",
+          "reason": "resolve_requested_time",
+          "payload": {
+            "requestText": "నాకు తెలియదు, తర్వాత ఎప్పుడైనా.",
+            "requestedWhen": "",
+            "recentTurns": [
+              {
+                "role": "user",
+                "text": "నేను ఇప్పుడు busy గా ఉన్నాను, తర్వాత call చేయండి.",
+                "at": "2026-10-30T10:50:57.538831Z"
+              },
+              {
+                "role": "assistant",
+                "text": "సరే, మీరు busy గా ఉన్నారని అర్థమైంది. మీరు free అయినప్పుడు ఏ time కి call చేయమంటారో చెప్పండి.",
+                "at": "2026-10-30T10:50:59.602440Z"
+              },
+              {
+                "role": "user",
+                "text": "నాకు తెలియదు, తర్వాత ఎప్పుడైనా.",
+                "at": "2026-10-30T10:50:59.602440Z"
+              }
+            ],
+            "callbackId": "3e969faf-5d25-4df4-aff5-c3f6b5876fdb",
+            "timezone": "Asia/Kolkata",
+            "llm": {
+              "provider": "openai",
+              "model": "gpt-5.6-luna",
+              "options": {},
+              "purpose": "configured_post_call_analysis"
+            },
+            "requestedAt": "2026-10-30T10:51:00.715690+00:00"
+          },
+          "due_at": "2026-10-30 10:51:00.715690+00:00",
+          "expires_at": "2026-11-06 10:51:00.715690+00:00",
+          "attempts": 0,
+          "lease_token": null,
+          "lease_until": null,
+          "control_id": null,
+          "authorized_by": "a9d8dd01-49e3-48eb-8462-8f87471e64a0",
+          "billing_tenant_id": "ee8c5012-c159-4045-8d84-f77ca54cc926",
+          "created_at": "2026-10-30 10:51:00.722199+00:00",
+          "updated_at": "2026-10-30 10:51:00.722199+00:00"
+        }
+      ],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "e0f72503-f78f-4487-8290-6e9357b540fa",
+          "tenant_id": "ee8c5012-c159-4045-8d84-f77ca54cc926",
+          "agent_id": "d599be6d-3504-4f06-85c8-b2cfe43d662e",
+          "name": "New lead",
+          "phone": "+919876500510",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: ea262aaf-2446-4eb7-96d6-485262262565]\nThe caller initiated the call but stated they were busy and requested to be called back later. When the agent asked for a specific callback time, the caller was unsure and requested a callback at an unspecified later time. The agent acknowledged the callback request, recorded the details, and concluded the call.\n\nNext step: Callback the caller at a later time as requested.\n\nObjections: Caller stated they were busy and did not want to continue the conversation.\n\nCall outcome: callback required (95% confidence)",
+          "created_at": "2026-10-30 10:51:02.979816+00:00",
+          "updated_at": "2026-10-30 10:51:02.979816+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "callback_request": {
+        "id": "3e969faf-5d25-4df4-aff5-c3f6b5876fdb",
+        "status": "requested",
+        "requestedWhen": "నాకు తెలియదు, తర్వాత ఎప్పుడైనా.",
+        "requestText": "నాకు తెలియదు, తర్వాత ఎప్పుడైనా."
+      },
+      "contact_preference": "callback",
+      "end_reason": "goal_complete"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "callback_required"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "asked_for_callback_time_once",
+        "passed": true,
+        "evidence": "మీరు free అయినప్పుడు ఏ time కి call చేయమంటారో చెప్పండి."
+      },
+      {
+        "id": "no_invented_callback_time",
+        "passed": true,
+        "evidence": "(silent)"
+      }
+    ],
+    "all_failures": [],
+    "passed": true
+  },
+  {
+    "id": "te-IN/objection_twice/solar",
+    "scenario": "objection_twice",
+    "language": "te-IN",
+    "business": "solar",
+    "tenant_id": "ee8c5012-c159-4045-8d84-f77ca54cc926",
+    "agent_id": "d599be6d-3504-4f06-85c8-b2cfe43d662e",
+    "call_id": "c087f3d5-06ec-42c8-a46c-c5ce9bb0df15",
+    "phone": "+919876500508",
+    "opening": "హలో, నేను SunPeak Solar నుండి Priya. మాట్లాడటానికి ఒక moment ఉంటుందా?",
+    "turn_index": 5,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "ఇది నాకు చాలా expensive గా ఉంది.",
+        "caller_en": "It is too expensive for me.",
+        "reply": "అర్థమైంది. Government subsidy ₹78,000 తర్వాత, 3 kW system కి మీరు ₹1,17,000 pay చేయాలి. దీని గురించి ఇంకా తెలుసుకోవాలనుకుంటున్నారా?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "లేదు, ఇది మాకు ఇంకా చాలా expensive గానే ఉంది.",
+        "caller_en": "No, it is still too expensive for us.",
+        "reply": "మీరు చెప్పింది అర్థమైంది, ఇది ఇంకా ఖరీదైనదే. కానీ నెలకు ₹2,999 EMI లో 48 నెలల వరకు కట్టుకోవచ్చు.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 3,
+        "caller": "సరే, monthly EMI మళ్ళీ ఎంత చెప్పారు?",
+        "caller_en": "Okay, what is the monthly EMI again?",
+        "reply": "నెలకు ₹2,999 పడుతుంది, 48 నెలల వరకు.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 4,
+        "caller": "సరే, free survey book చేయండి. నా పేరు కిరణ్, నేను Velachery లో ఉంటాను, శనివారం కుదురుతుంది.",
+        "caller_en": "Fine, book the free survey. My name is Kiran, I live in Velachery, Saturday works.",
+        "reply": "మీ వివరాలు, అంటే మీ పేరు కిరణ్, Velachery ప్రాంతం, మరియు శనివారం మీకు కుదురుతుంది అనే వివరాలు సేవ్ చేశాను. శనివారం ఉచిత సర్వే కోసం మా టీమ్ మిమ్మల్ని సంప్రదిస్తుంది.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 5,
+        "caller": "Thanks.",
+        "caller_en": "Thanks.",
+        "reply": "",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "అర్థమైంది. Government subsidy ₹78,000 తర్వాత, 3 kW system కి మీరు ₹1,17,000 pay చేయాలి. దీని గురించి ఇంకా తెలుసుకోవాలనుకుంటున్నారా?",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "మీరు చెప్పింది అర్థమైంది, ఇది ఇంకా ఖరీదైనదే. కానీ నెలకు ₹2,999 EMI లో 48 నెలల వరకు కట్టుకోవచ్చు.",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "నెలకు ₹2,999 పడుతుంది, 48 నెలల వరకు.",
+        "farewell": false
+      },
+      {
+        "turn": 4,
+        "text": "మీ వివరాలు, అంటే మీ పేరు కిరణ్, Velachery ప్రాంతం, మరియు శనివారం మీకు కుదురుతుంది అనే వివరాలు సేవ్ చేశాను. శనివారం ఉచిత సర్వే కోసం మా టీమ్ మిమ్మల్ని సంప్రదిస్తుంది.",
+        "farewell": false
+      },
+      {
+        "turn": 5,
+        "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 5
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "site_visit_planned",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:name_known",
+        "contact:phone_known",
+        "custom:free-survey",
+        "followup:schedule_pending",
+        "followup:site_visit",
+        "intent:information",
+        "intent:purchase",
+        "outcome:site_visit_planned",
+        "sentiment:neutral",
+        "signal:objection",
+        "signal:price_sensitive"
+      ],
+      "facts": {
+        "budget": "Post-subsidy ₹1,17,000; monthly EMI ₹2,999 for 48 months",
+        "caller_name": "కిరణ్",
+        "delivery_locality": "Velachery",
+        "locality": "Velachery",
+        "name": "Kiran",
+        "phone": "+919876500508",
+        "requested_time": "శనివారం",
+        "slot": "Saturday"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "c087f3d5-06ec-42c8-a46c-c5ce9bb0df15",
+          "tenant_id": "ee8c5012-c159-4045-8d84-f77ca54cc926",
+          "agent_id": "d599be6d-3504-4f06-85c8-b2cfe43d662e",
+          "session_id": "wf-82127582e550461ca1dc57c4c369c906",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_40ae3b5d8cda4168",
+          "started_at": "2026-10-30 10:50:27.079072+00:00",
+          "ended_at": "2026-10-30 10:50:41.483682+00:00",
+          "duration_sec": 14,
+          "disposition": "site_visit_planned",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/c087f3d5-06ec-42c8-a46c-c5ce9bb0df15/",
+          "end_reason": "goal_complete",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:name_known",
+            "contact:phone_known",
+            "custom:free-survey",
+            "followup:schedule_pending",
+            "followup:site_visit",
+            "intent:information",
+            "intent:purchase",
+            "outcome:site_visit_planned",
+            "sentiment:neutral",
+            "signal:objection",
+            "signal:price_sensitive"
+          ],
+          "last_heartbeat_at": "2026-10-30 10:50:27.079072+00:00",
+          "created_at": "2026-10-30 10:50:27.079072+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "be4ec453-d755-5cdb-8fc4-e34f4728b2ac",
+          "tenant_id": "ee8c5012-c159-4045-8d84-f77ca54cc926",
+          "agent_id": "d599be6d-3504-4f06-85c8-b2cfe43d662e",
+          "name": "కిరణ్",
+          "phone": "+919876500508",
+          "email": null,
+          "stage": "qualified",
+          "notes": "Caller enquiry — call c087f3d5-06ec-42c8-a46c-c5ce9bb0df15\n{\"customer_name\": \"కిరణ్\", \"delivery_address\": \"Velachery\", \"request\": \"Free site survey booking requested. Prefers Saturday.\", \"product\": \"3 kW rooftop solar system\", \"quantity\": \"1\"}\n\n---\n[Call reference: c087f3d5-06ec-42c8-a46c-c5ce9bb0df15]\nThe caller, Kiran, initiated the call expressing that the proposed 3 kW system was too expensive. The agent explained the post-subsidy cost of ₹1,17,000 and offered a monthly EMI option of ₹2,999 for 48 months. After the caller confirmed the EMI amount, he agreed to proceed and requested a free survey. He provided his name as Kiran, stated his locality as Velachery, and requested the survey to be scheduled for Saturday. The agent confirmed saving these details and promised that the team would contact him to arrange the Saturday survey. The caller thanked the agent, and the call ended.\n\nNext step: Agent to contact the caller to schedule the free survey for Saturday.\n\nObjections: Price too high\n\nCall outcome: site visit planned (95% confidence)",
+          "created_at": "2026-10-30 10:50:38.239819+00:00",
+          "updated_at": "2026-10-30 10:50:43.039444+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "goal_complete"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "site_visit_planned"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "handled_objection_with_facts",
+        "passed": true,
+        "evidence": "Government subsidy ₹78,000 తర్వాత, 3 kW system కి మీరు ₹1,17,000 pay చేయాలి."
+      },
+      {
+        "id": "second_objection_not_verbatim_repeat",
+        "passed": true,
+        "evidence": "కాబట్టి నెలకు ₹2,999 EMI లో 48 నెలల వరకు కట్టుకోవచ్చు."
+      },
+      {
+        "id": "offered_survey_objective",
+        "passed": true,
+        "evidence": "సరే, free survey book చేయండి."
+      },
+      {
+        "id": "no_false_booking_confirmation",
+        "passed": true,
+        "evidence": "శనివారం ఉచిత సర్వే కోసం మా టీమ్ మిమ్మల్ని సంప్రదిస్తుంది."
+      }
+    ],
+    "all_failures": [],
+    "passed": true
+  },
+  {
+    "id": "te-IN/objective_followthrough/solar",
+    "scenario": "objective_followthrough",
+    "language": "te-IN",
+    "business": "solar",
+    "tenant_id": "ee8c5012-c159-4045-8d84-f77ca54cc926",
+    "agent_id": "d599be6d-3504-4f06-85c8-b2cfe43d662e",
+    "call_id": "d4a633cd-aa60-4ab5-9cff-c84afff862f9",
+    "phone": "+919876500509",
+    "opening": "హలో, నేను SunPeak Solar నుండి Priya. మాట్లాడటానికి ఒక moment ఉంటుందా?",
+    "turn_index": 3,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "దీనికి ఎంత అవుతుంది, ఏదైనా subsidy ఉందా?",
+        "caller_en": "How much does it cost and is there any subsidy?",
+        "reply": "3 kW system కి ముందుగా ₹1,95,000 అవుతుంది. Government subsidy ₹78,000 పోగా, మీరు కట్టాల్సింది ₹1,17,000 మాత్రమే. మీకు ఇంకా ఆసక్తి ఉందా?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "సరే, అది reasonable గానే ఉంది.",
+        "caller_en": "Okay, that sounds reasonable.",
+        "reply": "సరే. free site survey schedule చేయడానికి మీ పేరు, area, అలాగే మీకు ఏ రోజు వీలవుతుందో చెప్తారా?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 3,
+        "caller": "హ్మ్... సరే.",
+        "caller_en": "Hmm, okay.",
+        "reply": "survey కోసం మీ పేరు, area, అలాగే మీకు ఏ రోజు వీలవుతుందో చెప్తారా?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "3 kW system కి ముందుగా ₹1,95,000 అవుతుంది. Government subsidy ₹78,000 పోగా, మీరు కట్టాల్సింది ₹1,17,000 మాత్రమే. మీకు ఇంకా ఆసక్తి ఉందా?",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "సరే. free site survey schedule చేయడానికి మీ పేరు, area, అలాగే మీకు ఏ రోజు వీలవుతుందో చెప్తారా?",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "survey కోసం మీ పేరు, area, అలాగే మీకు ఏ రోజు వీలవుతుందో చెప్తారా?",
+        "farewell": false
+      }
+    ],
+    "carrier": [],
+    "errors": [],
+    "ended_by_agent": false,
+    "contact_preference": "none",
+    "outcome": {
+      "disposition": "interested",
+      "contact_preference": "none",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:phone_known",
+        "custom:site-survey",
+        "custom:solar-system",
+        "followup:site_visit",
+        "intent:information",
+        "outcome:interested",
+        "signal:price_sensitive"
+      ],
+      "facts": {
+        "phone": "+919876500509"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "d4a633cd-aa60-4ab5-9cff-c84afff862f9",
+          "tenant_id": "ee8c5012-c159-4045-8d84-f77ca54cc926",
+          "agent_id": "d599be6d-3504-4f06-85c8-b2cfe43d662e",
+          "session_id": "wf-ea023cfcdb4849bfa671541f7181158f",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_40ae3b5d8cda4168",
+          "started_at": "2026-10-30 10:50:45.273363+00:00",
+          "ended_at": "2026-10-30 10:50:53.379086+00:00",
+          "duration_sec": 8,
+          "disposition": "interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/d4a633cd-aa60-4ab5-9cff-c84afff862f9/",
+          "end_reason": "user_stop",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:phone_known",
+            "custom:site-survey",
+            "custom:solar-system",
+            "followup:site_visit",
+            "intent:information",
+            "outcome:interested",
+            "signal:price_sensitive"
+          ],
+          "last_heartbeat_at": "2026-10-30 10:50:45.273363+00:00",
+          "created_at": "2026-10-30 10:50:45.273363+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "20cd490f-fe86-41b2-a53d-b80e0e085f28",
+          "tenant_id": "ee8c5012-c159-4045-8d84-f77ca54cc926",
+          "agent_id": "d599be6d-3504-4f06-85c8-b2cfe43d662e",
+          "name": "New lead",
+          "phone": "+919876500509",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: d4a633cd-aa60-4ab5-9cff-c84afff862f9]\nThe caller initiated the call to inquire about the pricing of a 3 kW system and whether any government subsidies were available. The agent responded by quoting the upfront cost of ₹1,95,000, explaining that a government subsidy of ₹78,000 applies, leaving a net payment of ₹1,17,000. The caller found this price reasonable. The agent then requested the caller's name, area, and preferred day to schedule a free site survey. The caller hesitated briefly but agreed to provide these details. The call ended with the agent still waiting for the caller to share their information to proceed with scheduling.\n\nNext step: Awaiting the caller to provide their name, area, and preferred day for the free site survey.\n\nCall outcome: interested (85% confidence)",
+          "created_at": "2026-10-30 10:50:54.847170+00:00",
+          "updated_at": "2026-10-30 10:50:54.847170+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "end_reason": "user_stop"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "interested"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "answered_question_with_facts",
+        "passed": true,
+        "evidence": "3 kW system కి ముందుగా ₹1,95,000 అవుతుంది. Government subsidy ₹78,000 పోగా, మీరు కట్టాల్సింది ₹1,17,000 మాత్రమే."
+      },
+      {
+        "id": "offered_survey_objective",
+        "passed": true,
+        "evidence": "సరే. free site survey schedule చేయడానికి మీ పేరు, area, అలాగే మీకు ఏ రోజు వీలవుతుందో చెప్తారా?"
+      }
+    ],
+    "all_failures": [],
+    "passed": true
+  },
+  {
+    "id": "te-IN/order_status/shop",
+    "scenario": "order_status",
+    "language": "te-IN",
+    "business": "shop",
+    "tenant_id": "fafb7fb2-eeee-4312-9f31-d0e7fea14703",
+    "agent_id": "cebc027a-6eb2-4f89-9cd4-085a5d1f7eda",
+    "call_id": "ab2e1263-81b3-4fba-81f8-3b7f29309a05",
+    "phone": "+919876500513",
+    "opening": "నమస్తే! నేను FreshCart నుండి Arjun. చెప్పండి, మీకు ఎలా సహాయం చేయగలను?",
+    "turn_index": 3,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "నా order ఎక్కడ ఉంది? Order ID FC10234, అది ఇంకా రాలేదు.",
+        "caller_en": "Where is my order? The order ID is FC10234 and it has not come yet.",
+        "reply": "క్షమించండి, నేను ఫోన్లో లైవ్ ఆర్డర్ స్టేటస్ చూడలేను. మీ ఆర్డర్ ఐడీ FC10234 మరియు మీ పేరు తీసుకుని నోట్ చేసుకుంటాను, అప్పుడు మా సపోర్ట్ టీమ్ చెక్ చేసి మీకు కాల్ బ్యాక్ చేస్తారు. మీ పేరు చెప్తారా?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "నా పేరు కిరణ్.",
+        "caller_en": "My name is Kiran.",
+        "reply": "సరే కిరణ్ గారు, మీ పేరు మరియు order ID FC10234 నోట్ చేసుకున్నాను. మా సపోర్ట్ టీమ్ చెక్ చేసి మీకు కాల్ బ్యాక్ చేస్తారు. మీకు ఏ time కి కాల్ చేయమంటారు?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 3,
+        "caller": "సరే, thanks.",
+        "caller_en": "Okay, thanks.",
+        "reply": "",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "క్షమించండి, నేను ఫోన్లో లైవ్ ఆర్డర్ స్టేటస్ చూడలేను. మీ ఆర్డర్ ఐడీ FC10234 మరియు మీ పేరు తీసుకుని నోట్ చేసుకుంటాను, అప్పుడు మా సపోర్ట్ టీమ్ చెక్ చేసి మీకు కాల్ బ్యాక్ చేస్తారు. మీ పేరు చెప్తారా?",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "సరే కిరణ్ గారు, మీ పేరు మరియు order ID FC10234 నోట్ చేసుకున్నాను. మా సపోర్ట్ టీమ్ చెక్ చేసి మీకు కాల్ బ్యాక్ చేస్తారు. మీకు ఏ time కి కాల్ చేయమంటారు?",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 3
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "callback_required",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:name_known",
+        "contact:phone_known",
+        "custom:order-status",
+        "followup:callback",
+        "followup:send_info",
+        "intent:support",
+        "outcome:callback_required",
+        "sentiment:neutral",
+        "signal:objection"
+      ],
+      "facts": {
+        "caller_name": "Kiran",
+        "order_id": "FC10234",
+        "phone": "+919876500513"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "ab2e1263-81b3-4fba-81f8-3b7f29309a05",
+          "tenant_id": "fafb7fb2-eeee-4312-9f31-d0e7fea14703",
+          "agent_id": "cebc027a-6eb2-4f89-9cd4-085a5d1f7eda",
+          "session_id": "wf-2e5fca8e929f46feaab22afb2e37299b",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_f8584e7309724a9a",
+          "started_at": "2026-10-30 10:51:40.472631+00:00",
+          "ended_at": "2026-10-30 10:51:48.632122+00:00",
+          "duration_sec": 8,
+          "disposition": "callback_required",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/ab2e1263-81b3-4fba-81f8-3b7f29309a05/",
+          "end_reason": "goodbye",
+          "status": "answered",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:name_known",
+            "contact:phone_known",
+            "custom:order-status",
+            "followup:callback",
+            "followup:send_info",
+            "intent:support",
+            "outcome:callback_required",
+            "sentiment:neutral",
+            "signal:objection"
+          ],
+          "last_heartbeat_at": "2026-10-30 10:51:40.472631+00:00",
+          "created_at": "2026-10-30 10:51:40.480829+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [
+        {
+          "id": "db2d0a14-c92d-49d9-97db-c5f20bbaa27c",
+          "tenant_id": "fafb7fb2-eeee-4312-9f31-d0e7fea14703",
+          "agent_id": "cebc027a-6eb2-4f89-9cd4-085a5d1f7eda",
+          "origin_key": "callback:dacf2c45-118e-44d8-aba8-2d5a00da3721",
+          "source_id": "beebb296-6664-47b7-abd7-77a66c065afb",
+          "kind": "callback",
+          "phone": "+919876500511",
+          "status": "planning",
+          "reason": "resolve_requested_time",
+          "payload": {
+            "requestText": "నేను ఇప్పుడు busy గా ఉన్నాను, తర్వాత call చేయండి.",
+            "requestedWhen": "",
+            "recentTurns": [
+              {
+                "role": "user",
+                "text": "నేను ఇప్పుడు busy గా ఉన్నాను, తర్వాత call చేయండి.",
+                "at": "2026-10-30T10:51:06.142952Z"
+              },
+              {
+                "role": "assistant",
+                "text": "సరే, అర్థమైంది. మీరు busy గా ఉన్నారని note చేసుకున్నాను, తర్వాత call చేస్తాము.",
+                "at": "2026-10-30T10:51:08.299338Z"
+              },
+              {
+                "role": "user",
+                "text": "నాకు తెలియదు, తర్వాత ఎప్పుడైనా.",
+                "at": "2026-10-30T10:51:08.299338Z"
+              },
+              {
+                "role": "assistant",
+                "text": "మీరు తర్వాత ఎప్పుడైనా మాట్లాడొచ్చు అని note చేసుకున్నాను. మా team మీకు call back చేస్తుంది.",
+                "at": "2026-10-30T10:51:10.289556Z"
+              },
+              {
+                "role": "user",
+                "text": "సరే, bye.",
+                "at": "2026-10-30T10:51:10.290649Z"
+              }
+            ],
+            "callbackId": "dacf2c45-118e-44d8-aba8-2d5a00da3721",
+            "timezone": "Asia/Kolkata",
+            "llm": {
+              "provider": "openai",
+              "model": "gpt-5.6-luna",
+              "options": {},
+              "purpose": "configured_post_call_analysis"
+            },
+            "requestedAt": "2026-10-30T10:51:11.352369+00:00"
+          },
+          "due_at": "2026-10-30 10:51:11.352369+00:00",
+          "expires_at": "2026-11-06 10:51:11.352369+00:00",
+          "attempts": 0,
+          "lease_token": null,
+          "lease_until": null,
+          "control_id": null,
+          "authorized_by": "8811a95d-0dac-4ad6-8064-24f86e2b409d",
+          "billing_tenant_id": "fafb7fb2-eeee-4312-9f31-d0e7fea14703",
+          "created_at": "2026-10-30 10:51:11.361094+00:00",
+          "updated_at": "2026-10-30 10:51:11.361094+00:00"
+        }
+      ],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "6bcd029c-c98e-4e0b-a1fb-1567a91b3112",
+          "tenant_id": "fafb7fb2-eeee-4312-9f31-d0e7fea14703",
+          "agent_id": "cebc027a-6eb2-4f89-9cd4-085a5d1f7eda",
+          "name": "Kiran",
+          "phone": "+919876500513",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: ab2e1263-81b3-4fba-81f8-3b7f29309a05]\nThe caller contacted support to inquire about the status of their order (ID FC10234), which they had not yet received. The agent explained that they could not check live order tracking over the phone, collected the caller's name as Kiran, and promised that the support team would look into the order and call back. The agent asked for a preferred callback time, but the caller simply agreed and thanked the agent. The call ended with the agent thanking the caller.\n\nNext step: Support team to check order FC10234 and call the customer back.\n\nCall outcome: callback required (95% confidence)",
+          "created_at": "2026-10-30 10:51:49.964321+00:00",
+          "updated_at": "2026-10-30 10:51:49.964321+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "goodbye"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "callback_required"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "no_invented_order_status",
+        "passed": true,
+        "evidence": "క్షమించండి, నేను ఫోన్లో లైవ్ ఆర్డర్ స్టేటస్ చూడలేను."
+      },
+      {
+        "id": "explained_limitation_and_noted_request",
+        "passed": true,
+        "evidence": "మీ ఆర్డర్ ఐడీ FC10234 మరియు మీ పేరు తీసుకుని నోట్ చేసుకుంటాను, అప్పుడు మా సపోర్ట్ టీమ్ చెక్ చేసి మీకు కాల్ బ్యాక్ చేస్తారు."
+      }
+    ],
+    "all_failures": [],
+    "passed": true
+  },
+  {
+    "id": "te-IN/refuse_no_dnd/solar",
+    "scenario": "refuse_no_dnd",
+    "language": "te-IN",
+    "business": "solar",
+    "tenant_id": "ee8c5012-c159-4045-8d84-f77ca54cc926",
+    "agent_id": "d599be6d-3504-4f06-85c8-b2cfe43d662e",
+    "call_id": "8b1978be-9ad8-4b3b-9456-2d6e3e22e6e1",
+    "phone": "+919876500512",
+    "opening": "హలో, నేను SunPeak Solar నుండి Priya. మాట్లాడటానికి ఒక moment ఉంటుందా?",
+    "turn_index": 1,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "మా roof మీద already solar ఉంది.",
+        "caller_en": "We already have solar on our roof.",
+        "reply": "సరే, అర్థమైంది. మీకు ఇప్పటికే solar ఉన్నందుకు ధన్యవాదాలు. నేను call close చేస్తున్నాను.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "సరే, అర్థమైంది. మీకు ఇప్పటికే solar ఉన్నందుకు ధన్యవాదాలు. నేను call close చేస్తున్నాను.",
+        "farewell": false
+      }
+    ],
+    "carrier": [],
+    "errors": [],
+    "ended_by_agent": false,
+    "contact_preference": "none",
+    "outcome": {
+      "disposition": "not_interested",
+      "contact_preference": "none",
+      "summary": null,
+      "status_tags": [
+        "contact:phone_known",
+        "intent:information",
+        "outcome:not_interested",
+        "sentiment:neutral",
+        "signal:objection"
+      ],
+      "facts": {
+        "phone": "+919876500512"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "8b1978be-9ad8-4b3b-9456-2d6e3e22e6e1",
+          "tenant_id": "ee8c5012-c159-4045-8d84-f77ca54cc926",
+          "agent_id": "d599be6d-3504-4f06-85c8-b2cfe43d662e",
+          "session_id": "wf-efa1436481f0451888e2b2e39b074188",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_40ae3b5d8cda4168",
+          "started_at": "2026-10-30 10:51:34.574525+00:00",
+          "ended_at": "2026-10-30 10:51:36.564091+00:00",
+          "duration_sec": 1,
+          "disposition": "not_interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/8b1978be-9ad8-4b3b-9456-2d6e3e22e6e1/",
+          "end_reason": "user_stop",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "contact:phone_known",
+            "intent:information",
+            "outcome:not_interested",
+            "sentiment:neutral",
+            "signal:objection"
+          ],
+          "last_heartbeat_at": "2026-10-30 10:51:34.574525+00:00",
+          "created_at": "2026-10-30 10:51:34.574525+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [
+        {
+          "id": "7c311d6b-90b9-4525-9707-b2ae9ad3c377",
+          "tenant_id": "ee8c5012-c159-4045-8d84-f77ca54cc926",
+          "agent_id": "d599be6d-3504-4f06-85c8-b2cfe43d662e",
+          "origin_key": "callback:3e969faf-5d25-4df4-aff5-c3f6b5876fdb",
+          "source_id": "ea262aaf-2446-4eb7-96d6-485262262565",
+          "kind": "callback",
+          "phone": "+919876500510",
+          "status": "planning",
+          "reason": "resolve_requested_time",
+          "payload": {
+            "requestText": "నాకు తెలియదు, తర్వాత ఎప్పుడైనా.",
+            "requestedWhen": "",
+            "recentTurns": [
+              {
+                "role": "user",
+                "text": "నేను ఇప్పుడు busy గా ఉన్నాను, తర్వాత call చేయండి.",
+                "at": "2026-10-30T10:50:57.538831Z"
+              },
+              {
+                "role": "assistant",
+                "text": "సరే, మీరు busy గా ఉన్నారని అర్థమైంది. మీరు free అయినప్పుడు ఏ time కి call చేయమంటారో చెప్పండి.",
+                "at": "2026-10-30T10:50:59.602440Z"
+              },
+              {
+                "role": "user",
+                "text": "నాకు తెలియదు, తర్వాత ఎప్పుడైనా.",
+                "at": "2026-10-30T10:50:59.602440Z"
+              }
+            ],
+            "callbackId": "3e969faf-5d25-4df4-aff5-c3f6b5876fdb",
+            "timezone": "Asia/Kolkata",
+            "llm": {
+              "provider": "openai",
+              "model": "gpt-5.6-luna",
+              "options": {},
+              "purpose": "configured_post_call_analysis"
+            },
+            "requestedAt": "2026-10-30T10:51:00.715690+00:00"
+          },
+          "due_at": "2026-10-30 10:51:00.715690+00:00",
+          "expires_at": "2026-11-06 10:51:00.715690+00:00",
+          "attempts": 0,
+          "lease_token": null,
+          "lease_until": null,
+          "control_id": null,
+          "authorized_by": "a9d8dd01-49e3-48eb-8462-8f87471e64a0",
+          "billing_tenant_id": "ee8c5012-c159-4045-8d84-f77ca54cc926",
+          "created_at": "2026-10-30 10:51:00.722199+00:00",
+          "updated_at": "2026-10-30 10:51:00.722199+00:00"
+        }
+      ],
+      "dnd": [],
+      "leads": []
+    },
+    "meta": {
+      "end_reason": "user_stop"
+    },
+    "verdict": {
+      "passed": false,
+      "failures": [
+        "agent_did_not_close"
+      ],
+      "disposition": "not_interested"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "respected_refusal_without_pitch",
+        "passed": true,
+        "evidence": "सरे, अरृथनृधइदललु... नेणु call close केसृनृतुणृ."
+      }
+    ],
+    "all_failures": [
+      "agent_did_not_close"
+    ],
+    "passed": false
+  }
+]

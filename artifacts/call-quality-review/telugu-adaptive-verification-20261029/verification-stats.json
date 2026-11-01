@@ -1,0 +1,17 @@
+{
+  "sessions": 53,
+  "adaptive_sessions": 44,
+  "fixed_probe_sessions": 9,
+  "caller_turns": 231,
+  "sarvam_requests": 912,
+  "caller_requests": 209,
+  "subject_requests": 703,
+  "agent_closed_sessions": 51,
+  "carrier_attempts": 52,
+  "carrier_acknowledgements": 51,
+  "harness_error_sessions": 0,
+  "hot_memory_loads": 159,
+  "hot_loads_without_projection": 0,
+  "max_memory_load_s": 0.01600000000325963,
+  "application_source_drift": {}
+}

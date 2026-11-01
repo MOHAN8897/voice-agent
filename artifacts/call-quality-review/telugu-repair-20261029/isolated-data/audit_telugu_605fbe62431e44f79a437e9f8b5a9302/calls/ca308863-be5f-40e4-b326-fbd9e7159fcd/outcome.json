@@ -1,0 +1,98 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Raman called to ask about ordering 200 matte visiting cards and requested pricing and delivery details. The agent quoted ₹700 total for 200 cards, with delivery in Vijayawada within 3 working days after artwork approval; urgent 24-hour delivery would cost an additional ₹150. Raman clarified that he only wanted information about wedding card pricing and was not ordering wedding cards. The agent explained that wedding card pricing depends on design, paper sample, and quantity, so no fixed phone quote was available. Raman confirmed that his name, product, and quantity had been noted. The call ended politely with no order placement or further action agreed.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_name": "రమణ",
+    "name": "Raman",
+    "phone": "+12025550102",
+    "price": "₹700 total",
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "standard_delivery": "Within 3 working days after artwork approval in Vijayawada",
+    "urgent_delivery": "Within 24 hours for an additional ₹150"
+  },
+  "objections": [],
+  "notes": "Caller showed purchase interest and gathered pricing and delivery information, but did not place an order during the call. Wedding cards were discussed only for information and were explicitly not being ordered.",
+  "tags": [
+    "intent:purchase",
+    "intent:pricing",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards",
+    "custom:vijayawada-delivery"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T16:35:54.791573Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_name": "రమణ",
+    "name": "Raman",
+    "phone": "+12025550102",
+    "price": "₹700 total",
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "standard_delivery": "Within 3 working days after artwork approval in Vijayawada",
+    "urgent_delivery": "Within 24 hours for an additional ₹150"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:matte-visiting-cards",
+    "custom:vijayawada-delivery",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive"
+  ],
+  "lead": {
+    "leadId": "de324848-5899-4b93-bf25-6827d60fb611",
+    "agentId": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.98,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

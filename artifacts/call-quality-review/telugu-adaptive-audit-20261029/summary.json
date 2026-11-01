@@ -1,0 +1,25 @@
+{
+  "sessions": 49,
+  "adaptive_sessions": 44,
+  "caller_turns": 192,
+  "live_Sarvam_requests": 699,
+  "caller_requests": 180,
+  "subject_requests": 519,
+  "agent_acknowledged_closes": 47,
+  "carrier_attempts": 48,
+  "caller_transport_closes": 2,
+  "exceptions": 0,
+  "review_statuses": {
+    "FAIL": 24,
+    "PARTIAL": 11,
+    "PASS": 14
+  },
+  "compiled_brain_requests": 332,
+  "compiled_requests_with_memory_projection": 18,
+  "memory_projection_timeout_warnings_for_final_calls": 168,
+  "turn_seconds_p50": 1.5625,
+  "turn_seconds_p95": 2.656,
+  "all_automatic_checks_pass": true,
+  "speech_queued_differs_from_final_text_turns": 33,
+  "total_session_wall_seconds": 683.348
+}

@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "నమస్తే Kavitha గారు. నాకు కొన్ని visiting cards ప్రింట్ చేయించుకోవాలి, matte finish కావాలి. దీనికి ఎంత ఖర్చు అవుతుంది?", "ts": "2026-10-29T11:27:49.334334Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Matte finish visiting cards one hundred cards కి three hundred fifty rupees అవుతుంది. మీకు ఎన్ని cards కావాలో చెప్తారా?", "ts": "2026-10-29T11:27:51.442790Z", "brain_latency_ms": 1866}
+{"seq": 3, "role": "user", "text": "ఒక వంద కార్డులకు మూడు వందల యాభై రూపాయలు అంటే కొంచెం ఎక్కువే కదా, damn! అయినా సరే, నేను ఇంకా ప్రింట్ చేయిస్తాను. మరి రెండు వందల కార్డులు తీసుకుంటే ఒక్కో కార్డుకి ఎంత అవుతుంది?", "ts": "2026-10-29T11:27:52.130194Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ఆ price details నా దగ్గర లేవండి. Minimum order quantity మాత్రం one hundred cards ఉంటుంది. మీరు proceed అవ్వాలనుకుంటే మీ పేరు చెప్తారా?", "ts": "2026-10-29T11:27:53.559467Z", "brain_latency_ms": 1179}
+{"seq": 5, "role": "user", "text": "సరే, నా పేరు రమేష్. నా email ramesh.audit@example.invalid. నా దగ్గర డిజైన్స్ ఇంకా లేవు, తర్వాత పంపిస్తాను. మీరు ఈ order note చేసుకుంటారా?", "ts": "2026-10-29T11:27:54.348962Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇంకేమైనా వివరాలు కావాలా?", "ts": "2026-10-29T11:27:55.876234Z", "brain_latency_ms": 1286}
+{"seq": 7, "role": "user", "text": "సరే, ప్రస్తుతానికి ఇంకేమీ అవసరం లేదు. నా enquiry save చేసినందుకు thanks, call close చేసేయండి.", "ts": "2026-10-29T11:27:56.671383Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-29T11:27:58.200689Z"}

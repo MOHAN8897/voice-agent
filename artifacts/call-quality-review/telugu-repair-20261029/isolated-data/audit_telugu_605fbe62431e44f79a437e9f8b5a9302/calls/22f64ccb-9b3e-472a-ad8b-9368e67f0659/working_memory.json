@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "requested_time": "రేపు ఉదయం 10 గంటల time",
+    "email": "sravani.audit@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: సరే, ఐదు వందల తొంభై తొమ్మిది రూపాయలు అయితే పర్వాలేదు. దయచేసి ఈ appointment ని ఇప్పుడే calendar లో create చేసి అది confirm అయిందో లేదో నాకు చెప్పండి.\nassistant: రేపు, October 30th ఉదయం ten AM నుంచి eleven AM మధ్యలో మీ split AC service కోసం calendar లో booking create చేసి confirm చేశాను.\nuser: ధన్యవాదాలు. మరి ఈ appointment calendar లో confirm అయిందో లేదో ఒకసారి మళ్ళీ చెప్తారా? నా email కి confirmation message కూడా వస్తుందా?\nassistant: మీ appointment calendar లో confirm అయిపోయింది. అయితే మీ email కి confirmation message వచ్చిందో లేదో నేను నిర్ధారించలేను, ఎందుకంటే ఆ వివరాలు నా దగ్గర లేవు."
+}

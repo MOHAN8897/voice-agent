@@ -1,0 +1,77 @@
+{
+  "call_id": "a7d70d10-a464-4e2e-bc4a-a2a61260390e",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.94,
+  "summary_te": "",
+  "summary_en": "Kiran called to inquire about learning Python, SQL, and PowerBI while working, specifically asking about weekend or evening batches, fees, installments, placement support, eligibility, and course duration. The agent explained that weekend classes run from 10 AM to 1 PM and weekday evening classes from 8 PM to 9 PM, with a total fee of ₹8,999 and no installment option. The agent clarified that only a Python with Data Analytics course is currently available, lasting eight weeks, and open to graduates or final-year students with basic computer knowledge. Placement assistance includes resume building, interview preparation, and job referrals, but there is no job or salary guarantee. Kiran expressed interest, provided his name, email, graduate qualification, and preference for the evening batch, and requested a demo during the upcoming weekend, preferably Saturday or Sunday. The agent could not confirm that the enquiry was saved or that the demo was scheduled due to a system issue. The call ended politely with the caller expecting follow-up to arrange the demo and save the enquiry.",
+  "next_action": "Follow up with Kiran to confirm/save the enquiry and schedule a demo session for Saturday or Sunday during the upcoming weekend.",
+  "extracted_fields": {
+    "batch_preference": "Evening batch",
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "course": "Python with Data Analytics",
+    "course_duration": "8 weeks",
+    "demo_preference": "Upcoming weekend, Saturday or Sunday",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550115",
+    "placement_support": "Resume building, interview preparation, and job referrals; no job or salary guarantee",
+    "product": "Python with Data Analytics course",
+    "qualification": "Graduate",
+    "requested_time": "evening batch"
+  },
+  "facts": {
+    "batch_preference": "Evening batch",
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "course": "Python with Data Analytics",
+    "course_duration": "8 weeks",
+    "demo_preference": "Upcoming weekend, Saturday or Sunday",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550115",
+    "placement_support": "Resume building, interview preparation, and job referrals; no job or salary guarantee",
+    "product": "Python with Data Analytics course",
+    "qualification": "Graduate",
+    "requested_time": "evening batch"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:python-data-analytics",
+    "followup:callback",
+    "followup:schedule_pending",
+    "intent:demo",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:demo",
+    "intent:information",
+    "followup:callback",
+    "followup:schedule_pending",
+    "sentiment:positive",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:python-data-analytics",
+    "custom:evening-batch",
+    "custom:weekend-demo"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "No installments are available.",
+    "Job guarantee and salary promise are not provided.",
+    "Enquiry saving and demo scheduling could not be confirmed due to a system issue."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T11:08:36.036490Z",
+  "generation_ok": true
+}

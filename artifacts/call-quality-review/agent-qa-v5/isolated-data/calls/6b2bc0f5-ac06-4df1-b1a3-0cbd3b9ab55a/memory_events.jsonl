@@ -1,0 +1,8 @@
+{"turn_seq": 1, "ts": "2026-10-31T17:15:38.346868Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T17:15:53.957483Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T17:16:04.711514Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T17:16:04.721730Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "assistant: NatureVeda Aloe Vera Juice-ന് 500 ml-ന് ₹399 ആണ് വില. ഇതിൽ Aloe Vera ആണ് ഉള്ളത്, ഒരു general wellness beverage ആയിട്ടാണ് ഇത് ഉപയോഗിക്കുന്നത്.\nuser: ശരി, 500 ml-ന് 399 രൂപയോ. ഇതിന്റെ size വേറെ ഉണ്ടോ?\nassistant: ക്ഷമിക്കണം, അതിന്റെ മറ്റ് size options ഇപ്പോൾ എനിക്ക് അറിയില്ല.\nuser: ഓ, ശരി. എങ്കിൽ കുപ്പി കുടിച്ചാൽ എങ്ങനെ ഉപയോഗിക്കണം എന്ന് ഒന്ന് പറയാമോ?\nassistant: Aloe Vera Juice ഒരു general wellness beverage ആയിട്ടാണ് ഉപയോഗിക്കുന്നത്. ഇതിന്റെ കൃത്യമായ usage instructions ഇപ്പോൾ എനിക്ക് അറിയില്ല. ഏത് details ആണ് വേണ്ടത്?"}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T17:16:28.037624Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T17:16:47.652277Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-31T17:17:12.940415Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 13, "ts": "2026-10-31T17:17:26.536072Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

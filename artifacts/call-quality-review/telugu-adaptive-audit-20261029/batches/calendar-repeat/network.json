@@ -1,0 +1,234 @@
+[
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_explicit_date_repeat",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  }
+]

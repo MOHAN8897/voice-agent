@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "నమస్తే Madhavi. నేను ప్రస్తుతం Python training కోసం చూస్తున్నాను, కానీ ప్రస్తుతానికి నాకు ఈ service అవసరం లేదు. దయచేసి నా enquiry note చేసుకోండి, నేను ఇప్పుడు call end చేస్తున్నాను.", "ts": "2026-10-29T17:40:15.134173Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "సరే, మీ Python training enquiry note చేసుకుంటున్నాను.", "ts": "2026-10-29T17:40:19.841219Z"}
+{"seq": 3, "role": "user", "text": "సరే, ధన్యవాదాలు. నేను ఇప్పుడు call end చేస్తున్నాను.", "ts": "2026-10-29T17:40:20.461628Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-29T17:40:21.642104Z"}

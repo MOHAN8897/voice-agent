@@ -1,0 +1,58 @@
+{
+  "call_id": "6dded37e-eae4-464f-ab68-ee6dff32988a",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Kiran called to ask about evening or weekend batches because he is currently employed, and also requested information about the fees and placement terms. The agent shared that the weekday batch runs from 8:00 PM to 9:00 PM, the weekend batch runs on Saturday and Sunday from 10:00 AM to 1:00 PM, and the total fee is ₹8,999. Kiran said the fee was acceptable but asked for more details about placement terms. He stated that he could not continue speaking at that time and would call the same number again after 6:00 PM; the agent acknowledged and recorded the callback request. The call ended politely, with placement terms still unanswered.",
+  "next_action": "Expect or make a follow-up call after 6:00 PM on the same number to explain the placement terms.",
+  "extracted_fields": {
+    "callback_number": "Same number",
+    "callback_time": "After 6:00 PM",
+    "caller_name": "Kiran",
+    "phone": "+12025550116",
+    "preferred_batches": "Evening weekday batch or weekend batch",
+    "total_fee": "₹8,999",
+    "weekday_batch_time": "8:00 PM to 9:00 PM",
+    "weekend_batch_time": "Saturday and Sunday, 10:00 AM to 1:00 PM"
+  },
+  "facts": {
+    "callback_number": "Same number",
+    "callback_time": "After 6:00 PM",
+    "caller_name": "Kiran",
+    "phone": "+12025550116",
+    "preferred_batches": "Evening weekday batch or weekend batch",
+    "total_fee": "₹8,999",
+    "weekday_batch_time": "8:00 PM to 9:00 PM",
+    "weekend_batch_time": "Saturday and Sunday, 10:00 AM to 1:00 PM"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:evening-batch",
+    "custom:placement-terms",
+    "custom:weekend-batch",
+    "followup:callback",
+    "followup:schedule_pending",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:positive"
+  ],
+  "tags": [
+    "intent:information",
+    "followup:callback",
+    "followup:schedule_pending",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:evening-batch",
+    "custom:weekend-batch",
+    "custom:placement-terms"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T11:08:45.095522Z",
+  "generation_ok": true
+}

@@ -1,0 +1,37 @@
+{
+  "call_id": "b131bec3-737a-437f-b5d0-a6be825e3ea2",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller expressed interest in the service but stated they were driving and could not continue the conversation. They explicitly requested not to have their number blocked and asked to be called back next Monday morning. The agent acknowledged saving the caller's details and the request for a follow-up call, then concluded the call.",
+  "next_action": "Call the caller back next Monday morning as requested.",
+  "extracted_fields": {
+    "phone": "+919876500037"
+  },
+  "facts": {
+    "phone": "+919876500037"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:callback-requested",
+    "followup:callback",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:callback-requested"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:36:45.510241Z",
+  "generation_ok": true
+}

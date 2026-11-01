@@ -1,0 +1,101 @@
+{
+  "disposition": "converted",
+  "disposition_confidence": 1.0,
+  "summary_te": "",
+  "summary_en": "The caller, Ravi Kumar, initiated the call to order 200 matte finish visiting cards for delivery to 12 MG Road, Vijayawada. The agent quoted a price of ₹700 and confirmed that delivery would take three working days after artwork approval, with cash on delivery as the payment method. The caller agreed to the terms and requested order confirmation. The agent confirmed the order details, and the caller concluded the call by thanking the agent.",
+  "next_action": null,
+  "extracted_fields": {
+    "budget": "₹700",
+    "caller_name": "ರವಿ ಕುಮಾರ್",
+    "name": "Ravi Kumar",
+    "phone": "+919876500030",
+    "slot": "3 working days after artwork approval"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:purchase",
+    "sentiment:positive",
+    "signal:ready_to_buy",
+    "action:required",
+    "followup:send_quote",
+    "followup:site_visit"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:cash-on-delivery",
+    "custom:vijayawada-delivery"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T20:20:02.077663Z",
+  "generation_ok": true,
+  "facts": {
+    "budget": "₹700",
+    "caller_name": "ರವಿ ಕುಮಾರ್",
+    "name": "Ravi Kumar",
+    "phone": "+919876500030",
+    "slot": "3 working days after artwork approval"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:cash-on-delivery",
+    "custom:vijayawada-delivery",
+    "custom:visiting-cards",
+    "followup:send_quote",
+    "followup:site_visit",
+    "intent:purchase",
+    "outcome:converted",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "2f5266e8-950c-4973-b961-8c6164c1c14c",
+    "agentId": "e7b642b1-6ead-412a-bcee-03095cacf6fe",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 100,
+    "band": "hot",
+    "disposition": "converted",
+    "confidence": 1.0,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "converted"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "budget"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "slot"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

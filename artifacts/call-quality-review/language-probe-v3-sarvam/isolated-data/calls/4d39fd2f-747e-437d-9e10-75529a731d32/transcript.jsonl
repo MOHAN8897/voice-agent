@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Hi, can a technician come to Kondapur tomorrow morning? My split AC is not cooling.", "ts": "2026-10-29T19:27:44.178358Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "అవును, Kondapur మా service area లో ఉంది. Split AC servicing ₹599 అవుతుంది. రేపు ఉదయం 10 AM నుంచి 6 PM మధ్యలో next-day slot ఉంటుంది. మీ పేరు చెప్తారా? అప్పుడు team confirm చేస్తుంది.", "ts": "2026-10-29T19:27:44.964558Z", "brain_latency_ms": 790}

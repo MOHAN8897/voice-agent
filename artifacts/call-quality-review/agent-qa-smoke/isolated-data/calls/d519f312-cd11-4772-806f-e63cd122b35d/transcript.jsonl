@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "ಹೌದು, ಹೇಳಿ. ನಿಮ್ಮ aloe vera juice ಬಗ್ಗೆ ತಿಳಿದುಕೊಳ್ಳಬೇಕಿತ್ತು, ಅದರ price ಮತ್ತು size ಎಷ್ಟು?", "ts": "2026-10-31T12:59:56.658246Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ಖಂಡಿತ, NatureVeda Aloe Vera Juice ಬೆಲೆ ₹399 ಮತ್ತು ಇದರ size 500 ml ಇದೆ. ಇದರ ಬಗ್ಗೆ ಇನ್ನು ಏನಾದರೂ details ಬೇಕಾ?", "ts": "2026-10-31T12:59:58.441572Z"}
+{"seq": 3, "role": "user", "text": "ಓಕೆ, ಇದನ್ನು daily ಹೇಗೆ consume ಮಾಡಬೇಕು? ಎಷ್ಟು quantity ತಗೋಬೇಕು?", "ts": "2026-10-31T13:01:14.418934Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಕ್ಷಮಿಸಿ, ಇದರ daily consumption quantity ಬಗ್ಗೆ exact details ನನ್ನ ಬಳಿ ಇಲ್ಲ. General ಆಗಿ wellness beverage ಆಗಿ ಬಳಸಬಹುದು, ಆದ್ರೆ ಎಷ್ಟು ತಗೋಬೇಕು ಅಂತ label ಮೇಲೆ ಇರೋ instructions ನೋಡಿ ಅಥವಾ doctor ಹತ್ರ ಕೇಳಿ confirm ಮಾಡ್ಕೊಳ್ಳಿ.", "ts": "2026-10-31T13:01:16.389957Z"}
+{"seq": 5, "role": "user", "text": "Okay, no problem. Actually, I would prefer to continue in English now. Could you please repeat the price of the aloe vera juice you mentioned earlier?", "ts": "2026-10-31T13:02:19.909960Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "Sure, the NatureVeda Aloe Vera Juice is priced at ₹399 for 500 ml.", "ts": "2026-10-31T13:02:21.586306Z"}

@@ -1,0 +1,65 @@
+{
+  "call_id": "0372de3c-db23-47f3-a5aa-ab1949defac4",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.9,
+  "summary_te": "ವ್ಯವಹಾರದ ಪ್ರತಿನಿಧಿಯು ಲಕ್ಶ್ಮೀ ಅವರಿಗೆ ನೇಚರ್‌ವೇದಾ ಅಲೋವೆರಾ ಜ್ಯೂಸ್ ಮತ್ತು ಹರ್ಬಲ್ ಹೇರ್ ಆಯಿಲ್ ಬೆಲೆಗಳನ್ನು ತಿಳಿಸಿದರು. ಅವರು ಪ್ರತಿದಿನ ಎಷ್ಟು ಕುಡಿಯಬೇಕು ಮತ್ತು ಹೇರ್ ಆಯಿಲ್‌ನ ಪದಾರ್ಥಗಳ ಬಗ್ಗೆ ವಿಚಾರಿಸಿದರು, ಆದರೆ ಪ್ರತಿನಿಧಿಯು ವೈದ್ಯಕೀಯ ಸಲಹೆಗಾಗಿ ವೃತ್ತಿಪರರನ್ನು ಸಂಪರ್ಕಿಸಲು ಸೂಚಿಸಿದರು. ಲಕ್ಶ್ಮೀ ಅವರು ಒಟ್ಟು ₹898 ಮೊತ್ತಕ್ಕೆ ಎರಡೂ ವಸ್ತುಗಳನ್ನು ಖರೀದಿಸಲು ಆಸಕ್ತಿ ವ್ಯಕ್ತಪಡಿಸಿದರು, ಆದರೆ ಆದೇಶವನ್ನು ಅಂತಿಮಗೊಳಿಸಲು ಅವರು ನಿರ್ಧರಿಸಲಿಲ್ಲ ಮತ್ತು ಕರೆ ಮುಕ್ತಾಯವಾಯಿತು.",
+  "summary_language": "kn-IN",
+  "summary_en": "The agent called Lakshmi to provide details about the company's aloe vera juice and hair oil. Lakshmi inquired about the daily dosage of the juice, and the agent stated they did not have that information and advised consulting a healthcare professional. Lakshmi then requested to continue the conversation in Kannada, which the agent agreed to do. Lakshmi asked for the combined total of one aloe vera juice and one hair oil, and the agent confirmed the price of ₹898. Although Lakshmi indicated this total was acceptable, she did not confirm the order, and the call ended without a concrete next step being agreed upon.",
+  "next_action": "callback_required",
+  "extracted_fields": {
+    "caller_name": "Lakshmi",
+    "phone": "+919700000015",
+    "product": "aloe vera juice",
+    "product_1": "aloe vera juice",
+    "product_1_price": "₹399",
+    "product_1_size": "500 ml",
+    "product_2": "Herbal Hair Oil",
+    "product_2_price": "₹499",
+    "quantity": "500",
+    "total_price": "₹898"
+  },
+  "facts": {
+    "caller_name": "Lakshmi",
+    "phone": "+919700000015",
+    "product": "aloe vera juice",
+    "product_1": "aloe vera juice",
+    "product_1_price": "₹399",
+    "product_1_size": "500 ml",
+    "product_2": "Herbal Hair Oil",
+    "product_2_price": "₹499",
+    "quantity": "500",
+    "total_price": "₹898"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:aloe-vera-juice",
+    "custom:herbal-hair-oil",
+    "followup:callback",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:aloe-vera-juice",
+    "custom:herbal-hair-oil"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [
+    "How much should I drink daily?",
+    "What are the ingredients in the hair oil?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T16:36:23.558810Z",
+  "generation_ok": true
+}

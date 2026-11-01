@@ -1,0 +1,14 @@
+{
+  "facts": {
+    "product": "split AC",
+    "delivery_locality": "మాదాపూర్",
+    "requested_time": "రేపు October 30th ఉదయం 10 గంటల",
+    "caller_name": "సురేష్ గారు",
+    "caller_email": "sravani.audit@example.invalid"
+  },
+  "preferences": {
+    "requested_time": "రేపు ఉదయం 10 గంటల ప్రాంతంలో"
+  },
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "user: సరే సురేష్ గారు, అర్థమైంది. నా పేరు శ్రావణి, మాదాపూర్ లో నా split AC కి general service కావాలి, నా email sravani.audit@example.invalid. థాంక్యూ, ఈ general servicing లో exactly ఏమేమి cover అవుతాయో ఒకసారి చెప్తారా? అలాగే రేపు October 30th ఉదయం 10 గంటల టైమ్ నా request confirm అయిందో లేదో కూడా చెప్పగలరా?\nassistant: Phone లో exact servicing details చెప్పలేము, మా technician inspection తర్వాతే అన్నీ వివరిస్తారు. మీ request ఇంకా confirm కాలేదు, దయచేసి అలాగే అనుకోకండి. రేపు October 30th ఉదయం 10 గంటల slot కి proceed అవుదామా?"
+}

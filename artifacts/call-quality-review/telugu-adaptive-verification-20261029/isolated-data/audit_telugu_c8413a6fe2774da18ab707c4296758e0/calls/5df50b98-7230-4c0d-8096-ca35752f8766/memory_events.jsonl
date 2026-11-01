@@ -1,0 +1,2 @@
+{"turn_seq": 1, "ts": "2026-10-29T15:52:59.003934Z", "source": "model", "operations": [{"op": "set_fact", "key": "caller_name", "value": "ఇంకా"}, {"op": "append_context", "value": "Caller provided contact details in this call."}], "applied": true, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-29T15:53:00.315192Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

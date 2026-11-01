@@ -1,0 +1,94 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Kiran called to inquire about a Python course and asked about the eligibility requirements. Kiran also explicitly requested a callback tomorrow morning. The agent acknowledged and recorded the details and callback request, but the eligibility information was not provided during this call. The call ended with thanks and a greeting.",
+  "next_action": "Call Kiran tomorrow morning and provide the Python course eligibility details.",
+  "extracted_fields": {
+    "caller_name": "కిరణ్",
+    "course": "Python course",
+    "name": "Kiran",
+    "phone": "+12025550135",
+    "requested_callback": "Tomorrow morning"
+  },
+  "objections": [],
+  "notes": "Caller provided contact details according to the working memory, but the specific contact details were not included in the transcript.",
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "action:required",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-course",
+    "custom:eligibility-inquiry"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:17:45.335869Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_name": "కిరణ్",
+    "course": "Python course",
+    "name": "Kiran",
+    "phone": "+12025550135",
+    "requested_callback": "Tomorrow morning"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:eligibility-inquiry",
+    "custom:python-course",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "6bcdbdb5-dd72-48cb-ac7c-b2171b1afa80",
+    "agentId": "4c5270a8-990a-5800-868d-9d685eca9a09",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 50,
+    "band": "warm",
+    "disposition": "callback_required",
+    "confidence": 0.98,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,60 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్కు అశ్వగంధ క్యాప్సూల్స్ ధర మరియు వివరాల గురించి సమాచారం అందించారు. కస్టమర్ తన బీపీ మందుల గురించి మరియు సైడ్ ఎఫెక్ట్స్ గురించి అడిగారు, దానికి ఏజెంట్ సరైన ఆరోగ్య సలహాలు మరియు పరిమిత సమాచారం ఇచ్చారు. ధర మరియు డిస్కౌంట్ల గురించి కూడా చర్చ జరిగింది, కానీ కస్టమర్ తన డాక్టర్‌ను సంప్రదించి తర్వాత నిర్ణయిస్తానని చెప్పారు. చివరగా, కస్టమర్ ప్రస్తుతానికి ఆర్డర్ వద్దని, తర్వాత చూస్తానని స్పష్టం చేయడంతో కాల్ ముగిసింది.",
+  "summary_en": "The agent called the customer to provide information about Ashwagandha capsules priced at ₹699. The customer inquired about safety while taking blood pressure medication and potential side effects, to which the agent advised consulting a healthcare professional and stated that exact side effect details were unavailable. When asked about discounts, the agent confirmed there were none. The customer decided to think it over and speak with their doctor first, and politely declined an immediate order, ending the call.",
+  "next_action": "No further action required.",
+  "extracted_fields": {
+    "phone": "+919700000006",
+    "price": "₹699",
+    "product": "Ashwagandha capsules"
+  },
+  "objections": [
+    "Currently taking BP tablets and concerned about safety.",
+    "Asked about side effects."
+  ],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "signal:objection",
+    "sentiment:neutral",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:ashwagandha-capsules",
+    "custom:bp-medication"
+  ],
+  "unanswered_questions": [
+    "Are there any discounts available?",
+    "Are there any side effects?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T14:28:38.967863Z",
+  "generation_ok": true,
+  "summary_language": "te-IN",
+  "facts": {
+    "phone": "+919700000006",
+    "price": "₹699",
+    "product": "Ashwagandha capsules"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:ashwagandha-capsules",
+    "custom:bp-medication",
+    "followup:send_info",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

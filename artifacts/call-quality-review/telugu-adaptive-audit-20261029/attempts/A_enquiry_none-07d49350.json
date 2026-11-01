@@ -1,0 +1,298 @@
+{
+  "scenario": {
+    "id": "A_enquiry_none",
+    "business": "A",
+    "kind": "enquiry",
+    "integration": "none",
+    "policy": "review",
+    "max_turns": 12,
+    "goal": "Learn standard versus matte visiting-card pricing, minimum quantity, design approval, delivery, rush surcharge and advance-payment conditions. Start with 100 cards, later correct to 200. Ask about wedding-card price once as an unknown fact. Try to submit a quote/internal order request with your final details. Ask what quantity they recorded after intervening conversation. Stay curious for roughly 10 caller turns if the conversation remains useful. Around the middle, thank them and ask another relevant question in the SAME turn, without ending the call. At the end, clearly say all your questions are answered and thank them."
+  },
+  "agent": {
+    "id": "A",
+    "key": "printing",
+    "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "name": "Sri Krishna Digital Prints",
+    "agent_name": "Kavitha",
+    "role": "sales",
+    "industry": "printing",
+    "brief": "Agent name Kavitha. Company name Sri Krishna Digital Prints.\nOutbound and inbound customer inquiries in Telugu.\nWe print visiting cards: normal paper visiting cards cost 200 rupees for 100 cards,\nmatte finish cards cost 350 rupees for 100 cards. Minimum order quantity 100 cards.\nWedding invitation cards are customized: pricing depends on design, paper sample and quantity, no fixed price over the phone.\nFlex banners: normal flex 15 rupees per square foot, star flex 20 rupees per square foot.\nDelivery in Vijayawada takes 3 working days after design artwork approval; urgent 24-hour delivery is extra 150 rupees.\nPayment: Cash on delivery accepted for orders up to 1000 rupees; 50% advance payment required for orders above 1000 rupees.\nNo online payment or credit card processing on phone call.\nOffice hours Monday to Saturday 9:30 AM to 8:00 PM, Sunday closed.\nGoal: answer customer questions on cards, banners and pricing; understand their requirement.\nIf interested, take preferred name, quantity and delivery locality for a quote or order request.\nDo not force details before answering questions.\nCustomer refusing visiting cards may still want flex banners or wedding cards.\nNever claim an order is paid or dispatched without artwork approval and design confirmation.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Kavitha",
+      "company_name": "Sri Krishna Digital Prints",
+      "role": "Sales and customer enquiries",
+      "permitted_next_steps": "Collect customer name, item type, quantity and delivery locality in Vijayawada to submit an internal quote/order request. Explain that artwork approval is required before printing.",
+      "payment_rules": "Cash on delivery for orders up to 1000 rupees; 50% advance for orders above 1000 rupees. No online payment collection on call.",
+      "delivery_details": "Local delivery in Vijayawada takes 3 working days after artwork approval. Urgent 24-hour delivery is extra 150 rupees.",
+      "wedding_cards": "Customized quotation only based on design and paper sample. No fixed price on phone.",
+      "visiting_cards": "Standard 200 rupees for 100 cards; Matte finish 350 rupees for 100 cards. Minimum order 100 cards.",
+      "forbidden_actions": "Never confirm external courier shipment or take card payment on phone. Never guarantee delivery without artwork approval."
+    },
+    "user_id": "de625f35-524c-4767-a252-106cb34cdfae",
+    "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e"
+  },
+  "call_id": "36db7f49-65a0-4d66-9aeb-65abcfa26fde",
+  "session_id": "adaptive-15e1856617794aafbde4994bd502fddf",
+  "phone": "+12025550101",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_8649a3d49b8f",
+  "turn_index": 1,
+  "turns": [],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "Matte finish cards one hundred cards కి three hundred fifty rupees అవుతుంది. Minimum quantity one hundred cards ఉండాలి. మీకు ఇంకేమైనా details కావాలా?",
+      "at": 103354.671
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "Matte finish cards one hundred cards కి three hundred fifty rupees అవుతుంది. Minimum quantity one hundred cards ఉండాలి. మీకు ఇంకేమైనా details కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5188,
+        "output_tokens": 35,
+        "total_tokens": 5223
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "product",
+            "value": "visiting cards"
+          },
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "100"
+          },
+          {
+            "op": "set_preference",
+            "key": "finish",
+            "value": "matte"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "transcript": "నమస్తే Kavitha. నాకు visiting cards కావాలి, matte finish అయితే బాగుంటుంది. ఒక 100 cards తో start చేద్దామనుకుంటున్నాను. వాటి standard price ఎంత ఉంటుంది, minimum quantity ఎంత ఇవ్వాలి?",
+      "at": 103354.703
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [],
+  "carrier": [],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 103354.734
+    }
+  ],
+  "started_at": "2026-10-29T11:03:49.267597+00:00",
+  "errors": [
+    {
+      "kind": "AttributeError",
+      "message": "'PstnVoiceLoop' object has no attribute '_turn_task'"
+    }
+  ],
+  "brain_checksum": "e13acafd95972aee7bb5fb38e469acc564a37d73b8c900459c3eb77a6c514fa1",
+  "runtime_checksum": "a17be14db31846c43a2d1387b18289d4d71c3d8e1ee7b54160095d4b275af6dc",
+  "available_tools": [
+    "SAVE_ENQUIRY"
+  ],
+  "db": {
+    "call": [
+      {
+        "call_id": "36db7f49-65a0-4d66-9aeb-65abcfa26fde",
+        "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+        "session_id": "adaptive-15e1856617794aafbde4994bd502fddf",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_8649a3d49b8f",
+        "started_at": "2026-10-29 11:03:48.800129+00:00",
+        "ended_at": "2026-10-29 11:03:51.890227+00:00",
+        "duration_sec": 3,
+        "disposition": null,
+        "finalization_status": "processing",
+        "storage_path": "data/calls/36db7f49-65a0-4d66-9aeb-65abcfa26fde/",
+        "end_reason": "user_stop",
+        "status": "in_progress",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [],
+        "last_heartbeat_at": "2026-10-29 11:03:48.800129+00:00",
+        "created_at": "2026-10-29 11:03:48.805116+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [],
+    "dnd": [],
+    "leads": [],
+    "tools": [],
+    "assessments": []
+  },
+  "metadata": {
+    "call_id": "36db7f49-65a0-4d66-9aeb-65abcfa26fde",
+    "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "session_id": "adaptive-15e1856617794aafbde4994bd502fddf",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_8649a3d49b8f",
+    "started_at": "2026-10-29T11:03:48.800129+00:00",
+    "status": "active",
+    "storage_path": "data/calls/36db7f49-65a0-4d66-9aeb-65abcfa26fde/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550101",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 11377,
+        "output_tokens": 295,
+        "cached_tokens": 0
+      }
+    },
+    "disconnected_at": "2026-10-29T11:03:51.890227+00:00",
+    "ended_at": "2026-10-29T11:03:51.890227+00:00",
+    "end_reason": "user_stop",
+    "duration_sec": 3.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 3.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.0006250000000000001,
+      "telephony_inr": 0.05951250000000001,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.0006250000000000001,
+      "telnyx_inr": 0.05951250000000001,
+      "telnyx_voice_api_usd": 0.0001,
+      "telnyx_sip_usd": 0.00025,
+      "telnyx_media_stream_usd": 0.00017500000000000003,
+      "telnyx_call_recording_usd": 0.0001,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.22,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-28",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.012500000000000002,
+      "telephony_inr_per_min": 1.19025,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.012500000000000002,
+      "telnyx_inr_per_min": 1.19025,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0
+    }
+  },
+  "wall_elapsed_s": 4.078,
+  "simulated_exchange_timeline_s": 0,
+  "request_count": 4
+}

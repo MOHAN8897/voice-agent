@@ -1,0 +1,59 @@
+{
+  "call_id": "0ec7baea-c013-4a8c-8f66-2a9965efb0ef",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "Raman called to ask about ordering 200 matte visiting cards, including pricing and delivery. The agent quoted ₹700 total for 200 cards, based on ₹350 per 100 cards, with delivery in Vijayawada taking 3 working days after artwork approval; urgent 24-hour delivery would cost an additional ₹150. Raman also asked about wedding card pricing only for information and clarified that he was not ordering wedding cards. The agent explained that wedding card pricing depends on customization, design, paper sample, and quantity, so no fixed price could be provided over the phone. Raman asked the agent to confirm the details remembered, and the agent repeated his name, product, quantity, delivery location, timeline, and urgent-delivery surcharge. No order was confirmed; Raman said he had no further questions and ended the call politely.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_name": "రమణ",
+    "delivery_location": "Vijayawada",
+    "name": "Raman",
+    "phone": "+12025550134",
+    "price": "₹700 total",
+    "product": "Matte visiting cards",
+    "quantity": "200",
+    "standard_delivery": "3 working days after artwork approval",
+    "urgent_delivery": "24 hours for an additional ₹150",
+    "wedding_cards_interest": "Information only; no order"
+  },
+  "facts": {
+    "caller_name": "రమణ",
+    "delivery_location": "Vijayawada",
+    "name": "Raman",
+    "phone": "+12025550134",
+    "price": "₹700 total",
+    "product": "Matte visiting cards",
+    "quantity": "200",
+    "standard_delivery": "3 working days after artwork approval",
+    "urgent_delivery": "24 hours for an additional ₹150",
+    "wedding_cards_interest": "Information only; no order"
+  },
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:matte-visiting-cards",
+    "custom:wedding-cards",
+    "followup:send_info",
+    "intent:information",
+    "intent:pricing",
+    "outcome:interested",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:pricing",
+    "sentiment:neutral",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards",
+    "custom:wedding-cards"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T11:17:41.269118Z",
+  "generation_ok": true
+}

@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "product": "aloe vera juice"
+  },
+  "preferences": {
+    "language": "plain English"
+  },
+  "important_context": "",
+  "summary": "user: Okay, got it. If I take one aloe vera juice and one hair oil, what will be the total amount?\nassistant: One Aloe Vera Juice at ₹399 and one Herbal Hair Oil at ₹499 makes a total of ₹898. Just let me know if you would like to place an order.\nuser: 898 rupees is okay. I will think about it and let you know later. Thank you for the information.\nassistant: You're welcome. Just let me know whenever you decide if you'd like to place the order."
+}

@@ -1,0 +1,8 @@
+{"turn_seq": 1, "ts": "2026-10-31T14:00:33.981772Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T14:00:54.477654Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T14:01:27.663474Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T14:01:27.678496Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "assistant: The Herbal Face Cream contains Neem, Turmeric, and Aloe Vera, and it is intended for moisturizing and routine skin care. I don't have the usage instructions right now, so the information is currently unavailable.\nuser: Ah, okay, no problem about the usage instructions. Actually, I think I would like to order two bottles of your hair oil and one face cream instead.\nassistant: The Herbal Hair Oil is 499 rupees for 200 ml, and the Herbal Face Cream is 599 rupees for 50 g. I can help you place an order for two bottles of hair oil and one face cream. Would you like to proceed?"}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T14:01:58.771860Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T14:02:30.904044Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-31T14:02:57.103625Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 13, "ts": "2026-10-31T14:03:24.720851Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "consultation fee कितनी है और आप लोग कितने बजे open रहते हो?", "ts": "2026-10-30T10:42:50.825281Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Consultation fee 300 रुपये है, और क्लिनिक सोमवार से शनिवार, सुबह 10 बजे से रात 8 बजे तक खुला रहता है।", "ts": "2026-10-30T10:42:53.915678Z"}
+{"seq": 3, "role": "user", "text": "Can you tell me the clinic timings in English please?", "ts": "2026-10-30T10:42:53.917193Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "The clinic is open Monday to Saturday, 10 AM to 8 PM.", "ts": "2026-10-30T10:42:56.795761Z"}
+{"seq": 5, "role": "user", "text": "मुझे दांत में दर्द है, क्या कल आ सकता हूँ?", "ts": "2026-10-30T10:42:56.796761Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "हाँ, कल शनिवार है और क्लिनिक खुला रहेगा। आप कल किस समय आना चाहेंगे? अपॉइंटमेंट कन्फर्म करने के लिए कृपया अपना नाम और समस्या भी बता दीजिए।", "ts": "2026-10-30T10:43:00.557420Z"}
+{"seq": 7, "role": "user", "text": "ठीक है, thanks।", "ts": "2026-10-30T10:43:00.557420Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "ठीक है। कल शनिवार है और क्लिनिक खुला रहेगा।", "ts": "2026-10-30T10:43:02.895273Z"}

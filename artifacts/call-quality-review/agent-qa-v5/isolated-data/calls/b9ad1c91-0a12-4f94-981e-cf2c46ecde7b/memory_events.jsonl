@@ -1,0 +1,7 @@
+{"turn_seq": 1, "ts": "2026-10-31T16:55:11.878234Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T16:55:33.078674Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T16:55:47.820064Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T16:55:47.844807Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "assistant: हमारे पास NatureVeda Herbal Hair Oil ₹499 में 200 ml, Aloe Vera Juice ₹399 में 500 ml, Herbal Face Cream ₹599 में 50 g, और Ashwagandha Capsules ₹699 में 60 capsules हैं। क्या आप इनमें से किसी के बारे में और जानना चाहेंगे?\nuser: Aloe Vera Juice का price ठीक है। इसका delivery charge कितना लगेगा?\nassistant: इसकी जानकारी मेरे पास उपलब्ध नहीं है। बाकी products के बारे में कुछ पूछना है?\nuser: ठीक है, कोई बात नहीं। क्या इन products की कोई offer या discount चल रहा है?\nassistant: अभी कोई offer या discount चल रहा है, इसकी जानकारी मेरे पास नहीं है।"}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T16:56:01.672439Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T16:56:16.783641Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-31T16:56:35.487563Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

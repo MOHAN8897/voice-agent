@@ -1,0 +1,13 @@
+{
+  "facts": {
+    "caller_name": "మాధవి గారు",
+    "email": "kiran.audit@example.invalid",
+    "caller_email": "kiran.audit@example.invalid",
+    "product": "Python course"
+  },
+  "preferences": {
+    "batch_preference": "evening batch"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "assistant: మీ అభ్యర్థన నిర్ధారణ అయిందో లేదో నాకు తెలియదు. దయచేసి దాన్ని పూర్తయినట్టు భావించకండి.\nuser: మాధవి గారు, నా details మీరు note చేసుకున్నారని ఒకసారి confirm చేయండి. అలాగే, ఈ Python course exact duration ఎన్ని weeks ఉంటుందో ఒక్కసారి clarify చేస్తారా? నా questions అన్నీ clear అయ్యాయి, thank you.\nassistant: మీ అభ్యర్థన నిర్ధారణ అయిందో లేదో నాకు తెలియదు. దయచేసి దాన్ని పూర్తయినట్టు భావించకండి."
+}

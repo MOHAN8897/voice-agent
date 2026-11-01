@@ -1,0 +1,8 @@
+{"turn_seq": 1, "ts": "2026-10-31T16:48:45.343417Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T16:48:58.630921Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T16:49:14.329893Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T16:49:14.342373Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: അതെ, ഒന്ന് സംസാരിക്കാമല്ലോ. എന്താണ് details?\nassistant: ശരി. ഇന്ന് ഞങ്ങളുടെ കയ്യിൽ herbal products ഉണ്ട്. Hair oil, Aloe Vera Juice, Face Cream, അതോ Ashwagandha Capsules ആണോ?\nuser: ആ aloe vera juice-ന്റെ price എത്രയാണ്?\nassistant: NatureVeda Aloe Vera Juice-ന് 500 ml-ന് ₹399 ആണ് വില. അതൊരു general wellness beverage ആണ്. ഇന്ന് order ചെയ്യണോ?\nuser: 500 ml-ന് 399 രൂപയോ? കുറെ നാളായിട്ട് ഇത് കുടിക്കാൻ നോക്കുന്നുണ്ടായിരുന്നു. ഇതിൽ എന്തെങ്കിലും discount ഉണ്ടോ?\nassistant: ആ വിവരം എനിക്കറിയില്ല."}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T16:49:23.470398Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T16:49:34.570333Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-31T16:49:52.227590Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 13, "ts": "2026-10-31T16:50:17.759917Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

@@ -1,0 +1,16 @@
+{
+  "facts": {
+    "product": "Python మరియు data training",
+    "caller_name": "కిరణ్",
+    "email": "kiran.audit@example.invalid",
+    "qualification": "B.Com",
+    "caller_email": "kiran.audit@example.invalid"
+  },
+  "preferences": {
+    "requested_time": "వీకెండ్స్",
+    "weekend_preference": "weekend preference",
+    "stop_contact": "ఇక details save చేయడం కుదరదు"
+  },
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "assistant: మీ అభ్యర్థన నిర్ధారణ అయిందో లేదో నాకు తెలియదు. దయచేసి దాన్ని పూర్తయినట్టు భావించకండి.\nuser: అర్థం చేసుకొన్నాను, payment చేయను. కానీ నా details మళ్ళీ ఒకసారి system లో save చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com, weekend preference. ఇప్పుడు save చేశారా, record సరిగ్గా save అయిందో లేదో ఒకసారి confirm చేయండి.\nassistant: మీ అభ్యర్థన నిర్ధారణ అయిందో లేదో నాకు తెలియదు. దయచేసి దాన్ని పూర్తయినట్టు భావించకండి."
+}

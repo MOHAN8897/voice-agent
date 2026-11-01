@@ -1,0 +1,115 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "The caller requested general servicing for her window AC in Madhapur and asked for a 30-minute technician appointment on October 30, 2026 at 10:00 AM. She provided her name as Shravani, email address, and phone number, and confirmed that the proposed 30-minute slot works for her. The agent initially stated that the slot was available and said the appointment would be booked, but repeatedly asked the caller to restate or explain the request. The transcript does not confirm that the calendar appointment was actually created or that confirmation was sent. The call ended without completion, so follow-up is required to book the appointment and send confirmation.",
+  "next_action": "Create the 30-minute technician appointment for October 30, 2026 at 10:00 AM in Madhapur for the caller’s window AC general servicing, then send confirmation using the provided contact details.",
+  "extracted_fields": {
+    "appointment_date": "October 30, 2026",
+    "appointment_duration": "30 minutes",
+    "appointment_time": "10:00 AM",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "locality": "Madhapur",
+    "phone_number": "+12025550149",
+    "product": "Window AC",
+    "quantity": "30",
+    "requested_time": "October 30, 2026 న ఉదయం 10 గంటలకి",
+    "service_type": "General servicing"
+  },
+  "objections": [],
+  "notes": "The caller repeated the same request several times because the agent did not complete or confirm the booking. Do not claim the appointment was created; the transcript only confirms slot availability and caller acceptance.",
+  "tags": [
+    "intent:booking",
+    "followup:site_visit",
+    "followup:send_info",
+    "action:required",
+    "sentiment:frustrated"
+  ],
+  "custom_tags": [
+    "custom:window-ac",
+    "custom:general-servicing",
+    "custom:madhapur"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:31:53.274817Z",
+  "generation_ok": true,
+  "facts": {
+    "appointment_date": "October 30, 2026",
+    "appointment_duration": "30 minutes",
+    "appointment_time": "10:00 AM",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "locality": "Madhapur",
+    "phone_number": "+12025550149",
+    "product": "Window AC",
+    "quantity": "30",
+    "requested_time": "October 30, 2026 న ఉదయం 10 గంటలకి",
+    "service_type": "General servicing"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:general-servicing",
+    "custom:window-ac",
+    "followup:callback",
+    "followup:send_info",
+    "followup:site_visit",
+    "intent:booking",
+    "outcome:callback_required",
+    "sentiment:frustrated"
+  ],
+  "lead": {
+    "leadId": "ff95c5e9-b2b6-4ff3-848d-445f6cd53569",
+    "agentId": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 100,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.97,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "appointment_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone_number"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

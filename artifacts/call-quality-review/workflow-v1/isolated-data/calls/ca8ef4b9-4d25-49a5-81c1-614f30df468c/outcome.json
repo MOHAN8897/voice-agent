@@ -1,0 +1,99 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the course fee and the availability of a weekend batch. The agent responded by stating that the fee is ₹8,999 with no installment options and that the weekend batch runs from 10 AM to 1 PM. The caller, identifying himself as Kiran, expressed interest and asked the agent to note his inquiry. The agent acknowledged the details and asked for the caller's qualifications and preferred batch. The caller declined to provide further information, stating that was all for now, and the call ended with the agent thanking him.",
+  "next_action": "followup:callback",
+  "extracted_fields": {
+    "budget": "₹8,999",
+    "caller_name": "Kiran",
+    "name": "Kiran",
+    "phone": "+919876500017",
+    "slot": "Weekend, 10 AM to 1 PM"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "followup:callback",
+    "action:required",
+    "signal:ready_to_buy",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:weekend-batch",
+    "custom:course-fee"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T20:18:21.576180Z",
+  "generation_ok": true,
+  "facts": {
+    "budget": "₹8,999",
+    "caller_name": "Kiran",
+    "name": "Kiran",
+    "phone": "+919876500017",
+    "slot": "Weekend, 10 AM to 1 PM"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:course-fee",
+    "custom:weekend-batch",
+    "followup:callback",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:price_sensitive",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "1a0a4726-2c5a-56ae-b4b5-d4617ffc949b",
+    "agentId": "2d355f6d-7940-40c1-9755-b6aa0fc1d613",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 100,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.9,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "budget"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "slot"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

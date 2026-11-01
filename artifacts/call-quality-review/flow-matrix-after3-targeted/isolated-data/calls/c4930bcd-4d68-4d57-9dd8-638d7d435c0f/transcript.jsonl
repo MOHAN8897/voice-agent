@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "I am busy right now, call me later.", "ts": "2026-10-30T11:21:33.096061Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I understand you are busy right now. When would be a good time for us to call you back?", "ts": "2026-10-30T11:21:35.477974Z"}
+{"seq": 3, "role": "user", "text": "I don't know, sometime later.", "ts": "2026-10-30T11:21:35.478973Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "I've saved your details and your request for a follow-up call. Thank you for your time. Goodbye.", "ts": "2026-10-30T11:21:36.575923Z"}

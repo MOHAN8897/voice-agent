@@ -1,0 +1,114 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్ కు కాల్ చేసి హెయిర్ ఆయిల్ మరియు ఫేస్ క్రీమ్ ధరల గురించి వివరించారు. కస్టమర్ తమ ఇమెయిల్ mohansaiteja.99@gmail.com కు వివరాలు పంపమని కోరారు మరియు స్టాక్, Kukatpally కు డెలివరీ సమయం గురించి అడిగారు, కానీ ఏజెంట్ వద్ద ఆ సమాచారం లేదు. కస్టమర్ రేపు ఉదయం 11 గంటలకు ఆర్డర్ కోసం ఒక కాల్ బుక్ చేయాలని కోరారు, దానికి ఏజెంట్ అంగీకరించారు. చివరగా, కస్టమర్ కాల్ బుక్ అయిందో లేదో నిర్ధారించుకుని కాల్ ముగించారు.",
+  "summary_en": "The agent called the customer to provide pricing details for herbal hair oil and face cream. The customer requested that these details be emailed to mohansaiteja.99@gmail.com, which the agent confirmed sending. When the customer asked about current stock levels and delivery timelines to Kukatpally, the agent stated that this information was unavailable. The customer then requested a scheduled callback for tomorrow at 11 AM to place an order, which the agent agreed to arrange. The customer confirmed the booking and concluded the call.",
+  "next_action": "Team to check stock and delivery details for Kukatpally and contact the customer for the scheduled 11 AM callback tomorrow.",
+  "extracted_fields": {
+    "callback_time": "Tomorrow at 11 AM",
+    "delivery_location": "Kukatpally",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919700000008",
+    "handoff_requested": "true"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "followup:send_info",
+    "intent:purchase",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:hair-oil",
+    "custom:face-cream",
+    "custom:kukkatpally-delivery"
+  ],
+  "unanswered_questions": [
+    "Is the face cream currently in stock?",
+    "When will the delivery reach Kukatpally?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T13:38:40.778192Z",
+  "generation_ok": true,
+  "summary_language": "te-IN",
+  "facts": {
+    "callback_time": "Tomorrow at 11 AM",
+    "delivery_location": "Kukatpally",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919700000008",
+    "handoff_requested": "true"
+  },
+  "human_handoff": {
+    "contactRole": "team",
+    "reason": "Customer wants a callback tomorrow at 11 AM to place an order.",
+    "requestedTime": "రేపు ఉదయం 11 గంటలకు",
+    "callerWords": "రేపు ఉదయం 11 గంటలకు ఆర్డర్ ప్లేస్ చేయడానికి మీ టీమ్‌తో ఒక షార్ట్ కాల్ బుక్ చేయగలరా?",
+    "id": "0ac51dd3-b936-42e5-b6ca-2d9b602dda98",
+    "status": "requested",
+    "requestedWhen": "రేపు ఉదయం 11 గంటలకు",
+    "requestText": "రేపు ఉదయం 11 గంటలకు ఆర్డర్ ప్లేస్ చేయడానికి మీ టీమ్‌తో ఒక షార్ట్ కాల్ బుక్ చేయగలరా?"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:phone_known",
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:kukkatpally-delivery",
+    "followup:callback",
+    "followup:handoff",
+    "followup:send_info",
+    "intent:purchase",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "485f1fd7-d81a-4b30-b866-7da7c52f5d4d",
+    "agentId": "10390077-097c-599b-8c78-0f10f417867d",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "intent:purchase"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "callback_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

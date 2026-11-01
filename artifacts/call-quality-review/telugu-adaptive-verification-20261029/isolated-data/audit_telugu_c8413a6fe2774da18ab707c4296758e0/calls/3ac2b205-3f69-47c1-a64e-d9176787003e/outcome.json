@@ -1,0 +1,52 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller introduced herself as Shravani and clearly requested that this number never be called again permanently because she was busy. The agent acknowledged her request, thanked her for her time, and ended the call politely. No further follow-up was agreed.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "caller_name": "Shravani",
+    "phone": "+12025550111"
+  },
+  "objections": [
+    "Caller requested no further calls permanently."
+  ],
+  "notes": "Permanent do-not-call request.",
+  "tags": [
+    "signal:do_not_call",
+    "sentiment:negative"
+  ],
+  "custom_tags": [],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:41:11.063644Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_name": "Shravani",
+    "phone": "+12025550111"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "outcome:not_interested",
+    "sentiment:negative",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": {
+    "score": 0,
+    "band": "disqualified",
+    "disposition": "not_interested",
+    "confidence": 0.99,
+    "components": [],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "caller_opt_out"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

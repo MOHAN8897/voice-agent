@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "requested_time": "tomorrow at 11 AM",
+    "caller_name": "Kiran"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: I have tooth pain. I want an appointment tomorrow at 11 AM.\nassistant: I understand you have tooth pain. I can note your preferred time for tomorrow at 11 AM for the front desk to confirm. To proceed, I will need your name.\nuser: My name is Kiran.\nassistant: Thank you, Kiran. I have noted your preferred time for tomorrow at 11 AM for the front desk to confirm.\nuser: Is my appointment confirmed?\nassistant: Your appointment is not confirmed yet. I have noted your preferred time for tomorrow at 11 AM.\nuser: Okay, thanks."
+}

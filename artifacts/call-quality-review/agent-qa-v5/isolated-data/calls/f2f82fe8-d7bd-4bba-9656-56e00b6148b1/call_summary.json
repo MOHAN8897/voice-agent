@@ -1,0 +1,50 @@
+{
+  "call_id": "f2f82fe8-d7bd-4bba-9656-56e00b6148b1",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "एक एजेंट ने ग्राहक को कॉल करके चार उपलब्ध उत्पादों के बारे में जानकारी दी। ग्राहक ने एलोवेरा जूस के बारे में पूछा और ₹399 की कीमत पर रुचि दिखाई, लेकिन एजेंट सामग्री, प्रिजर्वेटिव, निर्माण या डिलीवरी के बारे में बुनियादी सवालों के जवाब नहीं दे सका। ग्राहक ने जानकारी की कमी पर आपत्ति जताई और कहा कि वह बिना बुनियादी जानकारी के भरोसा नहीं कर सकती। उसने अभी ऑर्डर करने से स्पष्ट रूप से इनकार कर दिया, और एजेंट ने उसकी बात को स्वीकार करते हुए कॉल समाप्त कर दी।",
+  "summary_language": "hi-IN",
+  "summary_en": "An agent called the customer to share details about four available products. The customer inquired about the Aloe Vera Juice, expressing interest at the price of ₹399, but the agent could not answer basic questions regarding ingredients, preservatives, manufacturing, or delivery. The customer objected to the lack of information and stated she could not trust the business without these basic details. She firmly refused to place an order at this time, and the agent acknowledged her decision before ending the call.",
+  "next_action": null,
+  "extracted_fields": {
+    "budget": "399",
+    "phone": "+919700000001",
+    "product": "Aloe Vera Juice"
+  },
+  "facts": {
+    "budget": "399",
+    "phone": "+919700000001",
+    "product": "Aloe Vera Juice"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:delivery-query",
+    "custom:product-inquiry",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:negative",
+    "signal:objection"
+  ],
+  "tags": [
+    "sentiment:negative",
+    "signal:objection",
+    "intent:information"
+  ],
+  "custom_tags": [
+    "custom:product-inquiry",
+    "custom:delivery-query"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Agent lacked basic product and delivery details, causing the customer to lose trust."
+  ],
+  "unanswered_questions": [
+    "Does the Aloe Vera Juice contain sugar or preservatives?",
+    "What is the delivery process?",
+    "Where are the products manufactured?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T16:01:31.355564Z",
+  "generation_ok": true
+}

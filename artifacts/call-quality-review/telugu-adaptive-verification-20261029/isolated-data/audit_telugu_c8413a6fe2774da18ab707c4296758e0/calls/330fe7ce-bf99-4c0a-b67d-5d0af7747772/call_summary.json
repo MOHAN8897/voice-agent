@@ -1,0 +1,70 @@
+{
+  "call_id": "330fe7ce-bf99-4c0a-b67d-5d0af7747772",
+  "language_callback": null,
+  "disposition": "site_visit_planned",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller requested general servicing for a split AC in Madhapur, asking whether a technician could come tomorrow at 10:00 AM India time and what the charge would be. The agent quoted ₹599, stated that Madhapur is within the service area, confirmed there would be no extra charges, and indicated availability within the next-day 10:00 AM–6:00 PM window. The caller clarified that only split AC service was needed, not refrigerator repair, and asked for the 10:00 AM slot to be noted. She provided her name as Shravani and email as sravani.audit@example.invalid. The agent said the booking was noted for tomorrow at 10:00 AM in Madhapur but also disclosed that it could not send the details to the team or guarantee follow-up. The caller had no further questions and ended the call politely.",
+  "next_action": "Confirm with the service team whether the 10:00 AM technician appointment is actually scheduled; the agent only noted it and could not confirm dispatch or follow-up.",
+  "extracted_fields": {
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "extra_charges": "None stated",
+    "locality": "Madhapur",
+    "name": "Shravani",
+    "phone": "+12025550122",
+    "product": "split AC",
+    "quoted_price": "₹599",
+    "requested_slot": "Tomorrow at 10:00 AM India time",
+    "requested_time": "రేపు 10 AM",
+    "service": "General servicing for split AC"
+  },
+  "facts": {
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "extra_charges": "None stated",
+    "locality": "Madhapur",
+    "name": "Shravani",
+    "phone": "+12025550122",
+    "product": "split AC",
+    "quoted_price": "₹599",
+    "requested_slot": "Tomorrow at 10:00 AM India time",
+    "requested_time": "రేపు 10 AM",
+    "service": "General servicing for split AC"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:10am-slot",
+    "custom:madhapur",
+    "custom:split-ac-service",
+    "followup:site_visit",
+    "intent:booking",
+    "intent:purchase",
+    "outcome:site_visit_planned",
+    "sentiment:positive"
+  ],
+  "tags": [
+    "intent:booking",
+    "intent:purchase",
+    "followup:site_visit",
+    "action:required",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:split-ac-service",
+    "custom:madhapur",
+    "custom:10am-slot"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T15:44:16.714646Z",
+  "generation_ok": true
+}

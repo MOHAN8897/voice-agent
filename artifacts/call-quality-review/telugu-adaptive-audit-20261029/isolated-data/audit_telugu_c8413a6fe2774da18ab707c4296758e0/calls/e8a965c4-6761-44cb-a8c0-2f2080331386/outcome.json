@@ -1,0 +1,112 @@
+{
+  "disposition": "new_lead",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller asked about ordering matte-finish visiting cards, specifically the minimum order quantity and pricing. The agent explained that the minimum order is 100 cards at ₹350 and asked for the required quantity. The caller said they currently need 250 cards and asked whether extra charges would apply. The agent could not confirm extra charges and requested the caller’s name. The caller provided the name Ramesh and the email address ramesh.audit@example.invalid, stating that designs would be sent later and that nothing more was needed for now. The call ended politely without an order being placed or a follow-up appointment being scheduled.",
+  "next_action": "Confirm any extra charges for 250 matte-finish cards and follow up if appropriate; await the caller’s designs by email.",
+  "extracted_fields": {
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "రమేష్",
+    "email": "ramesh.audit@example.invalid",
+    "finish": "Matte",
+    "minimum_order": "100 cards",
+    "name": "Ramesh",
+    "phone": "+12025550125",
+    "price_for_minimum_order": "₹350",
+    "product": "Visiting cards",
+    "quantity": "250",
+    "quantity_requested": "250 cards"
+  },
+  "objections": [
+    "Extra charges for 250 cards were unknown and not confirmed."
+  ],
+  "notes": "Caller indicated designs would be sent later by email. No purchase was completed.",
+  "tags": [
+    "intent:pricing",
+    "intent:information",
+    "followup:send_info",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:matte-finish",
+    "custom:visiting-cards",
+    "custom:250-cards"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:10:40.331620Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "రమేష్",
+    "email": "ramesh.audit@example.invalid",
+    "finish": "Matte",
+    "minimum_order": "100 cards",
+    "name": "Ramesh",
+    "phone": "+12025550125",
+    "price_for_minimum_order": "₹350",
+    "product": "Visiting cards",
+    "quantity": "250",
+    "quantity_requested": "250 cards"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:matte-finish",
+    "custom:visiting-cards",
+    "followup:send_info",
+    "intent:information",
+    "intent:pricing",
+    "outcome:new_lead",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "4e8ea751-d1cc-4c26-8817-e25d0d521380",
+    "agentId": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "stage": "new",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 35,
+    "band": "cold",
+    "disposition": "new_lead",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

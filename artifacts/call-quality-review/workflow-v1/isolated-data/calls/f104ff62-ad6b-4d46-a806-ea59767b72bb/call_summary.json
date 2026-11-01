@@ -1,0 +1,39 @@
+{
+  "call_id": "f104ff62-ad6b-4d46-a806-ea59767b72bb",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call while driving and requested that their number not be blocked because they have an interest in the service. They explicitly requested a callback on Monday morning. The agent acknowledged and logged the callback request and the caller's details before ending the call.",
+  "next_action": "Call the customer back on Monday morning.",
+  "extracted_fields": {
+    "phone": "+919876500005",
+    "slot": "Monday morning"
+  },
+  "facts": {
+    "phone": "+919876500005",
+    "slot": "Monday morning"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "followup:callback",
+    "outcome:callback_required",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "tags": [
+    "followup:callback",
+    "sentiment:positive",
+    "signal:objection",
+    "action:required"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [
+    "Do not block my number"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:16:10.832542Z",
+  "generation_ok": true
+}

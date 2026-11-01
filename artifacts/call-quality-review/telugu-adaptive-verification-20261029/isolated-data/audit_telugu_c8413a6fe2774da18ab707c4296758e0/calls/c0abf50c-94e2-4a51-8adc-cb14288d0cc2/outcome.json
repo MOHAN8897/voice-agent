@@ -1,0 +1,63 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller requested matte-finish visiting cards and said they would send the designs later. They provided the email address ramesh.audit@example.invalid and asked for details to be sent there. The caller repeatedly issued a permanent do-not-call request for this number and then asked to end the call. The agent acknowledged the product preference, stated that the enquiry was saved, and ended the call politely. No purchase or delivery was confirmed, and no email sending was confirmed.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "caller_email": "ramesh.audit@example.invalid",
+    "contact_preference": "Permanent opt-out; do not call this number again",
+    "designs": "Caller will send designs later",
+    "email": "ramesh.audit@example.invalid",
+    "phone": "+12025550105",
+    "product": "Matte-finish visiting cards"
+  },
+  "objections": [],
+  "notes": "Do not call this number again under any circumstances. The caller requested email details, but sending was not confirmed.",
+  "tags": [
+    "intent:purchase",
+    "intent:information",
+    "followup:send_info",
+    "signal:do_not_call"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:39:32.423892Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_email": "ramesh.audit@example.invalid",
+    "contact_preference": "Permanent opt-out; do not call this number again",
+    "designs": "Caller will send designs later",
+    "email": "ramesh.audit@example.invalid",
+    "phone": "+12025550105",
+    "product": "Matte-finish visiting cards"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:email_known",
+    "contact:phone_known",
+    "custom:matte-visiting-cards",
+    "intent:information",
+    "intent:purchase",
+    "outcome:not_interested",
+    "signal:do_not_call"
+  ],
+  "lead": null,
+  "lead_assessment": {
+    "score": 0,
+    "band": "disqualified",
+    "disposition": "not_interested",
+    "confidence": 0.99,
+    "components": [],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "caller_opt_out"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

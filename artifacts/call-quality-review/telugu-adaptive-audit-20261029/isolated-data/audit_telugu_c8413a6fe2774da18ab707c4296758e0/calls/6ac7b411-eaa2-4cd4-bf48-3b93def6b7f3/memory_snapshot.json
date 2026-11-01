@@ -1,0 +1,13 @@
+{
+  "facts": {
+    "product": "visiting cards",
+    "caller_name": "రమేష్",
+    "email": "ramesh.audit@example.invalid",
+    "caller_email": "ramesh.audit@example.invalid"
+  },
+  "preferences": {
+    "finish": "matte finish"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "assistant: ఆ price details నా దగ్గర లేవండి. Minimum order quantity మాత్రం one hundred cards ఉంటుంది. మీరు proceed అవ్వాలనుకుంటే మీ పేరు చెప్తారా?\nuser: సరే, నా పేరు రమేష్. నా email ramesh.audit@example.invalid. నా దగ్గర డిజైన్స్ ఇంకా లేవు, తర్వాత పంపిస్తాను. మీరు ఈ order note చేసుకుంటారా?\nassistant: ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇంకేమైనా వివరాలు కావాలా?"
+}

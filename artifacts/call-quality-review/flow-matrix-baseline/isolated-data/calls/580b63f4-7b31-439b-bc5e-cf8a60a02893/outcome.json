@@ -1,0 +1,39 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call but remained hesitant and did not clearly state their name, dental issue, or preferred appointment time. The agent from the dental clinic introduced herself and requested the caller's name, problem, and a convenient time to visit. However, the caller did not provide any of this information and only responded with hesitation. As a result, no further discussion took place, and the call concluded without any next steps.",
+  "next_action": "No action was agreed upon during the call.",
+  "extracted_fields": {
+    "phone": "+919876500547"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "sentiment:neutral",
+    "intent:information"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:47:06.932180Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500547"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

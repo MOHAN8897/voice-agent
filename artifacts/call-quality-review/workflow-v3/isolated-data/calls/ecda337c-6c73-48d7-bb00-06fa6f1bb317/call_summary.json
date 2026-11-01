@@ -1,0 +1,42 @@
+{
+  "call_id": "ecda337c-6c73-48d7-bb00-06fa6f1bb317",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller requested to book a visit for tomorrow at 11 AM and immediately demanded confirmation and a booking number. The agent explained that the booking could not be confirmed without first collecting the caller's name and locality, noting that service is limited to Madhapur, Gachibowli, Kondapur, and Kukatpally. The caller asked again for confirmation and a booking number, but the agent clarified that no booking or number existed yet because the team had not confirmed the visit. The caller accepted this, thanked the agent, and ended the call without providing their details, leaving the booking unfulfilled.",
+  "next_action": "Agent must follow up with the caller to collect their name and locality to proceed with scheduling the 11 AM visit.",
+  "extracted_fields": {
+    "phone": "+919876500019"
+  },
+  "facts": {
+    "phone": "+919876500019"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:11-am-slot",
+    "custom:locality-verification",
+    "followup:callback",
+    "intent:booking",
+    "outcome:callback_required",
+    "signal:objection"
+  ],
+  "tags": [
+    "action:required",
+    "followup:callback",
+    "intent:booking",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:11-am-slot",
+    "custom:locality-verification"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Caller requested immediate confirmation and booking number without providing required details."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:45:12.501540Z",
+  "generation_ok": true
+}

@@ -1,0 +1,57 @@
+{
+  "call_id": "81492e9d-0f70-4648-9cbf-a271da6ce3dc",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "આઉટબાઉન્ડ કૉલમાં એજન્ટે ગ્રાહકને Ashwagandha કેપ્સ્યુલ્સ વિશે માહિતી આપી અને તેની કિંમત ₹699 જણાવી. ગ્રાહકે બ્લડ પ્રેશરની દવા ચાલતી હોવાની વાત કરી અને તેની સલામતી, આડઅસરો અને ડિસ્કાઉન્ટ વિશે પૂછ્યું. એજન્ટે સલાહ આપી કે ડૉક્ટરની સલાહ લેવી જરૂરી છે અને ડિસ્કાઉન્ટની માહિતી પોતાની પાસે નથી તેમ જણાવ્યું. ગ્રાહકે આ વાત સમજીને ડૉક્ટરની સલાહ લીધા પછી જ નિર્ણય લેવાની વાત કરી. છેલ્લે એજન્ટે તેમને વિચારવા માટે સમય આપ્યો અને કૉલ પૂરો થયો.",
+  "summary_language": "gu-IN",
+  "summary_en": "The agent called the customer to provide details about Ashwagandha capsules priced at ₹699 for 60 units. The customer, who is on blood pressure medication, asked if the product was safe, whether it could cure stress, and if any discounts were available. The agent clarified that no guarantees were provided regarding stress relief or side effects, and stated that current discount information was unavailable. The customer agreed to consult her doctor before making a decision. The call ended with the agent advising her to take her time before deciding.",
+  "next_action": "No immediate action required.",
+  "extracted_fields": {
+    "medical_condition": "blood pressure",
+    "phone": "+919700000019",
+    "price": "₹699 for 60 capsules",
+    "product": "Ashwagandha capsules"
+  },
+  "facts": {
+    "medical_condition": "blood pressure",
+    "phone": "+919700000019",
+    "price": "₹699 for 60 capsules",
+    "product": "Ashwagandha capsules"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:ashwagandha-capsules",
+    "custom:medical-consultation",
+    "followup:send_info",
+    "followup:send_quote",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:information",
+    "signal:objection",
+    "followup:send_info",
+    "sentiment:neutral",
+    "action:required",
+    "followup:send_quote"
+  ],
+  "custom_tags": [
+    "custom:ashwagandha-capsules",
+    "custom:medical-consultation"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "The customer was concerned about safety while taking blood pressure medication and asked for guarantees regarding stress relief and side effects."
+  ],
+  "unanswered_questions": [
+    "Is there a current discount or offer available?",
+    "Are there any side effects?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T16:46:00.466088Z",
+  "generation_ok": true
+}

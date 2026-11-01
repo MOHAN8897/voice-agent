@@ -1,0 +1,922 @@
+[
+  {
+    "case": "A_isolated_profanity",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_isolated_profanity",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_isolated_profanity",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_isolated_profanity",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_isolated_profanity",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_isolated_profanity",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_isolated_profanity",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_isolated_profanity",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_isolated_profanity",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_isolated_profanity",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_isolated_profanity",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_isolated_profanity",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_isolated_profanity",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_isolated_profanity",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_isolated_profanity",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_isolated_profanity",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_persistent_abuse",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_wrong_number",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_wrong_number",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_wrong_number",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_wrong_number",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_wrong_number",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_wrong_number",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_wrong_number",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_wrong_number",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "A_budget_correction",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_prompt_injection",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_prompt_injection",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_prompt_injection",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_prompt_injection",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_prompt_injection",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_electrical_safety",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_electrical_safety",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_electrical_safety",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_electrical_safety",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_electrical_safety",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_electrical_safety",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_electrical_safety",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_electrical_safety",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_electrical_safety",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_electrical_safety",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_electrical_safety",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_electrical_safety",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_electrical_safety",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_electrical_safety",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_electrical_safety",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_electrical_safety",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_success",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_success",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_success",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "B_booking_success",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_success",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_success",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_success",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_success",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_success",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_success",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_success",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_failure",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_failure",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_failure",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_failure",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_failure",
+    "actor": "caller",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_failure",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_failure",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  },
+  {
+    "case": "C_crm_failure",
+    "actor": "agent",
+    "host": "api.sarvam.ai",
+    "method": "POST",
+    "path": "/v1/chat/completions",
+    "status": 200
+  }
+]

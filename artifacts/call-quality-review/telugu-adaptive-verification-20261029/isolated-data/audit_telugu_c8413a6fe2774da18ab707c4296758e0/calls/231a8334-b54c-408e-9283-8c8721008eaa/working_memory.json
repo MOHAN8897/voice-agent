@@ -1,0 +1,14 @@
+{
+  "facts": {
+    "caller_name": "కవిత",
+    "product": "విజిటింగ్ కార్డ్స్",
+    "quantity": "200",
+    "caller_email": "ramesh.audit@example.invalid",
+    "delivery_locality": "విజయవాడ"
+  },
+  "preferences": {
+    "callback": "వద్దు"
+  },
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "assistant: రమేష్ గారు, మీ పేరు, two hundred cards quantity, Vijayawada delivery location record చేశాను. Standard finish price ఇప్పుడు నా దగ్గర లేదు. మీకు ఎప్పుడు call చేయమంటారో ఆ time చెప్తారా?\nuser: కవిత గారు, నేను ఇప్పుడే decide అవ్వలేదు కాబట్టి callback వద్దు. మీరు record చేసిన details అన్నీ clear గా చెప్పండి, అలాగే standard finish 200 cards కి exact price కూడా చెప్పండి. నాకు ఇప్పుడు order place చేయను, ఇంకేమైనా ఉంటే చెప్పండి.\nassistant: రమేష్ గారు, మీ details అన్నీ record అయ్యాయి. Standard finish price ఇప్పుడు నా దగ్గర లేదు. ఇంకేమైనా తెలుసుకోవాలా?"
+}

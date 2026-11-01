@@ -1,0 +1,148 @@
+{
+  "call_id": "37d0f6ff-01d0-40b2-b496-90be2f914fdd",
+  "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+  "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09",
+  "session_id": "adaptive-03c7be8075f84f14bc3e52b548520841",
+  "channel": "pstn",
+  "direction": "outbound",
+  "environment": "development",
+  "tier": "medium",
+  "combination_id": "5b3ecb0dcd721b7f",
+  "compiled_brain_version": "cb_v20261029_fef6bbf1152f",
+  "started_at": "2026-10-29T15:42:55.900731+00:00",
+  "status": "active",
+  "storage_path": "data/calls/37d0f6ff-01d0-40b2-b496-90be2f914fdd/",
+  "resolved_stack": {
+    "combination_id": "5b3ecb0dcd721b7f",
+    "tier": "medium",
+    "mode": "frontend",
+    "language": "te-IN",
+    "voice_preset": "telugu_natural",
+    "stt": {
+      "provider": "sarvam",
+      "model": "saaras:v3-realtime",
+      "config": {
+        "mode": "realtime"
+      }
+    },
+    "llm": {
+      "provider": "sarvam",
+      "model": "sarvam-105b-conversations",
+      "config": {
+        "api_mode": "chat_completions_v1"
+      }
+    },
+    "tts": {
+      "provider": "sarvam",
+      "model": "bulbul:v3",
+      "config": {
+        "speaker": "shubh",
+        "api_mode": "websocket"
+      }
+    }
+  },
+  "pipeline": "composed_voice",
+  "caller_id": "+12025550100",
+  "callee_e164": "+12025550116",
+  "audit": true,
+  "is_test": true,
+  "call_end_policy": {
+    "allowedReasons": [
+      "goodbye",
+      "firm_refusal",
+      "not_interested",
+      "goal_complete",
+      "abuse"
+    ],
+    "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+    "farewellSource": "default"
+  },
+  "stage_usage": {
+    "llm": {
+      "input_tokens": 11798,
+      "output_tokens": 284,
+      "cached_tokens": 9952
+    }
+  },
+  "callback_request": {
+    "id": "be63f487-aa51-4059-b419-a1f1fc498aa2",
+    "status": "requested",
+    "requestedWhen": "ఒక ఆరు గంటల తర్వాత",
+    "requestText": "ప్రస్తుతం నేను మాట్లాడలేను. ఒక ఆరు గంటల తర్వాత నాకు మళ్ళీ కాల్ చేయండి. నా పేరు కిరణ్, ఇదే నంబర్‌కి కాల్ చేయండి."
+  },
+  "contact_preference": "callback",
+  "hangup_reason": "goal_complete",
+  "hangup_initiator": "agent",
+  "hangup_outcome": "agent_ended",
+  "hangup_playback_wait_ms": 61,
+  "hangup_trail_ms": 1000,
+  "hangup_heard_playback": true,
+  "callback_close_phase": "semantic_pending",
+  "disconnected_at": "2026-10-29T15:42:59.172629+00:00",
+  "ended_at": "2026-10-29T15:42:59.172629+00:00",
+  "end_reason": "goal_complete",
+  "duration_sec": 3.0,
+  "provider_cost_result": {
+    "status": "incomplete",
+    "missing": [
+      "provider_cost_snapshot"
+    ],
+    "stages": {},
+    "totalUsd": null,
+    "totalInr": null
+  },
+  "usage": {
+    "cost_accounting_version": 3,
+    "supplier_cost_status": "incomplete",
+    "live_transcript_usd": 0.0,
+    "live_transcript_inr": 0.0,
+    "pipeline": "composed_voice",
+    "duration_sec": 3.0,
+    "telephony_provider": "telnyx",
+    "telephony_usd": 0.0006250000000000001,
+    "telephony_inr": 0.059543750000000006,
+    "model_cost_usd": null,
+    "model_cost_inr": null,
+    "telnyx_usd": 0.0006250000000000001,
+    "telnyx_inr": 0.059543750000000006,
+    "telnyx_voice_api_usd": 0.0001,
+    "telnyx_sip_usd": 0.00025,
+    "telnyx_media_stream_usd": 0.00017500000000000003,
+    "telnyx_call_recording_usd": 0.0001,
+    "telnyx_destination_country": "US",
+    "telnyx_sip_usd_per_min": 0.005,
+    "telnyx_cost_is_estimate": true,
+    "vobiz_usd": 0.0,
+    "vobiz_inr": 0.0,
+    "carrier_cost_source": "tariff_estimate",
+    "cost_usd": null,
+    "cost_inr": null,
+    "cost_is_estimate": true,
+    "fx_rate_inr": 95.27,
+    "fx_source": "live_cache",
+    "fx_as_of": "2026-10-29",
+    "gst_inr": 0.0,
+    "cost_usd_per_min": null,
+    "cost_inr_per_min": null,
+    "telephony_usd_per_min": 0.012500000000000002,
+    "telephony_inr_per_min": 1.1908750000000001,
+    "model_cost_usd_per_min": null,
+    "model_cost_inr_per_min": null,
+    "telnyx_usd_per_min": 0.012500000000000002,
+    "telnyx_inr_per_min": 1.1908750000000001,
+    "vobiz_usd_per_min": 0.0,
+    "vobiz_inr_per_min": 0.0,
+    "post_call_analysis_responses": {
+      "resp_02f05e78cafb4a3b016ae36983fbc887d19d7381828223f547": {
+        "input_tokens": 1042,
+        "output_tokens": 183,
+        "cached_tokens": 0,
+        "cache_write_tokens": 1039,
+        "model": "gpt-5.6-luna",
+        "cost_usd": 0.00047995000000000004
+      }
+    },
+    "post_call_analysis_usd": 0.00047995000000000004,
+    "post_call_analysis_inr": 0.045724836500000005
+  }
+}

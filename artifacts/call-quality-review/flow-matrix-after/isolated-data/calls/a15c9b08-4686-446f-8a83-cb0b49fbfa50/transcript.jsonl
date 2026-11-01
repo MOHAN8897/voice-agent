@@ -1,0 +1,10 @@
+{"seq": 1, "role": "user", "text": "It is too expensive for me.", "ts": "2026-10-30T10:48:28.422213Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I understand. The 3 kW system is 1,95,000 rupees before the government subsidy of 78,000 rupees, so your net cost is 1,17,000 rupees. Would you like to book your free site survey?", "ts": "2026-10-30T10:48:30.671690Z"}
+{"seq": 3, "role": "user", "text": "No, it is still too expensive for us.", "ts": "2026-10-30T10:48:30.671690Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Sure.", "ts": "2026-10-30T10:48:33.105955Z"}
+{"seq": 5, "role": "user", "text": "Okay, what is the monthly EMI again?", "ts": "2026-10-30T10:48:33.130844Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "The monthly EMI starts from 2,999 rupees for 48 months.", "ts": "2026-10-30T10:48:35.969855Z"}
+{"seq": 7, "role": "user", "text": "Fine, book the free survey. My name is Kiran, I live in Velachery, Saturday works.", "ts": "2026-10-30T10:48:35.969855Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Your details have been saved, Kiran. I have noted that you are in Velachery and Saturday works for you. The free site survey request has been recorded.", "ts": "2026-10-30T10:48:40.171742Z"}
+{"seq": 9, "role": "user", "text": "Thanks.", "ts": "2026-10-30T10:48:40.171742Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-30T10:48:41.163341Z"}

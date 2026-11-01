@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-30T10:59:33.810262Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-30T10:59:36.588140Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-30T10:59:37.431140Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-30T10:59:37.441043Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: I am busy right now, call me later.\nassistant: I understand you are busy right now. I will call you back later.\nuser: I don't know, sometime later.\nassistant: I understand. You mentioned sometime later. I will note that down and call you back then.\nuser: Okay, bye.\nassistant: I've saved your details and your request for a follow-up call. Thank you for your time. Goodbye."}], "applied": true, "validation_errors": []}

@@ -1,0 +1,14 @@
+{
+  "facts": {
+    "product": "పెళ్లి కార్డులు",
+    "quantity": "200",
+    "caller_name": "రమేష్",
+    "caller_email": "ramesh.audit@example.invalid"
+  },
+  "preferences": {
+    "product_finish": "matte finish",
+    "finish": "matte finish"
+  },
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "user: Design నేను తర్వాత పంపిస్తాను. ఒకవేళ పెళ్లి కార్డుల price కూడా చెప్తే బాగుంటుంది, అలాగే advance payment ఎంత కట్టాలి, ఏమైనా conditions ఉన్నాయా?\nassistant: Wedding invitation cards design, paper sample, ఇంకా quantity బట్టి మారుతాయి, so phone లో fixed price చెప్పలేము. Advance payment గురించి చెప్పాలంటే, order one thousand rupees పైన ఉంటే 50% advance కట్టాలి, అంతకంటే తక్కువ ఉంటే cash on delivery ఉంటుంది."
+}

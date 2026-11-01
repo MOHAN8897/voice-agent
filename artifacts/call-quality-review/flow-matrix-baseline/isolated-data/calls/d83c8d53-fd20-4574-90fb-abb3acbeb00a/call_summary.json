@@ -1,0 +1,36 @@
+{
+  "call_id": "d83c8d53-fd20-4574-90fb-abb3acbeb00a",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call and immediately stated that they already have solar panels installed on their roof. The agent acknowledged this information and explicitly offered to respect a do-not-call request if the caller wished to be removed from the contact list. The caller did not provide any further details, and the conversation concluded with the agent respecting the caller's existing setup without pushing for a follow-up.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500541"
+  },
+  "facts": {
+    "phone": "+919876500541"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:solar-rooftop",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "signal:do_not_call",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:solar-rooftop"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Already has solar panels installed"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:45:17.562876Z",
+  "generation_ok": true
+}

@@ -1,0 +1,113 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్ కు కాల్ చేశారు. కస్టమర్ ఫేస్ క్రీమ్ మరియు హెయిర్ ఆయిల్ ధరల గురించి అడిగారు మరియు వివరాలను mohansaiteja.99@gmail.com కు ఈమెయిల్ చేయమని కోరారు. ఏజెంట్ ఈమెయిల్ పంపడం కనెక్షన్ సమస్యల వల్ల విఫలమైందని తెలిపారు. స్టాక్ మరియు డెలివరీ వివరాల గురించి ఏజెంట్ వద్ద సమాచారం లేదు. రేపు ఉదయం 11 గంటలకు కాల్ బ్యాక్ ఏర్పాటు చేయాలని మరియు ఆర్డర్ ప్లేస్ చేయడానికి షార్ట్ కాల్ కావాలని కస్టమర్ కోరారు. ఏజెంట్ ఈ అభ్యర్థనను నోట్ చేసుకుని, టీమ్ త్వరలో కన్ఫర్మ్ చేస్తుందని హామీ ఇచ్చారు, దాంతో కాల్ ముగిసింది.",
+  "summary_en": "The business agent called the customer, who inquired about the prices of a face cream and hair oil. The agent shared the prices but could not email the details to mohansaiteja.99@gmail.com due to a connection issue. When asked about stock and delivery to Kukatpally, the agent stated that this information was unavailable. The customer requested a callback tomorrow at 11 AM to arrange a short call to place an order. The agent agreed to pass this request to the team, who will confirm the callback, and the call concluded.",
+  "next_action": "Callback team to confirm 11 AM call and email product details.",
+  "extracted_fields": {
+    "callback_time": "Tomorrow 11 AM",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919700000008",
+    "handoff_requested": "true"
+  },
+  "objections": [
+    "Agent could not send the requested product details via email due to a technical connection issue."
+  ],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "intent:purchase",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:order-placement"
+  ],
+  "unanswered_questions": [
+    "Is the face cream currently in stock?",
+    "When will the delivery reach Kukatpally?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T15:36:27.340739Z",
+  "generation_ok": true,
+  "summary_language": "te-IN",
+  "facts": {
+    "callback_time": "Tomorrow 11 AM",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919700000008",
+    "handoff_requested": "true"
+  },
+  "human_handoff": {
+    "contactRole": "team",
+    "reason": "Customer requested a callback at 11 AM tomorrow (Sunday, Nov 1) with the team to confirm stock/delivery and place an order after email details could not be sent.",
+    "requestedTime": "Tomorrow 11 AM",
+    "callerWords": "caller wants a short call tomorrow at 11 AM with the team to place an order for Herbal Face Cream and Hair Oil",
+    "id": "650b331c-ee68-464d-a753-9980efdee69b",
+    "status": "requested",
+    "requestedWhen": "Tomorrow 11 AM",
+    "requestText": "caller wants a short call tomorrow at 11 AM with the team to place an order for Herbal Face Cream and Hair Oil"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:phone_known",
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:order-placement",
+    "followup:callback",
+    "followup:handoff",
+    "intent:purchase",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "d4a75da4-c181-461a-bcd7-36141a2cce1c",
+    "agentId": "60e25f6e-5494-59f3-99a0-dcd3c42c309a",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "intent:purchase"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "callback_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

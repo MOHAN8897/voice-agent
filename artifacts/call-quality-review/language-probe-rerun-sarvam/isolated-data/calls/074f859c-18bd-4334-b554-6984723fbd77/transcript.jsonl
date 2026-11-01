@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "ಸ್ಪ್ಲಿಟ್ ಎಸಿಯ ಸರ್ವಿಸಿಂಗ್‌ಗೆ ಎಷ್ಟು ಖರ್ಚಾಗುತ್ತದೆ?", "ts": "2026-10-29T19:10:28.690390Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Split AC servicing-ಗೆ 599 rupees ಆಗುತ್ತೆ. ನಿಮಗೆ visit book ಮಾಡ್ಬೇಕಾ?", "ts": "2026-10-29T19:10:29.286534Z", "brain_latency_ms": 600}
+{"seq": 3, "role": "user", "text": "ನನ್ನ ಸ್ಪ್ಲಿಟ್ ಎಸಿಗೆ ಸರ್ವಿಸ್ ಮಾಡಿಸಬೇಕು, ಚಾರ್ಜ್ ಎಷ್ಟು?", "ts": "2026-10-29T19:10:29.303177Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Split AC servicing-ಗೆ 599 rupees charge ಆಗುತ್ತೆ. ನಿಮ್ಮ area ಯಾವುದು ಅಂತ ಹೇಳ್ತೀರಾ? Madhapur, Gachibowli, Kondapur ಅಥವಾ Kukatpally-ನಲ್ಲಿ ಮಾತ್ರ ನಾವು service ಕೊಡ್ತೀವಿ.", "ts": "2026-10-29T19:10:29.994499Z", "brain_latency_ms": 695}

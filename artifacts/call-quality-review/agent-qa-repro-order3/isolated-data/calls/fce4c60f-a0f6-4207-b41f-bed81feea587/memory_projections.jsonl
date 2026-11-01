@@ -1,0 +1,6 @@
+{"turn_seq": 1, "ts": "2026-10-31T14:56:06.518392Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-31T14:56:30.530011Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-31T14:56:50.576620Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nquantity: 1"}
+{"turn_seq": 7, "ts": "2026-10-31T14:57:09.285805Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1"}
+{"turn_seq": 9, "ts": "2026-10-31T14:57:29.397856Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1 | caller_name: लक्ष्मी रेड्डी | delivery_address: फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072"}
+{"turn_seq": 11, "ts": "2026-10-31T14:57:37.858418Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1 | caller_name: लक्ष्मी रेड्डी | delivery_address: फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072"}

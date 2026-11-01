@@ -1,0 +1,34 @@
+{
+  "call_id": "d2e49878-2173-42f6-aeb5-400208d5ba4d",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller said they were unable to talk at that moment and asked Madhavi to call back on the same number after approximately six hours. The agent acknowledged and recorded the callback request. The call ended politely with no product or service details discussed.",
+  "next_action": "Call the caller back on the same number approximately six hours after this call.",
+  "extracted_fields": {
+    "callback_time": "Approximately six hours later",
+    "phone_number": "Same number"
+  },
+  "facts": {
+    "callback_time": "Approximately six hours later",
+    "phone_number": "Same number"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "followup:callback",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:40:07.112934Z",
+  "generation_ok": true
+}

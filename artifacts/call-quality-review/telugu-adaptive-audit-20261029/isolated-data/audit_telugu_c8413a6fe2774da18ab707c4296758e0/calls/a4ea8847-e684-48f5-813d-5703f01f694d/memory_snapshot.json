@@ -1,0 +1,17 @@
+{
+  "facts": {
+    "caller_name": "కిరణ్",
+    "product": "8 weeks course",
+    "requested_time": "Saturday లేదా Sunday",
+    "delivery_locality": "హైదరాబాద్",
+    "budget": "8,999 rupees",
+    "email": "kiran.audit@example.invalid",
+    "qualification": "graduate",
+    "caller_email": "kiran.audit@example.invalid"
+  },
+  "preferences": {
+    "payment_method": "instalments"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "user: Live projects ఉండటం బాగుంది. Demo session register చేసే ముందు, ఈ 8 weeks course లో ఏమైనా assessments లేదా exams ఉంటాయా? అలాగే, నేను working professional ని కాబట్టి, నా office timings కి clash అవ్వకుండా ఈ Saturday batch కి ఏమైనా flexibility ఉంటుందా?\nassistant: ఈ కోర్సులో assessments మరియు live projects ఉంటాయి, కానీ formal exams ఏమీ ఉండవు. Working professionals కోసం timings లో flexibility ఏమీ ఉండదు. మీరు free demo session కి register అవుతారా?"
+}

@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "product": "aloe vera juice",
+    "delivery_locality": "Kukatpally, Hyderabad"
+  },
+  "preferences": {
+    "language": "Hindi"
+  },
+  "important_context": "",
+  "summary": "user: Yes, tell me. I am listening.\nassistant: Great. Which herbal product or category would you like to explore today?\nuser: Actually, can you tell me what products you have? I am especially interested in the aloe vera juice, what is the price for that?\nassistant: Our NatureVeda Aloe Vera Juice costs 399 rupees for 500 ml. It contains Aloe Vera and is marketed as a general wellness beverage. Would you like to know more about it?\nuser: 399 rupees is okay. Does it have any added sugar or preservatives in it?\nassistant: I’m sorry, I don’t have that detail right now."
+}

@@ -1,0 +1,44 @@
+{
+  "call_id": "b84d3532-88da-42cb-a601-4bb270808eab",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the service charge for split AC servicing. The agent provided the pricing, stating it is ₹599. The caller expressed interest in the service, thanked the agent, and ended the call.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500009",
+    "price": "₹599",
+    "service_type": "split AC servicing"
+  },
+  "facts": {
+    "phone": "+919876500009",
+    "price": "₹599",
+    "service_type": "split AC servicing"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:ac-servicing",
+    "followup:send_quote",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:positive",
+    "signal:price_sensitive",
+    "action:required",
+    "followup:send_quote"
+  ],
+  "custom_tags": [
+    "custom:ac-servicing"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:56:23.199186Z",
+  "generation_ok": true
+}

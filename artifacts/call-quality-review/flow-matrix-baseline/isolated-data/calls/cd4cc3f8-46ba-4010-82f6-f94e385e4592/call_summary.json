@@ -1,0 +1,42 @@
+{
+  "call_id": "cd4cc3f8-46ba-4010-82f6-f94e385e4592",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, contacted support to inquire about the status of order ID FC10234, which had not yet been delivered. The agent explained that they could not check live order status over the phone. After noting the caller's name as Kiran, the agent promised to forward the order details to the support team so they could check the order and call the customer back. The caller agreed to this resolution by saying ' , thanks,' and the call concluded with the agent confirming that the support team would follow up.",
+  "next_action": "Support team to check order status and call back the customer.",
+  "extracted_fields": {
+    "caller_name": "Kiran",
+    "order_id": "FC10234",
+    "phone": "+919876500525"
+  },
+  "facts": {
+    "caller_name": "Kiran",
+    "order_id": "FC10234",
+    "phone": "+919876500525"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:order-status",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:order-status"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:40:45.228459Z",
+  "generation_ok": true
+}

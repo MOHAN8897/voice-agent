@@ -1,0 +1,51 @@
+{
+  "call_id": "699848fd-f25d-4535-8048-a6e854180abc",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 1.0,
+  "summary_te": "એજન્ટે ગ્રાહકને હર્બલ ઉત્પાદનો વિશે માહિતી આપવા માટે ફોન કર્યો હતો. ગ્રાહકે હેર ઓઇલ વિશે પૂછપરછ કરી અને તેની કિંમત તથા ઘટકો વિશે જાણકારી મેળવી. એજન્ટ પાસે ડિલિવરીની માહિતી ન હોવાથી ગ્રાહકે તરત ઓર્ડર આપવાનું ટાળ્યું. અંતે, ગ્રાહકે કાલે સાંજે 6:30 વાગ્યે ફરી ફોન કરવા માટે વિનંતી કરી અને એજન્ટે કૉલ પૂરો કર્યો.",
+  "summary_language": "gu-IN",
+  "summary_en": "The agent called the customer to offer herbal products, and the customer inquired about the Hair Oil due to dry hair. The agent shared the price of ₹499 and the listed ingredients, but could not provide usage frequency or delivery timelines. The customer hesitated to order immediately because of the missing delivery details. They agreed that the agent would call the customer back tomorrow at 6:30 PM, and the call ended politely.",
+  "next_action": "Call the customer back tomorrow at 6:30 PM.",
+  "extracted_fields": {
+    "callback_time": "કાલે સાંજે 6:30 વાગ્યે",
+    "phone": "+919700000017",
+    "price": "₹499",
+    "product": "NatureVeda Herbal Hair Oil 200 ml"
+  },
+  "facts": {
+    "callback_time": "કાલે સાંજે 6:30 વાગ્યે",
+    "phone": "+919700000017",
+    "price": "₹499",
+    "product": "NatureVeda Herbal Hair Oil 200 ml"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:herbal-hair-oil",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:herbal-hair-oil"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Delivery timeline was unavailable."
+  ],
+  "unanswered_questions": [
+    "How often should the hair oil be used?",
+    "When will the delivery arrive?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T16:41:27.989086Z",
+  "generation_ok": true
+}

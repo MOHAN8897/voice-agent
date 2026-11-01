@@ -1,0 +1,92 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller inquired about the pricing and subsidy for a 3 kW rooftop system. The agent explained that the initial price is ₹1,95,000, which reduces to ₹1,17,000 after applying the government subsidy of ₹78,000. The caller found this price reasonable. The agent then requested the caller's name, their area in Chennai, and a preferred date for a free site survey. Although the caller agreed in principle, they did not provide any of the requested details before the call ended.",
+  "next_action": "callback_required",
+  "extracted_fields": {
+    "phone": "+919876500536"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "intent:quote",
+    "followup:callback",
+    "signal:price_sensitive",
+    "sentiment:positive",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:rooftop-solar",
+    "custom:site-survey",
+    "custom:chennai"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T11:06:28.834174Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500536"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:chennai",
+    "custom:rooftop-solar",
+    "custom:site-survey",
+    "followup:callback",
+    "intent:information",
+    "intent:quote",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "1d2065a8-00aa-4938-b26e-bed7c1ace097",
+    "agentId": "9456b5b5-92ba-4a0c-bbd9-332dd3c942e5",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 50,
+    "band": "warm",
+    "disposition": "interested",
+    "confidence": 0.85,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

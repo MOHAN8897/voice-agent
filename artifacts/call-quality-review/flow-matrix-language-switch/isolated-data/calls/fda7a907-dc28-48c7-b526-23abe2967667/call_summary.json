@@ -1,0 +1,61 @@
+{
+  "call_id": "fda7a907-dc28-48c7-b526-23abe2967667",
+  "language_callback": {
+    "status": "requested",
+    "kind": "language_switch",
+    "id": "3e6f720a-a1b1-4310-a8ee-baf735d1f629",
+    "caller_language": "en-IN",
+    "configured_language": "ta-IN",
+    "summary": "Caller asked to continue in English; call back in English with the same agent."
+  },
+  "disposition": "callback_required",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the delivery fee for a 300 rupee order. The agent replied that orders under 490 rupees incur a 30-rupee delivery fee. The caller then requested to speak in English. The agent agreed to call back in English but ended the call immediately without confirming a specific time for the callback. Language handoff: Caller asked to continue in English; call back in English with the same agent.",
+  "next_action": "Call back in English with the same agent (Callback needed in another language). No callback time has been booked.",
+  "extracted_fields": {
+    "budget": "300 rupees",
+    "phone": "+919876500503",
+    "preferred_language": "en-IN",
+    "callback_requested": "true",
+    "requested_language": "en-IN",
+    "language_switch": "true"
+  },
+  "facts": {
+    "budget": "300 rupees",
+    "phone": "+919876500503",
+    "preferred_language": "en-IN",
+    "callback_requested": "true",
+    "requested_language": "en-IN",
+    "language_switch": "true"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "contact:preferred_language",
+    "custom:delivery-fee",
+    "custom:language-switch",
+    "followup:callback",
+    "followup:language_switch",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:information",
+    "followup:callback",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:delivery-fee",
+    "custom:language-switch"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Language preference: English"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T12:30:51.332433Z",
+  "generation_ok": true
+}

@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-29T17:52:09.531594Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T17:52:14.798475Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_name: శ్రావణి | delivery_locality: మాదాపూర్ | requested_time: రేపు ఉదయం 10 గంటల time | email: sravani.audit@example.invalid"}
+{"turn_seq": 5, "ts": "2026-10-29T17:52:19.790124Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_name: శ్రావణి | delivery_locality: మాదాపూర్ | requested_time: రేపు ఉదయం 10 గంటల time | email: sravani.audit@example.invalid"}
+{"turn_seq": 7, "ts": "2026-10-29T17:52:22.713205Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: శ్రావణి | delivery_locality: మాదాపూర్ | requested_time: రేపు ఉదయం 10 గంటల time | email: sravani.audit@example.invalid"}

@@ -1,0 +1,10 @@
+{"turn_seq": 1, "ts": "2026-10-29T15:42:24.369167Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T15:42:26.930348Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_name: కిరణ్"}
+{"turn_seq": 5, "ts": "2026-10-29T15:42:29.499465Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_name: కిరణ్"}
+{"turn_seq": 7, "ts": "2026-10-29T15:42:32.033573Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: కిరణ్"}
+{"turn_seq": 9, "ts": "2026-10-29T15:42:34.376014Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: కిరణ్\n[Preferences]\nrequested_time: weekend batch"}
+{"turn_seq": 11, "ts": "2026-10-29T15:42:37.180214Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: Madhavi | requested_time: October 30th\n[Preferences]\nrequested_time: weekend batch"}
+{"turn_seq": 13, "ts": "2026-10-29T15:42:39.460556Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: Madhavi | requested_time: October 30th\n[Preferences]\nrequested_time: weekend batch"}
+{"turn_seq": 15, "ts": "2026-10-29T15:42:41.779979Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: Madhavi | requested_time: October 30th\n[Preferences]\nrequested_time: weekend batch"}
+{"turn_seq": 17, "ts": "2026-10-29T15:42:44.441443Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: Madhavi | requested_time: evening 6 PM నుంచి 7 PM మధ్యలో | product: Python course\n[Preferences]\nrequested_time: weekend batch"}
+{"turn_seq": 19, "ts": "2026-10-29T15:42:47.099271Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: Madhavi | requested_time: evening 6 PM నుంచి 7 PM మధ్యలో | product: Python course\n[Preferences]\nrequested_time: weekend batch"}

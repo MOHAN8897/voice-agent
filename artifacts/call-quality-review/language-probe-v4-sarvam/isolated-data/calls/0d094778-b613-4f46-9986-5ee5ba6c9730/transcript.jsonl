@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "for two ACs what will AMC cost one year", "ts": "2026-10-29T19:37:48.658053Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I don't have AMC pricing on hand. We do window AC servicing at 499 rupees and split AC servicing at 599 rupees. Which type of ACs do you have?", "ts": "2026-10-29T19:37:49.217141Z", "brain_latency_ms": 560}

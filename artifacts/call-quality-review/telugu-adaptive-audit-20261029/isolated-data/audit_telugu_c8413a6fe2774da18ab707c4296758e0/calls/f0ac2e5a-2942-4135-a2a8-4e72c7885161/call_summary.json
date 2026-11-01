@@ -1,0 +1,72 @@
+{
+  "call_id": "f0ac2e5a-2942-4135-a2a8-4e72c7885161",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller, Shravani from Madhapur, requested general servicing for her split AC and asked for a technician around 10:00 AM the next day. The agent said the 10:00 AM slot was available and also mentioned a 2:00 PM option. The caller accepted the quoted servicing price of ₹599, asked about inspection fees and potential parts charges, and was told there was no inspection fee and that any replacement parts would be charged at actual MRP after inspection. The caller then clarified whether the appointment was confirmed; the agent explained it was only a request pending team confirmation. The caller requested a callback by 5:00 PM the same day and also asked whether window and split AC pricing and inspection-fee conditions differ. The agent recorded the details and callback request but did not answer the comparison question or confirm the appointment before the call ended politely.",
+  "next_action": "Callback by 5:00 PM today to confirm whether the technician can attend tomorrow at 10:00 AM and answer the window-versus-split AC pricing and inspection-fee questions.",
+  "extracted_fields": {
+    "callback_deadline": "Today by 5:00 PM",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "inspection_fee": "No inspection fee; waived if repair is performed",
+    "locality": "Madhapur",
+    "parts_charges": "Extra, based on actual MRP after inspection",
+    "phone": "+12025550108",
+    "product": "split AC",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు 10 AM",
+    "service": "General split AC servicing",
+    "service_price": "₹599"
+  },
+  "facts": {
+    "callback_deadline": "Today by 5:00 PM",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "inspection_fee": "No inspection fee; waived if repair is performed",
+    "locality": "Madhapur",
+    "parts_charges": "Extra, based on actual MRP after inspection",
+    "phone": "+12025550108",
+    "product": "split AC",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు 10 AM",
+    "service": "General split AC servicing",
+    "service_price": "₹599"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:split-ac-service",
+    "followup:callback",
+    "followup:schedule_pending",
+    "intent:booking",
+    "intent:pricing",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:booking",
+    "intent:pricing",
+    "followup:callback",
+    "followup:schedule_pending",
+    "signal:price_sensitive",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:split-ac-service",
+    "custom:madhapur",
+    "custom:morning-slot"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Appointment was not yet confirmed.",
+    "Caller requested clarification on whether window AC and split AC pricing and inspection-fee conditions differ."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T11:06:59.501548Z",
+  "generation_ok": true
+}

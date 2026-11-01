@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "इसे कल सुबह 11 बजे के लिए बुक करो और अभी booking confirm कर दो।", "ts": "2026-10-29T20:17:40.478226Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ठीक है, कल सुबह 11 बजे की appointment के लिए मुझे आपका नाम और क्या problem है, ये बता दीजिए ताकि front desk इसे confirm कर सके।", "ts": "2026-10-29T20:17:54.835029Z"}
+{"seq": 3, "role": "user", "text": "क्या ये confirm हो गया? मुझे booking number दो।", "ts": "2026-10-29T20:17:54.836779Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "अभी तक booking confirm नहीं हुई है, इसलिए कोई booking number नहीं दिया जा सकता। अभी तक आपका नाम और problem details नहीं मिली हैं, जो front desk को booking confirm करने के लिए चाहिए। अपना नाम और problem बता दीजिए।", "ts": "2026-10-29T20:17:58.298723Z"}
+{"seq": 5, "role": "user", "text": "ठीक है, thanks.", "ts": "2026-10-29T20:17:58.300729Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "अभी तक booking confirm नहीं हुई है, इसलिए कोई booking number नहीं दिया जा सकता। अभी तक आपका नाम और problem details नहीं मिली हैं, जो front desk को booking confirm करने के लिए चाहिए। अपना नाम और problem बता दीजिए।", "ts": "2026-10-29T20:18:01.073042Z"}

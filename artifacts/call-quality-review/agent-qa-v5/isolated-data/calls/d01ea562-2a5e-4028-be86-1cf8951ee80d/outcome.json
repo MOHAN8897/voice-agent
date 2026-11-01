@@ -1,0 +1,114 @@
+{
+  "disposition": "converted",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The agent called Lakshmi Reddy to offer product details, and the customer requested information about the Herbal Face Cream and Herbal Hair Oil. The agent shared ingredient lists and prices, but could not provide usage instructions, delivery timelines, discounts, or payment timing. Despite these objections, Lakshmi Reddy agreed to proceed and provided her contact details and delivery address. The agent confirmed the order for two hair oil bottles and one face cream, and the call ended with the customer seeking clarification on the next steps.",
+  "next_action": "no_outcome",
+  "extracted_fields": {
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919700000007",
+    "product": "Herbal Hair Oil, Herbal Face Cream",
+    "quantity": "2, 1",
+    "total_price": "1597 rupees"
+  },
+  "objections": [
+    "Usage instructions for the face cream were unavailable.",
+    "Delivery time was unavailable.",
+    "Discount details were unavailable.",
+    "Payment timing was unavailable."
+  ],
+  "notes": "",
+  "tags": [
+    "intent:purchase",
+    "sentiment:positive",
+    "signal:price_sensitive",
+    "followup:send_quote"
+  ],
+  "custom_tags": [
+    "custom:herbal-skincare",
+    "custom:hair-oil-order"
+  ],
+  "unanswered_questions": [
+    "How do I use the face cream?",
+    "How long will the delivery take?",
+    "Is there any discount on this order?",
+    "Do I need to pay now?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T16:18:41.263129Z",
+  "generation_ok": true,
+  "summary_language": "en-IN",
+  "facts": {
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919700000007",
+    "product": "Herbal Hair Oil, Herbal Face Cream",
+    "quantity": "2, 1",
+    "total_price": "1597 rupees"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:hair-oil-order",
+    "custom:herbal-skincare",
+    "followup:send_quote",
+    "intent:purchase",
+    "outcome:converted",
+    "sentiment:positive",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "ddda7f4d-84fc-4626-a044-42c30c9d123e",
+    "agentId": "8fbc9848-05fa-4d72-b6be-57c2ae899e1c",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "converted",
+    "confidence": 0.85,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "converted"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

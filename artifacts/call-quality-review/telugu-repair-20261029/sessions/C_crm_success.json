@@ -1,0 +1,1064 @@
+{
+  "scenario": {
+    "id": "C_crm_success",
+    "business": "C",
+    "kind": "crm_success",
+    "integration": "success",
+    "policy": "review",
+    "max_turns": 6,
+    "goal": "Ask Python fees then explicitly ask to create your contact in their CRM/customer-record system. Provide Kiran and kiran.audit@example.invalid, qualification B.Com, weekend preference. Ask whether the record was actually saved. Ask to save the same details a second time once, then end. Do not ask for a callback or registration booking."
+  },
+  "agent": {
+    "id": "C",
+    "key": "academy",
+    "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+    "name": "Teja Data Academy",
+    "agent_name": "Madhavi",
+    "role": "counsellor",
+    "industry": "education",
+    "brief": "Agent name Madhavi, company Teja Data Academy.\nPhone counselling and course admissions in Telugu.\nWe offer practical Python with Data Analytics certification course.\nDuration: 8 weeks online live classes with hands-on projects.\nBatches: Weekday batch 8:00 PM to 9:00 PM (Mon-Fri); Weekend batch 10:00 AM to 1:00 PM (Sat-Sun).\nFee: Final fee is 8,999 rupees total. An old leaflet mentions 12000/15000 rupees, discard that old fee. Current fee 8,999 rupees only.\nNo installment discounts.\nEligibility: Any graduate (BTech, BSc, BCom) or final year college student. Basic computer knowledge needed, prior coding not required.\nPlacement policy: 100% placement assistance provided (resume building, interview preparation, job referrals); strictly NO job guarantee or salary promise.\nGoal: answer course curriculum, fees, batches and timing questions.\nIf interested in free demo session or admission counselling, collect preferred name, email, qualification and preferred batch.\nNo payment collected over the phone.\nRefund policy: No refund once classes start after the first week.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Madhavi",
+      "company_name": "Teja Data Academy",
+      "role": "Course counselling and demo registration",
+      "permitted_next_steps": "Collect student name, email, educational qualification and batch preference (weekday/weekend) to book a free demo class or counsellor callback.",
+      "fee_terms": "Final course fee is 8,999 rupees total. Disregard any old fees. No installment discounts.",
+      "placement_policy": "Placement assistance provided (interview prep, resume building, referrals); strictly no job guarantee.",
+      "eligibility_rules": "Any graduate or final year student; no prior coding experience required.",
+      "forbidden_actions": "Never guarantee a job, salary package or placement. Never collect fees or credit card numbers on call."
+    },
+    "user_id": "903ba6dd-ad2a-47cf-a44a-36ef191127f3",
+    "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601"
+  },
+  "call_id": "aaa01c3f-179c-4040-8a28-5e8bd9e9a4ca",
+  "session_id": "adaptive-8d7a51fd67f34ceb8792a858a8185f7b",
+  "phone": "+12025550121",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_3f4f01b76299",
+  "turn_index": 4,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నమస్తే, నాకు Python training fees ఎంతో చెప్పండి. నేను B.Com చదివాను, weekends లో attend అవ్వగలను.",
+        "intends_end": false,
+        "intent": "Inquire about Python course fees and mention availability",
+        "elapsed_s": 0.625
+      },
+      "spoken": "Python with Data Analytics course మొత్తం fee eight thousand nine hundred ninety nine rupees అవుతుంది. మీరు B. Com చదివారు కాబట్టి, weekend batch శని, ఆదివారాలు ఉదయం ten AM నుంచి మధ్యాహ్నం one PM వరకు ఉంటుంది. మీకు ఈ batch లో చేరాలని ఉందా?",
+      "elapsed_s": 3.703,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "education": "B.Com"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        1070,
+        1071,
+        1072,
+        1073,
+        1074,
+        1075
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "Python with Data Analytics course మొత్తం fee eight thousand nine hundred ninety nine rupees అవుతుంది. మీరు B. Com చదివారు కాబట్టి, weekend batch శని, ఆదివారాలు ఉదయం ten AM నుంచి మధ్యాహ్నం one PM వరకు ఉంటుంది. మీకు ఈ batch లో చేరాలని ఉందా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4761,
+            "output_tokens": 55,
+            "cached_tokens": 3584,
+            "total_tokens": 4816
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 2,
+      "caller": {
+        "utterance": "సరే, eight thousand nine hundred ninety nine rupees fees ఓకే. నా details ని మీ system లో save చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com, weekend preference. ఇది save చేశారా లేదా ఒకసారి చెప్పండి.",
+        "intends_end": false,
+        "intent": "Ask to save contact details in CRM and confirm if saved",
+        "elapsed_s": 0.656
+      },
+      "spoken": "క్షమించండి, మీ details save చేయడం కుదరలేదు.",
+      "elapsed_s": 4.5,
+      "memory_before": {
+        "facts": {
+          "education": "B.Com"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "education": "B.Com",
+          "caller_name": "కిరణ్",
+          "email": "kiran.audit@example.invalid",
+          "qualification": "B.Com"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        1077,
+        1078,
+        1079,
+        1080,
+        1081,
+        1082,
+        1083
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "క్షమించండి, మీ details save చేయడం కుదరలేదు.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5828,
+            "output_tokens": 51,
+            "cached_tokens": 4128,
+            "total_tokens": 5879
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [],
+          "order_proof": false,
+          "action_outcome_unconfirmed": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 3,
+      "caller": {
+        "utterance": "అవునా, save అవ్వలేదా? సరే, మళ్ళీ ఒకసారి నా details save చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com, weekend preference. ఇది సరిగ్గా save అయిందో లేదో మళ్ళీ ఒకసారి confirm చేయండి.",
+        "intends_end": false,
+        "intent": "Re-request saving customer details and verify CRM save status",
+        "elapsed_s": 0.735
+      },
+      "spoken": "క్షమించండి, system లో మీ details save అవ్వలేదు.",
+      "elapsed_s": 4.094,
+      "memory_before": {
+        "facts": {
+          "education": "B.Com",
+          "caller_name": "కిరణ్",
+          "email": "kiran.audit@example.invalid",
+          "qualification": "B.Com"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "education": "B.Com",
+          "caller_name": "కిరణ్",
+          "email": "kiran.audit@example.invalid",
+          "qualification": "B.Com"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, eight thousand nine hundred ninety nine rupees fees ఓకే. నా details ని మీ system లో save చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com, weekend preference. ఇది save చేశారా లేదా ఒకసారి చెప్పండి.\nassistant: క్షమించండి, మీ details save చేయడం కుదరలేదు.\nuser: అవునా, save అవ్వలేదా? సరే, మళ్ళీ ఒకసారి నా details save చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com, weekend preference. ఇది సరిగ్గా save అయిందో లేదో మళ్ళీ ఒకసారి confirm చేయండి.\nassistant: క్షమించండి, system లో మీ details save అవ్వలేదు."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        1085,
+        1086,
+        1087,
+        1088,
+        1089,
+        1090,
+        1091
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "క్షమించండి, system లో మీ details save అవ్వలేదు.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5801,
+            "output_tokens": 49,
+            "cached_tokens": 4128,
+            "total_tokens": 5850
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [],
+          "order_proof": false,
+          "action_outcome_unconfirmed": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 4,
+      "caller": {
+        "utterance": "రెండు సార్లు save అవ్వలేదా? సరే, ప్రస్తుతానికి అంతే. నాకు ఇంకేమీ అవసరం లేదు, call end చేస్తున్నాను.",
+        "intends_end": true,
+        "intent": "Conclude the call after a repeated system failure to save details.",
+        "elapsed_s": 0.656
+      },
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 2.797,
+      "memory_before": {
+        "facts": {
+          "education": "B.Com",
+          "caller_name": "కిరణ్",
+          "email": "kiran.audit@example.invalid",
+          "qualification": "B.Com"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, eight thousand nine hundred ninety nine rupees fees ఓకే. నా details ని మీ system లో save చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com, weekend preference. ఇది save చేశారా లేదా ఒకసారి చెప్పండి.\nassistant: క్షమించండి, మీ details save చేయడం కుదరలేదు.\nuser: అవునా, save అవ్వలేదా? సరే, మళ్ళీ ఒకసారి నా details save చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com, weekend preference. ఇది సరిగ్గా save అయిందో లేదో మళ్ళీ ఒకసారి confirm చేయండి.\nassistant: క్షమించండి, system లో మీ details save అవ్వలేదు."
+      },
+      "memory_after": {
+        "facts": {
+          "education": "B.Com",
+          "caller_name": "కిరణ్",
+          "email": "kiran.audit@example.invalid",
+          "qualification": "B.Com"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, eight thousand nine hundred ninety nine rupees fees ఓకే. నా details ని మీ system లో save చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com, weekend preference. ఇది save చేశారా లేదా ఒకసారి చెప్పండి.\nassistant: క్షమించండి, మీ details save చేయడం కుదరలేదు.\nuser: అవునా, save అవ్వలేదా? సరే, మళ్ళీ ఒకసారి నా details save చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com, weekend preference. ఇది సరిగ్గా save అయిందో లేదో మళ్ళీ ఒకసారి confirm చేయండి.\nassistant: క్షమించండి, system లో మీ details save అవ్వలేదు."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        1093,
+        1094,
+        1095
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "response_contract": "speech_text",
+          "finish_reason": "stop",
+          "server_owned_close": true,
+          "end_call": {
+            "should_end": true,
+            "reason": "goodbye",
+            "contact_preference": "end_call",
+            "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "Python with Data Analytics course మొత్తం fee eight thousand nine hundred ninety nine rupees అవుతుంది. మీరు B. Com చదివారు కాబట్టి, weekend batch శని, ఆదివారాలు ఉదయం ten AM నుంచి మధ్యాహ్నం one PM వరకు ఉంటుంది. మీకు ఈ batch లో చేరాలని ఉందా?",
+      "at": 127875.671
+    },
+    {
+      "turn": 2,
+      "text": "క్షమించండి, మీ details save చేయడం కుదరలేదు.",
+      "at": 127880.875
+    },
+    {
+      "turn": 3,
+      "text": "క్షమించండి, system లో మీ details save అవ్వలేదు.",
+      "at": 127885.687
+    },
+    {
+      "turn": 4,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 127888.062
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "Python with Data Analytics course మొత్తం fee eight thousand nine hundred ninety nine rupees అవుతుంది. మీరు B. Com చదివారు కాబట్టి, weekend batch శని, ఆదివారాలు ఉదయం ten AM నుంచి మధ్యాహ్నం one PM వరకు ఉంటుంది. మీకు ఈ batch లో చేరాలని ఉందా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4761,
+        "output_tokens": 55,
+        "cached_tokens": 3584,
+        "total_tokens": 4816
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "క్షమించండి, మీ details save చేయడం కుదరలేదు.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5828,
+        "output_tokens": 51,
+        "cached_tokens": 4128,
+        "total_tokens": 5879
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [],
+      "order_proof": false,
+      "action_outcome_unconfirmed": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "క్షమించండి, system లో మీ details save అవ్వలేదు.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5801,
+        "output_tokens": 49,
+        "cached_tokens": 4128,
+        "total_tokens": 5850
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [],
+      "order_proof": false,
+      "action_outcome_unconfirmed": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "response_contract": "speech_text",
+      "finish_reason": "stop",
+      "server_owned_close": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "goodbye",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "Python training fees ఎంతో చెప్పండి",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "education",
+            "value": "B.Com"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నమస్తే, నాకు Python training fees ఎంతో చెప్పండి. నేను B.Com చదివాను, weekends లో attend అవ్వగలను.",
+      "at": 127874.859
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "ఇది save చేశారా లేదా ఒకసారి చెప్పండి",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "write",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "కిరణ్"
+          },
+          {
+            "op": "set_fact",
+            "key": "email",
+            "value": "kiran.audit@example.invalid"
+          },
+          {
+            "op": "set_fact",
+            "key": "qualification",
+            "value": "B.Com"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, eight thousand nine hundred ninety nine rupees fees ఓకే. నా details ని మీ system లో save చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com, weekend preference. ఇది save చేశారా లేదా ఒకసారి చెప్పండి.",
+      "at": 127880.281
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "Confirm whether the details were saved correctly.",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "write",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "అవునా, save అవ్వలేదా? సరే, మళ్ళీ ఒకసారి నా details save చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com, weekend preference. ఇది సరిగ్గా save అయిందో లేదో మళ్ళీ ఒకసారి confirm చేయండి.",
+      "at": 127885.093
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "decision": "close",
+        "reason": "goodbye",
+        "evidence": "నాకు ఇంకేమీ అవసరం లేదు, call end చేస్తున్నాను",
+        "remaining_request": "",
+        "contact_intent": "end_this_call",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": true,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "transcript": "రెండు సార్లు save అవ్వలేదా? సరే, ప్రస్తుతానికి అంతే. నాకు ఇంకేమీ అవసరం లేదు, call end చేస్తున్నాను.",
+      "at": 127888.062
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 4,
+      "at": 127888.062
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 127889.125,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 127875.703
+    },
+    {
+      "turn_seq": 3,
+      "at": 127880.89
+    },
+    {
+      "turn_seq": 5,
+      "at": 127885.734
+    },
+    {
+      "turn_seq": 7,
+      "at": 127888.093
+    }
+  ],
+  "started_at": "2026-10-29T17:52:28.573899+00:00",
+  "errors": [],
+  "brain_checksum": "badd2ebe1baeffdab06fcc4ff604a27d9b8163536e58ab0501a7e6b9b2c0f782",
+  "runtime_checksum": "7210cc52c2afe60e1b9cf6bd3960d7f18798aec9f4a7ca0c038e4ded88c2dcb3",
+  "available_tools": [
+    "HUBSPOT_CREATE_CONTACT",
+    "GOOGLECALENDAR_CREATE_EVENT",
+    "GOOGLECALENDAR_FIND_FREE_SLOTS",
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 127874.234,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 2,
+      "start_s": 127878.906,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 40,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 3,
+      "start_s": 127883.75,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 121,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 4,
+      "start_s": 127888.062,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 121,
+      "rolling_chars": 569
+    }
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "interested",
+    "disposition_confidence": 0.97,
+    "summary_te": "",
+    "summary_en": "The caller asked for Python training fees and explained that they have a B.Com qualification and can attend on weekends. The agent quoted a total fee of ₹8,999 and described a Saturday-Sunday batch from 10:00 AM to 1:00 PM. The caller accepted the fee, requested that their details be saved, and provided the name Kiran, email kiran.audit@example.invalid, B.Com qualification, and weekend preference. The agent stated twice that the details could not be saved. The caller ended the call without requesting anything further, and no enrollment or data-saving action was confirmed.",
+    "next_action": "Follow up to capture the caller's details and assist with enrollment in the weekend Python with Data Analytics batch.",
+    "extracted_fields": {
+      "availability": "Weekends",
+      "batch_schedule": "Saturday and Sunday, 10:00 AM-1:00 PM",
+      "caller_name": "కిరణ్",
+      "course": "Python with Data Analytics",
+      "education": "B.Com",
+      "email": "kiran.audit@example.invalid",
+      "fee": "₹8,999",
+      "name": "Kiran",
+      "phone": "+12025550121",
+      "qualification": "B.Com"
+    },
+    "objections": [
+      "Caller requested their details to be saved, but the system failed to save them twice."
+    ],
+    "notes": "The caller accepted the quoted fee but enrollment was not completed because the details could not be saved.",
+    "tags": [
+      "intent:information",
+      "intent:purchase",
+      "signal:ready_to_buy",
+      "action:required",
+      "followup:send_info"
+    ],
+    "custom_tags": [
+      "custom:python-training",
+      "custom:data-analytics",
+      "custom:weekend-batch"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T17:52:50.461227Z",
+    "generation_ok": true,
+    "facts": {
+      "availability": "Weekends",
+      "batch_schedule": "Saturday and Sunday, 10:00 AM-1:00 PM",
+      "caller_name": "కిరణ్",
+      "course": "Python with Data Analytics",
+      "education": "B.Com",
+      "email": "kiran.audit@example.invalid",
+      "fee": "₹8,999",
+      "name": "Kiran",
+      "phone": "+12025550121",
+      "qualification": "B.Com"
+    },
+    "disclosure_status": null,
+    "contact_preference": "end_call",
+    "status_tags": [
+      "action:required",
+      "contact:email_known",
+      "contact:name_known",
+      "contact:phone_known",
+      "custom:data-analytics",
+      "custom:python-training",
+      "followup:send_info",
+      "intent:information",
+      "intent:purchase",
+      "outcome:interested",
+      "signal:objection",
+      "signal:ready_to_buy"
+    ],
+    "lead": {
+      "leadId": "f140b838-689a-4539-85dc-85615bd4f902",
+      "agentId": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+      "stage": "contacted",
+      "action": "created"
+    },
+    "lead_assessment": {
+      "score": 50,
+      "band": "warm",
+      "disposition": "interested",
+      "confidence": 0.97,
+      "components": [
+        {
+          "signal": "interest",
+          "points": 40,
+          "max": 40,
+          "evidence": "interested"
+        },
+        {
+          "signal": "requirements",
+          "points": 0,
+          "max": 25,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "timing",
+          "points": 0,
+          "max": 25,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "contact",
+          "points": 10,
+          "max": 10,
+          "evidence": "phone"
+        }
+      ],
+      "version": 1,
+      "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+      "reason": "recorded_signals"
+    },
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "aaa01c3f-179c-4040-8a28-5e8bd9e9a4ca",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+        "session_id": "adaptive-8d7a51fd67f34ceb8792a858a8185f7b",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_3f4f01b76299",
+        "started_at": "2026-10-29 17:52:28.559086+00:00",
+        "ended_at": "2026-10-29 17:52:46.330065+00:00",
+        "duration_sec": 17,
+        "disposition": "interested",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/aaa01c3f-179c-4040-8a28-5e8bd9e9a4ca/",
+        "end_reason": "goodbye",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "action:required",
+          "contact:email_known",
+          "contact:name_known",
+          "contact:phone_known",
+          "custom:data-analytics",
+          "custom:python-training",
+          "followup:send_info",
+          "intent:information",
+          "intent:purchase",
+          "outcome:interested",
+          "signal:objection",
+          "signal:ready_to_buy"
+        ],
+        "last_heartbeat_at": "2026-10-29 17:52:28.559086+00:00",
+        "created_at": "2026-10-29 17:52:28.559086+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [],
+    "dnd": [],
+    "leads": [
+      {
+        "lead_id": "f140b838-689a-4539-85dc-85615bd4f902",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+        "name": "Kiran",
+        "phone": "+12025550121",
+        "email": "kiran.audit@example.invalid",
+        "stage": "contacted",
+        "notes": "[Call reference: aaa01c3f-179c-4040-8a28-5e8bd9e9a4ca]\nThe caller asked for Python training fees and explained that they have a B.Com qualification and can attend on weekends. The agent quoted a total fee of ₹8,999 and described a Saturday-Sunday batch from 10:00 AM to 1:00 PM. The caller accepted the fee, requested that their details be saved, and provided the name Kiran, email kiran.audit@example.invalid, B.Com qualification, and weekend preference. The agent stated twice that the details could not be saved. The caller ended the call without requesting anything further, and no enrollment or data-saving action was confirmed.\n\nNext step: Follow up to capture the caller's details and assist with enrollment in the weekend Python with Data Analytics batch.\n\nObjections: Caller requested their details to be saved, but the system failed to save them t\n\nCall outcome: interested (97% confidence)",
+        "created_at": "2026-10-29 17:52:50.479327+00:00",
+        "updated_at": "2026-10-29 17:52:50.479327+00:00"
+      }
+    ],
+    "tools": [],
+    "assessments": [
+      {
+        "id": "a7367539-4071-4cf0-9302-c0b8a277847f",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "lead_id": "f140b838-689a-4539-85dc-85615bd4f902",
+        "source_call_id": "aaa01c3f-179c-4040-8a28-5e8bd9e9a4ca",
+        "assessment": {
+          "score": 50,
+          "band": "warm",
+          "disposition": "interested",
+          "confidence": 0.97,
+          "components": [
+            {
+              "signal": "interest",
+              "points": 40,
+              "max": 40,
+              "evidence": "interested"
+            },
+            {
+              "signal": "requirements",
+              "points": 0,
+              "max": 25,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "timing",
+              "points": 0,
+              "max": 25,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "contact",
+              "points": 10,
+              "max": 10,
+              "evidence": "phone"
+            }
+          ],
+          "version": 1,
+          "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+          "reason": "recorded_signals"
+        },
+        "updated_at": "2026-10-29 17:52:46.330065+00:00"
+      }
+    ]
+  },
+  "metadata": {
+    "call_id": "aaa01c3f-179c-4040-8a28-5e8bd9e9a4ca",
+    "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+    "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+    "session_id": "adaptive-8d7a51fd67f34ceb8792a858a8185f7b",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_3f4f01b76299",
+    "started_at": "2026-10-29T17:52:28.559086+00:00",
+    "status": "active",
+    "storage_path": "data/calls/aaa01c3f-179c-4040-8a28-5e8bd9e9a4ca/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550121",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 59032,
+        "output_tokens": 2041,
+        "cached_tokens": 29536
+      }
+    },
+    "contact_preference": "end_call",
+    "hangup_reason": "goodbye",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 62,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": true,
+    "callback_close_phase": "idle",
+    "disconnected_at": "2026-10-29T17:52:46.330065+00:00",
+    "ended_at": "2026-10-29T17:52:46.330065+00:00",
+    "end_reason": "goodbye",
+    "duration_sec": 17.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 17.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.003541666666666667,
+      "telephony_inr": 0.33741458333333335,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.003541666666666667,
+      "telnyx_inr": 0.33741458333333335,
+      "telnyx_voice_api_usd": 0.0005666666666666667,
+      "telnyx_sip_usd": 0.0014166666666666666,
+      "telnyx_media_stream_usd": 0.0009916666666666667,
+      "telnyx_call_recording_usd": 0.0005666666666666667,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.27,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-29",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.0125,
+      "telephony_inr_per_min": 1.1908750000000001,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.0125,
+      "telnyx_inr_per_min": 1.1908750000000001,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_0f8bdddd2d774e69016ae387ef268c87d1a4ab74d3b67dd7bd": {
+          "input_tokens": 1449,
+          "output_tokens": 349,
+          "cached_tokens": 0,
+          "cache_write_tokens": 1446,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.0007809
+        }
+      },
+      "post_call_analysis_usd": 0.0007809,
+      "post_call_analysis_inr": 0.07439634299999999
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నమస్తే, నాకు Python training fees ఎంతో చెప్పండి. నేను B.Com చదివాను, weekends లో attend అవ్వగలను.",
+      "ts": "2026-10-29T17:52:29.212520Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "Python with Data Analytics course మొత్తం fee eight thousand nine hundred ninety nine rupees అవుతుంది. మీరు B. Com చదివారు కాబట్టి, weekend batch శని, ఆదివారాలు ఉదయం ten AM నుంచి మధ్యాహ్నం one PM వరకు ఉంటుంది. మీకు ఈ batch లో చేరాలని ఉందా?",
+      "ts": "2026-10-29T17:52:32.871215Z"
+    },
+    {
+      "seq": 3,
+      "role": "user",
+      "text": "సరే, eight thousand nine hundred ninety nine rupees fees ఓకే. నా details ని మీ system లో save చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com, weekend preference. ఇది save చేశారా లేదా ఒకసారి చెప్పండి.",
+      "ts": "2026-10-29T17:52:33.597150Z",
+      "partial": false
+    },
+    {
+      "seq": 4,
+      "role": "assistant",
+      "text": "క్షమించండి, మీ details save చేయడం కుదరలేదు.",
+      "ts": "2026-10-29T17:52:38.062061Z"
+    },
+    {
+      "seq": 5,
+      "role": "user",
+      "text": "అవునా, save అవ్వలేదా? సరే, మళ్ళీ ఒకసారి నా details save చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com, weekend preference. ఇది సరిగ్గా save అయిందో లేదో మళ్ళీ ఒకసారి confirm చేయండి.",
+      "ts": "2026-10-29T17:52:38.847603Z",
+      "partial": false
+    },
+    {
+      "seq": 6,
+      "role": "assistant",
+      "text": "క్షమించండి, system లో మీ details save అవ్వలేదు.",
+      "ts": "2026-10-29T17:52:42.871780Z"
+    },
+    {
+      "seq": 7,
+      "role": "user",
+      "text": "రెండు సార్లు save అవ్వలేదా? సరే, ప్రస్తుతానికి అంతే. నాకు ఇంకేమీ అవసరం లేదు, call end చేస్తున్నాను.",
+      "ts": "2026-10-29T17:52:43.602669Z",
+      "partial": false
+    },
+    {
+      "seq": 8,
+      "role": "assistant",
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T17:52:45.258518Z"
+    }
+  ],
+  "wall_elapsed_s": 22.047,
+  "simulated_exchange_timeline_s": 80,
+  "request_count": 27
+}

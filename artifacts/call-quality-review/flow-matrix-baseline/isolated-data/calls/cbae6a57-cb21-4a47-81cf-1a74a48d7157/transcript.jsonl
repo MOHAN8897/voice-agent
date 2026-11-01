@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "What is the delivery fee for a 300 rupees order?", "ts": "2026-10-30T10:37:53.825954Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "For orders below 499 rupees, there is a 30 rupees delivery fee, so your 300 rupees order will have a 30 rupees delivery fee.", "ts": "2026-10-30T10:37:56.772623Z"}

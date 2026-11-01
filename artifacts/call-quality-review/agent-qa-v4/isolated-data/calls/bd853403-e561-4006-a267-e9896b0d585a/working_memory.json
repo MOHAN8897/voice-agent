@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "email": "mohansaiteja.99@gmail.com"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: అలాగే, వాళ్ళు confirm చేశాక నాకు మళ్ళీ call చేస్తారా?\nassistant: తప్పకుండా, మీ callback request ని note చేసుకుంటున్నాను. మీకు ఏ time కి call చేస్తే convenient గా ఉంటుంది?\nuser: రేపు ఉదయం 11 AM కి మీ team తో ఒక short call arrange చేయండి, order place చేయడానికి.\nassistant: సరే, రేపు ఉదయం 11 AM కి మీ team తో ఒక short call arrange చేయడానికి నేను ఇది మా team కి pass చేస్తున్నాను. వాళ్ళు త్వరలో మీకు confirm చేస్తారు.\nuser: సరే, మరి ఆ 11 AM call book అయిందా లేదా ఒకసారి confirm చేస్తారా?\nassistant: మీ 11 AM callback request ని save చేశాను. మా team త్వరలో మీకు confirm చేస్తారు."
+}

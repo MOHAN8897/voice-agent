@@ -1,0 +1,51 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller requested to book a service for tomorrow at 11 AM and immediately asked for a booking confirmation and number. The agent explained that the booking could not be confirmed yet because essential details such as the specific appliance requiring service and the service area had not been provided. The caller then asked again if the booking was confirmed and for the booking number. The agent reiterated that no booking or number was available yet and requested the missing details again. The caller accepted this and ended the call.",
+  "next_action": "No further action required.",
+  "extracted_fields": {
+    "phone": "+919876500055",
+    "requested_time": "tomorrow 11 AM"
+  },
+  "objections": [
+    "Booking was requested without providing appliance details or service area."
+  ],
+  "notes": "",
+  "tags": [
+    "sentiment:neutral",
+    "intent:booking",
+    "action:required",
+    "followup:schedule_pending",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:service-booking"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T20:23:17.630632Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500055",
+    "requested_time": "tomorrow 11 AM"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:service-booking",
+    "followup:schedule_pending",
+    "intent:booking",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

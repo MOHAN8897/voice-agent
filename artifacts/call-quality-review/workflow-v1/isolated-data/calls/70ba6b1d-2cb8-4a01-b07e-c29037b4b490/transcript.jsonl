@@ -1,0 +1,7 @@
+{"seq": 1, "role": "user", "text": "ನನಗೆ 200 matte ವಿಸಿಟಿಂಗ್ ಕಾರ್ಡ್ಸ್ ಬೇಕು.", "ts": "2026-10-29T20:19:49.183957Z", "partial": false}
+{"seq": 2, "role": "user", "text": "ನನ್ನ ಹೆಸರು ರವಿ ಕುಮಾರ್. ವಿಜಯವಾಡದ 12 MG Road-ಗೆ ಡೆಲಿವರಿ ಮಾಡಿ.", "ts": "2026-10-29T20:19:51.291917Z", "partial": false}
+{"seq": 3, "role": "assistant", "text": "ಸರಿ ರವಿ ಕುಮಾರ್ ಅವರೇ. 200 matte finish cards-ಗೆ ₹700 ಆಗುತ್ತೆ. ವಿಜಯವಾಡದಲ್ಲಿ artwork approve ಆದ ಮೇಲೆ 3 working days-ನಲ್ಲಿ delivery ಆಗುತ್ತೆ. ನಿಮ್ಮ delivery address 12 MG Road, ವಿಜಯವಾಡ ಅಂತ confirm ಮಾಡಿದ್ದೀರಾ, ಸರಿನಾ?", "ts": "2026-10-29T20:19:55.416168Z"}
+{"seq": 4, "role": "user", "text": "ಹೌದು, ದಯವಿಟ್ಟು order ಕನ್ಫರ್ಮ್ ಮಾಡಿ.", "ts": "2026-10-29T20:19:55.417209Z", "partial": false}
+{"seq": 5, "role": "assistant", "text": "ಸರಿ ರವಿ ಕುಮಾರ್ ಅವರೇ. ನಿಮ್ಮ order confirm ಆಗಿದೆ: 200 matte finish visiting cards, delivery address 12 MG Road, ವಿಜಯವಾಡ. Artwork approve ಆದ ಮೇಲೆ 3 working days-ನಲ್ಲಿ delivery ಆಗುತ್ತೆ. Payment cash on delivery ಇರುತ್ತೆ.", "ts": "2026-10-29T20:19:58.838171Z"}
+{"seq": 6, "role": "user", "text": "ಥ್ಯಾಂಕ್ಸ್, ಅಷ್ಟೇ.", "ts": "2026-10-29T20:19:58.838171Z", "partial": false}
+{"seq": 7, "role": "assistant", "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.", "ts": "2026-10-29T20:19:59.822264Z"}

@@ -1,0 +1,80 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "એજન્ટે ગ્રાહકને કૉલ કર્યો હતો. ગ્રાહકે એલોવેરા જ્યુસ અને હેર ઓઇલના ભાવ અને કદ વિશે પૂછપરછ કરી. એજન્ટે એલોવેરા જ્યુસના ₹399 અને હેર ઓઇલના ₹499 જણાવ્યા, અને કુલ ₹898 નો ભાવ આપ્યો. ગ્રાહકે કુકાટપલ્લી, હૈદરાબાદમાં ડિલિવરી વિશે પૂછ્યું, પરંતુ એજન્ટ પાસે તે માહિતી ન હતી. ડિલિવરીની ખાતરી ન મળતાં ગ્રાહકે અત્યારે ઓર્ડર ન કરવાનો નિર્ણય લીધો અને કૉલ પૂરો કર્યો.",
+  "summary_en": "The agent called the customer to inquire about product interest. The customer asked for the prices and sizes of aloe vera juice and hair oil, and the agent shared that the items cost ₹399 and ₹499 respectively, totaling ₹898. When the customer provided their delivery address in Kukatpally, Hyderabad, the agent stated that delivery details were unavailable. Because the agent could not confirm delivery to that location, the customer decided not to place an order at this time, and the call ended.",
+  "next_action": null,
+  "extracted_fields": {
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "delivery_locality": "Kukatpally, Hyderabad",
+    "phone": "+919700000020",
+    "product_1": "Aloe Vera Juice",
+    "product_1_price": "₹399",
+    "product_1_size": "500 ml",
+    "product_2": "Herbal Hair Oil",
+    "product_2_price": "₹499",
+    "product_2_size": "200 ml"
+  },
+  "objections": [
+    "Delivery to Kukatpally, Hyderabad is not confirmed."
+  ],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "signal:objection",
+    "sentiment:neutral",
+    "followup:send_quote"
+  ],
+  "custom_tags": [
+    "custom:aloe-vera-juice",
+    "custom:hair-oil",
+    "custom:delivery-inquiry"
+  ],
+  "unanswered_questions": [
+    "Does the agent deliver to Kukatpally, Hyderabad?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T16:48:34.645582Z",
+  "generation_ok": true,
+  "summary_language": "gu-IN",
+  "facts": {
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "delivery_locality": "Kukatpally, Hyderabad",
+    "phone": "+919700000020",
+    "product_1": "Aloe Vera Juice",
+    "product_1_price": "₹399",
+    "product_1_size": "500 ml",
+    "product_2": "Herbal Hair Oil",
+    "product_2_price": "₹499",
+    "product_2_size": "200 ml"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:aloe-vera-juice",
+    "custom:delivery-inquiry",
+    "custom:hair-oil",
+    "followup:send_quote",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": {
+    "score": 0,
+    "band": "disqualified",
+    "disposition": "not_interested",
+    "confidence": 0.85,
+    "components": [],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "not_interested"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

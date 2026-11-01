@@ -1,0 +1,54 @@
+{
+  "call_id": "a2c82cf6-eacc-47d8-b2e8-4a227800fcdf",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller contacted support because they were experiencing a toothache and requested a dental appointment for tomorrow at 11:00 AM. The agent informed the caller that the consultation fee is ₹300. The caller identified himself as Kiran. The agent noted the requested time and name but explained that they did not have a confirmation receipt on hand. The agent stated that the front desk would verify the details and call the caller back shortly to confirm. The caller accepted this and ended the call.",
+  "next_action": "Front desk to verify details and call the caller back to confirm the appointment.",
+  "extracted_fields": {
+    "caller_name": "కిరణ్",
+    "name": "Kiran",
+    "phone": "+919876500544",
+    "requested_time": "రేపు ఉదయం 11 కి",
+    "slot": "Tomorrow at 11:00 AM"
+  },
+  "facts": {
+    "caller_name": "కిరణ్",
+    "name": "Kiran",
+    "phone": "+919876500544",
+    "requested_time": "రేపు ఉదయం 11 కి",
+    "slot": "Tomorrow at 11:00 AM"
+  },
+  "status_tags": [
+    "action:required",
+    "action:urgent",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:dental-appointment",
+    "followup:callback",
+    "followup:site_visit",
+    "intent:booking",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:needs_approval",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:booking",
+    "followup:callback",
+    "sentiment:neutral",
+    "signal:objection",
+    "action:urgent",
+    "signal:needs_approval"
+  ],
+  "custom_tags": [
+    "custom:dental-appointment",
+    "custom:toothache"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:46:24.120809Z",
+  "generation_ok": true
+}

@@ -1,0 +1,104 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "The caller asked about visiting cards, specifically the price difference between standard and matte finishes and the minimum order quantity. The agent quoted ₹200 per 100 cards for standard finish, ₹350 per 100 cards for matte finish, and a minimum order of 100 cards. The caller preferred matte finish, accepted the 100-card minimum, and said they would later order 200 cards. The caller also asked about the design approval process, and the agent said delivery to Vijayawada would take three working days after artwork approval. The caller accepted the delivery timeline, then asked whether delivery charges were extra and how much advance payment was required. The agent did not answer these questions and ended the call with thanks. No order was confirmed.",
+  "next_action": "Provide the delivery charge and advance payment details, then confirm the design submission and order quantity.",
+  "extracted_fields": {
+    "delivery_location": "Vijayawada",
+    "delivery_timeline": "3 working days after artwork approval",
+    "finish": "Matte finish",
+    "matte_price": "₹350 per 100 cards",
+    "minimum_order_quantity": "100 cards",
+    "phone": "+12025550102",
+    "product": "Visiting cards",
+    "quantity_discussed": "200 cards",
+    "standard_price": "₹200 per 100 cards"
+  },
+  "objections": [],
+  "notes": "The caller expressed purchase interest but still needs delivery charge and advance payment information before proceeding. Design will be sent later for approval.",
+  "tags": [
+    "intent:purchase",
+    "intent:pricing",
+    "followup:send_info",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:matte-finish",
+    "custom:vijayawada-delivery"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:33:07.462486Z",
+  "generation_ok": true,
+  "facts": {
+    "delivery_location": "Vijayawada",
+    "delivery_timeline": "3 working days after artwork approval",
+    "finish": "Matte finish",
+    "matte_price": "₹350 per 100 cards",
+    "minimum_order_quantity": "100 cards",
+    "phone": "+12025550102",
+    "product": "Visiting cards",
+    "quantity_discussed": "200 cards",
+    "standard_price": "₹200 per 100 cards"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:matte-finish",
+    "custom:vijayawada-delivery",
+    "custom:visiting-cards",
+    "followup:send_info",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive"
+  ],
+  "lead": {
+    "leadId": "de324848-5899-4b93-bf25-6827d60fb611",
+    "agentId": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.97,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

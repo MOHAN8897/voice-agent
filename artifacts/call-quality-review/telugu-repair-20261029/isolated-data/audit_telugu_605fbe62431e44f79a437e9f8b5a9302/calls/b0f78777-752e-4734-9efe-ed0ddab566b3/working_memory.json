@@ -1,0 +1,14 @@
+{
+  "facts": {
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "delivery_locality": "విజయవాడ",
+    "email": "ramesh.audit@example.invalid"
+  },
+  "preferences": {
+    "payment_method": "cash on delivery",
+    "callback_time": "సాయంత్రం 6 గంటలకి"
+  },
+  "important_context": "",
+  "summary": "user: సరే, ఇక్కడి నుంచే process చేస్తారంటే బాగుంది. మరి ఈ order status లేదా details అన్నీ నాకు ramesh.audit@example.invalid కి email చేస్తారా?\nassistant: క్షమించండి, నేను ఇక్కడి నుంచి email పంపలేను. మీరు అడిగిన order details అన్నీ note చేసుకున్నాను. మీకు ఇంకా ఏమైనా సమాచారం కావాలా?\nuser: అర్థమైంది కవిత గారు, email పంపలేరు కదా. ప్రస్తుతానికి నాకు ఇంకేమీ అవసరం లేదు, ఈ details అన్నీ note చేసుకున్నందుకు thanks. ఇకపై call చేయొద్దు.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+}

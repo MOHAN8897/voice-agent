@@ -1,0 +1,47 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.86,
+  "summary_te": "",
+  "summary_en": "The caller said they would discuss the matter with their family tomorrow and personally call back afterward. They explicitly asked the business not to call them again and ended the call. No additional product, pricing, or contact details were discussed, and no callback was scheduled by the business.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+12025550132"
+  },
+  "objections": [],
+  "notes": "Caller requested no business callback and said they would initiate contact themselves after speaking with family.",
+  "tags": [
+    "followup:callback",
+    "signal:do_not_call",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:47:46.014161Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+12025550132"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:phone_known",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call"
+  ],
+  "lead": null,
+  "lead_assessment": {
+    "score": 0,
+    "band": "disqualified",
+    "disposition": "not_interested",
+    "confidence": 0.86,
+    "components": [],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "caller_opt_out"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "ரெண்டு ACக்கு annual maintenance contract AMC எவ்வளவு ஆகும்", "ts": "2026-10-29T19:10:15.162121Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Sorry, phone-ல parts இல்லாம AMC pricing details என்கிட்ட இல்ல. நம்ம technician வந்து inspection பண்ணிட்டு, actual MRP-க்கு parts எவ்ளோன்னு சொல்லிடுவாங்க. நீங்க servicing மட்டும் பண்ணிக்கிறீங்களா இல்ல inspection வேணுமா?", "ts": "2026-10-29T19:10:15.987966Z", "brain_latency_ms": 829}

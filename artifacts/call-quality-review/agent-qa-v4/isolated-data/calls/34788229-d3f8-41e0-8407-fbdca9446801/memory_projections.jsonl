@@ -1,0 +1,6 @@
+{"turn_seq": 1, "ts": "2026-10-31T15:00:24.816667Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-31T15:00:45.251922Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_name: Lakshmi Reddy"}
+{"turn_seq": 5, "ts": "2026-10-31T15:00:58.781401Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_name: Lakshmi Reddy"}
+{"turn_seq": 7, "ts": "2026-10-31T15:01:17.485030Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: Lakshmi Reddy"}
+{"turn_seq": 9, "ts": "2026-10-31T15:01:31.859988Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: Lakshmi Reddy"}
+{"turn_seq": 11, "ts": "2026-10-31T15:01:47.374540Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: Lakshmi Reddy"}

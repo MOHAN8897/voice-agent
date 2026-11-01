@@ -1,0 +1,56 @@
+{
+  "call_id": "6f8f6cdf-2e95-4afe-b1d8-8459a1ce3d4f",
+  "language_callback": {
+    "status": "requested",
+    "kind": "language_switch",
+    "id": "d88cdbcc-bcfa-4c58-a8af-d9d3d9a728fb",
+    "caller_language": "en-IN",
+    "configured_language": "te-IN",
+    "summary": "Caller asked to continue in English; call back in English with the same agent."
+  },
+  "disposition": "callback_required",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the delivery fee for a 300 rupees order. The agent responded by stating that the delivery fee would be 30 rupees. The caller then requested to speak in English. The agent acknowledged this request, stated that they would call back in English, and concluded the call by thanking the caller. Language handoff: Caller asked to continue in English; call back in English with the same agent.",
+  "next_action": "Call back in English with the same agent (Callback needed in another language). No callback time has been booked.",
+  "extracted_fields": {
+    "phone": "+919876500502",
+    "preferred_language": "en-IN",
+    "callback_requested": "true",
+    "requested_language": "en-IN",
+    "language_switch": "true"
+  },
+  "facts": {
+    "phone": "+919876500502",
+    "preferred_language": "en-IN",
+    "callback_requested": "true",
+    "requested_language": "en-IN",
+    "language_switch": "true"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "contact:preferred_language",
+    "custom:delivery-fee",
+    "custom:language-preference",
+    "followup:callback",
+    "followup:language_switch",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:information",
+    "followup:callback",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:delivery-fee",
+    "custom:language-preference"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T12:30:32.959619Z",
+  "generation_ok": true
+}

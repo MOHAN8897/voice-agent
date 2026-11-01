@@ -1,0 +1,63 @@
+{
+  "call_id": "dacbd0d4-fb12-4d6a-953d-fededf1e81b7",
+  "language_callback": null,
+  "disposition": "site_visit_planned",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, initiated the call expressing that the proposed three-kilowatt system was too expensive. The agent explained the total cost of ₹1,95,000, the government subsidy of ₹78,000, and the resulting out-of-pocket payment of ₹1,17,000. The caller objected to the price but inquired about the monthly EMI, which the agent clarified as starting from ₹2,999 for 48 months. After hearing the EMI details, the caller agreed to proceed and requested a free site survey. The caller provided his name as Kiran and his location as Velachery, specifying that Saturday would be a suitable time. The agent confirmed these details and stated that the team would contact him soon to schedule the survey. The call ended with the caller thanking the agent.",
+  "next_action": "Team to contact the caller to schedule the free site survey for Saturday.",
+  "extracted_fields": {
+    "budget": "Not specified",
+    "caller_name": "కిరణ్",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "name": "Kiran",
+    "phone": "+919876500535",
+    "requested_time": "శనివారం",
+    "slot": "Saturday"
+  },
+  "facts": {
+    "budget": "Not specified",
+    "caller_name": "కిరణ్",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "name": "Kiran",
+    "phone": "+919876500535",
+    "requested_time": "శనివారం",
+    "slot": "Saturday"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:emi-financing",
+    "custom:free-survey",
+    "custom:three-kilowatt",
+    "followup:callback",
+    "followup:site_visit",
+    "intent:information",
+    "outcome:site_visit_planned",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "sentiment:positive",
+    "signal:price_sensitive",
+    "followup:site_visit",
+    "intent:information",
+    "action:required",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:three-kilowatt",
+    "custom:free-survey",
+    "custom:emi-financing"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "The price of the three-kilowatt system was too high."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:43:49.454930Z",
+  "generation_ok": true
+}

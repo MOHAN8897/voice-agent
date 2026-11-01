@@ -1,0 +1,99 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller requested matte-finish visiting cards and said they would send the designs later. They provided the email address ramesh.audit@example.invalid and asked for a callback in approximately six hours to discuss the request. The agent acknowledged and recorded the details and callback request, then ended the call politely. No pricing, quantity, or design specifications were discussed.",
+  "next_action": "Arrange a callback approximately six hours after this call to discuss the visiting card requirements.",
+  "extracted_fields": {
+    "callback_timing": "Approximately six hours after the call",
+    "caller_email": "ramesh.audit@example.invalid",
+    "designs": "Caller will send designs later",
+    "email": "ramesh.audit@example.invalid",
+    "finish": "Matte finish",
+    "phone": "+12025550119",
+    "product": "Visiting cards"
+  },
+  "objections": [],
+  "notes": null,
+  "tags": [
+    "followup:callback",
+    "intent:purchase",
+    "intent:information",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:matte-finish"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:08:58.814205Z",
+  "generation_ok": true,
+  "facts": {
+    "callback_timing": "Approximately six hours after the call",
+    "caller_email": "ramesh.audit@example.invalid",
+    "designs": "Caller will send designs later",
+    "email": "ramesh.audit@example.invalid",
+    "finish": "Matte finish",
+    "phone": "+12025550119",
+    "product": "Visiting cards"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:phone_known",
+    "custom:matte-finish",
+    "custom:visiting-cards",
+    "followup:callback",
+    "intent:information",
+    "intent:purchase",
+    "outcome:callback_required",
+    "sentiment:positive"
+  ],
+  "lead": {
+    "leadId": "2805df33-2078-47ab-af68-4d1c41466af8",
+    "agentId": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.99,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

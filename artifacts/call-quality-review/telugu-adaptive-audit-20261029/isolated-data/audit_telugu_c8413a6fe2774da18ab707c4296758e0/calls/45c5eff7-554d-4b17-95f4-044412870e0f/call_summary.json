@@ -1,0 +1,54 @@
+{
+  "call_id": "45c5eff7-554d-4b17-95f4-044412870e0f",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.86,
+  "summary_te": "",
+  "summary_en": "The caller first requested that this number never be called again because they do not like receiving calls. They then stated that they need a technician for split AC service in Madhapur tomorrow at around 10:00 AM. The agent only thanked the caller and ended the call without confirming the service request, scheduling a technician, or addressing the do-not-call request. No follow-up was agreed, and the call ended with a brief farewell.",
+  "next_action": "Honor the do-not-call request and, if service requests can still be processed through another channel, arrange or confirm a technician for split AC service in Madhapur tomorrow around 10:00 AM without calling this number.",
+  "extracted_fields": {
+    "contact_preference": "Do not call this number again",
+    "location": "Madhapur",
+    "phone": "+12025550111",
+    "requested_slot": "Tomorrow around 10:00 AM",
+    "service": "Split AC service"
+  },
+  "facts": {
+    "contact_preference": "Do not call this number again",
+    "location": "Madhapur",
+    "phone": "+12025550111",
+    "requested_slot": "Tomorrow around 10:00 AM",
+    "service": "Split AC service"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:madhapur",
+    "custom:split-ac",
+    "intent:booking",
+    "intent:support",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:booking",
+    "intent:support",
+    "followup:site_visit",
+    "signal:do_not_call",
+    "action:required",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:split-ac",
+    "custom:madhapur",
+    "custom:morning-slot"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Caller does not want to receive calls on this number."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T11:07:32.825707Z",
+  "generation_ok": true
+}

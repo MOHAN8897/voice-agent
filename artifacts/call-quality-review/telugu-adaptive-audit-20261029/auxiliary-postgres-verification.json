@@ -1,0 +1,36 @@
+{
+  "database": "isolated disposable PostgreSQL schema",
+  "cases": [
+    {
+      "case": "concurrent_workers_same_job_and_real_journal",
+      "pass": true
+    },
+    {
+      "case": "concurrent_workers_same_number_cooldown",
+      "pass": true
+    },
+    {
+      "case": "missed_delay_dedupe_and_attempt_foreign_key",
+      "pass": true
+    },
+    {
+      "case": "dnd_prevents_dispatch",
+      "pass": true
+    },
+    {
+      "case": "tenant_approval_survives_overnight_adjustment",
+      "pass": true
+    },
+    {
+      "case": "strict_calling_window_boundary",
+      "pass": true
+    },
+    {
+      "case": "uncertain_dispatch_is_not_replayed",
+      "pass": true
+    }
+  ],
+  "passed": 7,
+  "realCarrierCalls": 0,
+  "testSchemaRemoved": true
+}

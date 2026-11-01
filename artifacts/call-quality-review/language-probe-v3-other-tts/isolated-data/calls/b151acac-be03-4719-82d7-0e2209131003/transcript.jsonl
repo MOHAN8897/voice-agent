@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "ನಾನು simple question ಕೇಳಿದ್ದೀನಿ, please straight answer ಕೊಡಿ. Fridge inspection fee ಎಷ್ಟು?", "ts": "2026-10-29T19:32:19.381384Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Fridge inspection-ಗೆ ₹250 ಆಗುತ್ತೆ. ಒಂದು ವೇಳೆ ನೀವು repair ಮಾಡಿಸಿದ್ರೆ ಆ inspection charge waive off ಆಗುತ್ತೆ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?", "ts": "2026-10-29T19:32:20.009779Z", "brain_latency_ms": 635}
+{"seq": 3, "role": "user", "text": "ಯಾಕೆ ಇಷ್ಟು delay? Fridge inspectionಗೆ exact fee ಎಷ್ಟು ಅಂತ straight ಆಗಿ ಹೇಳಿ.", "ts": "2026-10-29T19:32:20.022046Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಕ್ಷಮಿಸಿ, exact fee ಬಂದು ₹250. ನೀವು repair ಮುಂದುವರಿಸಿದ್ರೆ ಈ charge waive off ಆಗುತ್ತೆ. ಬೇರೆ ಏನಾದ್ರೂ ಮಾಹಿತಿ ಬೇಕಾ?", "ts": "2026-10-29T19:32:20.811682Z", "brain_latency_ms": 791}

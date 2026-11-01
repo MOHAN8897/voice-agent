@@ -1,0 +1,122 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "Ramana initially enquired about approximately 200 matte visiting cards for delivery in Vijayawada and asked about delivery timing. The agent stated that delivery would take 3 working days after artwork approval, or 24 hours with an additional ₹150 urgent-delivery charge. The caller decided not to place the order yet and asked how to submit artwork and about office hours; the agent provided office hours as Monday–Saturday, 9:30 AM–8:00 PM, closed Sunday, but stated that it could not send the enquiry to the team or guarantee follow-up. The caller also asked about flex banners, received prices of ₹15 per square foot for normal flex and ₹20 for star flex, then declined banners for now. The caller corrected his name to Ramesh, confirmed the product and quantity, and asked about payment. The agent said orders under ₹1,000 allow cash on delivery, while higher orders require 50% advance payment. The caller objected to the advance-payment requirement and preferred cash on delivery, and asked about artwork approval timing. He said he would send artwork approval later and requested that the enquiry be noted, while also stating that he would not call again and asked not to receive further calls. No order was placed, no artwork was submitted, and no team follow-up was confirmed. The call ended politely.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_name": "రమేష్",
+    "delivery_locality": "Vijayawada",
+    "delivery_location": "Vijayawada",
+    "flex_banner_price": "Normal flex ₹15/sq ft; star flex ₹20/sq ft",
+    "initial_name": "Ramana",
+    "name": "Ramesh",
+    "office_hours": "Monday-Saturday, 9:30 AM-8:00 PM; Sunday closed",
+    "payment_policy_stated": "Orders under ₹1,000: cash on delivery; higher orders: 50% advance",
+    "payment_preference": "Cash on delivery",
+    "phone": "+12025550139",
+    "product": "Matte visiting cards",
+    "quantity": "200",
+    "standard_delivery_time": "3 working days after artwork approval",
+    "urgent_delivery_charge": "₹150",
+    "urgent_delivery_time": "24 hours"
+  },
+  "objections": [
+    "The caller found the 50% advance payment requirement inconvenient and preferred cash on delivery.",
+    "The caller did not want to place the order yet and declined flex banners for now."
+  ],
+  "notes": "The caller said he would send artwork approval later but explicitly requested no further calls. The agent could not confirm that the enquiry would be sent to the team or that follow-up would occur.",
+  "tags": [
+    "intent:purchase",
+    "intent:information",
+    "signal:price_sensitive",
+    "signal:objection",
+    "signal:do_not_call",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards",
+    "custom:artwork-approval",
+    "custom:vijayawada"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:49:10.609265Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_name": "రమేష్",
+    "delivery_locality": "Vijayawada",
+    "delivery_location": "Vijayawada",
+    "flex_banner_price": "Normal flex ₹15/sq ft; star flex ₹20/sq ft",
+    "initial_name": "Ramana",
+    "name": "Ramesh",
+    "office_hours": "Monday-Saturday, 9:30 AM-8:00 PM; Sunday closed",
+    "payment_policy_stated": "Orders under ₹1,000: cash on delivery; higher orders: 50% advance",
+    "payment_preference": "Cash on delivery",
+    "phone": "+12025550139",
+    "product": "Matte visiting cards",
+    "quantity": "200",
+    "standard_delivery_time": "3 working days after artwork approval",
+    "urgent_delivery_charge": "₹150",
+    "urgent_delivery_time": "24 hours"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:artwork-approval",
+    "custom:matte-visiting-cards",
+    "custom:vijayawada",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "62843ad3-010f-4af5-bbc3-10adcffd4ecd",
+    "agentId": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

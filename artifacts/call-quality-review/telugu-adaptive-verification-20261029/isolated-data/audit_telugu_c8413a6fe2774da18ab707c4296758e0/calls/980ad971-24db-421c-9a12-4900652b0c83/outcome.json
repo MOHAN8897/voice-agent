@@ -1,0 +1,48 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller explicitly asked that this number never be called again, then asked for the price of 100 visiting cards. The agent acknowledged the do-not-call request and quoted ₹200 for normal paper cards and ₹350 for matte-finish cards. The caller said they understood the pricing, needed nothing else, and ended the call courteously. No purchase or follow-up was agreed.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+12025550150",
+    "price_matte_finish": "₹350",
+    "price_normal_paper": "₹200",
+    "quantity": "100 visiting cards"
+  },
+  "objections": [],
+  "notes": "Caller requested no further calls to this number.",
+  "tags": [
+    "intent:pricing",
+    "signal:do_not_call",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:52:57.611465Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+12025550150",
+    "price_matte_finish": "₹350",
+    "price_normal_paper": "₹200",
+    "quantity": "100 visiting cards"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:visiting-cards",
+    "intent:pricing",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

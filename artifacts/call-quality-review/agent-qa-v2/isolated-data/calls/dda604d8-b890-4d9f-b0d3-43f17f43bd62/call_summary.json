@@ -1,0 +1,58 @@
+{
+  "call_id": "dda604d8-b890-4d9f-b0d3-43f17f43bd62",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్ కు కాల్ చేసి హెయిర్ ఆయిల్ మరియు ఫేస్ క్రీమ్ ధరల గురించి వివరించారు. కస్టమర్ తమ ఇమెయిల్ mohansaiteja.99@gmail.com కు వివరాలు పంపమని కోరారు మరియు స్టాక్, Kukatpally కు డెలివరీ సమయం గురించి అడిగారు, కానీ ఏజెంట్ వద్ద ఆ సమాచారం లేదు. కస్టమర్ రేపు ఉదయం 11 గంటలకు ఆర్డర్ కోసం ఒక కాల్ బుక్ చేయాలని కోరారు, దానికి ఏజెంట్ అంగీకరించారు. చివరగా, కస్టమర్ కాల్ బుక్ అయిందో లేదో నిర్ధారించుకుని కాల్ ముగించారు.",
+  "summary_language": "te-IN",
+  "summary_en": "The agent called the customer to provide pricing details for herbal hair oil and face cream. The customer requested that these details be emailed to mohansaiteja.99@gmail.com, which the agent confirmed sending. When the customer asked about current stock levels and delivery timelines to Kukatpally, the agent stated that this information was unavailable. The customer then requested a scheduled callback for tomorrow at 11 AM to place an order, which the agent agreed to arrange. The customer confirmed the booking and concluded the call.",
+  "next_action": "Team to check stock and delivery details for Kukatpally and contact the customer for the scheduled 11 AM callback tomorrow.",
+  "extracted_fields": {
+    "callback_time": "Tomorrow at 11 AM",
+    "delivery_location": "Kukatpally",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919700000008",
+    "handoff_requested": "true"
+  },
+  "facts": {
+    "callback_time": "Tomorrow at 11 AM",
+    "delivery_location": "Kukatpally",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919700000008",
+    "handoff_requested": "true"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:phone_known",
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:kukkatpally-delivery",
+    "followup:callback",
+    "followup:handoff",
+    "followup:send_info",
+    "intent:purchase",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "followup:callback",
+    "followup:send_info",
+    "intent:purchase",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:hair-oil",
+    "custom:face-cream",
+    "custom:kukkatpally-delivery"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [
+    "Is the face cream currently in stock?",
+    "When will the delivery reach Kukatpally?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T13:38:40.778192Z",
+  "generation_ok": true
+}

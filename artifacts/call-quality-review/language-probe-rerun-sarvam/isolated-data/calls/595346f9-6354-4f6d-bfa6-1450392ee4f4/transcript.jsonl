@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "ನನ್ನ fridgeಗೆ new compressor ಹಾಕೋಕೆ exact price ಎಷ್ಟು", "ts": "2026-10-29T19:10:51.229509Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ಕ್ಷಮಿಸಿ, exact price phone-ನಲ್ಲಿ ಹೇಳೋಕೆ ಆಗಲ್ಲ. Technician ಬಂದು inspection ಮಾಡಿದ ಮೇಲೆ ಮಾತ್ರ actual MRP ಪ್ರಕಾರ spare parts price ಹೇಳ್ತಾರೆ. Fridge inspection charge 250 rupees ಆಗುತ್ತೆ, ಆದ್ರೆ ನೀವು repair ಮುಂದುವರಿಸಿದ್ರೆ ಆ charge waive off ಆಗುತ್ತೆ.", "ts": "2026-10-29T19:10:53.509532Z", "brain_latency_ms": 2282}
+{"seq": 3, "role": "user", "text": "fridge ಹೊಸ compressor total price exact ಆಗಿ ಹೇಳಿ", "ts": "2026-10-29T19:10:53.544027Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಕ್ಷಮಿಸಿ, exact price ಈಗ ಹೇಳೋಕೆ ಆಗಲ್ಲ. Technician ಬಂದು inspection ಮಾಡಿದ ಮೇಲೆ ಮಾತ್ರ actual MRP price ಹೇಳ್ತಾರೆ. Inspection charge 250 rupees ಇದೆ, ಆದ್ರೆ ನೀವು repair ಮಾಡಿಸಿದ್ರೆ ಅದು free ಆಗುತ್ತೆ. ನಿಮಗೆ visit schedule ಮಾಡ್ಬೇಕಾ?", "ts": "2026-10-29T19:10:54.114551Z", "brain_latency_ms": 577}

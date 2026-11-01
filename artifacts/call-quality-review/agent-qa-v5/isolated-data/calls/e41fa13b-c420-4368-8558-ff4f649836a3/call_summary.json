@@ -1,0 +1,57 @@
+{
+  "call_id": "e41fa13b-c420-4368-8558-ff4f649836a3",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "ಏಜೆಂಟ್ NatureVeda Herbals ನಿಂದ ಪ್ರಿಯಾ ಅವರು ಗ್ರಾಹಕರನ್ನು ಸಂಪರ್ಕಿಸಿ, ಕೂದಲಿನ ಎಣ್ಣೆ, ಮುಖದ ಕ್ರೀಮ್ ಮತ್ತು ಅಶ್ವಗಂಧ ಕ್ಯಾಪ್ಸುಲ್‌ಗಳ ಬೆಲೆ ಮತ್ತು ಪದಾರ್ಥಗಳನ್ನು ವಿವರಿಸಿದರು. ಗ್ರಾಹಕರು ಎಲ್ಲಾ ಉತ್ಪನ್ನಗಳ ಬೆಲೆಗಳು ತಮಗೆ ತುಂಬಾ ದುಬಾರಿ ಎಂದು ಭಾವಿಸಿದರು. ಗ್ರಾಹಕರು ಈ ಬೆಲೆಗೆ ಖರೀದಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ ಎಂದು ಸ್ಪಷ್ಟವಾಗಿ ಹೇಳಿದರು ಮತ್ತು ತಮ್ಮ ಸಂಖ್ಯೆಯನ್ನು ಸಂಪರ್ಕ ಪಟ್ಟಿಯಿಂದ ತೆಗೆದುಹಾಕಲು ಹಾಗೂ ಮತ್ತೆ ಕರೆ ಮಾಡದಂತೆ ಕೇಳಿಕೊಂಡರು. ಏಜೆಂಟ್ ಇದನ್ನು ಒಪ್ಪಿಕೊಂಡು, ಭವಿಷ್ಯದಲ್ಲಿ ಈ ಸಂಖ್ಯೆಗೆ ಕರೆ ಮಾಡುವುದಿಲ್ಲ ಎಂದು ಭರವಸೆ ನೀಡಿದರು ಮತ್ತು ಕರೆ ಮುಕ್ತಾಯವಾಯಿತು.",
+  "summary_language": "kn-IN",
+  "summary_en": "The agent from NatureVeda Herbals called the customer to share details about herbal products, including hair oil, face cream, and Ashwagandha capsules. The customer objected to the prices, stating that ₹499, ₹599, and ₹699 were too high, and ultimately refused to purchase. The customer also requested to be removed from the contact list and asked not to receive further calls. The agent agreed to these terms, thanked the customer for their time, and ended the call.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+919700000013",
+    "price_ashwagandha": "₹699",
+    "price_face_cream": "₹599",
+    "price_hair_oil": "₹499",
+    "product": "Herbal Hair Oil, Face Cream, Ashwagandha Capsules"
+  },
+  "facts": {
+    "phone": "+919700000013",
+    "price_ashwagandha": "₹699",
+    "price_face_cream": "₹599",
+    "price_hair_oil": "₹499",
+    "product": "Herbal Hair Oil, Face Cream, Ashwagandha Capsules"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:herbal-products",
+    "custom:pricing-query",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:negative",
+    "signal:do_not_call",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "sentiment:negative",
+    "signal:price_sensitive",
+    "signal:objection",
+    "signal:do_not_call",
+    "intent:information",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:pricing-query"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Hair oil price is too high",
+    "Face cream price is too high",
+    "Ashwagandha capsules price is too high"
+  ],
+  "unanswered_questions": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T16:31:26.822672Z",
+  "generation_ok": true
+}

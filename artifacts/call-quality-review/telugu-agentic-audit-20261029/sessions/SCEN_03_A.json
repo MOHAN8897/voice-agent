@@ -1,0 +1,81 @@
+{
+  "scenario_id": "SCEN_03",
+  "title": "Natural Ending Variations (Immediate Goodbye & Polite Wrapup)",
+  "business_id": "A",
+  "agent_name": "Kavitha",
+  "category": "J_Natural_Endings",
+  "integration_condition": "none",
+  "caller_phone": "+919876543212",
+  "total_turns": 2,
+  "total_tokens": 10500,
+  "duration_sec": 7.5,
+  "call_ended": true,
+  "carrier_hangup_invoked": true,
+  "carrier_hangup_error": false,
+  "transcript": [
+    {
+      "turn": 1,
+      "user": "విజిటింగ్ కార్డుల రేటు ఎంతండి?",
+      "user_en": "What is the visiting cards rate?",
+      "agent": "Normal paper విజిటింగ్ cards one hundred కి two hundred rupees అవుతుంది, matte finish cards one hundred కి three hundred fifty rupees పడుతుంది. Minimum order one hundred cards ఉండాలి. మీకు వేరే ఏమైనా details కావాలా?",
+      "latency_ms": 1315,
+      "tokens": 5211,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 2,
+      "user": "సరే, అంతే అంతే థ్యాంక్ యూ.",
+      "user_en": "Okay, that is all, thank you.",
+      "agent": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "latency_ms": 1348,
+      "tokens": 5289,
+      "should_end": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "db_evidence": {
+    "call": {
+      "call_id": "081ae8f5-5ce2-458a-987f-a01e9540b611",
+      "status": "active",
+      "finalization_status": "pending",
+      "disposition": null,
+      "end_reason": null,
+      "duration_sec": null,
+      "status_tags": []
+    },
+    "callbacks": [],
+    "followup_jobs": [],
+    "dnc_entries": [],
+    "leads": [],
+    "tool_executions": []
+  },
+  "evaluation": {
+    "assertions": [],
+    "all_passed": true,
+    "scores": {
+      "telugu_naturalness": 7.5,
+      "understanding_relevance": 7.0,
+      "script_adherence": 6.5,
+      "memory_corrections": 9.0,
+      "capability_honesty": 10.0,
+      "callback_dnd_outcome": 10.0,
+      "hangup_handoff": 9.5,
+      "overall": 8.42
+    }
+  },
+  "created_at": "2026-10-29T10:30:25.722996+00:00"
+}

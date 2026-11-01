@@ -1,0 +1,14 @@
+{"seq": 1, "role": "user", "text": "नमस्ते प्रिया, हाँ मुझे हमारे products के बारे में जानना है। ये aloe vera juice का price क्या है और इसकी size क्या-क्या आती है?", "ts": "2026-10-31T16:05:02.046959Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "NatureVeda Aloe Vera Juice ₹399 का है और इसकी size 500 ml आती है।", "ts": "2026-10-31T16:05:03.516452Z"}
+{"seq": 3, "role": "user", "text": "ठीक है, 500 ml के लिए ₹399। और इसको लेना कैसे सही रहेगा?", "ts": "2026-10-31T16:05:14.189765Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ये general wellness beverage के लिए है, तो आप इसे daily routine में drink कर सकते हैं। अगर आप इसे लेना चाहें तो बता दीजिए।", "ts": "2026-10-31T16:05:15.455476Z"}
+{"seq": 5, "role": "user", "text": "ठीक है, daily drink करने का idea अच्छा है। वैसे, क्या आपको पता है कि हमारे यहाँ Kukatpally, Hyderabad में delivery कितने दिन में हो जाएगी?", "ts": "2026-10-31T16:05:34.900472Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "माफ़ कीजिए, Kukatpally, Hyderabad में delivery कितने दिन में हो जाएगी, इसकी जानकारी मेरे पास उपलब्ध नहीं है। अगर आप order place करना चाहें तो बता दीजिए।", "ts": "2026-10-31T16:05:36.581143Z"}
+{"seq": 7, "role": "user", "text": "Actually प्रिया, I think we should continue in English now. Could you please repeat the price of the aloe vera juice you told me earlier?", "ts": "2026-10-31T16:05:57.590782Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Sure, the NatureVeda Aloe Vera Juice is priced at ₹399 for 500 ml.", "ts": "2026-10-31T16:05:59.250439Z"}
+{"seq": 9, "role": "user", "text": "Okay, 500 ml for 399 rupees. अब मुझे उस hair oil के ingredients के बारे में बताइए जो आप बेचते हैं।", "ts": "2026-10-31T16:06:13.023062Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "The NatureVeda Herbal Hair Oil contains Amla, Bhringraj, Hibiscus, and Coconut Oil, and it comes in 200 ml for ₹499. It is meant for routine hair and scalp care. Would you like to place an order for it?", "ts": "2026-10-31T16:06:14.400806Z"}
+{"seq": 11, "role": "user", "text": "Amla, Bhringraj, Hibiscus, and Coconut Oil, that sounds good. One juice and one hair oil, what will be the total amount?", "ts": "2026-10-31T16:06:37.274259Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "One Aloe Vera Juice at ₹399 and one Herbal Hair Oil at ₹499 will come to a total of ₹898.", "ts": "2026-10-31T16:06:39.268372Z"}
+{"seq": 13, "role": "user", "text": "Okay, 898 rupees for both. That sounds reasonable. Thank you for the information Priya.", "ts": "2026-10-31T16:06:51.892058Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "You're welcome. Let me know if you'd like to place an order.", "ts": "2026-10-31T16:06:53.386152Z"}

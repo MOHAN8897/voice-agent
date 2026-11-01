@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "मेरे फ्रिज के नए कम्प्रेसर का exact प्राइस कितना है", "ts": "2026-10-29T18:42:42.073719Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "देखिए, spare parts का exact price phone पर बताना possible नहीं है। Technician inspection के बाद actual MRP बताएँगे, और अगर आप repair करवाते हैं तो inspection charge भी waive हो जाएगा। वैसे आपका घर किस area में है?", "ts": "2026-10-29T18:42:42.996682Z", "brain_latency_ms": 922}

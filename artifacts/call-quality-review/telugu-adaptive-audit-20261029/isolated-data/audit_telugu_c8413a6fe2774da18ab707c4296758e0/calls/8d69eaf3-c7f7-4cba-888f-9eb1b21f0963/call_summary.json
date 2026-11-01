@@ -1,0 +1,67 @@
+{
+  "call_id": "8d69eaf3-c7f7-4cba-888f-9eb1b21f0963",
+  "language_callback": null,
+  "disposition": "site_visit_planned",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "The caller requested general servicing for a split AC and asked about the price and availability of a technician the next morning at 10:00 AM. The agent quoted ₹599, confirmed Madhapur is within the service area, and said a slot was available. The caller provided the name Shravani, confirmed there was no other issue, and requested booking confirmation at ₹599 for the 10:00 AM slot. The caller then asked about the inspection fee. The agent explained that ₹250 applies to fridge inspection, but for this split AC the inspection fee would not apply. The caller confirmed the booking again, said all questions were clear, and the call ended with thanks. The transcript confirms the requested appointment and service details, but does not explicitly confirm that a booking record was successfully created.",
+  "next_action": null,
+  "extracted_fields": {
+    "appointment_slot": "Tomorrow at 10:00 AM",
+    "budget": "599 rupees",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "inspection_fee": "Not applicable for this split AC service",
+    "issue": "No additional issue; general service only",
+    "locality": "Madhapur",
+    "phone": "+12025550126",
+    "price": "599 rupees",
+    "product": "split AC",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "service": "Split AC general service"
+  },
+  "facts": {
+    "appointment_slot": "Tomorrow at 10:00 AM",
+    "budget": "599 rupees",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "inspection_fee": "Not applicable for this split AC service",
+    "issue": "No additional issue; general service only",
+    "locality": "Madhapur",
+    "phone": "+12025550126",
+    "price": "599 rupees",
+    "product": "split AC",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "service": "Split AC general service"
+  },
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:general-service",
+    "custom:madhapur",
+    "custom:split-ac",
+    "followup:site_visit",
+    "intent:booking",
+    "intent:support",
+    "outcome:site_visit_planned",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:booking",
+    "intent:support",
+    "followup:site_visit",
+    "signal:ready_to_buy",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:split-ac",
+    "custom:general-service",
+    "custom:madhapur"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T11:10:54.889963Z",
+  "generation_ok": true
+}

@@ -1,0 +1,63 @@
+{
+  "call_id": "93f05ee3-2820-4553-96c7-054517a3b55f",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "Kiran called to ask about the fee for a Python with Data Analytics course and requested that his contact details be saved. He provided his name, email address, B.Com qualification, and preference for weekend classes. The agent quoted a total fee of ₹8,999 and stated that his contact had been created and his details were saved. Kiran repeatedly asked for the details to be saved again or checked because he was not confident they had actually been recorded. The agent repeatedly confirmed that the details were already saved but did not provide any additional verification or confirmed second save. Kiran ended the call by saying he would call again later.",
+  "next_action": "Verify that Kiran's contact record and weekend-class preference are actually saved, and provide confirmation if he calls back.",
+  "extracted_fields": {
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "class_preference": "Weekends",
+    "course": "Python with Data Analytics",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550147",
+    "qualification": "B.Com"
+  },
+  "facts": {
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "class_preference": "Weekends",
+    "course": "Python with Data Analytics",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550147",
+    "qualification": "B.Com"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:python-data-analytics",
+    "custom:weekend-classes",
+    "followup:callback",
+    "intent:information",
+    "intent:pricing",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:pricing",
+    "intent:information",
+    "signal:objection",
+    "followup:callback",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-data-analytics",
+    "custom:weekend-classes"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Caller lacked confidence that his contact details had actually been saved and repeatedly requested verification or another save."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T16:30:42.976564Z",
+  "generation_ok": true
+}

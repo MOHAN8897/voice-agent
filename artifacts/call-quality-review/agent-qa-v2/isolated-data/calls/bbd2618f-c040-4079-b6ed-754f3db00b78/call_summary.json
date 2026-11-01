@@ -1,0 +1,53 @@
+{
+  "call_id": "bbd2618f-c040-4079-b6ed-754f3db00b78",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.9,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్‌కు కాల్ చేశారు. కస్టమర్ అలోవెరా జ్యూస్ ధర మరియు పరిమాణాన్ని అడిగారు, అలాగే హెయిర్ ఆయిల్ పదార్థాలు మరియు కలిపిన మొత్తం ధర గురించి అడిగారు. ఏజెంట్ ధరలను పంచుకున్నారు కానీ వినియోగ సూచనల గురించి సమాచారం లేదని చెప్పారు. కస్టమర్ ఇంగ్లీష్‌లోకి మారడానికి అంగీకరించారు మరియు మొత్తం ధర ₹898 అని తెలుసుకున్నారు. కాల్ మర్యాదపూర్వకంగా ముగిసింది.",
+  "summary_language": "te-IN",
+  "summary_en": "The agent called the customer to provide product information. The customer asked about the price and size of Aloe Vera Juice, how to consume it, and the combined cost of one Aloe Vera Juice and one Herbal Hair Oil. The agent shared the pricing details but explained that they did not have information regarding daily usage instructions. The customer agreed to continue the conversation in Indian English, and the call ended after confirming the total cost of ₹898.",
+  "next_action": "followup:send_info",
+  "extracted_fields": {
+    "combined_price": "₹898",
+    "phone": "+919700000007",
+    "price_aloe_vera_juice": "₹399",
+    "price_hair_oil": "₹499",
+    "product": "Aloe Vera Juice, Herbal Hair Oil"
+  },
+  "facts": {
+    "combined_price": "₹898",
+    "phone": "+919700000007",
+    "price_aloe_vera_juice": "₹399",
+    "price_hair_oil": "₹499",
+    "product": "Aloe Vera Juice, Herbal Hair Oil"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:aloe-vera-juice",
+    "custom:herbal-hair-oil",
+    "followup:send_info",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "followup:send_info",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:aloe-vera-juice",
+    "custom:herbal-hair-oil"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [
+    "How should the aloe vera juice be consumed and how many times a day?",
+    "Can it be taken on an empty stomach in the morning?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T13:36:32.526213Z",
+  "generation_ok": true
+}

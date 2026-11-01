@@ -1,0 +1,78 @@
+{
+  "call_id": "d519f312-cd11-4772-806f-e63cd122b35d",
+  "tenant_id": "09623916-1297-4f27-ab5f-cee8718215d4",
+  "agent_id": "1eecf08c-4fb7-5531-9c1f-40de4d064ac8",
+  "session_id": "qa-558177954a394af19a9bd9be151c5d0f",
+  "channel": "pstn",
+  "direction": "outbound",
+  "environment": "development",
+  "tier": "medium",
+  "combination_id": "5b3ecb0dcd721b7f",
+  "compiled_brain_version": "cb_v20261031_3a81e03bb9cf",
+  "started_at": "2026-10-31T12:59:36.817481+00:00",
+  "status": "active",
+  "storage_path": "data/calls/d519f312-cd11-4772-806f-e63cd122b35d/",
+  "resolved_stack": {
+    "combination_id": "5b3ecb0dcd721b7f",
+    "tier": "medium",
+    "mode": "frontend",
+    "language": "kn-IN",
+    "voice_preset": "telugu_natural",
+    "stt": {
+      "provider": "sarvam",
+      "model": "saaras:v3-realtime",
+      "config": {
+        "mode": "realtime"
+      }
+    },
+    "llm": {
+      "provider": "sarvam",
+      "model": "sarvam-105b-conversations",
+      "config": {
+        "api_mode": "chat_completions_v1"
+      }
+    },
+    "tts": {
+      "provider": "sarvam",
+      "model": "bulbul:v3",
+      "config": {
+        "speaker": "shubh",
+        "api_mode": "websocket"
+      }
+    }
+  },
+  "pipeline": "composed_voice",
+  "callee_e164": "+919700000003",
+  "caller_id": "+914000000000",
+  "is_test": true,
+  "call_end_policy": {
+    "allowedReasons": [
+      "goodbye",
+      "firm_refusal",
+      "not_interested",
+      "goal_complete",
+      "abuse"
+    ],
+    "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+    "farewellSource": "default"
+  },
+  "stage_usage": {
+    "llm": {
+      "input_tokens": 31749,
+      "output_tokens": 1573,
+      "cached_tokens": 12192
+    },
+    "stt": {
+      "audio_seconds": 0.0
+    }
+  },
+  "active_language": "en-IN",
+  "language_switches": [
+    {
+      "from": "kn-IN",
+      "to": "en-IN",
+      "reason": "asked",
+      "at": "2026-10-31T13:02:19+00:00"
+    }
+  ]
+}

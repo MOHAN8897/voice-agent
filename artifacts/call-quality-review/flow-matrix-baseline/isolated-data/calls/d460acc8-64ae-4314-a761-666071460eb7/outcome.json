@@ -1,0 +1,39 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.35,
+  "summary_te": "",
+  "summary_en": "The call began with the caller making an inarticulate sound ('uh, hmm'), followed by a brief greeting ('hello hello'). The agent responded by asking the caller to repeat themselves because the audio was unclear. After this exchange, the caller did not provide any further information or clarify their intent, and the call ended inconclusively.",
+  "next_action": "No further action was agreed upon, and the call concluded without resolution.",
+  "extracted_fields": {
+    "phone": "+919876500514"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "sentiment:neutral",
+    "intent:information"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:37:19.300453Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500514"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

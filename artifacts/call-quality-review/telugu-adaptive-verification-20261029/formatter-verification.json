@@ -1,0 +1,50 @@
+[
+  {
+    "input": "Orders 1000 rupees",
+    "expected": "Orders one thousand rupees",
+    "actual": "Orders one thousand rupees",
+    "passed": true
+  },
+  {
+    "input": "రాత్రి 8:00 వరకు",
+    "expected": "రాత్రి eight వరకు",
+    "actual": "రాత్రి eight వరకు",
+    "passed": true
+  },
+  {
+    "input": "8:00PMవరకు",
+    "expected": "eight PM వరకు",
+    "actual": "eight PM వరకు",
+    "passed": true
+  },
+  {
+    "input": "8:00 PM వరకు",
+    "expected": "eight PM వరకు",
+    "actual": "eight PM వరకు",
+    "passed": true
+  },
+  {
+    "input": "20:00",
+    "expected": "eight PM",
+    "actual": "eight PM",
+    "passed": true
+  },
+  {
+    "input": "00:00",
+    "expected": "twelve AM",
+    "actual": "twelve AM",
+    "passed": true
+  },
+  {
+    "input": "రూ. 500",
+    "expected": "rupees five hundred",
+    "actual": "rupees five hundred",
+    "passed": true
+  },
+  {
+    "input": "500/-",
+    "expected": "five hundred rupees",
+    "actual": "five hundred rupees",
+    "passed": true
+  }
+]

@@ -1,0 +1,34 @@
+{
+  "call_id": "1a70fb67-2d10-41b5-9e11-6a996cced631",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller explicitly requested not to be called back again and asked to be removed from the list. The agent acknowledged the request, confirmed they would stop calling, and ended the call.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+919876500011"
+  },
+  "facts": {
+    "phone": "+919876500011"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "tags": [
+    "signal:do_not_call",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [
+    "Do not call again"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:56:36.244237Z",
+  "generation_ok": true
+}

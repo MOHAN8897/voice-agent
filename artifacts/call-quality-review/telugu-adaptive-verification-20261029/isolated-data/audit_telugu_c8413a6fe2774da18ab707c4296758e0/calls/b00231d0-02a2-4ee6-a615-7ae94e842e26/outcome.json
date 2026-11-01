@@ -1,0 +1,63 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "Kiran expressed interest in a Python course and stated that he will call the business himself tomorrow; this is not a callback request. He also said future calls about new offers are welcome and asked that his number not be blocked. The agent acknowledged and thanked him. No purchase, booking, qualification, or concrete follow-up from the business was agreed, and the call ended politely.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "caller_name": "కిరణ్",
+    "marketing_call_preference": "Open to future calls about new offers; do not block number",
+    "name": "Kiran",
+    "phone": "+12025550137",
+    "product": "Python course",
+    "self_call_timing": "Tomorrow"
+  },
+  "objections": [],
+  "notes": "Caller will initiate the next call himself; do not classify as callback_required.",
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:python-course"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:48:31.826767Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_name": "కిరణ్",
+    "marketing_call_preference": "Open to future calls about new offers; do not block number",
+    "name": "Kiran",
+    "phone": "+12025550137",
+    "product": "Python course",
+    "self_call_timing": "Tomorrow"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:python-course",
+    "intent:information",
+    "intent:purchase",
+    "outcome:not_interested",
+    "sentiment:positive",
+    "signal:do_not_call"
+  ],
+  "lead": null,
+  "lead_assessment": {
+    "score": 0,
+    "band": "disqualified",
+    "disposition": "not_interested",
+    "confidence": 0.97,
+    "components": [],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "caller_opt_out"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

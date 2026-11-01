@@ -1,0 +1,52 @@
+{
+  "call_id": "efccc367-f390-4e16-9319-4939a3ee0755",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "व्यवसाय के एजेंट ने ग्राहक लक्ष्मी रेड्डी को फोन किया और NatureVeda Herbal Hair Oil के बारे में बताया। ग्राहक ने इसके उपयोग के तरीके और आवृत्ति के बारे में पूछा, लेकिन एजेंट ने कहा कि उसके पास यह जानकारी नहीं है और उपयोग के लिए डॉक्टर से सलाह लेने को कहा। ग्राहक ने कहा कि वह इस बारे में सोचकर बताएगी और एजेंट से कहा कि वह कल शाम साढ़े छह बजे उसी नंबर पर कॉल करे। इसके बाद एजेंट ने कॉल समाप्त कर दिया।",
+  "summary_language": "hi-IN",
+  "summary_en": "The agent called the customer, Lakshmi Reddy, to offer NatureVeda Herbal Hair Oil. The customer inquired about the recommended weekly usage and whether it should be applied at night, but the agent stated they lacked this information and advised consulting a doctor. The customer said she would consider the offer and requested a callback tomorrow at 6:30 PM while she was busy at the office. The agent agreed to the callback and ended the call.",
+  "next_action": "Call Lakshmi Reddy back at 6:30 PM tomorrow.",
+  "extracted_fields": {
+    "callback_time": "कल शाम साढ़े छ बजे",
+    "caller_name": "लक्ष्मी रेड्डी",
+    "phone": "+919700000010"
+  },
+  "facts": {
+    "callback_time": "कल शाम साढ़े छ बजे",
+    "caller_name": "लक्ष्मी रेड्डी",
+    "phone": "+919700000010"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:hair-oil",
+    "custom:herbal-care",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:hair-oil",
+    "custom:herbal-care"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "The agent could not confirm the application frequency or timing and advised the customer to consult a healthcare professional."
+  ],
+  "unanswered_questions": [
+    "How often should the hair oil be applied per week?",
+    "Should the hair oil be applied at night and washed in the morning, or can it be applied at any time?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T14:37:24.682783Z",
+  "generation_ok": true
+}

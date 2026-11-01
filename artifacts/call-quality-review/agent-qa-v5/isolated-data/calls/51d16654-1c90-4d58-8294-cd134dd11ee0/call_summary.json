@@ -1,0 +1,36 @@
+{
+  "call_id": "51d16654-1c90-4d58-8294-cd134dd11ee0",
+  "language_callback": null,
+  "disposition": "no_outcome",
+  "disposition_confidence": 0.0,
+  "summary_te": "",
+  "summary_language": "ml-IN",
+  "summary_en": "Automatic summary generation failed. Transcript review: User: . Lakshmi Reddy . Assistant: Lakshmi Reddy. herbal product ? ? User: face cream . ingredients ? Assistant: NatureVeda Herbal Face Cream- Neem, Turmeric, Aloe Vera . 50 g- ₹599 , moisturizing- routine skin care- . User: , . ? Assistant: . . User: , . face cream- 2 bottle hair oil- . Assistant: Herbal Face Cream ₹599- Hair Oil ₹499- . User: price? Assistant: Face cream- ₹599- hair oil- ₹499- . 2 hair oil ₹1,497 . place ? User: , total price ? Assistant: Face cream- ₹599- 2 hair oil- ₹998- . ₹1,597 . User: Okay, total price 1,597 rupees. discount ? Assistant: . User: , discount . , offer ? Assistant: , . details ? ? User: , discount . . details . Lakshmi Reddy. Assistant: Lakshmi Reddy. Order confirm delivery address ? User: address Flat 302, Sai Residency, Kukatpally, Hyderabad 500072 . Assistant: , Flat 302, Sai Residency, Kukatpally, Hyderabad 500072. Herbal Face Cream- 2 Herbal Hair Oil-, ₹1,597, Lakshmi Reddy- . confirm ? User: , confirm . delivery ? (1 more turn in the full transcript.)",
+  "next_action": "Review the transcript and captured facts.",
+  "extracted_fields": {
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "phone": "+919700000022"
+  },
+  "facts": {
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "phone": "+919700000022"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "outcome:no_outcome",
+    "quality:agent_failure",
+    "quality:inconclusive"
+  ],
+  "tags": [],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T16:53:21.999160Z",
+  "generation_ok": false
+}

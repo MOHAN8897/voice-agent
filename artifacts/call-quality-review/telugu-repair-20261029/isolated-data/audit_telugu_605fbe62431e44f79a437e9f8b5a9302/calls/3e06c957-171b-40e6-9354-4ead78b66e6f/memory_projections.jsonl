@@ -1,0 +1,7 @@
+{"turn_seq": 1, "ts": "2026-10-29T17:23:49.955734Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T17:23:57.052979Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: visiting cards | quantity: 100\n[Preferences]\nfinish: matte finish"}
+{"turn_seq": 5, "ts": "2026-10-29T17:24:06.021095Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: visiting cards | quantity: 100\n[Preferences]\nfinish: matte finish"}
+{"turn_seq": 7, "ts": "2026-10-29T17:24:16.426487Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: visiting cards | quantity: 100 | email: ramesh.audit@example.invalid\n[Preferences]\nfinish: matte finish"}
+{"turn_seq": 9, "ts": "2026-10-29T17:24:25.288877Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: visiting cards | quantity: 200 | email: ramesh.audit@example.invalid\n[Preferences]\nfinish: matte finish"}
+{"turn_seq": 11, "ts": "2026-10-29T17:24:32.393206Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: visiting cards | quantity: 200 | email: ramesh.audit@example.invalid\n[Preferences]\nfinish: matte finish"}
+{"turn_seq": 13, "ts": "2026-10-29T17:24:36.341100Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: visiting cards | quantity: 200 | email: ramesh.audit@example.invalid\n[Preferences]\nfinish: matte finish"}

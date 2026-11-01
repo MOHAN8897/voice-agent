@@ -1,0 +1,16 @@
+{
+  "facts": {
+    "product": "wedding cards",
+    "quantity": "200",
+    "finish": "matte finish",
+    "caller_name": "రమేష్",
+    "email": "ramesh.audit@example.invalid",
+    "caller_email": "ramesh.audit@example.invalid",
+    "payment_method": "advance payment",
+    "requested_time": "rush delivery",
+    "delivery_locality": "విజయవాడ"
+  },
+  "preferences": {},
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "user: సరే Kavitha, 200 cards price ఇప్పుడు చెప్పలేకపోయినా పర్వాలేదు. మరి ఈ order process లో advance payment ఏమైనా చేయాలా? అలాగే rush delivery కి extra charges ఏమైనా ఉంటాయా?\nassistant: రమేష్ గారు, thousand rupees పైన orders ఉంటే 50% advance payment చేయాలి. Urgent 24-hour delivery కి extra one hundred fifty rupees అవుతుంది. మరి మీరు order తో ముందుకు వెళ్తారా?"
+}

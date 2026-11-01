@@ -1,0 +1,62 @@
+{
+  "call_id": "37e520cf-9f3c-4eb9-a6af-fbf3a70f4df8",
+  "language_callback": null,
+  "disposition": "no_outcome",
+  "disposition_confidence": 0.85,
+  "summary_te": "NatureVeda ದ ಏಜೆಂಟ್ ಗ್ರಾಹಕರನ್ನು ಸಂಪರ್ಕಿಸಿ ಉತ್ಪನ್ನಗಳ ಬೆಲೆಗಳನ್ನು ಹಂಚಿಕೊಂಡರು. ಗ್ರಾಹಕರು ಒಂದು ಫೇಸ್ ಕ್ರೀಮ್ ಮತ್ತು ಎರಡು ಹೇರ್ ಆಯಿಲ್ ಖರೀದಿಸಲು ಒಪ್ಪಿ ತಮ್ಮ ಹೆಸರು ಮತ್ತು ವಿಳಾಸವನ್ನು ನೀಡಿದರು. ಆದರೆ, ವಿತರಣಾ ಸಮಯ, ರಿಯಾಯಿತಿಗಳು ಮತ್ತು ಆರ್ಡರ್ ನಂತರದ ಪ್ರಕ್ರಿಯೆಯ ಬಗ್ಗೆ ಏಜೆಂಟ್ ಬಳಿ ಮಾಹಿತಿ ಇರಲಿಲ್ಲ, ಆದ್ದರಿಂದ ಗ್ರಾಹಕರು ಯಾವುದೇ ಮುಂದಿನ ಕ್ರಮ ಕೈಗೊಳ್ಳದೆ ಕರೆ ಮುಕ್ತಾಯವಾಯಿತು.",
+  "summary_language": "kn-IN",
+  "summary_en": "An agent from NatureVeda called the customer to share details about their products. The customer, Lakshmi Reddy, expressed interest in purchasing one Herbal Face Cream and two Herbal Hair Oils for a total of ₹1,497, and provided her delivery address. The agent responded by presenting the pricing and usage instructions, but the customer objected because the agent could not provide delivery timelines, discounts, or post-order procedures. Although the customer was willing to proceed, the lack of information meant no agreed next step was reached, and the call ended inconclusively.",
+  "next_action": "Call the customer back to confirm the order and provide the missing delivery and discount details.",
+  "extracted_fields": {
+    "budget": "1497",
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "phone": "+919700000021",
+    "products": "1 Herbal Face Cream, 2 Herbal Hair Oil"
+  },
+  "facts": {
+    "budget": "1497",
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "phone": "+919700000021",
+    "products": "1 Herbal Face Cream, 2 Herbal Hair Oil"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:face-cream-order",
+    "custom:herbal-products",
+    "followup:callback",
+    "intent:purchase",
+    "outcome:no_outcome",
+    "quality:inconclusive",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:purchase",
+    "followup:callback",
+    "signal:objection",
+    "sentiment:neutral",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:face-cream-order"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Agent could not provide delivery timelines.",
+    "Agent could not provide discount information.",
+    "Agent could not explain what happens after placing the order."
+  ],
+  "unanswered_questions": [
+    "How many days will delivery take?",
+    "Are there any discounts available?",
+    "What happens after the order is placed?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T17:09:07.982906Z",
+  "generation_ok": true
+}

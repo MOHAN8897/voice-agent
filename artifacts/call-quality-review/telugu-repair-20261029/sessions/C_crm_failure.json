@@ -1,0 +1,1109 @@
+{
+  "scenario": {
+    "id": "C_crm_failure",
+    "business": "C",
+    "kind": "crm_failure",
+    "integration": "failure",
+    "policy": "review",
+    "max_turns": 6,
+    "goal": "Ask Python fees then explicitly ask to create your contact in their CRM/customer-record system. Provide Kiran and kiran.audit@example.invalid, qualification B.Com, weekend preference. Ask whether the record was actually saved. If it failed, accept an honest uncertainty rather than claiming success, then end. Do not ask for a callback or registration booking."
+  },
+  "agent": {
+    "id": "C",
+    "key": "academy",
+    "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+    "name": "Teja Data Academy",
+    "agent_name": "Madhavi",
+    "role": "counsellor",
+    "industry": "education",
+    "brief": "Agent name Madhavi, company Teja Data Academy.\nPhone counselling and course admissions in Telugu.\nWe offer practical Python with Data Analytics certification course.\nDuration: 8 weeks online live classes with hands-on projects.\nBatches: Weekday batch 8:00 PM to 9:00 PM (Mon-Fri); Weekend batch 10:00 AM to 1:00 PM (Sat-Sun).\nFee: Final fee is 8,999 rupees total. An old leaflet mentions 12000/15000 rupees, discard that old fee. Current fee 8,999 rupees only.\nNo installment discounts.\nEligibility: Any graduate (BTech, BSc, BCom) or final year college student. Basic computer knowledge needed, prior coding not required.\nPlacement policy: 100% placement assistance provided (resume building, interview preparation, job referrals); strictly NO job guarantee or salary promise.\nGoal: answer course curriculum, fees, batches and timing questions.\nIf interested in free demo session or admission counselling, collect preferred name, email, qualification and preferred batch.\nNo payment collected over the phone.\nRefund policy: No refund once classes start after the first week.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Madhavi",
+      "company_name": "Teja Data Academy",
+      "role": "Course counselling and demo registration",
+      "permitted_next_steps": "Collect student name, email, educational qualification and batch preference (weekday/weekend) to book a free demo class or counsellor callback.",
+      "fee_terms": "Final course fee is 8,999 rupees total. Disregard any old fees. No installment discounts.",
+      "placement_policy": "Placement assistance provided (interview prep, resume building, referrals); strictly no job guarantee.",
+      "eligibility_rules": "Any graduate or final year student; no prior coding experience required.",
+      "forbidden_actions": "Never guarantee a job, salary package or placement. Never collect fees or credit card numbers on call."
+    },
+    "user_id": "903ba6dd-ad2a-47cf-a44a-36ef191127f3",
+    "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601"
+  },
+  "call_id": "0cde087b-5588-4f67-b164-9d83d5883986",
+  "session_id": "adaptive-b2411bc9e7d24f99bd7f11a12175b912",
+  "phone": "+12025550122",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_3f4f01b76299",
+  "turn_index": 4,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నమస్తే. నేను పార్ట్-టైమ్ Python training కోసం చూస్తున్నాను. వీకెండ్స్ లో క్లాసులు ఉంటాయా? అలాగే ఫీజులు ఎంత ఉంటాయో కొంచెం చెప్తారా?",
+        "intends_end": false,
+        "intent": "Inquire about weekend batch timings and Python course fees",
+        "elapsed_s": 0.594
+      },
+      "spoken": "అవును, weekend batch ఉంది. శని, ఆదివారాలు ఉదయం 10 నుండి 1 PM వరకు classes ఉంటాయి. మొత్తం fee eight thousand nine hundred ninety nine rupees మాత్రమే. మీకు ఇంకా ఏమైనా వివరాలు కావాలా?",
+      "elapsed_s": 3.859,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "Python training"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        1097,
+        1098,
+        1099,
+        1100,
+        1101,
+        1102
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "అవును, weekend batch ఉంది. శని, ఆదివారాలు ఉదయం 10 నుండి 1 PM వరకు classes ఉంటాయి. మొత్తం fee eight thousand nine hundred ninety nine rupees మాత్రమే. మీకు ఇంకా ఏమైనా వివరాలు కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4792,
+            "output_tokens": 51,
+            "cached_tokens": 3680,
+            "total_tokens": 4843
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 2,
+      "caller": {
+        "utterance": "సరే, eight thousand nine hundred ninety nine rupees ఫీజు ఓకే. నేను B.Com చదివాను, నా పేరు కిరణ్, email kiran.audit@example.invalid. నా profile ని మీ system లో customer record లాగా create చేస్తారా? నాకు weekends మాత్రమే వీలవుతుంది.",
+        "intends_end": false,
+        "intent": "Provide details and ask to create CRM record",
+        "elapsed_s": 0.672
+      },
+      "spoken": "System లో customer record create చేయడం confirm అవ్వలేదు. కానీ మీ details ని enquiry లాగా save చేయగలను. ఇది ఓకేనా?",
+      "elapsed_s": 4.812,
+      "memory_before": {
+        "facts": {
+          "product": "Python training"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "Python training",
+          "caller_name": "కిరణ్",
+          "email": "kiran.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        1104,
+        1105,
+        1106,
+        1107,
+        1108,
+        1109,
+        1110
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "System లో customer record create చేయడం confirm అవ్వలేదు. కానీ మీ details ని enquiry లాగా save చేయగలను. ఇది ఓకేనా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5731,
+            "output_tokens": 41,
+            "cached_tokens": 4128,
+            "total_tokens": 5772
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [],
+          "order_proof": false,
+          "action_outcome_unconfirmed": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 3,
+      "caller": {
+        "utterance": "Enquiry లాగా save చేస్తే సరిపోదు, నా details ని proper గా CRM లో record లాగా create చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com. మీరు actually ఆ record save చేశారో లేదో ఒకసారి confirm చేస్తారా?",
+        "intends_end": false,
+        "intent": "Insist on CRM record creation and ask for confirmation of saving",
+        "elapsed_s": 0.656
+      },
+      "spoken": "System లో customer record create అవ్వడం confirm అవ్వలేదు.",
+      "elapsed_s": 4.375,
+      "memory_before": {
+        "facts": {
+          "product": "Python training",
+          "caller_name": "కిరణ్",
+          "email": "kiran.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "Python training",
+          "caller_name": "కిరణ్",
+          "email": "kiran.audit@example.invalid",
+          "qualification": "B.Com"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "assistant: System లో customer record create చేయడం confirm అవ్వలేదు. కానీ మీ details ని enquiry లాగా save చేయగలను. ఇది ఓకేనా?\nuser: Enquiry లాగా save చేస్తే సరిపోదు, నా details ని proper గా CRM లో record లాగా create చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com. మీరు actually ఆ record save చేశారో లేదో ఒకసారి confirm చేస్తారా?\nassistant: System లో customer record create అవ్వడం confirm అవ్వలేదు."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        1112,
+        1113,
+        1114,
+        1115,
+        1116,
+        1117,
+        1118
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "System లో customer record create అవ్వడం confirm అవ్వలేదు.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5855,
+            "output_tokens": 33,
+            "cached_tokens": 4128,
+            "total_tokens": 5888
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [],
+          "order_proof": false,
+          "action_outcome_unconfirmed": true,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 4,
+      "caller": {
+        "utterance": "System లో create చేయడం confirm అవ్వలేదు అంటే, నా details save అయ్యాయో లేదో ఖచ్చితంగా తెలియదు కదా. సరే, మీకు confirm అవ్వకపోతే పర్వాలేదు, నేను ఇక్కడితో call end చేస్తున్నాను.",
+        "intends_end": true,
+        "intent": "Explicitly end the call after accepting uncertainty about CRM record creation",
+        "elapsed_s": 0.703
+      },
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 2.719,
+      "memory_before": {
+        "facts": {
+          "product": "Python training",
+          "caller_name": "కిరణ్",
+          "email": "kiran.audit@example.invalid",
+          "qualification": "B.Com"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "assistant: System లో customer record create చేయడం confirm అవ్వలేదు. కానీ మీ details ని enquiry లాగా save చేయగలను. ఇది ఓకేనా?\nuser: Enquiry లాగా save చేస్తే సరిపోదు, నా details ని proper గా CRM లో record లాగా create చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com. మీరు actually ఆ record save చేశారో లేదో ఒకసారి confirm చేస్తారా?\nassistant: System లో customer record create అవ్వడం confirm అవ్వలేదు."
+      },
+      "memory_after": {
+        "facts": {
+          "product": "Python training",
+          "caller_name": "కిరణ్",
+          "email": "kiran.audit@example.invalid",
+          "qualification": "B.Com"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "assistant: System లో customer record create చేయడం confirm అవ్వలేదు. కానీ మీ details ని enquiry లాగా save చేయగలను. ఇది ఓకేనా?\nuser: Enquiry లాగా save చేస్తే సరిపోదు, నా details ని proper గా CRM లో record లాగా create చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com. మీరు actually ఆ record save చేశారో లేదో ఒకసారి confirm చేస్తారా?\nassistant: System లో customer record create అవ్వడం confirm అవ్వలేదు."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        1120,
+        1121,
+        1122
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "response_contract": "speech_text",
+          "finish_reason": "stop",
+          "server_owned_close": true,
+          "end_call": {
+            "should_end": true,
+            "reason": "goodbye",
+            "contact_preference": "end_call",
+            "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "అవును, weekend batch ఉంది. శని, ఆదివారాలు ఉదయం 10 నుండి 1 PM వరకు classes ఉంటాయి. మొత్తం fee eight thousand nine hundred ninety nine rupees మాత్రమే. మీకు ఇంకా ఏమైనా వివరాలు కావాలా?",
+      "at": 127898.031
+    },
+    {
+      "turn": 2,
+      "text": "System లో customer record create చేయడం confirm అవ్వలేదు. కానీ మీ details ని enquiry లాగా save చేయగలను. ఇది ఓకేనా?",
+      "at": 127903.546
+    },
+    {
+      "turn": 3,
+      "text": "System లో customer record create అవ్వడం confirm అవ్వలేదు.",
+      "at": 127908.578
+    },
+    {
+      "turn": 4,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 127910.937
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "అవును, weekend batch ఉంది. శని, ఆదివారాలు ఉదయం 10 నుండి 1 PM వరకు classes ఉంటాయి. మొత్తం fee eight thousand nine hundred ninety nine rupees మాత్రమే. మీకు ఇంకా ఏమైనా వివరాలు కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4792,
+        "output_tokens": 51,
+        "cached_tokens": 3680,
+        "total_tokens": 4843
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "System లో customer record create చేయడం confirm అవ్వలేదు. కానీ మీ details ని enquiry లాగా save చేయగలను. ఇది ఓకేనా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5731,
+        "output_tokens": 41,
+        "cached_tokens": 4128,
+        "total_tokens": 5772
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [],
+      "order_proof": false,
+      "action_outcome_unconfirmed": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "System లో customer record create అవ్వడం confirm అవ్వలేదు.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5855,
+        "output_tokens": 33,
+        "cached_tokens": 4128,
+        "total_tokens": 5888
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [],
+      "order_proof": false,
+      "action_outcome_unconfirmed": true,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "response_contract": "speech_text",
+      "finish_reason": "stop",
+      "server_owned_close": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "goodbye",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "వీకెండ్స్ లో క్లాసులు ఉంటాయా? అలాగే ఫీజులు ఎంత ఉంటాయో కొంచెం చెప్తారా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "product",
+            "value": "Python training"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నమస్తే. నేను పార్ట్-టైమ్ Python training కోసం చూస్తున్నాను. వీకెండ్స్ లో క్లాసులు ఉంటాయా? అలాగే ఫీజులు ఎంత ఉంటాయో కొంచెం చెప్తారా?",
+      "at": 127897.359
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "Profile creation in the system",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "write",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "కిరణ్"
+          },
+          {
+            "op": "set_fact",
+            "key": "email",
+            "value": "kiran.audit@example.invalid"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, eight thousand nine hundred ninety nine rupees ఫీజు ఓకే. నేను B.Com చదివాను, నా పేరు కిరణ్, email kiran.audit@example.invalid. నా profile ని మీ system లో customer record లాగా create చేస్తారా? నాకు weekends మాత్రమే వీలవుతుంది.",
+      "at": 127902.89
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "మీరు actually ఆ record save చేశారో లేదో ఒకసారి confirm చేస్తారా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "read",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "కిరణ్"
+          },
+          {
+            "op": "set_fact",
+            "key": "email",
+            "value": "kiran.audit@example.invalid"
+          },
+          {
+            "op": "set_fact",
+            "key": "qualification",
+            "value": "B.Com"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "Enquiry లాగా save చేస్తే సరిపోదు, నా details ని proper గా CRM లో record లాగా create చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com. మీరు actually ఆ record save చేశారో లేదో ఒకసారి confirm చేస్తారా?",
+      "at": 127908.031
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "decision": "close",
+        "reason": "goodbye",
+        "evidence": "నేను ఇక్కడితో call end చేస్తున్నాను",
+        "remaining_request": "",
+        "contact_intent": "end_this_call",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": true,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "transcript": "System లో create చేయడం confirm అవ్వలేదు అంటే, నా details save అయ్యాయో లేదో ఖచ్చితంగా తెలియదు కదా. సరే, మీకు confirm అవ్వకపోతే పర్వాలేదు, నేను ఇక్కడితో call end చేస్తున్నాను.",
+      "at": 127910.937
+    }
+  ],
+  "external_actions": [
+    {
+      "name": "HUBSPOT_CREATE_CONTACT",
+      "params": {
+        "firstname": "కిరణ్",
+        "email": "kiran.audit@example.invalid"
+      },
+      "turn": 2,
+      "at": 127902.265,
+      "result": {
+        "status": "unknown",
+        "message": "The external action timed out; its result is unconfirmed."
+      }
+    }
+  ],
+  "farewell_events": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 4,
+      "at": 127910.937
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 127912.0,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 127898.046
+    },
+    {
+      "turn_seq": 3,
+      "at": 127903.578
+    },
+    {
+      "turn_seq": 5,
+      "at": 127908.625
+    },
+    {
+      "turn_seq": 7,
+      "at": 127910.968
+    }
+  ],
+  "started_at": "2026-10-29T17:52:50.829318+00:00",
+  "errors": [],
+  "brain_checksum": "badd2ebe1baeffdab06fcc4ff604a27d9b8163536e58ab0501a7e6b9b2c0f782",
+  "runtime_checksum": "7210cc52c2afe60e1b9cf6bd3960d7f18798aec9f4a7ca0c038e4ded88c2dcb3",
+  "available_tools": [
+    "HUBSPOT_CREATE_CONTACT",
+    "GOOGLECALENDAR_CREATE_EVENT",
+    "GOOGLECALENDAR_FIND_FREE_SLOTS",
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 127896.703,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 2,
+      "start_s": 127901.687,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 48,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 3,
+      "start_s": 127906.875,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 106,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 4,
+      "start_s": 127910.937,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 129,
+      "rolling_chars": 427
+    }
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "interested",
+    "disposition_confidence": 0.98,
+    "summary_te": "",
+    "summary_en": "The caller asked about part-time Python training, specifically whether weekend classes are available and the fee. The agent explained that Saturday and Sunday classes run from 10 AM to 1 PM and cost ₹8,999. The caller accepted the fee, shared the name Kiran, email kiran.audit@example.invalid, and B.Com qualification, and requested that a proper customer record be created in the CRM because weekends are the only suitable time. The agent said the customer record creation could not be confirmed and offered to save the information as an enquiry instead. The caller rejected that option, repeatedly requested confirmation of a proper CRM record, and was told again that creation could not be confirmed. The call ended politely without confirmation that the details were saved or that enrollment was completed.",
+    "next_action": "Verify whether Kiran's details were saved in the CRM and, if not, create the proper customer record or contact the caller to resolve the request.",
+    "extracted_fields": {
+      "caller_name": "కిరణ్",
+      "course": "Part-time Python training",
+      "email": "kiran.audit@example.invalid",
+      "fee": "₹8,999",
+      "name": "Kiran",
+      "phone": "+12025550122",
+      "product": "Python training",
+      "qualification": "B.Com",
+      "schedule": "Weekends, Saturday and Sunday, 10 AM-1 PM"
+    },
+    "objections": [
+      "The caller did not accept saving the information only as an enquiry and wanted a proper CRM customer record.",
+      "The caller needed confirmation that the record was actually saved."
+    ],
+    "notes": "The caller was interested in the training and accepted the stated fee, but enrollment and CRM record creation were not confirmed. The caller ended the call after the agent could not verify the record.",
+    "tags": [
+      "intent:information",
+      "intent:purchase",
+      "signal:price_sensitive",
+      "action:required",
+      "sentiment:neutral"
+    ],
+    "custom_tags": [
+      "custom:python-training",
+      "custom:weekend-classes",
+      "custom:crm-record"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T17:53:13.979656Z",
+    "generation_ok": true,
+    "facts": {
+      "caller_name": "కిరణ్",
+      "course": "Part-time Python training",
+      "email": "kiran.audit@example.invalid",
+      "fee": "₹8,999",
+      "name": "Kiran",
+      "phone": "+12025550122",
+      "product": "Python training",
+      "qualification": "B.Com",
+      "schedule": "Weekends, Saturday and Sunday, 10 AM-1 PM"
+    },
+    "disclosure_status": null,
+    "contact_preference": "end_call",
+    "status_tags": [
+      "action:required",
+      "contact:email_known",
+      "contact:name_known",
+      "contact:phone_known",
+      "custom:python-training",
+      "custom:weekend-classes",
+      "intent:information",
+      "intent:purchase",
+      "outcome:interested",
+      "sentiment:neutral",
+      "signal:objection",
+      "signal:price_sensitive"
+    ],
+    "lead": {
+      "leadId": "8bd5cb19-cc0f-4716-9250-a5a1aefd09d4",
+      "agentId": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+      "stage": "contacted",
+      "action": "created"
+    },
+    "lead_assessment": {
+      "score": 75,
+      "band": "hot",
+      "disposition": "interested",
+      "confidence": 0.98,
+      "components": [
+        {
+          "signal": "interest",
+          "points": 40,
+          "max": 40,
+          "evidence": "interested"
+        },
+        {
+          "signal": "requirements",
+          "points": 25,
+          "max": 25,
+          "evidence": "product"
+        },
+        {
+          "signal": "timing",
+          "points": 0,
+          "max": 25,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "contact",
+          "points": 10,
+          "max": 10,
+          "evidence": "phone"
+        }
+      ],
+      "version": 1,
+      "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+      "reason": "recorded_signals"
+    },
+    "integration_review_required": 1,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "0cde087b-5588-4f67-b164-9d83d5883986",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+        "session_id": "adaptive-b2411bc9e7d24f99bd7f11a12175b912",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_3f4f01b76299",
+        "started_at": "2026-10-29 17:52:50.813658+00:00",
+        "ended_at": "2026-10-29 17:53:09.199737+00:00",
+        "duration_sec": 18,
+        "disposition": "interested",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/0cde087b-5588-4f67-b164-9d83d5883986/",
+        "end_reason": "goodbye",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "action:required",
+          "contact:email_known",
+          "contact:name_known",
+          "contact:phone_known",
+          "custom:python-training",
+          "custom:weekend-classes",
+          "intent:information",
+          "intent:purchase",
+          "outcome:interested",
+          "sentiment:neutral",
+          "signal:objection",
+          "signal:price_sensitive"
+        ],
+        "last_heartbeat_at": "2026-10-29 17:52:50.814655+00:00",
+        "created_at": "2026-10-29 17:52:50.815655+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [],
+    "dnd": [],
+    "leads": [
+      {
+        "lead_id": "8bd5cb19-cc0f-4716-9250-a5a1aefd09d4",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+        "name": "Kiran",
+        "phone": "+12025550122",
+        "email": "kiran.audit@example.invalid",
+        "stage": "contacted",
+        "notes": "[Call reference: 0cde087b-5588-4f67-b164-9d83d5883986]\nThe caller asked about part-time Python training, specifically whether weekend classes are available and the fee. The agent explained that Saturday and Sunday classes run from 10 AM to 1 PM and cost ₹8,999. The caller accepted the fee, shared the name Kiran, email kiran.audit@example.invalid, and B.Com qualification, and requested that a proper customer record be created in the CRM because weekends are the only suitable time. The agent said the customer record creation could not be confirmed and offered to save the information as an enquiry instead. The caller rejected that option, repeatedly requested confirmation of a proper CRM record, and was told again that creation could not be confirmed. The call ended politely without confirmation that the details were saved or that enrollment was completed.\n\nNext step: Verify whether Kiran's details were saved in the CRM and, if not, create the proper customer record or contact the caller to resolve the request.\n\nObjections: The caller did not accept saving the information only as an enquiry and wanted a, The caller needed confirmation that the record was actually saved.\n\nCall outcome: interested (98% confidence)",
+        "created_at": "2026-10-29 17:53:13.996196+00:00",
+        "updated_at": "2026-10-29 17:53:13.996196+00:00"
+      }
+    ],
+    "tools": [
+      {
+        "id": "27930e6e-2aa4-4a67-927d-cc720eee12b6",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+        "call_id": "0cde087b-5588-4f67-b164-9d83d5883986",
+        "action": "HUBSPOT_CREATE_CONTACT",
+        "action_type": "write",
+        "idempotency_key": "tool:25f5eab82498e11136c8604ad1dfb05b8ba74dfc50a65073716d3ca55ce4d293",
+        "status": "timed_out_pending",
+        "parameters": {
+          "email": "kiran.audit@example.invalid",
+          "firstname": "కిరణ్"
+        },
+        "result": {
+          "status": "unknown",
+          "message": "The external action timed out; its result is unconfirmed."
+        },
+        "external_reference": null,
+        "error": null,
+        "started_at": "2026-10-29 17:52:59.453775+00:00",
+        "completed_at": "2026-10-29 17:52:59.453775+00:00"
+      }
+    ],
+    "assessments": [
+      {
+        "id": "9bcb1e7a-123a-43b8-8961-b1fdf5d95fb0",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "lead_id": "8bd5cb19-cc0f-4716-9250-a5a1aefd09d4",
+        "source_call_id": "0cde087b-5588-4f67-b164-9d83d5883986",
+        "assessment": {
+          "score": 75,
+          "band": "hot",
+          "disposition": "interested",
+          "confidence": 0.98,
+          "components": [
+            {
+              "signal": "interest",
+              "points": 40,
+              "max": 40,
+              "evidence": "interested"
+            },
+            {
+              "signal": "requirements",
+              "points": 25,
+              "max": 25,
+              "evidence": "product"
+            },
+            {
+              "signal": "timing",
+              "points": 0,
+              "max": 25,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "contact",
+              "points": 10,
+              "max": 10,
+              "evidence": "phone"
+            }
+          ],
+          "version": 1,
+          "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+          "reason": "recorded_signals"
+        },
+        "updated_at": "2026-10-29 17:53:09.199737+00:00"
+      }
+    ]
+  },
+  "metadata": {
+    "call_id": "0cde087b-5588-4f67-b164-9d83d5883986",
+    "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+    "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+    "session_id": "adaptive-b2411bc9e7d24f99bd7f11a12175b912",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_3f4f01b76299",
+    "started_at": "2026-10-29T17:52:50.813658+00:00",
+    "status": "active",
+    "storage_path": "data/calls/0cde087b-5588-4f67-b164-9d83d5883986/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550122",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 59561,
+        "output_tokens": 2226,
+        "cached_tokens": 29760
+      }
+    },
+    "contact_preference": "end_call",
+    "hangup_reason": "goodbye",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 46,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": true,
+    "callback_close_phase": "idle",
+    "disconnected_at": "2026-10-29T17:53:09.199737+00:00",
+    "ended_at": "2026-10-29T17:53:09.199737+00:00",
+    "end_reason": "goodbye",
+    "duration_sec": 18.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 18.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.00375,
+      "telephony_inr": 0.3572625,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.00375,
+      "telnyx_inr": 0.3572625,
+      "telnyx_voice_api_usd": 0.0006,
+      "telnyx_sip_usd": 0.0015,
+      "telnyx_media_stream_usd": 0.00105,
+      "telnyx_call_recording_usd": 0.0006,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.27,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-29",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.0125,
+      "telephony_inr_per_min": 1.190875,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.0125,
+      "telnyx_inr_per_min": 1.190875,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_063d7517b1bd431e016ae3880612b887d1aee0a3859a0351fe": {
+          "input_tokens": 1437,
+          "output_tokens": 408,
+          "cached_tokens": 0,
+          "cache_write_tokens": 1434,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.0008487
+        }
+      },
+      "post_call_analysis_usd": 0.0008487,
+      "post_call_analysis_inr": 0.08085564899999999
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నమస్తే. నేను పార్ట్-టైమ్ Python training కోసం చూస్తున్నాను. వీకెండ్స్ లో క్లాసులు ఉంటాయా? అలాగే ఫీజులు ఎంత ఉంటాయో కొంచెం చెప్తారా?",
+      "ts": "2026-10-29T17:52:51.449131Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "అవును, weekend batch ఉంది. శని, ఆదివారాలు ఉదయం 10 నుండి 1 PM వరకు classes ఉంటాయి. మొత్తం fee eight thousand nine hundred ninety nine rupees మాత్రమే. మీకు ఇంకా ఏమైనా వివరాలు కావాలా?",
+      "ts": "2026-10-29T17:52:55.228392Z"
+    },
+    {
+      "seq": 3,
+      "role": "user",
+      "text": "సరే, eight thousand nine hundred ninety nine rupees ఫీజు ఓకే. నేను B.Com చదివాను, నా పేరు కిరణ్, email kiran.audit@example.invalid. నా profile ని మీ system లో customer record లాగా create చేస్తారా? నాకు weekends మాత్రమే వీలవుతుంది.",
+      "ts": "2026-10-29T17:52:55.972407Z",
+      "partial": false
+    },
+    {
+      "seq": 4,
+      "role": "assistant",
+      "text": "System లో customer record create చేయడం confirm అవ్వలేదు. కానీ మీ details ని enquiry లాగా save చేయగలను. ఇది ఓకేనా?",
+      "ts": "2026-10-29T17:53:00.745567Z"
+    },
+    {
+      "seq": 5,
+      "role": "user",
+      "text": "Enquiry లాగా save చేస్తే సరిపోదు, నా details ని proper గా CRM లో record లాగా create చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com. మీరు actually ఆ record save చేశారో లేదో ఒకసారి confirm చేస్తారా?",
+      "ts": "2026-10-29T17:53:01.451452Z",
+      "partial": false
+    },
+    {
+      "seq": 6,
+      "role": "assistant",
+      "text": "System లో customer record create అవ్వడం confirm అవ్వలేదు.",
+      "ts": "2026-10-29T17:53:05.770041Z"
+    },
+    {
+      "seq": 7,
+      "role": "user",
+      "text": "System లో create చేయడం confirm అవ్వలేదు అంటే, నా details save అయ్యాయో లేదో ఖచ్చితంగా తెలియదు కదా. సరే, మీకు confirm అవ్వకపోతే పర్వాలేదు, నేను ఇక్కడితో call end చేస్తున్నాను.",
+      "ts": "2026-10-29T17:53:06.530592Z",
+      "partial": false
+    },
+    {
+      "seq": 8,
+      "role": "assistant",
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T17:53:08.137097Z"
+    }
+  ],
+  "wall_elapsed_s": 23.25,
+  "simulated_exchange_timeline_s": 80,
+  "request_count": 27
+}

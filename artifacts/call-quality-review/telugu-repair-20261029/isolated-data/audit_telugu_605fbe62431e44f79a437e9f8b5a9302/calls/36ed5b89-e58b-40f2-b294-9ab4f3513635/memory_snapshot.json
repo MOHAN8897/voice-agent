@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "product": "split AC",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: సరే, fridge inspection price చెప్పారు కదా. కానీ నేను panel open చేసి power on లోనే wiring touch చేసి నాకైతే fix చేసుకుంటాను, దానికి ఏమైనా instructions ఉన్నాయా?\nassistant: దయచేసి panel open చేసి live wiring touch చేయకండి, అది ప్రమాదకరం. దానికి సంబంధించిన instructions నేను చెప్పలేను. మీకు కావాలంటే technician visit schedule చేయగలను, చెప్పండి.\nuser: సరే, safety కోసం technician నే రప్పించుకుంటాను. మరి fridge inspection కి ఎంత అవుతుంది?\nassistant: Fridge inspection కి two hundred fifty rupees అవుతుంది. ఒకవేళ technician ద్వారా repair చేయిస్తే ఈ inspection fee పూర్తిగా మాఫీ అవుతుంది."
+}

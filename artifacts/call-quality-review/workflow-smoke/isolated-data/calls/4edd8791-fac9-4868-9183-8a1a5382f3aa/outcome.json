@@ -1,0 +1,35 @@
+{
+  "disposition": "no_outcome",
+  "disposition_confidence": 0.0,
+  "summary_te": "",
+  "summary_en": "Automatic summary generation failed. Transcript review: User: నేను ఇప్పుడు busy గా ఉన్నాను. రేపు సాయంత్రం 6 కి మళ్ళీ call చేయగలరా? Assistant: మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+  "next_action": "Review the transcript and captured facts.",
+  "extracted_fields": {
+    "phone": "+919876500001"
+  },
+  "facts": {
+    "phone": "+919876500001"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "followup:callback",
+    "outcome:no_outcome",
+    "quality:inconclusive"
+  ],
+  "tags": [],
+  "custom_tags": [],
+  "objections": [],
+  "notes": "Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quota', 'param': None, 'code': 'credit_bala",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T20:02:29.475661Z",
+  "generation_ok": false,
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

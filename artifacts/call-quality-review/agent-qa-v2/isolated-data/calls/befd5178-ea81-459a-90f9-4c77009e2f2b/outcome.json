@@ -1,0 +1,99 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్ లక్ష్మి రెడ్డిని సంప్రదించి ఆయుర్వేద ఫేస్ క్రీమ్ మరియు హెయిర్ ఆయిల్ ధరలు, పదార్థాల గురించి వివరించారు. కస్టమర్ 2 హెయిర్ ఆయిల్ బాటిళ్లు మరియు 1 ఫేస్ క్రీమ్ కొనడానికి ఆసక్తి చూపారు, మరియు తన పేరు, చిరునామా అందించారు. డెలివరీ సమయం మరియు డిస్కౌంట్ల గురించి ఏజెంట్‌కు సమాచారం లేదు, కాబట్టి ఆర్డర్ ప్రాసెసింగ్ కోసం తదుపరి చర్య అవసరం. కస్టమర్ ఆర్డర్ ఇవ్వడానికి అంగీకరించారు, మరియు ఆర్డర్ నిర్ధారణ కోసం కాల్ ముగిసింది.",
+  "summary_en": "The business's agent called the customer to provide details about herbal face cream and hair oil. The customer, Lakshmi Reddy, expressed interest in purchasing two bottles of hair oil and one face cream, and provided her delivery address in Hyderabad. The agent could not provide information on delivery timelines or discounts. The customer agreed to proceed with the order, and the call ended with the understanding that the business team would process the request.",
+  "next_action": "The business team must process the customer's order for 2 hair oils and 1 face cream using the provided details.",
+  "extracted_fields": {
+    "caller_name": "లక్ష్మి రెడ్డి",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "phone_number": "same as caller ID",
+    "products": "2 hair oils, 1 face cream",
+    "quantity": "1"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:purchase",
+    "followup:callback",
+    "signal:needs_approval"
+  ],
+  "custom_tags": [
+    "custom:ayurvedic-cream",
+    "custom:hair-oil"
+  ],
+  "unanswered_questions": [
+    "How long will the delivery take?",
+    "Is there any discount available?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T13:30:41.933968Z",
+  "generation_ok": true,
+  "summary_language": "te-IN",
+  "facts": {
+    "caller_name": "లక్ష్మి రెడ్డి",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "phone_number": "same as caller ID",
+    "products": "2 hair oils, 1 face cream",
+    "quantity": "1"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:ayurvedic-cream",
+    "custom:hair-oil",
+    "followup:callback",
+    "intent:purchase",
+    "outcome:callback_required",
+    "signal:needs_approval"
+  ],
+  "lead": {
+    "leadId": "43dc29f0-3289-427e-93c8-5aebcf5da1fd",
+    "agentId": "10390077-097c-599b-8c78-0f10f417867d",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "intent:purchase"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "quantity"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone_number"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "caller_name": "శ్రావణి",
+    "product": "window AC service",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: నా email sravani.audit@example.invalid. రేపు పది గంటలకు book చేయండి. Booking నిజంగా confirm అయిందా చెప్పండి.\nassistant: శ్రావణి గారు, మీ email sravani. audit@example. invalid note చేసుకున్నాను. కానీ ఇక్కడ నుంచి నేరుగా booking confirm చేయలేము, మా team review చేశాకే అది జరుగుతుంది. రేపు 30th October, 10 AM slot కి సంబంధించి ఒక enquiry save చేయమంటారా?\nuser: సరే, confirm కానప్పుడు confirm అయింది అనకండి. ప్రస్తుతం ఇంతే చాలు, thank you.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+}

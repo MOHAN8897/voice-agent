@@ -1,0 +1,15 @@
+{
+  "facts": {
+    "caller_name": "కిరణ్",
+    "product": "Python మరియు SQL/PowerBI training",
+    "delivery_locality": "హైదరాబాద్",
+    "email": "kiran.audit@example.invalid",
+    "qualification": "graduate"
+  },
+  "preferences": {
+    "delivery_time": "Weekend batch",
+    "batch_preference": "weekend batch"
+  },
+  "important_context": "",
+  "summary": "assistant: మా దగ్గర free demo session fee గురించి సమాచారం లేదు. మీ enquiry save అయిందో లేదో నేను ఇప్పుడే confirm చేయలేను.\nuser: Demo fee గురించి కూడా తెలియదు అంటే ఎలా అండి? సరే, నా enquiry save అయిందో లేదో మీరు ఇప్పుడే check చేయలేకపోతున్నారు కదా, మరి నా details save చేయడానికి వేరే ఏదైనా way ఉందా? అలాగే ఈ 8 weeks weekend batch ఎప్పుడు start అవుతుందో చెప్పగలరా?\nassistant: Demo session fee గురించి మాకు సమాచారం లేదు. మీ enquiry save చేయడానికి SAVE_ENQUIRY tool పనిచేయలేదు, కాబట్టి ప్రస్తుతం వేరే దారి లేదు. అలాగే 8 weeks weekend batch ఎప్పుడు start అవుతుందనే వివరాలు మాకు తెలియవు."
+}

@@ -1,0 +1,14 @@
+{
+  "schema": "sim_f9c0eecf6c1f4bfdaebe7c721de68199",
+  "spec": "natureveda",
+  "languages": [
+    "te-IN",
+    "hi-IN",
+    "en-IN",
+    "ta-IN",
+    "kn-IN",
+    "gu-IN",
+    "ml-IN"
+  ],
+  "model": "sarvam-105b-conversations"
+}

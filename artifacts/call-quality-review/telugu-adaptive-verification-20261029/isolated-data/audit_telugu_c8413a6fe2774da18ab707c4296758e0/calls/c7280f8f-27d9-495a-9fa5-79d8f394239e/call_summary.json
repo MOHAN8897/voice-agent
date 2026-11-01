@@ -1,0 +1,77 @@
+{
+  "call_id": "c7280f8f-27d9-495a-9fa5-79d8f394239e",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller, Shravani, requested general servicing for a split AC in Madhapur and asked about the price and any inspection fee. The agent quoted ₹599 for split AC servicing and explained that spare parts, if needed, would be charged additionally at actual MRP after technician inspection; the ₹250 inspection-fee explanation applied to refrigerator service, not the requested AC service. A next-day service window from 10:00 AM to 6:00 PM was available. Shravani provided her name, locality, and email, and requested the 10:00 AM time while clarifying that the AC had no major issue. She also asked about warranty or coverage, but the agent could not provide those details. The caller agreed to proceed with the booking process, but the agent clarified that the 10:00 AM slot was only noted as a request and was not actually confirmed or forwarded for follow-up. The call ended after the caller acknowledged this and said her questions were answered.",
+  "next_action": "Confirm whether the 10:00 AM next-day service slot can be booked and communicate the confirmation to Shravani; provide warranty or coverage details if available.",
+  "extracted_fields": {
+    "available_window": "Tomorrow, 10:00 AM to 6:00 PM",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "issue": "No major issue; general service requested",
+    "location": "Madhapur",
+    "name": "Shravani",
+    "phone": "+12025550107",
+    "product": "split AC",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు ఉదయం 10 గంటల",
+    "service": "General service for split AC",
+    "service_price": "₹599",
+    "spare_parts_cost": "Extra, at actual MRP after technician inspection"
+  },
+  "facts": {
+    "available_window": "Tomorrow, 10:00 AM to 6:00 PM",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "issue": "No major issue; general service requested",
+    "location": "Madhapur",
+    "name": "Shravani",
+    "phone": "+12025550107",
+    "product": "split AC",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు ఉదయం 10 గంటల",
+    "service": "General service for split AC",
+    "service_price": "₹599",
+    "spare_parts_cost": "Extra, at actual MRP after technician inspection"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:madhapur",
+    "custom:split-ac-service",
+    "followup:schedule_pending",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:purchase",
+    "intent:information",
+    "followup:schedule_pending",
+    "signal:objection",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:split-ac-service",
+    "custom:madhapur",
+    "custom:morning-slot"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Warranty or coverage details were unavailable.",
+    "The requested 10:00 AM slot was noted but not confirmed."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T15:40:04.160068Z",
+  "generation_ok": true
+}

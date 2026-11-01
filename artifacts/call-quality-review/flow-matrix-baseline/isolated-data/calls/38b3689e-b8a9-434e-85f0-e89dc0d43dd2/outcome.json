@@ -1,0 +1,77 @@
+{
+  "disposition": "new_lead",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call but only responded with hesitant sounds ('ah... hmm...'). The agent, Anjali from Sunrise Dental Clinic, asked for the caller's name, reason for the visit, and their preferred date and time to confirm an appointment. The caller did not provide any of this information, only saying 'hello hello'. The call ended without any concrete details being shared or an appointment being scheduled.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500530"
+  },
+  "objections": [],
+  "notes": null,
+  "tags": [
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:42:25.026300Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500530"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:new_lead",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "7c38ef78-57a8-4587-a711-30c998bf92e8",
+    "agentId": "a6c9765d-cdd2-41b0-90bf-aa7baf7d21e1",
+    "stage": "new",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 10,
+    "band": "cold",
+    "disposition": "new_lead",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

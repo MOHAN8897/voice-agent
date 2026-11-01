@@ -1,0 +1,6 @@
+{"turn_seq": 1, "ts": "2026-10-29T11:22:12.168939Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T11:22:14.689939Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-29T11:22:16.926355Z", "include_summary": true, "projection": ""}
+{"turn_seq": 7, "ts": "2026-10-29T11:22:19.446753Z", "include_summary": true, "projection": ""}
+{"turn_seq": 9, "ts": "2026-10-29T11:22:21.451923Z", "include_summary": true, "projection": ""}
+{"turn_seq": 11, "ts": "2026-10-29T11:22:22.649592Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: Ramana | product: visiting cards | quantity: 200 | delivery_locality: విజయవాడ\n[Preferences]\npayment_method: cash on delivery | product: banners\n[Context]\nCaller provided contact details in this call."}

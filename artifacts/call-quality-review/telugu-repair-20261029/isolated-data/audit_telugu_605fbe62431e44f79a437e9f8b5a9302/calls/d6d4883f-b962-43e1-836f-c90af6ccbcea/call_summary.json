@@ -1,0 +1,52 @@
+{
+  "call_id": "d6d4883f-b962-43e1-836f-c90af6ccbcea",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Kiran asked about the eligibility requirements for a Python course and requested a call tomorrow morning. The agent explained that graduates such as BTech, BSc, or BCom holders, as well as final-year students, are eligible, provided they have basic computer knowledge; prior coding experience is not required. Kiran repeated the eligibility question to obtain a direct answer, then said the information was sufficient and thanked the agent. The agent stated that the requested follow-up call had been noted and ended the conversation politely.",
+  "next_action": "Call Kiran tomorrow morning to follow up, as requested.",
+  "extracted_fields": {
+    "caller_name": "Kiran",
+    "course": "Python course",
+    "eligibility": "BTech, BSc, BCom, or other graduates; final-year students accepted; basic computer knowledge required; prior coding experience not required",
+    "phone": "+12025550117",
+    "requested_callback_time": "tomorrow morning",
+    "requested_time": "రేపు ఉదయం"
+  },
+  "facts": {
+    "caller_name": "Kiran",
+    "course": "Python course",
+    "eligibility": "BTech, BSc, BCom, or other graduates; final-year students accepted; basic computer knowledge required; prior coding experience not required",
+    "phone": "+12025550117",
+    "requested_callback_time": "tomorrow morning",
+    "requested_time": "రేపు ఉదయం"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:eligibility-inquiry",
+    "custom:python-course",
+    "followup:callback",
+    "intent:demo",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:positive"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "intent:demo",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:python-course",
+    "custom:eligibility-inquiry"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:48:39.203107Z",
+  "generation_ok": true
+}

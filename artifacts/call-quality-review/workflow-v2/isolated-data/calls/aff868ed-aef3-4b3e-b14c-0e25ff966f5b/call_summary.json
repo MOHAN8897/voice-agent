@@ -1,0 +1,53 @@
+{
+  "call_id": "aff868ed-aef3-4b3e-b14c-0e25ff966f5b",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the course fee and the availability of a weekend batch. The agent provided the details, stating that the Python with Data Analytics course fee is ₹8,999 with no installment options, and the weekend batch runs from 10 AM to 1 PM. The caller, identifying himself as Kiran, expressed interest and requested that his inquiry be noted. The agent acknowledged the inquiry, and the caller concluded the call by stating he had no further questions at the moment. The call ended with the agent thanking the caller.",
+  "next_action": "No immediate next step was agreed upon; the caller indicated he had no further questions.",
+  "extracted_fields": {
+    "budget": "Not disclosed",
+    "caller_name": "Kiran",
+    "name": "Kiran",
+    "phone": "+919876500049",
+    "slot": "Weekend (10 AM to 1 PM)"
+  },
+  "facts": {
+    "budget": "Not disclosed",
+    "caller_name": "Kiran",
+    "name": "Kiran",
+    "phone": "+919876500049",
+    "slot": "Weekend (10 AM to 1 PM)"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:python-analytics",
+    "custom:weekend-batch",
+    "followup:send_info",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "sentiment:neutral",
+    "signal:objection",
+    "followup:send_info",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:python-analytics",
+    "custom:weekend-batch"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:38:30.190843Z",
+  "generation_ok": true
+}

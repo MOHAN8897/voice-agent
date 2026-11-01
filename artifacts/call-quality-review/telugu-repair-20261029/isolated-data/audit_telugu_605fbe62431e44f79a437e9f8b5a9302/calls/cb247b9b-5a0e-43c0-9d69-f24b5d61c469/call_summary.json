@@ -1,0 +1,42 @@
+{
+  "call_id": "cb247b9b-5a0e-43c0-9d69-f24b5d61c469",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 1.0,
+  "summary_te": "",
+  "summary_en": "The caller clearly requested a permanent opt-out and asked never to be called again. They stated they did not want any training details. The agent acknowledged the request, thanked the caller, and ended the call. No further follow-up should be made.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+12025550110"
+  },
+  "facts": {
+    "phone": "+12025550110"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:permanent-opt-out",
+    "custom:training-details",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:negative",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "tags": [
+    "signal:do_not_call",
+    "intent:information",
+    "sentiment:negative"
+  ],
+  "custom_tags": [
+    "custom:training-details",
+    "custom:permanent-opt-out"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Does not want training details",
+    "Requested permanent do-not-call status"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:40:14.258974Z",
+  "generation_ok": true
+}

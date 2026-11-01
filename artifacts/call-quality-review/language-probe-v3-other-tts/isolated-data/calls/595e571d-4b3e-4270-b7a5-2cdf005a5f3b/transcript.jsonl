@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "What is the charge for split AC service, please?", "ts": "2026-10-29T19:32:33.273813Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "The split AC servicing charge is five hundred and ninety nine rupees. Which area are you located in?", "ts": "2026-10-29T19:32:34.085869Z", "brain_latency_ms": 814}

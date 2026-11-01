@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "product": "appointment",
+    "requested_time": "நாளைக்கு காலைல 11 மணிக்கு",
+    "caller_name": "Kiran"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: என் பேரு Kiran.\nassistant: உங்க பேரு Kiran-னு note பண்ணியாச்சு. நீங்க கேட்ட மாதிரி நாளைக்கு காலைல 11 மணிக்கு பல் வலிக்கு appointment வேணும்னு team-கிட்ட சொல்லியாச்சு. அவங்க இத confirm பண்ணிட்டு உங்களுக்கு call பண்ணுவாங்க.\nuser: என் appointment confirm ஆயிடுச்சா?\nassistant: உங்க பேரு Kiran, நாளைக்கு காலைல 11 மணிக்கு பல் வலிக்கு appointment வேணும்னு note பண்ணியாச்சு. Enquiry save ஆயிடுச்சு, ஆனா appointment இன்னும் confirm ஆகல. Team இத confirm பண்ணிட்டு உங்களுக்கு call பண்ணுவாங்க.\nuser: சரி, தேங்க்ஸ்."
+}

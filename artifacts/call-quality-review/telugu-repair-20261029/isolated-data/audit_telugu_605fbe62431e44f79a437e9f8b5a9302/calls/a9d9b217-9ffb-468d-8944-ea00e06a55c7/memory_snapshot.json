@@ -1,0 +1,13 @@
+{
+  "facts": {
+    "caller_name": "కిరణ్",
+    "email": "kiran.audit@example.invalid",
+    "qualification": "B.Com",
+    "caller_email": "kiran.audit@example.invalid"
+  },
+  "preferences": {
+    "availability": "వీకెండ్స్ మాత్రమే"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "user: సరే, eight thousand nine hundred ninety nine rupees ఫీజు ఓకే. నా డీటెయిల్స్ ఒకసారి వాళ్ళ system లో క్రియేట్ చేయండి. నా పేరు కిరణ్, email kiran.audit@example.invalid, qualification B.Com, అండ్ నాకు వీకెండ్స్ మాత్రమే టైమ్ ఉంటుంది.\nassistant: మీ details note చేసుకున్నాను, కిరణ్ గారు.\nuser: సరే, నా డీటెయిల్స్ system లో సేవ్ అయ్యాయా లేదా ఒకసారి confirm చేయండి. ఆ record మళ్ళీ ఒకసారి save చేయండి.\nassistant: అవును కిరణ్ గారు, మీ details అన్నీ system లో save అయ్యాయి. నేను మళ్ళీ save చేయాల్సిన అవసరం లేదు."
+}

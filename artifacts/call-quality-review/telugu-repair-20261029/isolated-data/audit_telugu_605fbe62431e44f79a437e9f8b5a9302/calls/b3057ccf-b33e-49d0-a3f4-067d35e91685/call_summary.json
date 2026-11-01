@@ -1,0 +1,61 @@
+{
+  "call_id": "b3057ccf-b33e-49d0-a3f4-067d35e91685",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Ramesh from Vijayawada initially asked for details and pricing for 100 matte-finish visiting cards, quoted at ₹350, with delivery taking 3 working days after artwork approval. He clarified that his name is Raman and increased the requirement to 200 cards, quoted at ₹700. He accepted the delivery timeline, verified that the recorded details were Raman, matte-finish visiting cards, and quantity 200, and asked to save the enquiry. The agent clarified that this was not a confirmed order, but an enquiry for team review, and stated that the order request was sent to the team. Raman acknowledged this and ended the call politely. No confirmed order or completed purchase was established.",
+  "next_action": "Team review of the enquiry and follow up regarding the order request.",
+  "extracted_fields": {
+    "caller_name": "రమణ",
+    "delivery_time": "3 working days after artwork approval",
+    "email": "ramesh.audit@example.invalid",
+    "location": "Vijayawada",
+    "phone": "+12025550118",
+    "price": "₹700",
+    "product": "matte-finish visiting cards",
+    "quantity": "200"
+  },
+  "facts": {
+    "caller_name": "రమణ",
+    "delivery_time": "3 working days after artwork approval",
+    "email": "ramesh.audit@example.invalid",
+    "location": "Vijayawada",
+    "phone": "+12025550118",
+    "price": "₹700",
+    "product": "matte-finish visiting cards",
+    "quantity": "200"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:200-cards",
+    "custom:matte-visiting-cards",
+    "followup:callback",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:purchase",
+    "intent:information",
+    "followup:callback",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards",
+    "custom:200-cards",
+    "custom:artwork-approval"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "The caller initially felt that 3 working days was somewhat late, but then accepted the delivery timeline."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:41:12.497051Z",
+  "generation_ok": true
+}

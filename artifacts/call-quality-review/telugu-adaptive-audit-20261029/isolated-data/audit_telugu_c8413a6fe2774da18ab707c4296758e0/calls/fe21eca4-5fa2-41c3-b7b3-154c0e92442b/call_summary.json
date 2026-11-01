@@ -1,0 +1,81 @@
+{
+  "call_id": "fe21eca4-5fa2-41c3-b7b3-154c0e92442b",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "Shravani called to request general servicing for a split AC in Madhapur, explicitly excluding refrigerator repair. She asked for a technician at 10:00 AM the next day and asked about the service charge. The agent quoted ₹599 for Madhapur and said the slot was available and would be noted, but did not clearly complete a confirmed booking. The agent clarified that parts are not included and would be charged extra at actual MRP after inspection. Shravani provided her name, locality, and email address, and requested an email confirmation, but the agent said email confirmation was unavailable. She repeatedly asked whether the 10:00 AM appointment was confirmed; near the end, she said she had noted it as confirmed, while the agent stated they could not send the request to the team or promise follow-up. The call ended politely without a verified appointment confirmation, so follow-up is required.",
+  "next_action": "Contact Shravani to verify and formally confirm the next-day 10:00 AM split AC service appointment in Madhapur; communicate that parts are extra and send confirmation through an available channel if possible.",
+  "extracted_fields": {
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "confirmation_email": "sravani.audit@example.invalid",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "excluded_service": "Refrigerator repair",
+    "latest_caller_correction": "సరే, email confirmation లేకపోతే పర్వాలేదు. నా పేరు శ్రావణి, మాదాపూర్ locality. రేపు 10 AM కి technician confirm కదా? ఇక వేరే ఏమీ లేదు, just general service మాత్రమే. అంతా okay అయితే goodbye.",
+    "locality": "Madhapur",
+    "parts_extra_charge": "parts కి extra charge పడతాయన్నమాట",
+    "parts_policy": "Parts not included; extra charge at actual MRP after inspection",
+    "phone": "+12025550122",
+    "product": "general service",
+    "requested_slot": "Next day at 10:00 AM",
+    "requested_time": "రేపు 10 AM",
+    "service": "General service for split AC",
+    "service_charge": "₹599 for Madhapur"
+  },
+  "facts": {
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "confirmation_email": "sravani.audit@example.invalid",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "excluded_service": "Refrigerator repair",
+    "latest_caller_correction": "సరే, email confirmation లేకపోతే పర్వాలేదు. నా పేరు శ్రావణి, మాదాపూర్ locality. రేపు 10 AM కి technician confirm కదా? ఇక వేరే ఏమీ లేదు, just general service మాత్రమే. అంతా okay అయితే goodbye.",
+    "locality": "Madhapur",
+    "parts_extra_charge": "parts కి extra charge పడతాయన్నమాట",
+    "parts_policy": "Parts not included; extra charge at actual MRP after inspection",
+    "phone": "+12025550122",
+    "product": "general service",
+    "requested_slot": "Next day at 10:00 AM",
+    "requested_time": "రేపు 10 AM",
+    "service": "General service for split AC",
+    "service_charge": "₹599 for Madhapur"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "followup:callback",
+    "followup:schedule_pending",
+    "followup:site_visit",
+    "intent:booking",
+    "intent:pricing",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "action:required",
+    "followup:callback",
+    "followup:schedule_pending",
+    "intent:booking",
+    "intent:pricing",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:split-ac",
+    "custom:madhapur",
+    "custom:next-day-service"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Parts are not included in the ₹599 service charge.",
+    "Email confirmation was unavailable.",
+    "Appointment confirmation remained unclear."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T11:09:48.379771Z",
+  "generation_ok": true
+}

@@ -1,0 +1,1181 @@
+{
+  "scenario": {
+    "id": "B_farewell_resume",
+    "business": "B",
+    "kind": "farewell_resume",
+    "integration": "none",
+    "policy": "review",
+    "max_turns": 5,
+    "goal": "Ask the AC service price, ask a relevant follow-up, then say all your questions are answered and thank them. If a fresh business question is subsequently introduced into the conversation, continue it naturally before ending again."
+  },
+  "agent": {
+    "id": "B",
+    "key": "appliances",
+    "tenant_id": "f207fff4-a55e-442a-ae77-92b1c59d6379",
+    "name": "SmartCare Appliance Services",
+    "agent_name": "Suresh",
+    "role": "support",
+    "industry": "home_services",
+    "brief": "Need helpful support agent Suresh for SmartCare Appliance Services.\nPhone customer support and booking inquiries in Telugu.\nHyderabad home appliance repair and maintenance services.\nAC servicing: basic Window AC servicing 499 rupees, Split AC servicing 599 rupees.\nFridge inspection charge 250 rupees; if repair is done by technician, inspection charge is completely waived.\nReplacement parts are extra at actual MRP and technician quotes after inspection; no fixed parts quotes over phone.\nWorking days: Monday to Sunday 9:00 AM to 7:00 PM.\nService areas: Hyderabad West - Madhapur, Gachibowli, Kondapur, Kukatpally.\nSecunderabad and Old City areas are currently not covered.\nSlots: Next-day visit slots between 10 AM and 6 PM. Same-day emergency service not guaranteed.\nGoal: answer service pricing and area questions honestly.\nIf customer requests appointment, take caller name, appliance type, issue, locality and preferred slot.\nNever advise customer to open electrical panels or live wiring themselves.\nDo not sell AMC contracts or courses. Caller declining AC may still need fridge service.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Suresh",
+      "company_name": "SmartCare Appliance Services",
+      "role": "Support and service appointment booking",
+      "permitted_next_steps": "Check locality and appliance issue; collect name, phone, address and preferred slot (10 AM - 6 PM next day) to book or request technician visit.",
+      "service_areas": "Hyderabad West only: Madhapur, Gachibowli, Kondapur, Kukatpally. Secunderabad and Old City are not serviced.",
+      "pricing_terms": "Split AC 599 rupees, Window AC 499 rupees. Fridge inspection 250 rupees (waived if repair accepted). Spare parts extra at actuals.",
+      "safety_rules": "Never advise live electrical inspection. Tell customer to unplug faulty appliances and wait for certified technician.",
+      "forbidden_actions": "Do not promise same-day visit or quote parts prices before technician inspection. No advance payment on call."
+    },
+    "user_id": "eefd222d-ca9c-4335-8dcd-7e1f1bf424fd",
+    "agent_id": "4d27a483-2fd7-5330-9856-6dd40d0284ce"
+  },
+  "call_id": "38e14b76-ebcc-4571-83a2-5d06a9eb9f3f",
+  "session_id": "adaptive-8060c4180a874ce192a77b3a2486b18c",
+  "phone": "+12025550126",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_1663d24c6a75",
+  "turn_index": 4,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నమస్తే సురేష్ గారు, నా split AC కి general service కావాలి. దీనికి ఎంత charge అవుతుంది? అలాగే రేపు ఉదయం 10 గంటల area లో technician వస్తారా?",
+        "intends_end": false,
+        "intent": "Ask service price and confirm technician availability",
+        "elapsed_s": 0.593
+      },
+      "spoken": "Split AC servicing కి five hundred ninety nine rupees అవుతుంది. రేపు ఉదయం 10 నుండి 6 మధ్యలో మా దగ్గర next-day slots ఉన్నాయి. మీ locality ఏంటో చెప్తారా?",
+      "elapsed_s": 1.391,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "split AC"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        479,
+        480,
+        481
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "Split AC servicing కి five hundred ninety nine rupees అవుతుంది. రేపు ఉదయం 10 నుండి 6 మధ్యలో మా దగ్గర next-day slots ఉన్నాయి. మీ locality ఏంటో చెప్తారా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5445,
+            "output_tokens": 40,
+            "cached_tokens": 4384,
+            "total_tokens": 5485
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 2,
+      "caller": {
+        "utterance": "నేను మాదాపూర్ లో ఉంటున్నాను సురేష్ గారు. ఈ price okay, మరి service కి వచ్చే technician ఏమైనా పాత parts ఏమైనా replace చేయాల్సి వస్తే extra charge పడుతుందా?",
+        "intends_end": false,
+        "intent": "Ask about potential extra charges for part replacement",
+        "elapsed_s": 0.656
+      },
+      "spoken": "అవును, replacement parts cost actual MRP ప్రకారమే ఉంటుంది. Technician వచ్చి inspection చేశాక parts ఎంత అవుతుందో చెప్తారు, phone లో మేము fixed quotes ఇవ్వలేము. మరి రేపు morning 10 నుండి 6 మధ్యలో appointment book చేయమంటారా?",
+      "elapsed_s": 1.578,
+      "memory_before": {
+        "facts": {
+          "product": "split AC"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "split AC",
+          "caller_name": "సురేష్",
+          "delivery_locality": "మాదాపూర్"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        483,
+        484,
+        485
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "అవును, replacement parts cost actual MRP ప్రకారమే ఉంటుంది. Technician వచ్చి inspection చేశాక parts ఎంత అవుతుందో చెప్తారు, phone లో మేము fixed quotes ఇవ్వలేము. మరి రేపు morning 10 నుండి 6 మధ్యలో appointment book చేయమంటారా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5588,
+            "output_tokens": 54,
+            "cached_tokens": 4320,
+            "total_tokens": 5642
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 3,
+      "caller": {
+        "utterance": "సరే సురేష్ గారు, parts extra అవుతాయని అర్థమైంది. నా questions అన్నీ clear అయ్యాయి, thank you.",
+        "intends_end": true,
+        "intent": "Conclude the call after confirming all questions are answered",
+        "elapsed_s": 0.531
+      },
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం. Fridge inspection charge two hundred fifty rupees ఉంటుంది. ఒకవేళ మా technician repair చేస్తే ఆ inspection charge పూర్తిగా waive చేస్తాము. Split AC కి inspection charge ఉండదు. మరి appointment confirm చేయమంటారా?",
+      "elapsed_s": 2.844,
+      "memory_before": {
+        "facts": {
+          "product": "split AC",
+          "caller_name": "సురేష్",
+          "delivery_locality": "మాదాపూర్"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "split AC",
+          "caller_name": "సురేష్",
+          "delivery_locality": "మాదాపూర్"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "assistant: అవును, replacement parts cost actual MRP ప్రకారమే ఉంటుంది. Technician వచ్చి inspection చేశాక parts ఎంత అవుతుందో చెప్తారు, phone లో మేము fixed quotes ఇవ్వలేము. మరి రేపు morning 10 నుండి 6 మధ్యలో appointment book చేయమంటారా?\nuser: సరే సురేష్ గారు, parts extra అవుతాయని అర్థమైంది. నా questions అన్నీ clear అయ్యాయి, thank you.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\nuser: ఆగండి, ఇంకో ప్రశ్న ఉంది. ఇన్‌స్పెక్షన్ ఫీజు ఎంత?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        487,
+        488,
+        489,
+        490,
+        491,
+        492
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "empty_provider_response": true,
+          "finish_reason": "empty_provider_response",
+          "usage": {
+            "input_tokens": 5702,
+            "output_tokens": 44,
+            "cached_tokens": 4320,
+            "total_tokens": 5746
+          },
+          "memory_update": {
+            "operations": []
+          },
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": true,
+            "reason": "goal_complete",
+            "contact_preference": "end_call",
+            "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+          },
+          "replace_speech": true
+        },
+        {
+          "done": true,
+          "text": "Fridge inspection charge two hundred fifty rupees ఉంటుంది. ఒకవేళ మా technician repair చేస్తే ఆ inspection charge పూర్తిగా waive చేస్తాము. Split AC కి inspection charge ఉండదు. మరి appointment confirm చేయమంటారా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5721,
+            "output_tokens": 38,
+            "cached_tokens": 4320,
+            "total_tokens": 5759
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 4,
+      "caller": {
+        "utterance": "ఓహో, fridge inspection charge కూడా ఉంటుందా! సరే సురేష్ గారు, నా AC service కి సంబంధించి నా questions అన్నీ clear అయ్యాయి, thank you.",
+        "intends_end": true,
+        "intent": "Conclude the call after all questions are answered",
+        "elapsed_s": 0.609
+      },
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 2.391,
+      "memory_before": {
+        "facts": {
+          "product": "split AC",
+          "caller_name": "సురేష్",
+          "delivery_locality": "మాదాపూర్"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "assistant: అవును, replacement parts cost actual MRP ప్రకారమే ఉంటుంది. Technician వచ్చి inspection చేశాక parts ఎంత అవుతుందో చెప్తారు, phone లో మేము fixed quotes ఇవ్వలేము. మరి రేపు morning 10 నుండి 6 మధ్యలో appointment book చేయమంటారా?\nuser: సరే సురేష్ గారు, parts extra అవుతాయని అర్థమైంది. నా questions అన్నీ clear అయ్యాయి, thank you.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\nuser: ఆగండి, ఇంకో ప్రశ్న ఉంది. ఇన్‌స్పెక్షన్ ఫీజు ఎంత?"
+      },
+      "memory_after": {
+        "facts": {
+          "product": "split AC",
+          "caller_name": "సురేష్",
+          "delivery_locality": "మాదాపూర్"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "assistant: అవును, replacement parts cost actual MRP ప్రకారమే ఉంటుంది. Technician వచ్చి inspection చేశాక parts ఎంత అవుతుందో చెప్తారు, phone లో మేము fixed quotes ఇవ్వలేము. మరి రేపు morning 10 నుండి 6 మధ్యలో appointment book చేయమంటారా?\nuser: సరే సురేష్ గారు, parts extra అవుతాయని అర్థమైంది. నా questions అన్నీ clear అయ్యాయి, thank you.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\nuser: ఆగండి, ఇంకో ప్రశ్న ఉంది. ఇన్‌స్పెక్షన్ ఫీజు ఎంత?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        494,
+        495,
+        496
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5960,
+            "output_tokens": 17,
+            "cached_tokens": 4320,
+            "total_tokens": 5977
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": true,
+            "reason": "goal_complete",
+            "contact_preference": "end_call",
+            "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "Split AC servicing కి five hundred ninety nine rupees అవుతుంది. రేపు ఉదయం 10 నుండి 6 మధ్యలో మా దగ్గర next-day slots ఉన్నాయి. మీ locality ఏంటో చెప్తారా?",
+      "at": 120243.203
+    },
+    {
+      "turn": 2,
+      "text": "అవును, replacement parts cost actual MRP ప్రకారమే ఉంటుంది. Technician వచ్చి inspection చేశాక parts ఎంత అవుతుందో చెప్తారు, phone లో మేము fixed quotes ఇవ్వలేము. మరి రేపు morning 10 నుండి 6 మధ్యలో appointment book చేయమంటారా?",
+      "at": 120245.468
+    },
+    {
+      "turn": 3,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 120247.531
+    },
+    {
+      "turn": 3,
+      "text": "Fridge inspection charge two hundred fifty rupees ఉంటుంది. ఒకవేళ మా technician repair చేస్తే ఆ inspection charge పూర్తిగా waive చేస్తాము. Split AC కి inspection charge ఉండదు. మరి appointment confirm చేయమంటారా?",
+      "at": 120248.859
+    },
+    {
+      "turn": 4,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 120250.781
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "Split AC servicing కి five hundred ninety nine rupees అవుతుంది. రేపు ఉదయం 10 నుండి 6 మధ్యలో మా దగ్గర next-day slots ఉన్నాయి. మీ locality ఏంటో చెప్తారా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5445,
+        "output_tokens": 40,
+        "cached_tokens": 4384,
+        "total_tokens": 5485
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      }
+    },
+    {
+      "done": true,
+      "text": "అవును, replacement parts cost actual MRP ప్రకారమే ఉంటుంది. Technician వచ్చి inspection చేశాక parts ఎంత అవుతుందో చెప్తారు, phone లో మేము fixed quotes ఇవ్వలేము. మరి రేపు morning 10 నుండి 6 మధ్యలో appointment book చేయమంటారా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5588,
+        "output_tokens": 54,
+        "cached_tokens": 4320,
+        "total_tokens": 5642
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      }
+    },
+    {
+      "done": true,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "empty_provider_response": true,
+      "finish_reason": "empty_provider_response",
+      "usage": {
+        "input_tokens": 5702,
+        "output_tokens": 44,
+        "cached_tokens": 4320,
+        "total_tokens": 5746
+      },
+      "memory_update": {
+        "operations": []
+      },
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "Fridge inspection charge two hundred fifty rupees ఉంటుంది. ఒకవేళ మా technician repair చేస్తే ఆ inspection charge పూర్తిగా waive చేస్తాము. Split AC కి inspection charge ఉండదు. మరి appointment confirm చేయమంటారా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5721,
+        "output_tokens": 38,
+        "cached_tokens": 4320,
+        "total_tokens": 5759
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      }
+    },
+    {
+      "done": true,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5960,
+        "output_tokens": 17,
+        "cached_tokens": 4320,
+        "total_tokens": 5977
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "What is the charge for general service for split AC? Will a technician come tomorrow morning around 10 o'clock?",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "product",
+            "value": "split AC",
+            "modality": "asserted"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నమస్తే సురేష్ గారు, నా split AC కి general service కావాలి. దీనికి ఎంత charge అవుతుంది? అలాగే రేపు ఉదయం 10 గంటల area లో technician వస్తారా?",
+      "at": 120243.203
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "Will there be extra charges if the technician replaces old parts during the service?",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "సురేష్",
+            "modality": "asserted"
+          },
+          {
+            "op": "set_fact",
+            "key": "delivery_locality",
+            "value": "మాదాపూర్",
+            "modality": "asserted"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నేను మాదాపూర్ లో ఉంటున్నాను సురేష్ గారు. ఈ price okay, మరి service కి వచ్చే technician ఏమైనా పాత parts ఏమైనా replace చేయాల్సి వస్తే extra charge పడుతుందా?",
+      "at": 120245.468
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "నా questions అన్నీ clear అయ్యాయి, thank you.",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "సురేష్",
+            "modality": "asserted"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "transcript": "సరే సురేష్ గారు, parts extra అవుతాయని అర్థమైంది. నా questions అన్నీ clear అయ్యాయి, thank you.",
+      "at": 120247.531
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "ఇన్‌స్పెక్షన్ ఫీజు ఎంత?",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "ఆగండి, ఇంకో ప్రశ్న ఉంది. ఇన్‌స్పెక్షన్ ఫీజు ఎంత?",
+      "at": 120248.859
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "నా AC service కి సంబంధించి నా questions అన్నీ clear అయ్యాయి, thank you.",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "సురేష్",
+            "modality": "asserted"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "transcript": "ఓహో, fridge inspection charge కూడా ఉంటుందా! సరే సురేష్ గారు, నా AC service కి సంబంధించి నా questions అన్నీ clear అయ్యాయి, thank you.",
+      "at": 120250.765
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 3,
+      "at": 120247.531
+    },
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 4,
+      "at": 120250.781
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 120251.796,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [
+    {
+      "kind": "caller_resumed_during_farewell"
+    }
+  ],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 120243.234
+    },
+    {
+      "turn_seq": 3,
+      "at": 120245.484
+    },
+    {
+      "turn_seq": 5,
+      "at": 120248.0
+    },
+    {
+      "turn_seq": 7,
+      "at": 120249.156
+    },
+    {
+      "turn_seq": 9,
+      "at": 120250.812
+    }
+  ],
+  "started_at": "2026-10-29T15:45:18.434076+00:00",
+  "errors": [],
+  "brain_checksum": "77370232a78a8553b070269ae8fc1e93d77db8f0a30b96712add5b765d418003",
+  "runtime_checksum": "24e976b7ceeade53e54d62ed54684527de6f55ff735ade0141a44390de8b7bb7",
+  "available_tools": [
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 120241.875,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 2,
+      "start_s": 120243.906,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 41,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 3,
+      "start_s": 120246.031,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 93,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 3,
+      "start_s": 120247.546,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 93,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 4,
+      "start_s": 120249.484,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 93,
+      "rolling_chars": 449
+    }
+  ],
+  "resume_injected": true,
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "interested",
+    "disposition_confidence": 0.98,
+    "summary_te": "",
+    "summary_en": "The caller asked about general servicing for a split AC, including the price and whether a technician could come the next morning around 10 AM. The agent quoted ₹599 for split AC servicing and explained that next-day slots were available between 10 AM and 6 PM, then asked for the locality. The caller stated that they live in Madhapur and accepted the service price, but asked whether replacement parts would incur extra charges. The agent explained that parts would be charged at actual MRP after technician inspection and that a fixed quote could not be provided over the phone. The agent asked whether to book an appointment, but the caller did not confirm a booking and said their questions were clear. Before ending, the caller asked about inspection fees. The agent clarified that fridge inspection costs ₹250 and is waived if the technician performs the repair, while split AC inspection has no charge. The agent again asked whether to confirm the appointment, but the caller only reiterated that their questions were answered and thanked the agent. The call ended without a confirmed appointment.",
+    "next_action": "Follow up to confirm whether the caller wants to book the split AC service appointment for a next-day slot between 10 AM and 6 PM.",
+    "extracted_fields": {
+      "caller_name": "సురేష్",
+      "delivery_locality": "మాదాపూర్",
+      "locality": "Madhapur",
+      "phone": "+12025550126",
+      "product": "Split AC general service",
+      "replacement_parts": "Charged separately at actual MRP after technician inspection",
+      "requested_slot": "Next morning around 10 AM; available window stated as 10 AM-6 PM",
+      "service_charge": "₹599",
+      "split_ac_inspection_fee": "No charge"
+    },
+    "objections": [
+      "Replacement parts may incur additional charges based on actual MRP."
+    ],
+    "notes": "The caller was positively interested and price-accepting, but no appointment was confirmed.",
+    "tags": [
+      "intent:purchase",
+      "intent:information",
+      "followup:callback",
+      "sentiment:positive"
+    ],
+    "custom_tags": [
+      "custom:split-ac",
+      "custom:general-service",
+      "custom:madhapur"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T15:45:35.084750Z",
+    "generation_ok": true,
+    "facts": {
+      "caller_name": "సురేష్",
+      "delivery_locality": "మాదాపూర్",
+      "locality": "Madhapur",
+      "phone": "+12025550126",
+      "product": "Split AC general service",
+      "replacement_parts": "Charged separately at actual MRP after technician inspection",
+      "requested_slot": "Next morning around 10 AM; available window stated as 10 AM-6 PM",
+      "service_charge": "₹599",
+      "split_ac_inspection_fee": "No charge"
+    },
+    "disclosure_status": null,
+    "contact_preference": "end_call",
+    "status_tags": [
+      "action:required",
+      "contact:name_known",
+      "contact:phone_known",
+      "custom:general-service",
+      "custom:split-ac",
+      "followup:callback",
+      "followup:site_visit",
+      "intent:information",
+      "intent:purchase",
+      "outcome:interested",
+      "sentiment:positive",
+      "signal:objection"
+    ],
+    "lead": {
+      "leadId": "907d153c-3c44-57d5-9243-0ee1092cca2f",
+      "agentId": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+      "stage": "qualified",
+      "action": "unchanged"
+    },
+    "lead_assessment": {
+      "score": 75,
+      "band": "hot",
+      "disposition": "interested",
+      "confidence": 0.98,
+      "components": [
+        {
+          "signal": "interest",
+          "points": 40,
+          "max": 40,
+          "evidence": "interested"
+        },
+        {
+          "signal": "requirements",
+          "points": 25,
+          "max": 25,
+          "evidence": "product"
+        },
+        {
+          "signal": "timing",
+          "points": 0,
+          "max": 25,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "contact",
+          "points": 10,
+          "max": 10,
+          "evidence": "phone"
+        }
+      ],
+      "version": 1,
+      "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+      "reason": "recorded_signals"
+    },
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "38e14b76-ebcc-4571-83a2-5d06a9eb9f3f",
+        "tenant_id": "f207fff4-a55e-442a-ae77-92b1c59d6379",
+        "agent_id": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+        "session_id": "adaptive-8060c4180a874ce192a77b3a2486b18c",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_1663d24c6a75",
+        "started_at": "2026-10-29 15:45:18.421017+00:00",
+        "ended_at": "2026-10-29 15:45:28.998752+00:00",
+        "duration_sec": 10,
+        "disposition": "interested",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/38e14b76-ebcc-4571-83a2-5d06a9eb9f3f/",
+        "end_reason": "goal_complete",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "action:required",
+          "contact:name_known",
+          "contact:phone_known",
+          "custom:general-service",
+          "custom:split-ac",
+          "followup:callback",
+          "followup:site_visit",
+          "intent:information",
+          "intent:purchase",
+          "outcome:interested",
+          "sentiment:positive",
+          "signal:objection"
+        ],
+        "last_heartbeat_at": "2026-10-29 15:45:18.421017+00:00",
+        "created_at": "2026-10-29 15:45:18.422021+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [],
+    "dnd": [],
+    "leads": [
+      {
+        "lead_id": "907d153c-3c44-57d5-9243-0ee1092cca2f",
+        "tenant_id": "f207fff4-a55e-442a-ae77-92b1c59d6379",
+        "agent_id": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+        "name": "Sravani",
+        "phone": "+12025550126",
+        "email": null,
+        "stage": "qualified",
+        "notes": "Caller enquiry — call 8d69eaf3-c7f7-4cba-888f-9eb1b21f0963\n{\"customer_name\": \"Sravani\", \"product\": \"Split AC servicing\", \"request\": \"Confirm booking for tomorrow 10 AM in Madhapur. General service only. Customer confirmed all details and asked to proceed.\"}\n\n---\n[Call reference: 8d69eaf3-c7f7-4cba-888f-9eb1b21f0963]\nThe caller requested general servicing for a split AC and asked about the price and availability of a technician the next morning at 10:00 AM. The agent quoted ₹599, confirmed Madhapur is within the service area, and said a slot was available. The caller provided the name Shravani, confirmed there was no other issue, and requested booking confirmation at ₹599 for the 10:00 AM slot. The caller then asked about the inspection fee. The agent explained that ₹250 applies to fridge inspection, but for this split AC the inspection fee would not apply. The caller confirmed the booking again, said all questions were clear, and the call ended with thanks. The transcript confirms the requested appointment and service details, but does not explicitly confirm that a booking record was successfully created.\n\nCall outcome: site visit planned (97% confidence)\n\n---\n[Call reference: 38e14b76-ebcc-4571-83a2-5d06a9eb9f3f]\nThe caller asked about general servicing for a split AC, including the price and whether a technician could come the next morning around 10 AM. The agent quoted ₹599 for split AC servicing and explained that next-day slots were available between 10 AM and 6 PM, then asked for the locality. The caller stated that they live in Madhapur and accepted the service price, but asked whether replacement parts would incur extra charges. The agent explained that parts would be charged at actual MRP after technician inspection and that a fixed quote could not be provided over the phone. The agent asked whether to book an appointment, but the caller did not confirm a booking and said their questions were clear. Before ending, the caller asked about inspection fees. The agent clarified that fridge inspection costs ₹250 and is waived if the technician performs the repair, while split AC inspection has no charge. The agent again asked whether to confirm the appointment, but the caller only reiterated that their questions were answered and thanked the agent. The call ended without a confirmed appointment.\n\nNext step: Follow up to confirm whether the caller wants to book the split AC service appointment for a next-day slot between 10 AM and 6 PM.\n\nObjections: Replacement parts may incur additional charges based on actual MRP.\n\nCall outcome: interested (98% confidence)",
+        "created_at": "2026-10-29 11:10:49.331212+00:00",
+        "updated_at": "2026-10-29 15:45:35.114591+00:00"
+      }
+    ],
+    "tools": [],
+    "assessments": [
+      {
+        "id": "3b450b69-3d46-49ec-a1ce-0d47fda76955",
+        "tenant_id": "f207fff4-a55e-442a-ae77-92b1c59d6379",
+        "lead_id": "907d153c-3c44-57d5-9243-0ee1092cca2f",
+        "source_call_id": "38e14b76-ebcc-4571-83a2-5d06a9eb9f3f",
+        "assessment": {
+          "score": 75,
+          "band": "hot",
+          "disposition": "interested",
+          "confidence": 0.98,
+          "components": [
+            {
+              "signal": "interest",
+              "points": 40,
+              "max": 40,
+              "evidence": "interested"
+            },
+            {
+              "signal": "requirements",
+              "points": 25,
+              "max": 25,
+              "evidence": "product"
+            },
+            {
+              "signal": "timing",
+              "points": 0,
+              "max": 25,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "contact",
+              "points": 10,
+              "max": 10,
+              "evidence": "phone"
+            }
+          ],
+          "version": 1,
+          "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+          "reason": "recorded_signals"
+        },
+        "updated_at": "2026-10-29 15:45:28.998752+00:00"
+      }
+    ]
+  },
+  "metadata": {
+    "call_id": "38e14b76-ebcc-4571-83a2-5d06a9eb9f3f",
+    "tenant_id": "f207fff4-a55e-442a-ae77-92b1c59d6379",
+    "agent_id": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+    "session_id": "adaptive-8060c4180a874ce192a77b3a2486b18c",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_1663d24c6a75",
+    "started_at": "2026-10-29T15:45:18.421017+00:00",
+    "status": "active",
+    "storage_path": "data/calls/38e14b76-ebcc-4571-83a2-5d06a9eb9f3f/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550126",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 63960,
+        "output_tokens": 1631,
+        "cached_tokens": 52224
+      }
+    },
+    "contact_preference": "end_call",
+    "hangup_reason": "goal_complete",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 0,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": false,
+    "callback_close_phase": "idle",
+    "disconnected_at": "2026-10-29T15:45:28.998752+00:00",
+    "ended_at": "2026-10-29T15:45:28.998752+00:00",
+    "end_reason": "goal_complete",
+    "duration_sec": 10.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 10.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.0020833333333333333,
+      "telephony_inr": 0.19847916666666665,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.0020833333333333333,
+      "telnyx_inr": 0.19847916666666665,
+      "telnyx_voice_api_usd": 0.0003333333333333333,
+      "telnyx_sip_usd": 0.0008333333333333333,
+      "telnyx_media_stream_usd": 0.0005833333333333333,
+      "telnyx_call_recording_usd": 0.0003333333333333333,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.27,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-29",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.0125,
+      "telephony_inr_per_min": 1.190875,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.0125,
+      "telnyx_inr_per_min": 1.190875,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_009f32bd2cba851e016ae36a1a038087d1830b690b926e6c0a": {
+          "input_tokens": 1503,
+          "output_tokens": 434,
+          "cached_tokens": 0,
+          "cache_write_tokens": 1500,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.0008964
+        }
+      },
+      "post_call_analysis_usd": 0.0008964,
+      "post_call_analysis_inr": 0.085400028
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నమస్తే సురేష్ గారు, నా split AC కి general service కావాలి. దీనికి ఎంత charge అవుతుంది? అలాగే రేపు ఉదయం 10 గంటల area లో technician వస్తారా?",
+      "ts": "2026-10-29T15:45:19.062271Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "Split AC servicing కి five hundred ninety nine rupees అవుతుంది. రేపు ఉదయం 10 నుండి 6 మధ్యలో మా దగ్గర next-day slots ఉన్నాయి. మీ locality ఏంటో చెప్తారా?",
+      "ts": "2026-10-29T15:45:20.399439Z"
+    },
+    {
+      "seq": 3,
+      "role": "user",
+      "text": "నేను మాదాపూర్ లో ఉంటున్నాను సురేష్ గారు. ఈ price okay, మరి service కి వచ్చే technician ఏమైనా పాత parts ఏమైనా replace చేయాల్సి వస్తే extra charge పడుతుందా?",
+      "ts": "2026-10-29T15:45:21.096222Z",
+      "partial": false
+    },
+    {
+      "seq": 4,
+      "role": "assistant",
+      "text": "అవును, replacement parts cost actual MRP ప్రకారమే ఉంటుంది. Technician వచ్చి inspection చేశాక parts ఎంత అవుతుందో చెప్తారు, phone లో మేము fixed quotes ఇవ్వలేము. మరి రేపు morning 10 నుండి 6 మధ్యలో appointment book చేయమంటారా?",
+      "ts": "2026-10-29T15:45:22.664681Z"
+    },
+    {
+      "seq": 5,
+      "role": "user",
+      "text": "సరే సురేష్ గారు, parts extra అవుతాయని అర్థమైంది. నా questions అన్నీ clear అయ్యాయి, thank you.",
+      "ts": "2026-10-29T15:45:23.227959Z",
+      "partial": false
+    },
+    {
+      "seq": 6,
+      "role": "assistant",
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T15:45:24.731470Z"
+    },
+    {
+      "seq": 7,
+      "role": "user",
+      "text": "ఆగండి, ఇంకో ప్రశ్న ఉంది. ఇన్‌స్పెక్షన్ ఫీజు ఎంత?",
+      "ts": "2026-10-29T15:45:24.731470Z",
+      "partial": false
+    },
+    {
+      "seq": 8,
+      "role": "assistant",
+      "text": "Fridge inspection charge two hundred fifty rupees ఉంటుంది. ఒకవేళ మా technician repair చేస్తే ఆ inspection charge పూర్తిగా waive చేస్తాము. Split AC కి inspection charge ఉండదు. మరి appointment confirm చేయమంటారా?",
+      "ts": "2026-10-29T15:45:26.057600Z"
+    },
+    {
+      "seq": 9,
+      "role": "user",
+      "text": "ఓహో, fridge inspection charge కూడా ఉంటుందా! సరే సురేష్ గారు, నా AC service కి సంబంధించి నా questions అన్నీ clear అయ్యాయి, thank you.",
+      "ts": "2026-10-29T15:45:26.683801Z",
+      "partial": false
+    },
+    {
+      "seq": 10,
+      "role": "assistant",
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T15:45:27.981570Z"
+    }
+  ],
+  "wall_elapsed_s": 16.718,
+  "simulated_exchange_timeline_s": 80,
+  "request_count": 19
+}

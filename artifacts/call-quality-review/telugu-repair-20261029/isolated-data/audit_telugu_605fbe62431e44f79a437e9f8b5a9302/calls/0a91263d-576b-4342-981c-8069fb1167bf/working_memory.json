@@ -1,0 +1,12 @@
+{
+  "facts": {
+    "product": "visiting cards",
+    "quantity": "200",
+    "caller_name": "రమేష్",
+    "email": "ramesh.audit@example.invalid",
+    "delivery_locality": "విజయవాడ"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "assistant: డిజైన్ అప్రూవల్ ఎలా ఉంటుందో ప్రస్తుతం నాకు తెలియదు. డిజైన్ ఆర్ట్ వర్క్ అప్రూవ్ అయిన తర్వాత విజయవాడలో డెలివరీకి మూడు వర్కింగ్ డేస్ పడుతుంది.\nuser: సరే, design approval వివరాలు తర్వాత తెలుసుకుంటాను. Delivery మూడు రోజులు పడుతుంది కదా. మరి పెళ్లి కార్డుల price ఎంత ఉంటుందో కూడా ఒకసారి చెప్తారా? అలాగే 200 cards కి రేటు ఎంత అవుతుందో కూడా చెప్పండి.\nassistant: పెళ్లి కార్డులకి fixed price ఉండదు, అది design, పేపర్ శాంపిల్ మరియు క్వాంటిటీ మీద ఆధారపడి ఉంటుంది. సాధారణ పేపర్ తో చేసిన two hundred కార్డ్స్ కి four hundred rupees అవుతుంది."
+}

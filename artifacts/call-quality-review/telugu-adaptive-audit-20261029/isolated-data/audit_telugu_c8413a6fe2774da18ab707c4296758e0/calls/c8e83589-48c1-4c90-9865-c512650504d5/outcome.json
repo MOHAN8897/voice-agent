@@ -1,0 +1,45 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller stated that AC service is not needed now and declined the service. They explicitly requested not to receive any further calls. The agent acknowledged the request, thanked the caller, and ended the conversation politely.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+12025550112"
+  },
+  "objections": [
+    "AC service is not currently needed"
+  ],
+  "notes": "Caller requested no further calls.",
+  "tags": [
+    "intent:information",
+    "signal:do_not_call",
+    "sentiment:negative"
+  ],
+  "custom_tags": [
+    "custom:ac-service"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:07:37.184499Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+12025550112"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:ac-service",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:negative",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

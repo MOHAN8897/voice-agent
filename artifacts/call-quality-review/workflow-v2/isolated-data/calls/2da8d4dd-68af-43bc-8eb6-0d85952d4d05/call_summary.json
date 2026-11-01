@@ -1,0 +1,40 @@
+{
+  "call_id": "2da8d4dd-68af-43bc-8eb6-0d85952d4d05",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the course fee and whether a weekend batch was available. The agent provided the fee as ₹8,999 with no installments and confirmed the weekend batch schedule from 10:00 AM to 1:00 PM. The caller expressed satisfaction with this information, thanked the agent, and ended the call.",
+  "next_action": null,
+  "extracted_fields": {
+    "budget": "₹8,999",
+    "phone": "+919876500012",
+    "slot": "weekend"
+  },
+  "facts": {
+    "budget": "₹8,999",
+    "phone": "+919876500012",
+    "slot": "weekend"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:course-fee",
+    "custom:weekend-batch",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:positive"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:weekend-batch",
+    "custom:course-fee"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:33:26.795124Z",
+  "generation_ok": true
+}

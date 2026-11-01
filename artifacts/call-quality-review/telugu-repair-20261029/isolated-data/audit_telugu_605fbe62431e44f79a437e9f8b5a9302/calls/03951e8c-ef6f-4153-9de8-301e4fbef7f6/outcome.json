@@ -1,0 +1,109 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "The caller, Ramesh, asked about visiting card prices for standard paper versus matte finish. The agent quoted ₹200 per 100 standard cards and ₹350 per 100 matte cards, with a 100-card minimum. Ramesh preferred matte finish, discussed ordering 200 cards, and was told that 200 matte cards would total ₹700. Delivery in Vijayawada would take 3 working days after artwork approval; orders above ₹1,000 require 50% advance payment, while lower amounts could use cash on delivery. Ramesh said he would send the design later and provided the email ramesh.audit@example.invalid. He also asked about wedding card pricing and rush-order charges; the agent said wedding card pricing depends on design, paper sample, and quantity, and 24-hour rush delivery costs an additional ₹150. Ramesh provided his name and Vijayawada as the delivery locality and asked whether the 200-card quantity had been recorded and whether more details were needed. The agent did not clearly confirm the quantity or the additional required details, although the recorded facts indicate quantity 200, name, email, and locality. Ramesh ultimately declined to submit the order request at that time, said his questions were answered, and ended the call. No order or quote was submitted.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_name": "Ramesh",
+    "delivery_locality": "Vijayawada",
+    "delivery_time": "3 working days after artwork approval",
+    "email": "ramesh.audit@example.invalid",
+    "finish": "Matte",
+    "phone": "+12025550102",
+    "price": "₹700",
+    "product": "Visiting cards",
+    "quantity": "200",
+    "rush_delivery_charge": "₹150 for 24-hour delivery",
+    "wedding_card_pricing": "Depends on design, paper sample, and quantity"
+  },
+  "objections": [],
+  "notes": "The caller showed clear purchase interest but did not authorize order submission and said he would send the design later. The agent's statements about recording the quantity and required details were inconsistent/uncertain.",
+  "tags": [
+    "intent:purchase",
+    "intent:pricing",
+    "sentiment:positive",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:matte-finish",
+    "custom:vijayawada"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:21:31.676936Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_name": "Ramesh",
+    "delivery_locality": "Vijayawada",
+    "delivery_time": "3 working days after artwork approval",
+    "email": "ramesh.audit@example.invalid",
+    "finish": "Matte",
+    "phone": "+12025550102",
+    "price": "₹700",
+    "product": "Visiting cards",
+    "quantity": "200",
+    "rush_delivery_charge": "₹150 for 24-hour delivery",
+    "wedding_card_pricing": "Depends on design, paper sample, and quantity"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:matte-finish",
+    "custom:vijayawada",
+    "custom:visiting-cards",
+    "followup:send_info",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive"
+  ],
+  "lead": {
+    "leadId": "de324848-5899-4b93-bf25-6827d60fb611",
+    "agentId": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.97,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

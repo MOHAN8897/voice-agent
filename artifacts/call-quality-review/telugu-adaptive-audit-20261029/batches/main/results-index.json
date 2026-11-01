@@ -1,0 +1,191 @@
+[
+  {
+    "id": "A_enquiry_none",
+    "turns": 6,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 23.719
+  },
+  {
+    "id": "A_enquiry_success",
+    "turns": 6,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 21.703
+  },
+  {
+    "id": "A_enquiry_failure",
+    "turns": 8,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 24.859
+  },
+  {
+    "id": "A_callback_auto",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 5.984
+  },
+  {
+    "id": "A_dnd",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 5.047
+  },
+  {
+    "id": "A_refusal",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 4.235
+  },
+  {
+    "id": "B_enquiry_none",
+    "turns": 7,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 25.125
+  },
+  {
+    "id": "B_enquiry_success",
+    "turns": 5,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 16.281
+  },
+  {
+    "id": "B_enquiry_failure",
+    "turns": 6,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 21.86
+  },
+  {
+    "id": "B_callback_auto",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 5.203
+  },
+  {
+    "id": "B_dnd",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 6.125
+  },
+  {
+    "id": "B_refusal",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 4.282
+  },
+  {
+    "id": "C_enquiry_none",
+    "turns": 6,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 22.109
+  },
+  {
+    "id": "C_enquiry_success",
+    "turns": 5,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 16.391
+  },
+  {
+    "id": "C_enquiry_failure",
+    "turns": 6,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 20.125
+  },
+  {
+    "id": "C_callback_auto",
+    "turns": 2,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 9.0
+  },
+  {
+    "id": "C_dnd",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 3.844
+  },
+  {
+    "id": "C_refusal",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 4.266
+  },
+  {
+    "id": "A_callback_disabled",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 5.141
+  },
+  {
+    "id": "C_callback_review",
+    "turns": 2,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 9.063
+  },
+  {
+    "id": "A_memory_correction",
+    "turns": 7,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 22.125
+  },
+  {
+    "id": "B_scoped_objection",
+    "turns": 6,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 18.093
+  },
+  {
+    "id": "C_diversion_safety",
+    "turns": 8,
+    "errors": [],
+    "agent_closed": false,
+    "elapsed_s": 24.969
+  },
+  {
+    "id": "B_frustration",
+    "turns": 5,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 15.75
+  },
+  {
+    "id": "A_carrier_failure",
+    "turns": 3,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 10.907
+  },
+  {
+    "id": "B_farewell_resume",
+    "turns": 4,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 14.391
+  },
+  {
+    "id": "C_revoked_tool",
+    "turns": 7,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 21.594
+  }
+]

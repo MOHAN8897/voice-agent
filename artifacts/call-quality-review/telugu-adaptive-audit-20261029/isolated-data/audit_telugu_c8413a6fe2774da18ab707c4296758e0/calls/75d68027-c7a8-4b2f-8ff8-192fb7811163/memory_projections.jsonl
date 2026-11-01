@@ -1,0 +1,6 @@
+{"turn_seq": 1, "ts": "2026-10-29T11:07:02.080407Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T11:07:04.407445Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-29T11:07:06.961732Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nrequested_time: రేపు ఉదయం 10 గంటలకి | email: sravani.audit@example.invalid | caller_email: sravani.audit@example.invalid\n[Context]\nCaller provided contact details in this call."}
+{"turn_seq": 7, "ts": "2026-10-29T11:07:09.734607Z", "include_summary": true, "projection": ""}
+{"turn_seq": 9, "ts": "2026-10-29T11:07:12.342413Z", "include_summary": true, "projection": ""}
+{"turn_seq": 11, "ts": "2026-10-29T11:07:14.562420Z", "include_summary": true, "projection": ""}

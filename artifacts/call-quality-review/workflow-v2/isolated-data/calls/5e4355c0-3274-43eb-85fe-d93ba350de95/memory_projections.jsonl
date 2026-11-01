@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-29T20:36:49.245578Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T20:36:53.037232Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nquantity: 200"}
+{"turn_seq": 5, "ts": "2026-10-29T20:36:55.603354Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nquantity: 200 | caller_name: Ravi Kumar | delivery_address: 12 MG Road, Vijayawada"}
+{"turn_seq": 7, "ts": "2026-10-29T20:36:56.712116Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 200 | caller_name: Ravi Kumar | delivery_address: 12 MG Road, Vijayawada"}

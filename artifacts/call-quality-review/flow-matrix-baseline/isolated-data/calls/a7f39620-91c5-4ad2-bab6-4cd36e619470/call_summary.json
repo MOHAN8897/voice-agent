@@ -1,0 +1,54 @@
+{
+  "call_id": "a7f39620-91c5-4ad2-bab6-4cd36e619470",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller contacted support to schedule a dental appointment due to tooth pain, requesting a slot for tomorrow at 11 AM. The agent collected the caller's name as Kiran and acknowledged the request. When the caller asked if the appointment was confirmed, the agent clarified that it was not yet confirmed and that the request was only noted for the front desk to verify. The caller accepted this, and the call ended with the front desk pending confirmation.",
+  "next_action": "The front desk must confirm the requested appointment slot for tomorrow at 11 AM.",
+  "extracted_fields": {
+    "caller_name": "Kiran",
+    "name": "Kiran",
+    "phone": "+919876500510",
+    "requested_time": "tomorrow at 11 AM",
+    "slot": "tomorrow at 11 AM"
+  },
+  "facts": {
+    "caller_name": "Kiran",
+    "name": "Kiran",
+    "phone": "+919876500510",
+    "requested_time": "tomorrow at 11 AM",
+    "slot": "tomorrow at 11 AM"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:dental-appointment",
+    "custom:tooth-pain",
+    "followup:callback",
+    "followup:schedule_pending",
+    "followup:site_visit",
+    "intent:booking",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:booking",
+    "followup:schedule_pending",
+    "signal:objection",
+    "action:required",
+    "sentiment:neutral",
+    "followup:site_visit"
+  ],
+  "custom_tags": [
+    "custom:dental-appointment",
+    "custom:tooth-pain"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:36:08.365267Z",
+  "generation_ok": true
+}

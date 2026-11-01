@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Can you send someone tomorrow morning at ten-thirty? The fridge is not cooling.", "ts": "2026-10-29T19:39:50.582262Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I can arrange a next-day visit between 10 AM and 6 PM. Could you tell me which area you are in, like Madhapur, Gachibowli, Kondapur, or Kukatpally?", "ts": "2026-10-29T19:39:51.372573Z", "brain_latency_ms": 799}

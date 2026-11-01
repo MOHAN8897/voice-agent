@@ -1,0 +1,87 @@
+{
+  "scenario_id": "SCEN_15",
+  "title": "Explicit DND Opt-Out for Academy Business",
+  "business_id": "C",
+  "agent_name": "Madhavi",
+  "category": "D_Explicit_DND",
+  "integration_condition": "none",
+  "caller_phone": "+919876543234",
+  "total_turns": 2,
+  "total_tokens": 10219,
+  "duration_sec": 7.45,
+  "call_ended": true,
+  "carrier_hangup_invoked": true,
+  "carrier_hangup_error": false,
+  "transcript": [
+    {
+      "turn": 1,
+      "user": "నాకు మీ ట్రైనింగ్ అకాడమీ నుండి ఎలాంటి కాల్స్ రాకూడదు. DND లో పెట్టండి.",
+      "user_en": "I should not receive any calls from your training academy. Put on DND.",
+      "agent": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇకపై మీకు calls రావు. నమస్కారం.",
+      "latency_ms": 1389,
+      "tokens": 5210,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "user_asked_question"
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 2,
+      "user": "అవును, ఇక చేయొద్దు.",
+      "user_en": "Yes, don't call again.",
+      "agent": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "latency_ms": 1317,
+      "tokens": 5009,
+      "should_end": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "not_interested",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "db_evidence": {
+    "call": {
+      "call_id": "bdff761e-48aa-4249-99da-57d0c743dcea",
+      "status": "active",
+      "finalization_status": "pending",
+      "disposition": null,
+      "end_reason": null,
+      "duration_sec": null,
+      "status_tags": []
+    },
+    "callbacks": [],
+    "followup_jobs": [],
+    "dnc_entries": [],
+    "leads": [],
+    "tool_executions": []
+  },
+  "evaluation": {
+    "assertions": [
+      {
+        "name": "dnd_persisted_in_database",
+        "passed": false,
+        "detail": "DncEntry active count: 0"
+      }
+    ],
+    "all_passed": false,
+    "scores": {
+      "telugu_naturalness": 7.5,
+      "understanding_relevance": 7.0,
+      "script_adherence": 6.5,
+      "memory_corrections": 9.0,
+      "capability_honesty": 10.0,
+      "callback_dnd_outcome": 6.0,
+      "hangup_handoff": 9.5,
+      "overall": 7.75
+    }
+  },
+  "created_at": "2026-10-29T10:32:08.477829+00:00"
+}

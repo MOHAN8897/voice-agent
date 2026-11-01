@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "uh... hmm...", "ts": "2026-10-30T11:01:11.916154Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Sorry, I missed that. Could you repeat it?", "ts": "2026-10-30T11:01:14.216184Z"}
+{"seq": 3, "role": "user", "text": "hello hello", "ts": "2026-10-30T11:01:14.222475Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Hello, welcome to FreshCart. I am Arjun, an AI assistant. Could you please tell me what you need help with?", "ts": "2026-10-30T11:01:16.788443Z"}

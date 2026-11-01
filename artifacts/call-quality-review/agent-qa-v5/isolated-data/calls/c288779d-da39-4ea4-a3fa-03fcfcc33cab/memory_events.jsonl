@@ -1,0 +1,8 @@
+{"turn_seq": 1, "ts": "2026-10-31T17:13:53.894330Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T17:14:11.904937Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T17:14:22.683293Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T17:14:22.696348Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: Hair care products ആണല്ലേ. ഇത് എവിടെയാണ് manufacture ചെയ്യുന്നത്?\nassistant: ആ വിവരം എനിക്കറിയില്ല. ഇന്ന് ഏതെങ്കിലും product-നെ കുറിച്ച് കൂടുതൽ അറിയണോ?\nuser: ശരി, ഈ hair oil-ൽ എന്തൊക്കെയാണ് അടങ്ങിയിരിക്കുന്നത് എന്ന് പറയാമോ?\nassistant: ഈ NatureVeda Herbal Hair Oil-ൽ Amla, Bhringraj, Hibiscus, പിന്നെ Coconut Oil എന്നിവയാണ് അടങ്ങിയിരിക്കുന്നത്. ഇത് routine hair, scalp care-ന് വേണ്ടിയുള്ളതാണ്. ഇതിന്റെ വില 200 ml-ന് ₹499 ആണ്."}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T17:14:41.559166Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T17:14:55.867279Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-31T17:15:08.078362Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 13, "ts": "2026-10-31T17:15:21.677158Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

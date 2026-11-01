@@ -1,0 +1,10 @@
+{"seq": 1, "role": "user", "text": "Yes, tell me. Who are you calling from and what do you sell?", "ts": "2026-10-31T16:10:39.936940Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I am calling from NatureVeda Herbals. We offer herbal products like Hair Oil, Aloe Vera Juice, Face Cream, and Ashwagandha Capsules. Which one would you like to know about today?", "ts": "2026-10-31T16:10:41.744125Z"}
+{"seq": 3, "role": "user", "text": "Hair oil sounds interesting. What is the price for that one?", "ts": "2026-10-31T16:10:59.162500Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "NatureVeda Herbal Hair Oil costs 499 rupees for 200 ml. It contains Amla, Bhringraj, Hibiscus, and Coconut Oil, and is intended for routine hair and scalp care. Would you like to place an order today?", "ts": "2026-10-31T16:11:00.497112Z"}
+{"seq": 5, "role": "user", "text": "499 rupees? That is a bit costly na. Do you have any discount for first time buyers?", "ts": "2026-10-31T16:11:21.685534Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "I don't have any discount details for first time buyers right now. The Hair Oil is priced at 499 rupees for 200 ml. Would you still like to go ahead with an order, or would you prefer to check the details later?", "ts": "2026-10-31T16:11:23.576351Z"}
+{"seq": 7, "role": "user", "text": "No discount? Okay, I will think about it. What other products do you have?", "ts": "2026-10-31T16:11:44.204352Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "We also have Aloe Vera Juice at 399 rupees for 500 ml, Herbal Face Cream at 599 rupees for 50 g, and Ashwagandha Capsules at 699 rupees for 60 capsules. Which one would you like to explore?", "ts": "2026-10-31T16:11:45.318847Z"}
+{"seq": 9, "role": "user", "text": "Okay, these prices are too much. I do not want any products right now. Please remove my number from your list and never call this number again.", "ts": "2026-10-31T16:12:09.608672Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "Understood, we won't call this number again. Thank you for your time. Goodbye.", "ts": "2026-10-31T16:12:10.636007Z"}

@@ -1,0 +1,12 @@
+{"seq": 1, "role": "user", "text": "नमस्ते प्रिया जी, हाँ, बताइये आपके पास कौन-कौन से प्रोडक्ट्स हैं?", "ts": "2026-10-31T14:37:44.506532Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "हमारे पास NatureVeda Herbal Hair Oil है ₹499 में 200 ml, Aloe Vera Juice है ₹399 में 500 ml, Herbal Face Cream है ₹599 में 50 g, और Ashwagandha Capsules हैं ₹699 में 60 capsules। क्या आप इनमें से किसी के बारे में और जानकारी चाहते हैं?", "ts": "2026-10-31T14:37:46.321856Z"}
+{"seq": 3, "role": "user", "text": "अच्छा, एलोवेरा जूस के बारे में बताइये, ये पेट के लिए अच्छा होता है क्या?", "ts": "2026-10-31T14:38:08.768555Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "NatureVeda Aloe Vera Juice 500 ml का ₹399 में आता है और इसमें सिर्फ Aloe Vera है। इसे general wellness beverage के तौर पर market किया जाता है, इसलिए किसी भी medical condition या पेट की परेशानी के लिए आप अपने healthcare professional से सलाह ज़रूर लें।", "ts": "2026-10-31T14:38:10.665048Z"}
+{"seq": 5, "role": "user", "text": "ठीक है, और ये हेयर ऑयल के बारे में भी थोड़ा बताइए ना?", "ts": "2026-10-31T14:38:32.144324Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "NatureVeda Herbal Hair Oil 200 ml का ₹499 में आता है, और इसमें Amla, Bhringraj, Hibiscus और Coconut Oil हैं। यह routine hair and scalp care के लिए है। क्या आप इसका order करना चाहेंगे?", "ts": "2026-10-31T14:38:33.816000Z"}
+{"seq": 7, "role": "user", "text": "अच्छा, ये हेयर ऑयल बाल झड़ने में मदद करता है क्या?", "ts": "2026-10-31T14:38:52.728654Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "देखिए, यह product routine hair and scalp care के लिए है, लेकिन किसी बीमारी को ठीक करने का दावा नहीं किया जाता। अगर आपको बाल झड़ने की कोई medical condition है, तो healthcare professional से सलाह लेना बेहतर रहेगा।", "ts": "2026-10-31T14:38:54.553373Z"}
+{"seq": 9, "role": "user", "text": "Actually, mujhe thoda Telugu mein zyada comfort feel hota hai. Aap please mujhe kal subah 11 baje ke aas-paas call back kar sakte hain kya Telugu mein?", "ts": "2026-10-31T14:39:21.501776Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "ज़रूर, मैं आपको कल सुबह 11 बजे के आस-पास तेलुगु में call back करूँगी। आपकी callback request team के लिए note कर ली गई है, वो confirm कर देंगे।", "ts": "2026-10-31T14:39:23.654041Z"}
+{"seq": 11, "role": "user", "text": "Sare andi, chala thanks. Bye!", "ts": "2026-10-31T14:39:37.806676Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "ठीक है, आपका callback note कर लिया है। समय देने के लिए धन्यवाद। नमस्कार।", "ts": "2026-10-31T14:39:39.413890Z"}

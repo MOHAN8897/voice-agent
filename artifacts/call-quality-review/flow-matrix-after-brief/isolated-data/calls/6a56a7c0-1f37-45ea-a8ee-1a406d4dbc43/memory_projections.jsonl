@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-30T10:51:59.216256Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-30T10:52:01.791186Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nrequested_time: రేపు ఉదయం 11 కి"}
+{"turn_seq": 5, "ts": "2026-10-30T10:52:04.464091Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nrequested_time: రేపు ఉదయం 11 కి | caller_name: కిరణ్"}
+{"turn_seq": 7, "ts": "2026-10-30T10:52:05.463571Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nrequested_time: రేపు ఉదయం 11 కి | caller_name: కిరణ్"}

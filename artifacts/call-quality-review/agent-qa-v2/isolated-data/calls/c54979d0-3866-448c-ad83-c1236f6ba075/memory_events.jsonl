@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-31T13:42:30.370207Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T13:42:53.948726Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T13:43:10.321939Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T13:43:10.343548Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: अच्छा, यह aloe vera juice delivery के बाद कितने दिनों तक fresh रहता है?\nassistant: माफ़ कीजिए, delivery के बाद aloe vera juice कितने दिनों तक fresh रहेगा, यह जानकारी मेरे पास अभी उपलब्ध नहीं है।\nuser: कोई बात नहीं जी, आप मुझे इसके बारे में बाद में बता देना।\nassistant: ठीक है, मैं आपकी callback request note कर लेती हूँ। आपको किस समय call करना सही रहेगा?"}], "applied": true, "validation_errors": []}

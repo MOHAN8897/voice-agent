@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Can you send someone tomorrow morning at ten-thirty? The fridge is not cooling.", "ts": "2026-10-29T19:32:34.457656Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I can note that down for you. We do cover fridge inspections, which are 250 rupees, but the charge is waived if you go ahead with the repair. Before I record this, could you tell me your name and which area you are in? We serve Madhapur, Gachibowli, Kondapur, and Kukatpally only.", "ts": "2026-10-29T19:32:35.174132Z", "brain_latency_ms": 722}

@@ -1,0 +1,100 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller, Sravani, requested general service for her split AC but said she did not have time to talk immediately. She explicitly asked for a callback to the same number exactly six hours later and provided her email address, sravani.audit@example.invalid. The agent acknowledged and recorded the details and callback request. The call then ended politely. The transcript does not confirm that the callback was actually scheduled or completed.",
+  "next_action": "Arrange a callback to the same number six hours after this call regarding split AC general service.",
+  "extracted_fields": {
+    "callback_number": "Same number",
+    "callback_time": "6 hours after the call",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Sravani",
+    "email": "sravani.audit@example.invalid",
+    "phone": "+12025550110",
+    "product": "Split AC",
+    "service_requested": "General service"
+  },
+  "objections": [],
+  "notes": "Caller could not talk at the time of the call.",
+  "tags": [
+    "followup:callback",
+    "intent:support",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:split-ac",
+    "custom:general-service"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:41:05.130619Z",
+  "generation_ok": true,
+  "facts": {
+    "callback_number": "Same number",
+    "callback_time": "6 hours after the call",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Sravani",
+    "email": "sravani.audit@example.invalid",
+    "phone": "+12025550110",
+    "product": "Split AC",
+    "service_requested": "General service"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:general-service",
+    "custom:split-ac",
+    "followup:callback",
+    "intent:support",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "03ce5a76-6682-43c0-90eb-9b78ad02c9f6",
+    "agentId": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 100,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.99,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "callback_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

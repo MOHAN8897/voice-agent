@@ -1,0 +1,86 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller stated they were busy and requested to be called back later. The agent acknowledged the busy status, asked for a preferred callback time, and the caller replied they did not know but wanted to be called later. The agent confirmed saving the callback request and concluded the call.",
+  "next_action": "Callback the caller at a later time as requested.",
+  "extracted_fields": {
+    "callback_time": "sometime later",
+    "phone": "+919876500503"
+  },
+  "objections": [
+    "Caller is busy and unavailable to talk."
+  ],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:callback-request"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:48:29.405108Z",
+  "generation_ok": true,
+  "facts": {
+    "callback_time": "sometime later",
+    "phone": "+919876500503"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:callback-request",
+    "followup:callback",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "3af82be6-0125-477d-a782-aefc6615df66",
+    "agentId": "6f60434e-61c5-4e8d-906f-b2cecd74536d",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 35,
+    "band": "cold",
+    "disposition": "callback_required",
+    "confidence": 0.9,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "callback_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

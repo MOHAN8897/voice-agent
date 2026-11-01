@@ -1,0 +1,39 @@
+{
+  "call_id": "d4a633cd-aa60-4ab5-9cff-c84afff862f9",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the pricing of a 3 kW system and whether any government subsidies were available. The agent responded by quoting the upfront cost of ₹1,95,000, explaining that a government subsidy of ₹78,000 applies, leaving a net payment of ₹1,17,000. The caller found this price reasonable. The agent then requested the caller's name, area, and preferred day to schedule a free site survey. The caller hesitated briefly but agreed to provide these details. The call ended with the agent still waiting for the caller to share their information to proceed with scheduling.",
+  "next_action": "Awaiting the caller to provide their name, area, and preferred day for the free site survey.",
+  "extracted_fields": {
+    "phone": "+919876500509"
+  },
+  "facts": {
+    "phone": "+919876500509"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:site-survey",
+    "custom:solar-system",
+    "followup:site_visit",
+    "intent:information",
+    "outcome:interested",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:information",
+    "signal:price_sensitive",
+    "followup:site_visit"
+  ],
+  "custom_tags": [
+    "custom:solar-system",
+    "custom:site-survey"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:50:54.813477Z",
+  "generation_ok": true
+}

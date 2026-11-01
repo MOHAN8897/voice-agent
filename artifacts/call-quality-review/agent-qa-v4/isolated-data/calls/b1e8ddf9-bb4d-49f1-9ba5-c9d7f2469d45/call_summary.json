@@ -1,0 +1,71 @@
+{
+  "call_id": "b1e8ddf9-bb4d-49f1-9ba5-c9d7f2469d45",
+  "language_callback": {
+    "status": "requested",
+    "kind": "language_switch",
+    "id": "375d23cd-2e8e-405c-8938-2a2d9eaaf4bd",
+    "caller_language": "hi-IN",
+    "configured_language": "te-IN",
+    "summary": "Caller asked to continue in Hindi; call back in Hindi with the same agent."
+  },
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్కు హెర్బల్ హెయిర్ ఆయిల్, అలోవెరా జ్యూస్, ఫేస్ క్రీమ్ మరియు అశ్వగంధ క్యాప్సూల్స్ గురించి సమాచారం అందించారు. కస్టమర్ అలోవెరా జ్యూస్ ధర, డెలివరీ ఛార్జీలు, డిస్కౌంట్లు, ఫ్లేవర్లు, బాటిల్ పరిమాణం మరియు పదార్థాల గురించి అడిగారు. ఏజెంట్ ధర, పరిమాణం మరియు పదార్థాలను నిర్ధారించారు, కానీ డెలివరీ ఛార్జీలు మరియు డిస్కౌంట్ల గురించి సమాచారం లేదని చెప్పారు. కస్టమర్ హిందీలో మాట్లాడటానికి ప్రాధాన్యత ఇస్తూ, మరుసటి రోజు ఉదయం 11 గంటలకు కాల్ చేయమని అభ్యర్థించారు, దానికి ఏజెంట్ అంగీకరించారు. చివరగా, ఏజెంట్ కాల్ ముగించారు.",
+  "summary_language": "te-IN",
+  "summary_en": "The business's agent called the customer to share details about several wellness products, and the customer asked specific questions about Aloe Vera Juice. The agent shared that the 500 ml bottle costs ₹399, contains only aloe vera, and currently has no discounts or other flavors available. When the customer inquired about delivery charges, the agent stated that this information was not available in the system. The customer requested a follow-up call in Hindi the next morning at 11:00 AM, which the agent agreed to schedule. The call ended after the agent confirmed the callback note. Language handoff: Caller asked to continue in Hindi; call back in Hindi with the same agent.",
+  "next_action": "Call back in Hindi with the same agent (Callback needed in another language). No callback time has been booked.",
+  "extracted_fields": {
+    "bottle_size": "500 ml",
+    "callback_language": "Hindi",
+    "callback_time": "Tomorrow at 11:00 AM",
+    "phone": "+919700000003",
+    "price": "₹399",
+    "product": "Aloe Vera Juice",
+    "preferred_language": "hi-IN",
+    "callback_requested": "true",
+    "requested_language": "hi-IN",
+    "language_switch": "true"
+  },
+  "facts": {
+    "bottle_size": "500 ml",
+    "callback_language": "Hindi",
+    "callback_time": "Tomorrow at 11:00 AM",
+    "phone": "+919700000003",
+    "price": "₹399",
+    "product": "Aloe Vera Juice",
+    "preferred_language": "hi-IN",
+    "callback_requested": "true",
+    "requested_language": "hi-IN",
+    "language_switch": "true"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "contact:preferred_language",
+    "custom:aloe-vera-juice",
+    "custom:hindi-callback",
+    "followup:callback",
+    "followup:language_switch",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral",
+    "intent:information"
+  ],
+  "custom_tags": [
+    "custom:aloe-vera-juice",
+    "custom:hindi-callback"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [
+    "Are there any delivery charges?",
+    "Are there any discounts available?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T15:05:54.801270Z",
+  "generation_ok": true
+}

@@ -1,0 +1,566 @@
+[
+  {
+    "id": "hi-IN/language_switch/shop",
+    "scenario": "language_switch",
+    "language": "hi-IN",
+    "business": "shop",
+    "tenant_id": "e9530ba6-af7d-41d5-8e9e-c1880444980b",
+    "agent_id": "63078755-fce5-48d1-8fe3-39db3f175150",
+    "call_id": "f2569f4d-d07b-4c84-a3fa-37ec621fd33c",
+    "phone": "+919876500501",
+    "opening": "नमस्ते, मैं अर्जुन हूं FreshCart से। मैं आपकी क्या मदद कर सकता हूं?",
+    "turn_index": 2,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "300 रुपये के order की delivery fee कितनी है?",
+        "caller_en": "What is the delivery fee for a 300 rupees order?",
+        "reply": "देखिए, 499 रुपये से कम के orders पर ₹30 की delivery fee लगती है। तो आपके 300 रुपये के order पर ₹30 charge लगेगा।",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "Can you please speak in English? I want to talk in English.",
+        "caller_en": "Can you please speak in English? I want to talk in English.",
+        "reply": "",
+        "farewell": "ज़रूर, हम आपको English में वापस call करेंगे। समय देने के लिए धन्यवाद। नमस्कार।",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "देखिए, 499 रुपये से कम के orders पर ₹30 की delivery fee लगती है। तो आपके 300 रुपये के order पर ₹30 charge लगेगा।",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "ज़रूर, हम आपको English में वापस call करेंगे। समय देने के लिए धन्यवाद। नमस्कार।",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 2
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "callback",
+    "outcome": {
+      "disposition": "callback_required",
+      "contact_preference": "callback",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:phone_known",
+        "contact:preferred_language",
+        "custom:delivery-fee",
+        "followup:callback",
+        "followup:language_switch",
+        "intent:information",
+        "outcome:callback_required",
+        "sentiment:neutral"
+      ],
+      "facts": {
+        "budget": "300",
+        "phone": "+919876500501",
+        "preferred_language": "en-IN",
+        "callback_requested": "true",
+        "requested_language": "en-IN",
+        "language_switch": "true"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "f2569f4d-d07b-4c84-a3fa-37ec621fd33c",
+          "tenant_id": "e9530ba6-af7d-41d5-8e9e-c1880444980b",
+          "agent_id": "63078755-fce5-48d1-8fe3-39db3f175150",
+          "session_id": "wf-6a21d5b3e1404255ba9dfd696884ae42",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_575c7df81b4442d7",
+          "started_at": "2026-10-30 12:29:45.320266+00:00",
+          "ended_at": "2026-10-30 12:29:50.739348+00:00",
+          "duration_sec": 5,
+          "disposition": "callback_required",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/f2569f4d-d07b-4c84-a3fa-37ec621fd33c/",
+          "end_reason": "goal_complete",
+          "status": "answered",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:phone_known",
+            "contact:preferred_language",
+            "custom:delivery-fee",
+            "followup:callback",
+            "followup:language_switch",
+            "intent:information",
+            "outcome:callback_required",
+            "sentiment:neutral"
+          ],
+          "last_heartbeat_at": "2026-10-30 12:29:45.320266+00:00",
+          "created_at": "2026-10-30 12:29:45.320266+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "089a083e-baf6-4d9a-8838-3342659bdfaa",
+          "tenant_id": "e9530ba6-af7d-41d5-8e9e-c1880444980b",
+          "agent_id": "63078755-fce5-48d1-8fe3-39db3f175150",
+          "name": "New lead",
+          "phone": "+919876500501",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: f2569f4d-d07b-4c84-a3fa-37ec621fd33c]\nThe caller initiated the call to inquire about the delivery fee for a 300-rupee order. The agent informed them that orders under 499 rupees incur a 30-rupee delivery fee. The caller then requested that the conversation be conducted in English. The agent agreed to call the caller back in English and concluded the call. Language handoff: Caller asked to continue in English; call back in English with the same agent.\n\nNext step: Call back in English with the same agent (Callback needed in another language). No callback time has been booked.\n\nCall outcome: callback required (90% confidence)",
+          "created_at": "2026-10-30 12:29:51.800500+00:00",
+          "updated_at": "2026-10-30 12:29:51.800500+00:00"
+        }
+      ],
+      "language_switch": [
+        {
+          "id": "1b28e748-4e27-4fa8-8886-8ac2444b32f2",
+          "tenant_id": "e9530ba6-af7d-41d5-8e9e-c1880444980b",
+          "agent_id": "63078755-fce5-48d1-8fe3-39db3f175150",
+          "kind": "language_switch",
+          "original_call_id": "f2569f4d-d07b-4c84-a3fa-37ec621fd33c",
+          "phone_e164": "+919876500501",
+          "contact_name": null,
+          "requested_language": "en-IN",
+          "original_language": "hi-IN",
+          "request_text": "Can you please speak in English? I want to talk in English.",
+          "status": "pending",
+          "last_dial_request_id": null,
+          "campaign_id": null,
+          "callback_call_id": null,
+          "error": null,
+          "created_at": "2026-10-30 12:29:49.681166+00:00",
+          "updated_at": "2026-10-30 12:29:49.681166+00:00",
+          "completed_at": null
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "callback",
+      "end_reason": "goal_complete"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "callback_required"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "answered_question_with_facts",
+        "passed": true,
+        "evidence": "देखलीं, 499 रुपये से कम के orders पर ₹30 की delivery fee लगती है।"
+      },
+      {
+        "id": "offered_language_callback_and_closed",
+        "passed": true,
+        "evidence": "(silent)"
+      }
+    ],
+    "all_failures": [],
+    "passed": true
+  },
+  {
+    "id": "ta-IN/language_switch/shop",
+    "scenario": "language_switch",
+    "language": "ta-IN",
+    "business": "shop",
+    "tenant_id": "c5e49ff5-cc60-4592-a31c-0c6a96cc5f34",
+    "agent_id": "0cb66a4f-1a61-4114-a6eb-8f07bd17c584",
+    "call_id": "fda7a907-dc28-48c7-b526-23abe2967667",
+    "phone": "+919876500503",
+    "opening": "வணக்கம். நான் FreshCart நிறுவனத்தின் அர்ஜுன் பேசுகிறேன். உங்களுக்கு எப்படி உதவ முடியும்?",
+    "turn_index": 2,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "300 ரூவா order-க்கு delivery fee எவ்ளோ?",
+        "caller_en": "What is the delivery fee for a 300 rupees order?",
+        "reply": "நானூற்று தொண்ணூறு ரூபாய்க்கு குறைவான ஆர்டர்களுக்கு முப்பது ரூபாய் delivery fee வரும்.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "Can you please speak in English? I want to talk in English.",
+        "caller_en": "Can you please speak in English? I want to talk in English.",
+        "reply": "",
+        "farewell": "கண்டிப்பா, உங்களுக்கு Englishல மறுபடியும் call பண்றோம். உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "நானூற்று தொண்ணூறு ரூபாய்க்கு குறைவான ஆர்டர்களுக்கு முப்பது ரூபாய் delivery fee வரும்.",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "கண்டிப்பா, உங்களுக்கு Englishல மறுபடியும் call பண்றோம். உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 2
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "callback",
+    "outcome": {
+      "disposition": "callback_required",
+      "contact_preference": "callback",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:phone_known",
+        "contact:preferred_language",
+        "custom:delivery-fee",
+        "custom:language-switch",
+        "followup:callback",
+        "followup:language_switch",
+        "intent:information",
+        "outcome:callback_required",
+        "sentiment:neutral",
+        "signal:objection"
+      ],
+      "facts": {
+        "budget": "300 rupees",
+        "phone": "+919876500503",
+        "preferred_language": "en-IN",
+        "callback_requested": "true",
+        "requested_language": "en-IN",
+        "language_switch": "true"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "fda7a907-dc28-48c7-b526-23abe2967667",
+          "tenant_id": "c5e49ff5-cc60-4592-a31c-0c6a96cc5f34",
+          "agent_id": "0cb66a4f-1a61-4114-a6eb-8f07bd17c584",
+          "session_id": "wf-4daadcc9056a43699fa895d22d0383f5",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_89722cec00e04679",
+          "started_at": "2026-10-30 12:30:46.500917+00:00",
+          "ended_at": "2026-10-30 12:30:50.335920+00:00",
+          "duration_sec": 3,
+          "disposition": "callback_required",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/fda7a907-dc28-48c7-b526-23abe2967667/",
+          "end_reason": "goal_complete",
+          "status": "missed",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:phone_known",
+            "contact:preferred_language",
+            "custom:delivery-fee",
+            "custom:language-switch",
+            "followup:callback",
+            "followup:language_switch",
+            "intent:information",
+            "outcome:callback_required",
+            "sentiment:neutral",
+            "signal:objection"
+          ],
+          "last_heartbeat_at": "2026-10-30 12:30:46.500917+00:00",
+          "created_at": "2026-10-30 12:30:46.500917+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "ab149554-6e00-4f97-9cf3-86bfc8b39646",
+          "tenant_id": "c5e49ff5-cc60-4592-a31c-0c6a96cc5f34",
+          "agent_id": "0cb66a4f-1a61-4114-a6eb-8f07bd17c584",
+          "name": "New lead",
+          "phone": "+919876500503",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: fda7a907-dc28-48c7-b526-23abe2967667]\nThe caller initiated the call to inquire about the delivery fee for a 300 rupee order. The agent replied that orders under 490 rupees incur a 30-rupee delivery fee. The caller then requested to speak in English. The agent agreed to call back in English but ended the call immediately without confirming a specific time for the callback. Language handoff: Caller asked to continue in English; call back in English with the same agent.\n\nNext step: Call back in English with the same agent (Callback needed in another language). No callback time has been booked.\n\nObjections: Language preference: English\n\nCall outcome: callback required (85% confidence)",
+          "created_at": "2026-10-30 12:30:51.351823+00:00",
+          "updated_at": "2026-10-30 12:30:51.351823+00:00"
+        }
+      ],
+      "language_switch": [
+        {
+          "id": "3e6f720a-a1b1-4310-a8ee-baf735d1f629",
+          "tenant_id": "c5e49ff5-cc60-4592-a31c-0c6a96cc5f34",
+          "agent_id": "0cb66a4f-1a61-4114-a6eb-8f07bd17c584",
+          "kind": "language_switch",
+          "original_call_id": "fda7a907-dc28-48c7-b526-23abe2967667",
+          "phone_e164": "+919876500503",
+          "contact_name": null,
+          "requested_language": "en-IN",
+          "original_language": "ta-IN",
+          "request_text": "Can you please speak in English? I want to talk in English.",
+          "status": "pending",
+          "last_dial_request_id": null,
+          "campaign_id": null,
+          "callback_call_id": null,
+          "error": null,
+          "created_at": "2026-10-30 12:30:49.291168+00:00",
+          "updated_at": "2026-10-30 12:30:49.291168+00:00",
+          "completed_at": null
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "callback",
+      "end_reason": "goal_complete"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "callback_required"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "answered_question_with_facts",
+        "passed": true,
+        "evidence": "நானூற்று தொண்ணூறு ரூபாய்க்கு குறைவான ஆர்டர்களுக்கு முப்பது ரூபாய் delivery fee வரும்."
+      },
+      {
+        "id": "offered_language_callback_and_closed",
+        "passed": false,
+        "evidence": "(silent)"
+      }
+    ],
+    "all_failures": [
+      "judge:offered_language_callback_and_closed"
+    ],
+    "passed": false
+  },
+  {
+    "id": "te-IN/language_switch/shop",
+    "scenario": "language_switch",
+    "language": "te-IN",
+    "business": "shop",
+    "tenant_id": "28eb3477-fa57-49ae-99b9-9deddbabc95f",
+    "agent_id": "6240e009-cd60-4700-b623-8bd1d0e423a8",
+    "call_id": "6f8f6cdf-2e95-4afe-b1d8-8459a1ce3d4f",
+    "phone": "+919876500502",
+    "opening": "నమస్కారం, ఫ్రెష్‌కార్ట్‌కి స్వాగతం. నేను అర్జున్. నేను మీకు ఎలా సహాయం చేయగలను?",
+    "turn_index": 2,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "300 rupees order కి delivery fee ఎంత?",
+        "caller_en": "What is the delivery fee for a 300 rupees order?",
+        "reply": "మీ 300 రూపాయల ఆర్డర్‌కి డెలివరీ ఫీజు 30 రూపాయలు ఉంటుంది.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "Can you please speak in English? I want to talk in English.",
+        "caller_en": "Can you please speak in English? I want to talk in English.",
+        "reply": "",
+        "farewell": "తప్పకుండా, మీకు English లో మళ్ళీ call చేస్తాం. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "మీ 300 రూపాయల ఆర్డర్‌కి డెలివరీ ఫీజు 30 రూపాయలు ఉంటుంది.",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "తప్పకుండా, మీకు English లో మళ్ళీ call చేస్తాం. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 2
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "callback",
+    "outcome": {
+      "disposition": "callback_required",
+      "contact_preference": "callback",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:phone_known",
+        "contact:preferred_language",
+        "custom:delivery-fee",
+        "custom:language-preference",
+        "followup:callback",
+        "followup:language_switch",
+        "intent:information",
+        "outcome:callback_required",
+        "sentiment:neutral"
+      ],
+      "facts": {
+        "phone": "+919876500502",
+        "preferred_language": "en-IN",
+        "callback_requested": "true",
+        "requested_language": "en-IN",
+        "language_switch": "true"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "6f8f6cdf-2e95-4afe-b1d8-8459a1ce3d4f",
+          "tenant_id": "28eb3477-fa57-49ae-99b9-9deddbabc95f",
+          "agent_id": "6240e009-cd60-4700-b623-8bd1d0e423a8",
+          "session_id": "wf-1e4267efac5d48ad8221837804a85dd5",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_397becc93f9d474a",
+          "started_at": "2026-10-30 12:30:28.075323+00:00",
+          "ended_at": "2026-10-30 12:30:31.923942+00:00",
+          "duration_sec": 3,
+          "disposition": "callback_required",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/6f8f6cdf-2e95-4afe-b1d8-8459a1ce3d4f/",
+          "end_reason": "goal_complete",
+          "status": "missed",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:phone_known",
+            "contact:preferred_language",
+            "custom:delivery-fee",
+            "custom:language-preference",
+            "followup:callback",
+            "followup:language_switch",
+            "intent:information",
+            "outcome:callback_required",
+            "sentiment:neutral"
+          ],
+          "last_heartbeat_at": "2026-10-30 12:30:28.075323+00:00",
+          "created_at": "2026-10-30 12:30:28.075323+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "f354d510-5ad7-4ebc-8c8c-93c55a3cbc85",
+          "tenant_id": "28eb3477-fa57-49ae-99b9-9deddbabc95f",
+          "agent_id": "6240e009-cd60-4700-b623-8bd1d0e423a8",
+          "name": "New lead",
+          "phone": "+919876500502",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: 6f8f6cdf-2e95-4afe-b1d8-8459a1ce3d4f]\nThe caller initiated the call to inquire about the delivery fee for a 300 rupees order. The agent responded by stating that the delivery fee would be 30 rupees. The caller then requested to speak in English. The agent acknowledged this request, stated that they would call back in English, and concluded the call by thanking the caller. Language handoff: Caller asked to continue in English; call back in English with the same agent.\n\nNext step: Call back in English with the same agent (Callback needed in another language). No callback time has been booked.\n\nCall outcome: callback required (85% confidence)",
+          "created_at": "2026-10-30 12:30:32.978753+00:00",
+          "updated_at": "2026-10-30 12:30:32.978753+00:00"
+        }
+      ],
+      "language_switch": [
+        {
+          "id": "d88cdbcc-bcfa-4c58-a8af-d9d3d9a728fb",
+          "tenant_id": "28eb3477-fa57-49ae-99b9-9deddbabc95f",
+          "agent_id": "6240e009-cd60-4700-b623-8bd1d0e423a8",
+          "kind": "language_switch",
+          "original_call_id": "6f8f6cdf-2e95-4afe-b1d8-8459a1ce3d4f",
+          "phone_e164": "+919876500502",
+          "contact_name": null,
+          "requested_language": "en-IN",
+          "original_language": "te-IN",
+          "request_text": "Can you please speak in English? I want to talk in English.",
+          "status": "pending",
+          "last_dial_request_id": null,
+          "campaign_id": null,
+          "callback_call_id": null,
+          "error": null,
+          "created_at": "2026-10-30 12:30:30.783519+00:00",
+          "updated_at": "2026-10-30 12:30:30.783519+00:00",
+          "completed_at": null
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "callback",
+      "end_reason": "goal_complete"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "callback_required"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "answered_question_with_facts",
+        "passed": true,
+        "evidence": "మీ 300 రూపాయల ఆర్డర్‌కి డెలివరీ ఫీజు 30 రూపాయలు ఉంటుంది."
+      },
+      {
+        "id": "offered_language_callback_and_closed",
+        "passed": false,
+        "evidence": "AGENT (silent)"
+      }
+    ],
+    "all_failures": [
+      "judge:offered_language_callback_and_closed"
+    ],
+    "passed": false
+  }
+]

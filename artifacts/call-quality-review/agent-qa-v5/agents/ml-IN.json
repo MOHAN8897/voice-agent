@@ -1,0 +1,12 @@
+{
+  "language": "ml-IN",
+  "tenant_id": "46bbefdc-2ecd-4006-b181-3e2864ffce12",
+  "agent_id": "a3e5b2a7-8d8c-422d-925b-c137d41bebc5",
+  "user_id": "cc4f6fb8-bc11-44a5-b570-3fc48aa26e1d",
+  "brain_version": "cb_qa_b8e83586ffd847b4",
+  "brain_chars": 19311,
+  "brain_source": "retargeted:en-IN",
+  "direction": "outbound",
+  "name": "Priya",
+  "brain_path": "artifacts\\call-quality-review\\agent-qa-v5\\agents\\ml-IN-brain.txt"
+}

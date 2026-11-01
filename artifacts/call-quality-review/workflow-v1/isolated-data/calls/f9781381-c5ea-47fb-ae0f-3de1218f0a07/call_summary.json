@@ -1,0 +1,59 @@
+{
+  "call_id": "f9781381-c5ea-47fb-ae0f-3de1218f0a07",
+  "language_callback": null,
+  "disposition": "converted",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call requesting 200 matte visiting cards. The agent provided the pricing at 700 rupees and requested the caller's name and delivery address to proceed. The caller, Ravi Kumar, provided his name and the delivery address as 12 MG Road, Vijayawada. The agent confirmed the order details, stating that delivery would take 3 working days after artwork approval with cash on delivery payment. The caller agreed and explicitly confirmed the order. The call concluded with the caller thanking the agent and ending the conversation.",
+  "next_action": "No further action required as the order is confirmed.",
+  "extracted_fields": {
+    "caller_name": "Ravi Kumar",
+    "delivery_address": "12 MG Road, Vijayawada",
+    "finish": "matte",
+    "name": "Ravi Kumar",
+    "payment_terms": "cash on delivery",
+    "phone": "+919876500038",
+    "price": "700 rupees",
+    "product": "visiting cards",
+    "quantity": "200"
+  },
+  "facts": {
+    "caller_name": "Ravi Kumar",
+    "delivery_address": "12 MG Road, Vijayawada",
+    "finish": "matte",
+    "name": "Ravi Kumar",
+    "payment_terms": "cash on delivery",
+    "phone": "+919876500038",
+    "price": "700 rupees",
+    "product": "visiting cards",
+    "quantity": "200"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:cash-on-delivery",
+    "custom:visiting-cards",
+    "followup:send_quote",
+    "intent:purchase",
+    "outcome:converted",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:purchase",
+    "sentiment:positive",
+    "signal:ready_to_buy",
+    "action:required",
+    "followup:send_quote"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:cash-on-delivery"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:21:05.764053Z",
+  "generation_ok": true
+}

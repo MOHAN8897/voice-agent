@@ -1,0 +1,1638 @@
+{
+  "scenario": {
+    "id": "C_enquiry_success",
+    "business": "C",
+    "kind": "enquiry",
+    "integration": "success",
+    "policy": "review",
+    "max_turns": 12,
+    "goal": "Compare Python and SQL/PowerBI courses, duration, fees, instalments, evening/weekend batches and eligibility. Ask whether a job is guaranteed. Ask to save an enquiry and arrange a discussion/demo if supported, and clarify what has actually been done. Stay curious for roughly 10 caller turns if the conversation remains useful. Around the middle, thank them and ask another relevant question in the SAME turn, without ending the call. At the end, clearly say all your questions are answered and thank them."
+  },
+  "agent": {
+    "id": "C",
+    "key": "academy",
+    "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+    "name": "Teja Data Academy",
+    "agent_name": "Madhavi",
+    "role": "counsellor",
+    "industry": "education",
+    "brief": "Agent name Madhavi, company Teja Data Academy.\nPhone counselling and course admissions in Telugu.\nWe offer practical Python with Data Analytics certification course.\nDuration: 8 weeks online live classes with hands-on projects.\nBatches: Weekday batch 8:00 PM to 9:00 PM (Mon-Fri); Weekend batch 10:00 AM to 1:00 PM (Sat-Sun).\nFee: Final fee is 8,999 rupees total. An old leaflet mentions 12000/15000 rupees, discard that old fee. Current fee 8,999 rupees only.\nNo installment discounts.\nEligibility: Any graduate (BTech, BSc, BCom) or final year college student. Basic computer knowledge needed, prior coding not required.\nPlacement policy: 100% placement assistance provided (resume building, interview preparation, job referrals); strictly NO job guarantee or salary promise.\nGoal: answer course curriculum, fees, batches and timing questions.\nIf interested in free demo session or admission counselling, collect preferred name, email, qualification and preferred batch.\nNo payment collected over the phone.\nRefund policy: No refund once classes start after the first week.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Madhavi",
+      "company_name": "Teja Data Academy",
+      "role": "Course counselling and demo registration",
+      "permitted_next_steps": "Collect student name, email, educational qualification and batch preference (weekday/weekend) to book a free demo class or counsellor callback.",
+      "fee_terms": "Final course fee is 8,999 rupees total. Disregard any old fees. No installment discounts.",
+      "placement_policy": "Placement assistance provided (interview prep, resume building, referrals); strictly no job guarantee.",
+      "eligibility_rules": "Any graduate or final year student; no prior coding experience required.",
+      "forbidden_actions": "Never guarantee a job, salary package or placement. Never collect fees or credit card numbers on call."
+    },
+    "user_id": "77b8a5cc-673a-4043-88b6-648e7d5f1b45",
+    "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09"
+  },
+  "call_id": "7b450dad-00b9-4923-b220-38f6011c5503",
+  "session_id": "adaptive-3715d27e4c5c453582dd4570b621550e",
+  "phone": "+12025550114",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_fef6bbf1152f",
+  "turn_index": 6,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నమస్తే Madhavi. నేను working professional ని, అందుకే evenings లేదా weekends లో batch ఉంటే బాగుంటుంది. Python మరియు SQL లేదా PowerBI, ఈ రెండిటిలో ఏ courses available ఉన్నాయో చెప్తారా? అలాగే వాటి duration, fees, and instalments ఎలా ఉంటాయో కూడా చెప్పండి.",
+        "intends_end": false,
+        "intent": "Inquire about Python and SQL/PowerBI courses including timings, duration, fees, and instalments",
+        "elapsed_s": 0.797
+      },
+      "spoken": "మా దగ్గర Python with Data Analytics course ఉంది. ఇది 8 weeks ఉంటుంది, fee eight thousand nine hundred ninety nine rupees total. Weekday batch రాత్రి eight PM నుండి nine PM వరకు, weekend batch శని, ఆదివారాలు ఉదయం ten AM నుండి మధ్యాహ్నం one PM వరకు ఉంటాయి. Installment discounts ఏమీ లేవు.",
+      "elapsed_s": 2.234,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "Madhavi"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        270,
+        271,
+        272
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "మా దగ్గర Python with Data Analytics course ఉంది. ఇది 8 weeks ఉంటుంది, fee eight thousand nine hundred ninety nine rupees total. Weekday batch రాత్రి eight PM నుండి nine PM వరకు, weekend batch శని, ఆదివారాలు ఉదయం ten AM నుండి మధ్యాహ్నం one PM వరకు ఉంటాయి. Installment discounts ఏమీ లేవు.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5209,
+            "output_tokens": 93,
+            "total_tokens": 5302
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 2,
+      "caller": {
+        "utterance": "Python course details చెప్పి thanks. SQL లేదా PowerBI courses కూడా ఉన్నాయా? ఒకవేళ ఉంటే వాటి duration, fees, and instalment options ఎలా ఉంటాయో చెప్తారా? అలాగే placement గురించి, job guarantee ఉందా?",
+        "intends_end": false,
+        "intent": "Compare SQL/PowerBI courses and ask about job guarantee and fees",
+        "elapsed_s": 0.812
+      },
+      "spoken": "ప్రస్తుతం SQL లేదా PowerBI courses గురించి నా దగ్గర details లేవు, నేను దాని గురించి చెప్పలేను. Python course కి one hundred% placement assistance ఉంటుంది — resume building, interview preparation, job referrals ఉంటాయి. కానీ strict గా job guarantee లేదా salary promise ఏమీ ఇవ్వము.",
+      "elapsed_s": 2.031,
+      "memory_before": {
+        "facts": {
+          "caller_name": "Madhavi"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "Madhavi"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        274,
+        275,
+        276
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "ప్రస్తుతం SQL లేదా PowerBI courses గురించి నా దగ్గర details లేవు, నేను దాని గురించి చెప్పలేను. Python course కి one hundred% placement assistance ఉంటుంది — resume building, interview preparation, job referrals ఉంటాయి. కానీ strict గా job guarantee లేదా salary promise ఏమీ ఇవ్వము.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5383,
+            "output_tokens": 71,
+            "cached_tokens": 4128,
+            "total_tokens": 5454
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 3,
+      "caller": {
+        "utterance": "సరే, SQL, PowerBI details ఇప్పుడు లేకపోతే పర్వాలేదు. నా enquiry ని save చేస్తారా? అలాగే demo లేదా discussion ఏమైనా arrange చేయగలరా? ఇప్పటివరకు నా details ఏమైనా note చేసుకున్నారా?",
+        "intends_end": false,
+        "intent": "Save enquiry, arrange demo, and clarify actions taken",
+        "elapsed_s": 0.641
+      },
+      "spoken": "మీ details ఇప్పటి వరకు note చేయలేదు. నేను ఇప్పుడు మీ enquiry save చేస్తాను, అలాగే demo లేదా discussion కోసం మీరు ఏ time కి available గా ఉంటారో చెప్తారా?",
+      "elapsed_s": 1.515,
+      "memory_before": {
+        "facts": {
+          "caller_name": "Madhavi"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "Madhavi"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, SQL, PowerBI details ఇప్పుడు లేకపోతే పర్వాలేదు. నా enquiry ని save చేస్తారా? అలాగే demo లేదా discussion ఏమైనా arrange చేయగలరా? ఇప్పటివరకు నా details ఏమైనా note చేసుకున్నారా?\nassistant: మీ details ఇప్పటి వరకు note చేయలేదు. నేను ఇప్పుడు మీ enquiry save చేస్తాను, అలాగే demo లేదా discussion కోసం మీరు ఏ time కి available గా ఉంటారో చెప్తారా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        278,
+        279,
+        280
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "మీ details ఇప్పటి వరకు note చేయలేదు. నేను ఇప్పుడు మీ enquiry save చేస్తాను, అలాగే demo లేదా discussion కోసం మీరు ఏ time కి available గా ఉంటారో చెప్తారా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5492,
+            "output_tokens": 34,
+            "cached_tokens": 4128,
+            "total_tokens": 5526
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 4,
+      "caller": {
+        "utterance": "నేను ఈరోజు రాత్రి పది గంటల తర్వాత లేదా రేపు ఉదయం available గా ఉంటాను. నా enquiry save చేశారా, ఇప్పటివరకు ఏమైనా చేశారా అనేది ఒకసారి confirm చేయండి. అలాగే SQL లేదా PowerBI courses ఎప్పుడు start అవుతాయో కూడా తెలుసుకోవాలి.",
+        "intends_end": false,
+        "intent": "Confirm enquiry status, provide availability, and ask about future SQL/PowerBI batch start dates",
+        "elapsed_s": 0.75
+      },
+      "spoken": "మీ enquiry save అయింది. SQL లేదా PowerBI start dates గురించి నా దగ్గర information లేదు. రేపు ఉదయం లేదా ఈరోజు పది గంటల తర్వాత మీకు ఏ time వీలవుతుందో చెప్తారా? అప్పుడు demo లేదా discussion schedule చేద్దాం.",
+      "elapsed_s": 1.5,
+      "memory_before": {
+        "facts": {
+          "caller_name": "Madhavi"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, SQL, PowerBI details ఇప్పుడు లేకపోతే పర్వాలేదు. నా enquiry ని save చేస్తారా? అలాగే demo లేదా discussion ఏమైనా arrange చేయగలరా? ఇప్పటివరకు నా details ఏమైనా note చేసుకున్నారా?\nassistant: మీ details ఇప్పటి వరకు note చేయలేదు. నేను ఇప్పుడు మీ enquiry save చేస్తాను, అలాగే demo లేదా discussion కోసం మీరు ఏ time కి available గా ఉంటారో చెప్తారా?"
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "Madhavi"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, SQL, PowerBI details ఇప్పుడు లేకపోతే పర్వాలేదు. నా enquiry ని save చేస్తారా? అలాగే demo లేదా discussion ఏమైనా arrange చేయగలరా? ఇప్పటివరకు నా details ఏమైనా note చేసుకున్నారా?\nassistant: మీ details ఇప్పటి వరకు note చేయలేదు. నేను ఇప్పుడు మీ enquiry save చేస్తాను, అలాగే demo లేదా discussion కోసం మీరు ఏ time కి available గా ఉంటారో చెప్తారా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        282,
+        283,
+        284
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "మీ enquiry save అయింది. SQL లేదా PowerBI start dates గురించి నా దగ్గర information లేదు. రేపు ఉదయం లేదా ఈరోజు పది గంటల తర్వాత మీకు ఏ time వీలవుతుందో చెప్తారా? అప్పుడు demo లేదా discussion schedule చేద్దాం.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 6445,
+            "output_tokens": 47,
+            "cached_tokens": 4736,
+            "total_tokens": 6492
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [
+            "enquiry_saved"
+          ],
+          "order_proof": false,
+          "action_outcome_unconfirmed": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 5,
+      "caller": {
+        "utterance": "సరే, రేపు ఉదయం 11 గంటలకి demo schedule చేద్దాం. అలాగే, Python course కి eligibility criteria ఏంటి? నా enquiry save అయిందని confirm చేసినందుకు thanks.",
+        "intends_end": false,
+        "intent": "Confirm demo timing and ask eligibility criteria",
+        "elapsed_s": 0.625
+      },
+      "spoken": "రేపు ఉదయం eleven o'clock కి demo schedule అయింది. Python course కి eligibility ఏంటంటే, any graduate లేదా final year college students join అవ్వచ్చు. Basic computer knowledge ఉంటే చాలు, prior coding అవసరం లేదు. మీ enquiry కూడా save అయింది. ఇంకేమైనా వివరాలు కావాలా?",
+      "elapsed_s": 1.656,
+      "memory_before": {
+        "facts": {
+          "caller_name": "Madhavi"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, SQL, PowerBI details ఇప్పుడు లేకపోతే పర్వాలేదు. నా enquiry ని save చేస్తారా? అలాగే demo లేదా discussion ఏమైనా arrange చేయగలరా? ఇప్పటివరకు నా details ఏమైనా note చేసుకున్నారా?\nassistant: మీ details ఇప్పటి వరకు note చేయలేదు. నేను ఇప్పుడు మీ enquiry save చేస్తాను, అలాగే demo లేదా discussion కోసం మీరు ఏ time కి available గా ఉంటారో చెప్తారా?"
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "Madhavi",
+          "requested_time": "రేపు ఉదయం 11 గంటలకి"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, SQL, PowerBI details ఇప్పుడు లేకపోతే పర్వాలేదు. నా enquiry ని save చేస్తారా? అలాగే demo లేదా discussion ఏమైనా arrange చేయగలరా? ఇప్పటివరకు నా details ఏమైనా note చేసుకున్నారా?\nassistant: మీ details ఇప్పటి వరకు note చేయలేదు. నేను ఇప్పుడు మీ enquiry save చేస్తాను, అలాగే demo లేదా discussion కోసం మీరు ఏ time కి available గా ఉంటారో చెప్తారా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        286,
+        287,
+        288
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "రేపు ఉదయం eleven o'clock కి demo schedule అయింది. Python course కి eligibility ఏంటంటే, any graduate లేదా final year college students join అవ్వచ్చు. Basic computer knowledge ఉంటే చాలు, prior coding అవసరం లేదు. మీ enquiry కూడా save అయింది. ఇంకేమైనా వివరాలు కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 6688,
+            "output_tokens": 61,
+            "cached_tokens": 4736,
+            "total_tokens": 6749
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [
+            "appointment_confirmed"
+          ],
+          "order_proof": false,
+          "action_outcome_unconfirmed": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 6,
+      "caller": {
+        "utterance": "అర్థమైంది. నాకు Python, SQL, PowerBI courses, fees, duration, timings, eligibility, job guarantee, my enquiry save అవ్వడం, demo schedule అవ్వడం గురించి అన్ని వివరాలు clear గా తెలిశాయి. Thank you so much.",
+        "intends_end": true,
+        "intent": "Conclude the call after confirming all questions are answered",
+        "elapsed_s": 0.64
+      },
+      "spoken": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 2.797,
+      "memory_before": {
+        "facts": {
+          "caller_name": "Madhavi",
+          "requested_time": "రేపు ఉదయం 11 గంటలకి"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, SQL, PowerBI details ఇప్పుడు లేకపోతే పర్వాలేదు. నా enquiry ని save చేస్తారా? అలాగే demo లేదా discussion ఏమైనా arrange చేయగలరా? ఇప్పటివరకు నా details ఏమైనా note చేసుకున్నారా?\nassistant: మీ details ఇప్పటి వరకు note చేయలేదు. నేను ఇప్పుడు మీ enquiry save చేస్తాను, అలాగే demo లేదా discussion కోసం మీరు ఏ time కి available గా ఉంటారో చెప్తారా?"
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "Madhavi",
+          "requested_time": "రేపు ఉదయం 11 గంటలకి",
+          "product": "Python, SQL, PowerBI courses"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": "user: సరే, SQL, PowerBI details ఇప్పుడు లేకపోతే పర్వాలేదు. నా enquiry ని save చేస్తారా? అలాగే demo లేదా discussion ఏమైనా arrange చేయగలరా? ఇప్పటివరకు నా details ఏమైనా note చేసుకున్నారా?\nassistant: మీ details ఇప్పటి వరకు note చేయలేదు. నేను ఇప్పుడు మీ enquiry save చేస్తాను, అలాగే demo లేదా discussion కోసం మీరు ఏ time కి available గా ఉంటారో చెప్తారా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        290,
+        291,
+        292
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 6975,
+            "output_tokens": 29,
+            "cached_tokens": 5280,
+            "total_tokens": 7004
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [
+            "appointment_confirmed",
+            "enquiry_saved"
+          ],
+          "order_proof": false,
+          "action_outcome_unconfirmed": false,
+          "end_call": {
+            "should_end": true,
+            "reason": "goal_complete",
+            "contact_preference": "callback",
+            "farewell": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "మా దగ్గర Python with Data Analytics course ఉంది. ఇది 8 weeks ఉంటుంది, fee eight thousand nine hundred ninety nine rupees total. Weekday batch రాత్రి eight PM నుండి nine PM వరకు, weekend batch శని, ఆదివారాలు ఉదయం ten AM నుండి మధ్యాహ్నం one PM వరకు ఉంటాయి. Installment discounts ఏమీ లేవు.",
+      "at": 120042.781
+    },
+    {
+      "turn": 2,
+      "text": "ప్రస్తుతం SQL లేదా PowerBI courses గురించి నా దగ్గర details లేవు, నేను దాని గురించి చెప్పలేను. Python course కి one hundred% placement assistance ఉంటుంది — resume building, interview preparation, job referrals ఉంటాయి. కానీ strict గా job guarantee లేదా salary promise ఏమీ ఇవ్వము.",
+      "at": 120045.64
+    },
+    {
+      "turn": 3,
+      "text": "మీ details ఇప్పటి వరకు note చేయలేదు. నేను ఇప్పుడు మీ enquiry save చేస్తాను, అలాగే demo లేదా discussion కోసం మీరు ఏ time కి available గా ఉంటారో చెప్తారా?",
+      "at": 120047.796
+    },
+    {
+      "turn": 4,
+      "text": "మీ enquiry save అయింది. SQL లేదా PowerBI start dates గురించి నా దగ్గర information లేదు. రేపు ఉదయం లేదా ఈరోజు పది గంటల తర్వాత మీకు ఏ time వీలవుతుందో చెప్తారా? అప్పుడు demo లేదా discussion schedule చేద్దాం.",
+      "at": 120050.078
+    },
+    {
+      "turn": 5,
+      "text": "రేపు ఉదయం eleven o'clock కి demo schedule అయింది. Python course కి eligibility ఏంటంటే, any graduate లేదా final year college students join అవ్వచ్చు. Basic computer knowledge ఉంటే చాలు, prior coding అవసరం లేదు. మీ enquiry కూడా save అయింది. ఇంకేమైనా వివరాలు కావాలా?",
+      "at": 120052.375
+    },
+    {
+      "turn": 6,
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 120054.703
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "మా దగ్గర Python with Data Analytics course ఉంది. ఇది 8 weeks ఉంటుంది, fee eight thousand nine hundred ninety nine rupees total. Weekday batch రాత్రి eight PM నుండి nine PM వరకు, weekend batch శని, ఆదివారాలు ఉదయం ten AM నుండి మధ్యాహ్నం one PM వరకు ఉంటాయి. Installment discounts ఏమీ లేవు.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5209,
+        "output_tokens": 93,
+        "total_tokens": 5302
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      }
+    },
+    {
+      "done": true,
+      "text": "ప్రస్తుతం SQL లేదా PowerBI courses గురించి నా దగ్గర details లేవు, నేను దాని గురించి చెప్పలేను. Python course కి one hundred% placement assistance ఉంటుంది — resume building, interview preparation, job referrals ఉంటాయి. కానీ strict గా job guarantee లేదా salary promise ఏమీ ఇవ్వము.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5383,
+        "output_tokens": 71,
+        "cached_tokens": 4128,
+        "total_tokens": 5454
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      }
+    },
+    {
+      "done": true,
+      "text": "మీ details ఇప్పటి వరకు note చేయలేదు. నేను ఇప్పుడు మీ enquiry save చేస్తాను, అలాగే demo లేదా discussion కోసం మీరు ఏ time కి available గా ఉంటారో చెప్తారా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5492,
+        "output_tokens": 34,
+        "cached_tokens": 4128,
+        "total_tokens": 5526
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      }
+    },
+    {
+      "done": true,
+      "text": "మీ enquiry save అయింది. SQL లేదా PowerBI start dates గురించి నా దగ్గర information లేదు. రేపు ఉదయం లేదా ఈరోజు పది గంటల తర్వాత మీకు ఏ time వీలవుతుందో చెప్తారా? అప్పుడు demo లేదా discussion schedule చేద్దాం.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 6445,
+        "output_tokens": 47,
+        "cached_tokens": 4736,
+        "total_tokens": 6492
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [
+        "enquiry_saved"
+      ],
+      "order_proof": false,
+      "action_outcome_unconfirmed": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      }
+    },
+    {
+      "done": true,
+      "text": "రేపు ఉదయం eleven o'clock కి demo schedule అయింది. Python course కి eligibility ఏంటంటే, any graduate లేదా final year college students join అవ్వచ్చు. Basic computer knowledge ఉంటే చాలు, prior coding అవసరం లేదు. మీ enquiry కూడా save అయింది. ఇంకేమైనా వివరాలు కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 6688,
+        "output_tokens": 61,
+        "cached_tokens": 4736,
+        "total_tokens": 6749
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [
+        "appointment_confirmed"
+      ],
+      "order_proof": false,
+      "action_outcome_unconfirmed": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      }
+    },
+    {
+      "done": true,
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 6975,
+        "output_tokens": 29,
+        "cached_tokens": 5280,
+        "total_tokens": 7004
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [
+        "appointment_confirmed",
+        "enquiry_saved"
+      ],
+      "order_proof": false,
+      "action_outcome_unconfirmed": false,
+      "end_call": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "contact_preference": "callback",
+        "farewell": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "Which courses are available in Python and SQL or PowerBI, and what are their duration, fees, and instalments?",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "Madhavi",
+            "modality": "asserted"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నమస్తే Madhavi. నేను working professional ని, అందుకే evenings లేదా weekends లో batch ఉంటే బాగుంటుంది. Python మరియు SQL లేదా PowerBI, ఈ రెండిటిలో ఏ courses available ఉన్నాయో చెప్తారా? అలాగే వాటి duration, fees, and instalments ఎలా ఉంటాయో కూడా చెప్పండి.",
+      "at": 120042.781
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "Details about SQL or PowerBI courses including duration, fees, instalment options, placement, and job guarantee",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "Python course details చెప్పి thanks. SQL లేదా PowerBI courses కూడా ఉన్నాయా? ఒకవేళ ఉంటే వాటి duration, fees, and instalment options ఎలా ఉంటాయో చెప్తారా? అలాగే placement గురించి, job guarantee ఉందా?",
+      "at": 120045.64
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "callback",
+        "contact_evidence": "demo లేదా discussion ఏమైనా arrange చేయగలరా?",
+        "callback_time": "",
+        "remaining_request": "Save enquiry and arrange a demo or discussion; confirm if details have been noted.",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, SQL, PowerBI details ఇప్పుడు లేకపోతే పర్వాలేదు. నా enquiry ని save చేస్తారా? అలాగే demo లేదా discussion ఏమైనా arrange చేయగలరా? ఇప్పటివరకు నా details ఏమైనా note చేసుకున్నారా?",
+      "at": 120047.796
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "Confirm if the enquiry was saved and when SQL or PowerBI courses start.",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నేను ఈరోజు రాత్రి పది గంటల తర్వాత లేదా రేపు ఉదయం available గా ఉంటాను. నా enquiry save చేశారా, ఇప్పటివరకు ఏమైనా చేశారా అనేది ఒకసారి confirm చేయండి. అలాగే SQL లేదా PowerBI courses ఎప్పుడు start అవుతాయో కూడా తెలుసుకోవాలి.",
+      "at": 120050.078
+    },
+    {
+      "turn": 5,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "Python course కి eligibility criteria ఏంటి?",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "requested_time",
+            "value": "రేపు ఉదయం 11 గంటలకి",
+            "modality": "asserted"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, రేపు ఉదయం 11 గంటలకి demo schedule చేద్దాం. అలాగే, Python course కి eligibility criteria ఏంటి? నా enquiry save అయిందని confirm చేసినందుకు thanks.",
+      "at": 120052.375
+    },
+    {
+      "turn": 6,
+      "proposal": {
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "అర్థమైంది. నాకు Python, SQL, PowerBI courses, fees, duration, timings, eligibility, job guarantee, my enquiry save అవ్వడం, demo schedule అవ్వడం గురించి అన్ని వివరాలు clear గా తెలిశాయి. Thank you so mu",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "product",
+            "value": "Python, SQL, PowerBI courses",
+            "modality": "asserted"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "contact_preference": "callback",
+        "farewell": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "transcript": "అర్థమైంది. నాకు Python, SQL, PowerBI courses, fees, duration, timings, eligibility, job guarantee, my enquiry save అవ్వడం, demo schedule అవ్వడం గురించి అన్ని వివరాలు clear గా తెలిశాయి. Thank you so much.",
+      "at": 120054.64
+    }
+  ],
+  "external_actions": [
+    {
+      "name": "GOOGLECALENDAR_CREATE_EVENT",
+      "params": {
+        "summary": "Demo / Discussion Session",
+        "start": "2026-10-30T11:00:00+05:30",
+        "end": "2026-10-30T12:00:00+05:30",
+        "description": "Python with Data Analytics demo and discussion."
+      },
+      "turn": 5,
+      "at": 120051.703,
+      "result": {
+        "status": "confirmed",
+        "event_id": "audit-event-f00266e4ba",
+        "start": "2026-10-30T11:00:00+05:30",
+        "end": "2026-10-30T12:00:00+05:30",
+        "confirmed": true
+      }
+    },
+    {
+      "name": "GOOGLECALENDAR_CREATE_EVENT",
+      "params": {
+        "summary": "Demo Session - Python with Data Analytics",
+        "start": "2026-10-30T11:00:00+05:30",
+        "end": "2026-10-30T12:00:00+05:30",
+        "description": "Free demo session for Python with Data Analytics course."
+      },
+      "turn": 6,
+      "at": 120054.078,
+      "result": {
+        "status": "confirmed",
+        "event_id": "audit-event-15cb71ee48",
+        "start": "2026-10-30T11:00:00+05:30",
+        "end": "2026-10-30T12:00:00+05:30",
+        "confirmed": true
+      }
+    }
+  ],
+  "farewell_events": [
+    {
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 6,
+      "at": 120054.703
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 6,
+      "at": 120055.765,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 120042.796
+    },
+    {
+      "turn_seq": 3,
+      "at": 120045.656
+    },
+    {
+      "turn_seq": 5,
+      "at": 120047.843
+    },
+    {
+      "turn_seq": 7,
+      "at": 120050.093
+    },
+    {
+      "turn_seq": 9,
+      "at": 120052.39
+    },
+    {
+      "turn_seq": 11,
+      "at": 120054.703
+    }
+  ],
+  "started_at": "2026-10-29T15:41:56.953758+00:00",
+  "errors": [],
+  "brain_checksum": "1a4ac5e90596ee9c45ca2c8bfd3e4cc0c1623c678a1e9ac2ad5f798f81fe6679",
+  "runtime_checksum": "3d945e1bef2f29136529b391621967007f5f3b58e0472419bb1626b883ee7be9",
+  "available_tools": [
+    "HUBSPOT_CREATE_CONTACT",
+    "GOOGLECALENDAR_CREATE_EVENT",
+    "GOOGLECALENDAR_FIND_FREE_SLOTS",
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 120040.593,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 2,
+      "start_s": 120043.64,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 44,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 3,
+      "start_s": 120046.328,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 44,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 4,
+      "start_s": 120048.593,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 44,
+      "rolling_chars": 348
+    },
+    {
+      "turn": 5,
+      "start_s": 120050.734,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 44,
+      "rolling_chars": 348
+    },
+    {
+      "turn": 6,
+      "start_s": 120053.046,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 82,
+      "rolling_chars": 348
+    }
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "site_visit_planned",
+    "disposition_confidence": 0.99,
+    "summary_te": "",
+    "summary_en": "Madhavi, a working professional, enquired about Python, SQL, and PowerBI courses, preferring evening or weekend timings. The agent provided Python with Data Analytics details: 8 weeks, ₹8,999 total, weekday classes from 8:00–9:00 PM or weekend classes on Saturday and Sunday from 10:00 AM–1:00 PM, with no instalment discounts. SQL and PowerBI availability, fees, duration, instalment options, and start dates were not available during the call. The agent explained that Python includes 100% placement assistance through resume building, interview preparation, and job referrals, but no strict job or salary guarantee. Madhavi asked to save her enquiry and arrange a demo or discussion; the agent initially stated that no details had yet been noted, then confirmed that the enquiry was saved. A demo was scheduled for tomorrow at 11:00 AM. Eligibility was explained as any graduate or final-year student with basic computer knowledge; prior coding is not required. The caller confirmed that the information was clear and thanked the agent. The call ended with the agent stating that the details and request to call again had been recorded.",
+    "next_action": "Conduct the scheduled demo tomorrow at 11:00 AM and provide the pending SQL and PowerBI course availability, fees, duration, instalment options, and start dates if available.",
+    "extracted_fields": {
+      "caller_name": "Madhavi",
+      "courses_interested": "Python, SQL, PowerBI",
+      "demo_slot": "Tomorrow at 11:00 AM",
+      "eligibility": "Any graduate or final-year college student; basic computer knowledge; no prior coding required",
+      "installment_discount": "None",
+      "job_guarantee": "No strict job or salary guarantee",
+      "occupation": "Working professional",
+      "phone": "+12025550114",
+      "placement_assistance": "Resume building, interview preparation, and job referrals",
+      "product": "Python, SQL, PowerBI courses",
+      "python_course": "Python with Data Analytics",
+      "python_duration": "8 weeks",
+      "python_fee": "₹8,999 total",
+      "requested_time": "రేపు ఉదయం 11 గంటలకి",
+      "weekday_timing": "8:00 PM–9:00 PM",
+      "weekend_timing": "Saturday and Sunday, 10:00 AM–1:00 PM"
+    },
+    "objections": [],
+    "notes": "The caller requested information about SQL and PowerBI, but the agent did not have those details. The enquiry was confirmed as saved and the demo was confirmed as scheduled.",
+    "tags": [
+      "intent:demo",
+      "intent:information",
+      "followup:site_visit",
+      "sentiment:positive"
+    ],
+    "custom_tags": [
+      "custom:python-data-analytics",
+      "custom:sql-powerbi",
+      "custom:demo-scheduled"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T15:42:20.851144Z",
+    "generation_ok": true,
+    "facts": {
+      "caller_name": "Madhavi",
+      "courses_interested": "Python, SQL, PowerBI",
+      "demo_slot": "Tomorrow at 11:00 AM",
+      "eligibility": "Any graduate or final-year college student; basic computer knowledge; no prior coding required",
+      "installment_discount": "None",
+      "job_guarantee": "No strict job or salary guarantee",
+      "occupation": "Working professional",
+      "phone": "+12025550114",
+      "placement_assistance": "Resume building, interview preparation, and job referrals",
+      "product": "Python, SQL, PowerBI courses",
+      "python_course": "Python with Data Analytics",
+      "python_duration": "8 weeks",
+      "python_fee": "₹8,999 total",
+      "requested_time": "రేపు ఉదయం 11 గంటలకి",
+      "weekday_timing": "8:00 PM–9:00 PM",
+      "weekend_timing": "Saturday and Sunday, 10:00 AM–1:00 PM"
+    },
+    "disclosure_status": null,
+    "contact_preference": "callback",
+    "status_tags": [
+      "action:required",
+      "contact:name_known",
+      "contact:phone_known",
+      "custom:demo-scheduled",
+      "custom:python-data-analytics",
+      "custom:sql-powerbi",
+      "followup:callback",
+      "followup:site_visit",
+      "intent:demo",
+      "intent:information",
+      "outcome:site_visit_planned",
+      "sentiment:positive"
+    ],
+    "lead": {
+      "leadId": "ebf53bde-f7ab-46e6-b228-11c7bb139610",
+      "agentId": "4c5270a8-990a-5800-868d-9d685eca9a09",
+      "stage": "qualified",
+      "action": "advanced"
+    },
+    "lead_assessment": {
+      "score": 75,
+      "band": "hot",
+      "disposition": "site_visit_planned",
+      "confidence": 0.99,
+      "components": [
+        {
+          "signal": "interest",
+          "points": 40,
+          "max": 40,
+          "evidence": "site_visit_planned"
+        },
+        {
+          "signal": "requirements",
+          "points": 25,
+          "max": 25,
+          "evidence": "product"
+        },
+        {
+          "signal": "timing",
+          "points": 0,
+          "max": 25,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "contact",
+          "points": 10,
+          "max": 10,
+          "evidence": "phone"
+        }
+      ],
+      "version": 1,
+      "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+      "reason": "recorded_signals"
+    },
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "7b450dad-00b9-4923-b220-38f6011c5503",
+        "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09",
+        "session_id": "adaptive-3715d27e4c5c453582dd4570b621550e",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_fef6bbf1152f",
+        "started_at": "2026-10-29 15:41:56.934865+00:00",
+        "ended_at": "2026-10-29 15:42:12.975827+00:00",
+        "duration_sec": 16,
+        "disposition": "site_visit_planned",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/7b450dad-00b9-4923-b220-38f6011c5503/",
+        "end_reason": "goal_complete",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "action:required",
+          "contact:name_known",
+          "contact:phone_known",
+          "custom:demo-scheduled",
+          "custom:python-data-analytics",
+          "custom:sql-powerbi",
+          "followup:callback",
+          "followup:site_visit",
+          "intent:demo",
+          "intent:information",
+          "outcome:site_visit_planned",
+          "sentiment:positive"
+        ],
+        "last_heartbeat_at": "2026-10-29 15:41:56.934865+00:00",
+        "created_at": "2026-10-29 15:41:56.936864+00:00"
+      }
+    ],
+    "callbacks": [
+      {
+        "callback_id": "0d88f90f-64c0-410d-90d7-5189ca41541f",
+        "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "user_id": null,
+        "original_call_id": "7b450dad-00b9-4923-b220-38f6011c5503",
+        "original_attempt_id": null,
+        "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09",
+        "to_e164": "+12025550114",
+        "from_e164": null,
+        "dial_request_id": "requested:7b450dad-00b9-4923-b220-38f6011c5503",
+        "mode": "requested",
+        "status": "requested",
+        "provider": null,
+        "provider_call_control_id": null,
+        "error": null,
+        "created_at": "2026-10-29 15:42:11.840294+00:00",
+        "updated_at": "2026-10-29 15:42:11.840294+00:00"
+      }
+    ],
+    "jobs": [
+      {
+        "id": "24eee87e-2fe7-4d93-8979-78031aa356ba",
+        "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09",
+        "origin_key": "callback:7372afdc-2ba6-4519-91fe-5714ba530955",
+        "source_id": "8079e3b2-d70a-44a8-8978-1b0d0ac12fdf",
+        "kind": "callback",
+        "phone": "+12025550114",
+        "status": "cancelled",
+        "reason": "newer_callback_request",
+        "payload": {
+          "requestText": "సాయంత్రం 5:30 నుండి 6:30 మధ్యలో call చేస్తే బాగుంటుంది. ఈ Python course కి eligibility criteria ఏంటి? అలాగే నా enquiry save చేయడానికి మీరు ఇప్పటివరకు ఏమైనా steps తీసుకున్నారా?",
+          "requestedWhen": "",
+          "recentTurns": [
+            {
+              "role": "assistant",
+              "text": "తప్పకుండా కిరణ్ గారు. మా దగ్గర weekday batch రాత్రి eight PM నుండి nine PM వరకు, అలాగే weekend batch శని, ఆదివారాల్లో ఉదయం ten AM నుండి మధ్యాహ్నం one PM వరకు ఉంటాయి. ఈ course 8 weeks ఉంటుంది, total fee eight thousand nine hundred ninety nine rupees మాత్రమే.",
+              "at": "2026-10-29T11:08:02.241040Z"
+            },
+            {
+              "role": "user",
+              "text": "సరే, timings బాగున్నాయి. కానీ ఈ fees కి ఏమైనా instalments option ఉందా? అలాగే placement support గురించి కూడా చెప్పండి, job guarantee ఉందా?",
+              "at": "2026-10-29T11:08:02.855842Z"
+            },
+            {
+              "role": "assistant",
+              "text": "Fees eight thousand nine hundred ninety nine rupees total మాత్రమే, installment discounts ఏమీ లేవు. Placement విషయానికి వస్తే, మేము one hundred% placement assistance ఇస్తాం — resume building, interview preparation, job referrals ఉంటాయి. కానీ strict గా job guarantee లేదా salary promise ఇవ్వము.",
+              "at": "2026-10-29T11:08:04.825287Z"
+            },
+            {
+              "role": "user",
+              "text": "సరే, అర్థమైంది. నాకు SQL లేదా PowerBI లాంటి courses కూడా ఉంటే బాగుంటుంది, వాటి details కూడా చెప్పగలరా? అలాగే, నా enquiry ని save చేసి, ఒక demo class లేదా discussion ఏమైనా arrange చేయగలరా?",
+              "at": "2026-10-29T11:08:05.555337Z"
+            },
+            {
+              "role": "assistant",
+              "text": "ప్రస్తుతం నేను కేవలం Python with Data Analytics course గురించే details చెప్పగలను. మీ enquiry save చేయడానికి, మీకు ఏ time కి call చేయమంటారు?",
+              "at": "2026-10-29T11:08:06.841058Z"
+            },
+            {
+              "role": "user",
+              "text": "సరే, ప్రస్తుతానికి Python course details సరిపోతాయి. నా enquiry save చేయడానికి నా email kiran.audit@example.invalid. అలాగే, demo class లేదా discussion arrange చేయడానికి ఏ time కి call చేయమంటారు?",
+              "at": "2026-10-29T11:08:07.517411Z"
+            },
+            {
+              "role": "assistant",
+              "text": "సరే కిరణ్ గారు, మీ email note చేసుకున్నాను. మిమ్మల్ని మళ్ళీ ఏ time కి call చేయమంటారు?",
+              "at": "2026-10-29T11:08:08.773390Z"
+            },
+            {
+              "role": "user",
+              "text": "సాయంత్రం 5:30 నుండి 6:30 మధ్యలో call చేస్తే బాగుంటుంది. ఈ Python course కి eligibility criteria ఏంటి? అలాగే నా enquiry save చేయడానికి మీరు ఇప్పటివరకు ఏమైనా steps తీసుకున్నారా?",
+              "at": "2026-10-29T11:08:09.471377Z"
+            }
+          ],
+          "callbackId": "7372afdc-2ba6-4519-91fe-5714ba530955",
+          "timezone": "Asia/Kolkata",
+          "llm": {
+            "provider": "openai",
+            "model": "gpt-5.6-luna",
+            "options": {},
+            "purpose": "configured_post_call_analysis"
+          },
+          "requestedAt": "2026-10-29T11:08:09.726646+00:00"
+        },
+        "due_at": null,
+        "expires_at": "2026-11-05 11:08:09.726646+00:00",
+        "attempts": 0,
+        "lease_token": null,
+        "lease_until": null,
+        "control_id": null,
+        "authorized_by": "77b8a5cc-673a-4043-88b6-648e7d5f1b45",
+        "billing_tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "created_at": "2026-10-29 11:08:09.726646+00:00",
+        "updated_at": "2026-10-29 15:42:11.860732+00:00"
+      },
+      {
+        "id": "7dd52da2-af2f-42e6-b0e1-e9bc2d3a5def",
+        "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09",
+        "origin_key": "callback:0d88f90f-64c0-410d-90d7-5189ca41541f",
+        "source_id": "7b450dad-00b9-4923-b220-38f6011c5503",
+        "kind": "callback",
+        "phone": "+12025550114",
+        "status": "needs_review",
+        "reason": "approval_required",
+        "payload": {
+          "requestText": "సరే, SQL, PowerBI details ఇప్పుడు లేకపోతే పర్వాలేదు. నా enquiry ని save చేస్తారా? అలాగే demo లేదా discussion ఏమైనా arrange చేయగలరా? ఇప్పటివరకు నా details ఏమైనా note చేసుకున్నారా?",
+          "requestedWhen": "",
+          "recentTurns": [
+            {
+              "role": "assistant",
+              "text": "ప్రస్తుతం SQL లేదా PowerBI courses గురించి నా దగ్గర details లేవు, నేను దాని గురించి చెప్పలేను. Python course కి one hundred% placement assistance ఉంటుంది — resume building, interview preparation, job referrals ఉంటాయి. కానీ strict గా job guarantee లేదా salary promise ఏమీ ఇవ్వము.",
+              "at": "2026-10-29T15:42:02.830901Z"
+            },
+            {
+              "role": "user",
+              "text": "సరే, SQL, PowerBI details ఇప్పుడు లేకపోతే పర్వాలేదు. నా enquiry ని save చేస్తారా? అలాగే demo లేదా discussion ఏమైనా arrange చేయగలరా? ఇప్పటివరకు నా details ఏమైనా note చేసుకున్నారా?",
+              "at": "2026-10-29T15:42:03.520388Z"
+            },
+            {
+              "role": "assistant",
+              "text": "మీ details ఇప్పటి వరకు note చేయలేదు. నేను ఇప్పుడు మీ enquiry save చేస్తాను, అలాగే demo లేదా discussion కోసం మీరు ఏ time కి available గా ఉంటారో చెప్తారా?",
+              "at": "2026-10-29T15:42:04.984342Z"
+            },
+            {
+              "role": "user",
+              "text": "నేను ఈరోజు రాత్రి పది గంటల తర్వాత లేదా రేపు ఉదయం available గా ఉంటాను. నా enquiry save చేశారా, ఇప్పటివరకు ఏమైనా చేశారా అనేది ఒకసారి confirm చేయండి. అలాగే SQL లేదా PowerBI courses ఎప్పుడు start అవుతాయో కూడా తెలుసుకోవాలి.",
+              "at": "2026-10-29T15:42:05.785434Z"
+            },
+            {
+              "role": "assistant",
+              "text": "మీ enquiry save అయింది. SQL లేదా PowerBI start dates గురించి నా దగ్గర information లేదు. రేపు ఉదయం లేదా ఈరోజు పది గంటల తర్వాత మీకు ఏ time వీలవుతుందో చెప్తారా? అప్పుడు demo లేదా discussion schedule చేద్దాం.",
+              "at": "2026-10-29T15:42:07.265679Z"
+            },
+            {
+              "role": "user",
+              "text": "సరే, రేపు ఉదయం 11 గంటలకి demo schedule చేద్దాం. అలాగే, Python course కి eligibility criteria ఏంటి? నా enquiry save అయిందని confirm చేసినందుకు thanks.",
+              "at": "2026-10-29T15:42:07.928429Z"
+            },
+            {
+              "role": "assistant",
+              "text": "రేపు ఉదయం eleven o'clock కి demo schedule అయింది. Python course కి eligibility ఏంటంటే, any graduate లేదా final year college students join అవ్వచ్చు. Basic computer knowledge ఉంటే చాలు, prior coding అవసరం లేదు. మీ enquiry కూడా save అయింది. ఇంకేమైనా వివరాలు కావాలా?",
+              "at": "2026-10-29T15:42:09.563601Z"
+            },
+            {
+              "role": "user",
+              "text": "అర్థమైంది. నాకు Python, SQL, PowerBI courses, fees, duration, timings, eligibility, job guarantee, my enquiry save అవ్వడం, demo schedule అవ్వడం గురించి అన్ని వివరాలు clear గా తెలిశాయి. Thank you so much.",
+              "at": "2026-10-29T15:42:10.240223Z"
+            }
+          ],
+          "callbackId": "0d88f90f-64c0-410d-90d7-5189ca41541f",
+          "timezone": "Asia/Kolkata",
+          "llm": {
+            "provider": "openai",
+            "model": "gpt-5.6-luna",
+            "options": {},
+            "purpose": "configured_post_call_analysis"
+          },
+          "requestedAt": "2026-10-29T15:42:11.860732+00:00"
+        },
+        "due_at": null,
+        "expires_at": "2026-11-05 15:42:11.860732+00:00",
+        "attempts": 0,
+        "lease_token": null,
+        "lease_until": null,
+        "control_id": null,
+        "authorized_by": "77b8a5cc-673a-4043-88b6-648e7d5f1b45",
+        "billing_tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "created_at": "2026-10-29 15:42:11.862972+00:00",
+        "updated_at": "2026-10-29 15:42:11.862972+00:00"
+      }
+    ],
+    "dnd": [],
+    "leads": [
+      {
+        "lead_id": "a84c5c22-c5ed-55a7-8992-4f6fc2549166",
+        "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09",
+        "name": "Madhavi",
+        "phone": "+12025550114",
+        "email": null,
+        "stage": "contacted",
+        "notes": "Caller enquiry — call 7b450dad-00b9-4923-b220-38f6011c5503\n{\"request\": \"Enquiry for Python with Data Analytics course. Working professional interested in weekday evening or weekend batches. Available after 10 PM today or tomorrow morning. Also asked about SQL/PowerBI courses and batch start dates.\", \"customer_name\": \"Madhavi\"}\n\nEnquiry update:\n{\"request\": \"Caller is a working professional interested in Python with Data Analytics, SQL, and PowerBI courses. Asked about fees, duration, timings, eligibility, placement assistance vs job guarantee, and confirmed enquiry save and demo scheduling for tomorrow 11 AM.\", \"customer_name\": \"Madhavi\"}",
+        "created_at": "2026-10-29 15:42:06.670987+00:00",
+        "updated_at": "2026-10-29 15:42:11.258610+00:00"
+      },
+      {
+        "lead_id": "ebf53bde-f7ab-46e6-b228-11c7bb139610",
+        "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09",
+        "name": "Kiran",
+        "phone": "+12025550114",
+        "email": "kiran.audit@example.invalid",
+        "stage": "qualified",
+        "notes": "[Call reference: 8079e3b2-d70a-44a8-8978-1b0d0ac12fdf]\nKiran inquired about learning Python and data analytics while working and asked about evening or weekend batches, fees, duration, eligibility, instalment options, placement support, and job guarantee. The agent explained that the weekday batch runs from 8:00 PM to 9:00 PM, the weekend batch runs Saturday and Sunday from 10:00 AM to 1:00 PM, the course lasts 8 weeks, and the total fee is ₹8,999 with no instalment discounts. The agent clarified that placement assistance includes resume building, interview preparation, and job referrals, but there is no strict job guarantee or salary promise. Kiran also asked about SQL and PowerBI courses and requested a demo class or discussion; the agent said only Python with Data Analytics details were available and asked for a callback time. Kiran provided the email kiran.audit@example.invalid and requested a callback between 5:30 PM and 6:30 PM. The agent stated that the details and callback request were recorded, but eligibility criteria and a concrete demo appointment were not confirmed before the call ended.\n\nNext step: Call Kiran between 5:30 PM and 6:30 PM to discuss eligibility and arrange a demo class or discussion; provide SQL/PowerBI information if available.\n\nObjections: No instalment discounts are available., No strict job guarantee or salary promise is offered.\n\nCall outcome: callback required (98% confidence)\n\n---\n[Call reference: 7b450dad-00b9-4923-b220-38f6011c5503]\nMadhavi, a working professional, enquired about Python, SQL, and PowerBI courses, preferring evening or weekend timings. The agent provided Python with Data Analytics details: 8 weeks, ₹8,999 total, weekday classes from 8:00–9:00 PM or weekend classes on Saturday and Sunday from 10:00 AM–1:00 PM, with no instalment discounts. SQL and PowerBI availability, fees, duration, instalment options, and start dates were not available during the call. The agent explained that Python includes 100% placement assistance through resume building, interview preparation, and job referrals, but no strict job or salary guarantee. Madhavi asked to save her enquiry and arrange a demo or discussion; the agent initially stated that no details had yet been noted, then confirmed that the enquiry was saved. A demo was scheduled for tomorrow at 11:00 AM. Eligibility was explained as any graduate or final-year student with basic computer knowledge; prior coding is not required. The caller confirmed that the information was clear and thanked the agent. The call ended with the agent stating that the details and request to call again had been recorded.\n\nNext step: Conduct the scheduled demo tomorrow at 11:00 AM and provide the pending SQL and PowerBI course availability, fees, duration, instalment options, and start dates if available.\n\nCall outcome: site visit planned (99% confidence)",
+        "created_at": "2026-10-29 11:08:16.042619+00:00",
+        "updated_at": "2026-10-29 15:42:20.882002+00:00"
+      }
+    ],
+    "tools": [
+      {
+        "id": "22c9f6bd-d750-4262-ad8f-78b652aa9984",
+        "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09",
+        "call_id": "7b450dad-00b9-4923-b220-38f6011c5503",
+        "action": "GOOGLECALENDAR_CREATE_EVENT",
+        "action_type": "write",
+        "idempotency_key": "tool:5924dc7cb09e0711a7c23bb1fb291f1ec481d365fd325e8257ce5eaf2fd336aa",
+        "status": "succeeded",
+        "parameters": {
+          "end": "2026-10-30T12:00:00+05:30",
+          "start": "2026-10-30T11:00:00+05:30",
+          "summary": "Demo / Discussion Session",
+          "description": "Python with Data Analytics demo and discussion."
+        },
+        "result": {
+          "end": "2026-10-30T12:00:00+05:30",
+          "start": "2026-10-30T11:00:00+05:30",
+          "status": "confirmed",
+          "event_id": "audit-event-f00266e4ba",
+          "confirmed": true
+        },
+        "external_reference": null,
+        "error": null,
+        "started_at": "2026-10-29 15:42:08.873957+00:00",
+        "completed_at": "2026-10-29 15:42:08.891419+00:00"
+      },
+      {
+        "id": "cbbe1cd5-686b-477c-ae7f-7c7177c11c0b",
+        "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09",
+        "call_id": "7b450dad-00b9-4923-b220-38f6011c5503",
+        "action": "GOOGLECALENDAR_CREATE_EVENT",
+        "action_type": "write",
+        "idempotency_key": "tool:dadc54a7ff0fc72c135e4eea0102caf0e9ac3c905c3b961e7f792d84307d3359",
+        "status": "succeeded",
+        "parameters": {
+          "end": "2026-10-30T12:00:00+05:30",
+          "start": "2026-10-30T11:00:00+05:30",
+          "summary": "Demo Session - Python with Data Analytics",
+          "description": "Free demo session for Python with Data Analytics course."
+        },
+        "result": {
+          "end": "2026-10-30T12:00:00+05:30",
+          "start": "2026-10-30T11:00:00+05:30",
+          "status": "confirmed",
+          "event_id": "audit-event-15cb71ee48",
+          "confirmed": true
+        },
+        "external_reference": null,
+        "error": null,
+        "started_at": "2026-10-29 15:42:11.265405+00:00",
+        "completed_at": "2026-10-29 15:42:11.265405+00:00"
+      }
+    ],
+    "assessments": [
+      {
+        "id": "217ee9e1-794f-4091-b6f8-1af826d64b5b",
+        "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "lead_id": "ebf53bde-f7ab-46e6-b228-11c7bb139610",
+        "source_call_id": "7b450dad-00b9-4923-b220-38f6011c5503",
+        "assessment": {
+          "score": 75,
+          "band": "hot",
+          "disposition": "site_visit_planned",
+          "confidence": 0.99,
+          "components": [
+            {
+              "signal": "interest",
+              "points": 40,
+              "max": 40,
+              "evidence": "site_visit_planned"
+            },
+            {
+              "signal": "requirements",
+              "points": 25,
+              "max": 25,
+              "evidence": "product"
+            },
+            {
+              "signal": "timing",
+              "points": 0,
+              "max": 25,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "contact",
+              "points": 10,
+              "max": 10,
+              "evidence": "phone"
+            }
+          ],
+          "version": 1,
+          "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+          "reason": "recorded_signals"
+        },
+        "updated_at": "2026-10-29 15:42:12.975827+00:00"
+      }
+    ]
+  },
+  "metadata": {
+    "call_id": "7b450dad-00b9-4923-b220-38f6011c5503",
+    "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+    "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09",
+    "session_id": "adaptive-3715d27e4c5c453582dd4570b621550e",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_fef6bbf1152f",
+    "started_at": "2026-10-29T15:41:56.934865+00:00",
+    "status": "active",
+    "storage_path": "data/calls/7b450dad-00b9-4923-b220-38f6011c5503/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550114",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 81263,
+        "output_tokens": 2482,
+        "cached_tokens": 44064
+      }
+    },
+    "callback_request": {
+      "id": "0d88f90f-64c0-410d-90d7-5189ca41541f",
+      "status": "requested",
+      "requestedWhen": "సరే, SQL, PowerBI details ఇప్పుడు లేకపోతే పర్వాలేదు. నా enquiry ని save చేస్తారా? అలాగే demo లేదా discussion ఏమైనా arrange చేయగలరా? ఇప్పటివరకు నా details ఏమైనా note చేసుకున్నారా?",
+      "requestText": "సరే, SQL, PowerBI details ఇప్పుడు లేకపోతే పర్వాలేదు. నా enquiry ని save చేస్తారా? అలాగే demo లేదా discussion ఏమైనా arrange చేయగలరా? ఇప్పటివరకు నా details ఏమైనా note చేసుకున్నారా?"
+    },
+    "contact_preference": "callback",
+    "hangup_reason": "goal_complete",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 62,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": true,
+    "callback_close_phase": "semantic_pending",
+    "disconnected_at": "2026-10-29T15:42:12.975827+00:00",
+    "ended_at": "2026-10-29T15:42:12.975827+00:00",
+    "end_reason": "goal_complete",
+    "duration_sec": 16.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 16.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.003333333333333333,
+      "telephony_inr": 0.3175666666666666,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.003333333333333333,
+      "telnyx_inr": 0.3175666666666666,
+      "telnyx_voice_api_usd": 0.0005333333333333334,
+      "telnyx_sip_usd": 0.0013333333333333333,
+      "telnyx_media_stream_usd": 0.0009333333333333333,
+      "telnyx_call_recording_usd": 0.0005333333333333334,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.27,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-29",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.012499999999999999,
+      "telephony_inr_per_min": 1.190875,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.012499999999999999,
+      "telnyx_inr_per_min": 1.190875,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_0bba2a76f366af0e016ae36955daa087d19a0db8f12d200849": {
+          "input_tokens": 1751,
+          "output_tokens": 588,
+          "cached_tokens": 0,
+          "cache_write_tokens": 1748,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.0011432
+        }
+      },
+      "post_call_analysis_usd": 0.0011432,
+      "post_call_analysis_inr": 0.10891266399999999
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నమస్తే Madhavi. నేను working professional ని, అందుకే evenings లేదా weekends లో batch ఉంటే బాగుంటుంది. Python మరియు SQL లేదా PowerBI, ఈ రెండిటిలో ఏ courses available ఉన్నాయో చెప్తారా? అలాగే వాటి duration, fees, and instalments ఎలా ఉంటాయో కూడా చెప్పండి.",
+      "ts": "2026-10-29T15:41:57.787353Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "మా దగ్గర Python with Data Analytics course ఉంది. ఇది 8 weeks ఉంటుంది, fee eight thousand nine hundred ninety nine rupees total. Weekday batch రాత్రి eight PM నుండి nine PM వరకు, weekend batch శని, ఆదివారాలు ఉదయం ten AM నుండి మధ్యాహ్నం one PM వరకు ఉంటాయి. Installment discounts ఏమీ లేవు.",
+      "ts": "2026-10-29T15:41:59.969127Z"
+    },
+    {
+      "seq": 3,
+      "role": "user",
+      "text": "Python course details చెప్పి thanks. SQL లేదా PowerBI courses కూడా ఉన్నాయా? ఒకవేళ ఉంటే వాటి duration, fees, and instalment options ఎలా ఉంటాయో చెప్తారా? అలాగే placement గురించి, job guarantee ఉందా?",
+      "ts": "2026-10-29T15:42:00.833773Z",
+      "partial": false
+    },
+    {
+      "seq": 4,
+      "role": "assistant",
+      "text": "ప్రస్తుతం SQL లేదా PowerBI courses గురించి నా దగ్గర details లేవు, నేను దాని గురించి చెప్పలేను. Python course కి one hundred% placement assistance ఉంటుంది — resume building, interview preparation, job referrals ఉంటాయి. కానీ strict గా job guarantee లేదా salary promise ఏమీ ఇవ్వము.",
+      "ts": "2026-10-29T15:42:02.830901Z"
+    },
+    {
+      "seq": 5,
+      "role": "user",
+      "text": "సరే, SQL, PowerBI details ఇప్పుడు లేకపోతే పర్వాలేదు. నా enquiry ని save చేస్తారా? అలాగే demo లేదా discussion ఏమైనా arrange చేయగలరా? ఇప్పటివరకు నా details ఏమైనా note చేసుకున్నారా?",
+      "ts": "2026-10-29T15:42:03.520388Z",
+      "partial": false
+    },
+    {
+      "seq": 6,
+      "role": "assistant",
+      "text": "మీ details ఇప్పటి వరకు note చేయలేదు. నేను ఇప్పుడు మీ enquiry save చేస్తాను, అలాగే demo లేదా discussion కోసం మీరు ఏ time కి available గా ఉంటారో చెప్తారా?",
+      "ts": "2026-10-29T15:42:04.984342Z"
+    },
+    {
+      "seq": 7,
+      "role": "user",
+      "text": "నేను ఈరోజు రాత్రి పది గంటల తర్వాత లేదా రేపు ఉదయం available గా ఉంటాను. నా enquiry save చేశారా, ఇప్పటివరకు ఏమైనా చేశారా అనేది ఒకసారి confirm చేయండి. అలాగే SQL లేదా PowerBI courses ఎప్పుడు start అవుతాయో కూడా తెలుసుకోవాలి.",
+      "ts": "2026-10-29T15:42:05.785434Z",
+      "partial": false
+    },
+    {
+      "seq": 8,
+      "role": "assistant",
+      "text": "మీ enquiry save అయింది. SQL లేదా PowerBI start dates గురించి నా దగ్గర information లేదు. రేపు ఉదయం లేదా ఈరోజు పది గంటల తర్వాత మీకు ఏ time వీలవుతుందో చెప్తారా? అప్పుడు demo లేదా discussion schedule చేద్దాం.",
+      "ts": "2026-10-29T15:42:07.265679Z"
+    },
+    {
+      "seq": 9,
+      "role": "user",
+      "text": "సరే, రేపు ఉదయం 11 గంటలకి demo schedule చేద్దాం. అలాగే, Python course కి eligibility criteria ఏంటి? నా enquiry save అయిందని confirm చేసినందుకు thanks.",
+      "ts": "2026-10-29T15:42:07.928429Z",
+      "partial": false
+    },
+    {
+      "seq": 10,
+      "role": "assistant",
+      "text": "రేపు ఉదయం eleven o'clock కి demo schedule అయింది. Python course కి eligibility ఏంటంటే, any graduate లేదా final year college students join అవ్వచ్చు. Basic computer knowledge ఉంటే చాలు, prior coding అవసరం లేదు. మీ enquiry కూడా save అయింది. ఇంకేమైనా వివరాలు కావాలా?",
+      "ts": "2026-10-29T15:42:09.563601Z"
+    },
+    {
+      "seq": 11,
+      "role": "user",
+      "text": "అర్థమైంది. నాకు Python, SQL, PowerBI courses, fees, duration, timings, eligibility, job guarantee, my enquiry save అవ్వడం, demo schedule అవ్వడం గురించి అన్ని వివరాలు clear గా తెలిశాయి. Thank you so much.",
+      "ts": "2026-10-29T15:42:10.240223Z",
+      "partial": false
+    },
+    {
+      "seq": 12,
+      "role": "assistant",
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T15:42:11.890705Z"
+    }
+  ],
+  "wall_elapsed_s": 24.14,
+  "simulated_exchange_timeline_s": 120,
+  "request_count": 24
+}

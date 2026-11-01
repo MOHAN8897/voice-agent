@@ -1,0 +1,14 @@
+{"seq": 1, "role": "user", "text": "അതെ, ഒന്ന് സംസാരിക്കാമല്ലോ. എന്താണ് details?", "ts": "2026-10-31T16:48:44.096804Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ശരി. ഇന്ന് ഞങ്ങളുടെ കയ്യിൽ herbal products ഉണ്ട്. Hair oil, Aloe Vera Juice, Face Cream, അതോ Ashwagandha Capsules ആണോ?", "ts": "2026-10-31T16:48:45.340218Z"}
+{"seq": 3, "role": "user", "text": "ആ aloe vera juice-ന്റെ price എത്രയാണ്?", "ts": "2026-10-31T16:48:57.251662Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "NatureVeda Aloe Vera Juice-ന് 500 ml-ന് ₹399 ആണ് വില. അതൊരു general wellness beverage ആണ്. ഇന്ന് order ചെയ്യണോ?", "ts": "2026-10-31T16:48:58.627866Z"}
+{"seq": 5, "role": "user", "text": "500 ml-ന് 399 രൂപയോ? കുറെ നാളായിട്ട് ഇത് കുടിക്കാൻ നോക്കുന്നുണ്ടായിരുന്നു. ഇതിൽ എന്തെങ്കിലും discount ഉണ്ടോ?", "ts": "2026-10-31T16:49:12.460247Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ആ വിവരം എനിക്കറിയില്ല.", "ts": "2026-10-31T16:49:14.326874Z"}
+{"seq": 7, "role": "user", "text": "ഓ, അങ്ങനെയെങ്കിൽ discount ഒന്നും ഇല്ലാതെ എനിക്കിത് എടുക്കാൻ ബുദ്ധിമുട്ടാകും. വേറെ എന്തെങ്കിലും offers ഉണ്ടോ?", "ts": "2026-10-31T16:49:21.781640Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "നിലവിൽ വേറെ offers ഒന്നും എനിക്ക് പറയാൻ കഴിയില്ല. ആ വിവരം എനിക്കറിയില്ല.", "ts": "2026-10-31T16:49:23.467586Z"}
+{"seq": 9, "role": "user", "text": "അങ്ങനെയെങ്കിൽ എനിക്ക് ഇത് വാങ്ങാൻ ബുദ്ധിമുട്ടാണ്. വേറെ products എന്തെങ്കിലും ഉണ്ടോ?", "ts": "2026-10-31T16:49:33.086904Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "തീർച്ചയായും, വേറെ products ഉണ്ട്. ഞങ്ങളുടെ കയ്യിൽ 499 രൂപയുടെ Herbal Hair Oil, 599 രൂപയുടെ Face Cream, പിന്നെ 699 രൂപയുടെ Ashwagandha Capsules എന്നിവയുണ്ട്. ഇതിൽ ഏതാണ് കൂടുതൽ അറിയേണ്ടത്?", "ts": "2026-10-31T16:49:34.565254Z"}
+{"seq": 11, "role": "user", "text": "Hair oil-ന്റെ details കൂടി ഒന്ന് പറയാമോ?", "ts": "2026-10-31T16:49:50.575254Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "NatureVeda Herbal Hair Oil-ന് 200 ml-ന് 499 രൂപയാണ് വില. ഇതിൽ Amla, Bhringraj, Hibiscus, പിന്നെ Coconut Oil എന്നിവ അടങ്ങിയിട്ടുണ്ട്. ഇത് routine hair, scalp care-ന് വേണ്ടിയുള്ളതാണ്.", "ts": "2026-10-31T16:49:52.223513Z"}
+{"seq": 13, "role": "user", "text": "ശരി, hair oil-ന്റെ details എനിക്ക് കിട്ടി. പക്ഷെ ഇപ്പോൾ എനിക്ക് ഇംഗ്ലീഷിൽ സംസാരിക്കാൻ വലിയ കംഫർട്ടബിൾ അല്ല. ഹിന്ദിയിൽ സംസാരിക്കാൻ കൂടുതൽ എളുപ്പമാണ്. അതുകൊണ്ട് നാളെ രാവിലെ 11 മണിക്ക് എന്നെ ഒന്ന് call ചെയ്യാമോ?", "ts": "2026-10-31T16:50:16.019590Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "തീർച്ചയായും, ഹിന്ദി ഭാഷയിൽ നിങ്ങളെ വീണ്ടും call ചെയ്യാം. നാളെ രാവിലെ 11 മണിക്ക് ഞാൻ ഇത് note ചെയ്തോളാം.", "ts": "2026-10-31T16:50:17.755869Z"}

@@ -1,0 +1,52 @@
+{
+  "call_id": "ec63dd46-4994-454a-8cf8-8c691264154e",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "व्यवसायी ने ग्राहक को कॉल किया। ग्राहक फेस क्रीम के घटकों और उपयोग के बारे में पूछना चाहती थी। एजेंट ने कीमत और सामग्री बताई, लेकिन उपयोग के निर्देश और डिलीवरी के दिनों की जानकारी नहीं दे सका। ग्राहक ने दो हेयर ऑयल और एक फेस क्रीम का ऑर्डर ₹1,597 में देने की इच्छा जताई। एजेंट ने ऑर्डर की पुष्टि करने के लिए ग्राहक का नाम और डिलीवरी पता मांगा। कॉल ग्राहक द्वारा पता देने के बाद समाप्त हुई ताकि ऑर्डर आगे बढ़ सके।",
+  "summary_language": "hi-IN",
+  "summary_en": "The business's agent called the customer to discuss products. The customer inquired about the ingredients and usage of the face cream, and the agent shared the price and components but admitted to lacking the usage instructions. The customer decided to place an order for two hair oil bottles and one face cream for a total of ₹1,597. The agent requested the customer's name and delivery address to confirm the order. The call ended with the understanding that the customer would provide these details to proceed.",
+  "next_action": "Awaiting customer details to confirm the order.",
+  "extracted_fields": {
+    "phone": "+919700000012",
+    "products": "2 Herbal Hair Oil, 1 Herbal Face Cream",
+    "total_price": "₹1,597"
+  },
+  "facts": {
+    "phone": "+919700000012",
+    "products": "2 Herbal Hair Oil, 1 Herbal Face Cream",
+    "total_price": "₹1,597"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:order-confirmation",
+    "followup:callback",
+    "intent:information",
+    "intent:purchase",
+    "outcome:callback_required",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "followup:callback",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:order-confirmation"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [
+    "How many days will the delivery take?",
+    "Are there any discounts or offers currently running?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T13:46:13.984073Z",
+  "generation_ok": true
+}

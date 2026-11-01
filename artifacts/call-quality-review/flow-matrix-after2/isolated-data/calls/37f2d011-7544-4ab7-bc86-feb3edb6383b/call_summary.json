@@ -1,0 +1,46 @@
+{
+  "call_id": "37f2d011-7544-4ab7-bc86-feb3edb6383b",
+  "language_callback": null,
+  "disposition": "new_lead",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller inquired about the consultation fee and clinic opening hours. The agent provided the consultation fee of 300 rupees and confirmed that the clinic is open Monday to Saturday from 10 AM to 8 PM. The caller then asked in Hindi if they could visit the clinic tomorrow due to a toothache. The agent confirmed that the clinic would be open the next day and offered to book an appointment, requesting the caller's name, the dental issue, and their preferred time. The caller declined to provide these details, simply saying 'okay, thanks', and the call ended.",
+  "next_action": "callback_required",
+  "extracted_fields": {
+    "phone": "+919876500509"
+  },
+  "facts": {
+    "phone": "+919876500509"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:clinic-hours",
+    "custom:dental-consultation",
+    "followup:callback",
+    "intent:information",
+    "outcome:new_lead",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:urgent"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "followup:callback",
+    "signal:objection",
+    "signal:urgent",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:dental-consultation",
+    "custom:clinic-hours"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Caller declined to provide personal details and preferred appointment time."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:04:03.505136Z",
+  "generation_ok": true
+}

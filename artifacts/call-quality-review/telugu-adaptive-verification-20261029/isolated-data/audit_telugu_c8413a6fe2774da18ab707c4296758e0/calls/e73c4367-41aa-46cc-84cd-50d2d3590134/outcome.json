@@ -1,0 +1,87 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.94,
+  "summary_te": "",
+  "summary_en": "The caller initially asked for the price of split AC servicing, then corrected the request to window AC servicing. The agent quoted a price of ₹499 and asked for the caller's locality and preferred time to arrange an appointment. The caller confirmed that window AC service was the request, but did not provide locality, time, or schedule an appointment, and ended the call after saying there were no further questions. No service booking was completed.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+12025550138",
+    "price": "₹499",
+    "product": "window AC service",
+    "service": "Window AC servicing"
+  },
+  "objections": [],
+  "notes": "Caller showed interest in window AC servicing but did not proceed with appointment details.",
+  "tags": [
+    "intent:information",
+    "intent:pricing",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:window-ac-service"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:48:42.991448Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+12025550138",
+    "price": "₹499",
+    "product": "window AC service",
+    "service": "Window AC servicing"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:window-ac-service",
+    "intent:information",
+    "intent:pricing",
+    "outcome:interested",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "c803469c-786f-408a-a26a-f1304a461ead",
+    "agentId": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.94,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

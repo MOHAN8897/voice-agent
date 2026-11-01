@@ -1,0 +1,105 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller, Ravi Kumar, initiated the call to order 200 matte finish visiting cards. The agent quoted a total price of ₹700, explained the 3-working-day delivery timeline to 12 MG Road, Vijayawada after artwork approval, and confirmed cash on delivery. The caller agreed to the terms and requested to proceed with the order confirmation. The agent summarized the order details, and the caller ended the call after expressing thanks.\n\nServer check: no confirmed order was recorded for this call, so it was not marked as converted.",
+  "next_action": "",
+  "extracted_fields": {
+    "caller_name": "Ravi Kumar",
+    "delivery_address": "12 MG Road, Vijayawada",
+    "name": "Ravi Kumar",
+    "payment_terms": "cash on delivery",
+    "phone": "+919876500004",
+    "price": "₹700",
+    "product": "matte visiting cards",
+    "quantity": "200"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:purchase",
+    "sentiment:positive",
+    "signal:ready_to_buy",
+    "followup:send_quote",
+    "action:required",
+    "intent:information"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:cash-on-delivery"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T20:06:23.114833Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_name": "Ravi Kumar",
+    "delivery_address": "12 MG Road, Vijayawada",
+    "name": "Ravi Kumar",
+    "payment_terms": "cash on delivery",
+    "phone": "+919876500004",
+    "price": "₹700",
+    "product": "matte visiting cards",
+    "quantity": "200"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:cash-on-delivery",
+    "custom:visiting-cards",
+    "followup:send_quote",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "140f9e30-e212-490c-9985-ce3c4b062e3f",
+    "agentId": "3040a6ac-6351-4c71-837a-a5463c045a5a",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

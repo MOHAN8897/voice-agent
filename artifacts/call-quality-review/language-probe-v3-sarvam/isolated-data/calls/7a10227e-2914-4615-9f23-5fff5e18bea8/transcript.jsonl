@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "నేను సికింద్రాబాద్‌లో ఉంటాను. అక్కడికి టెక్నీషియన్ రావచ్చా?", "ts": "2026-10-29T19:27:24.548841Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "క్షమించండి, ప్రస్తుతం మా service కేవలం Madhapur, Gachibowli, Kondapur, Kukatpally areas లో మాత్రమే ఉంది. Secunderabad coverage లో లేదు, so అక్కడికి టెక్నీషియన్ రాలేరు. వేరే ఏదైనా help కావాలా?", "ts": "2026-10-29T19:27:27.115380Z", "brain_latency_ms": 2605}

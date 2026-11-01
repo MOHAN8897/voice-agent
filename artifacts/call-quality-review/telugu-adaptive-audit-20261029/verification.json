@@ -1,0 +1,18 @@
+{
+  "regression_suites": [
+    {
+      "passed": 176,
+      "warnings": 3,
+      "seconds": 29.1
+    },
+    {
+      "passed": 129,
+      "warnings": 14,
+      "seconds": 15.06
+    }
+  ],
+  "ruff_F_E9": "pass",
+  "compileall": "pass",
+  "application_source_drift": {},
+  "audit_markdown_sha256": "cf5c994de7ec7ddb215b0d86c5c3923732cf626c2f634226408ae03d1fb0153f"
+}

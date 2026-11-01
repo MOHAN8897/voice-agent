@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Window AC service का कितना price है, और Kondapur में cover करते हैं क्या?", "ts": "2026-10-29T19:10:56.527968Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Window AC servicing का charge 499 rupees है। हाँ, हम Kondapur में service देते हैं। क्या आपको visit book करवानी है?", "ts": "2026-10-29T19:10:57.346153Z", "brain_latency_ms": 820}

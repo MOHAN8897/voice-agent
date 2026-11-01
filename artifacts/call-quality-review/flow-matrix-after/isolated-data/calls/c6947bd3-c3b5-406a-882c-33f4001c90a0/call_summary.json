@@ -1,0 +1,40 @@
+{
+  "call_id": "c6947bd3-c3b5-406a-882c-33f4001c90a0",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller expressed that they needed to discuss the matter with their family before proceeding. After the agent acknowledged this and invited them to reach out with any questions, the caller requested a callback specifically on Sunday at 7 PM. The agent agreed to note this request and stated that the team would record and confirm it. The call concluded after the caller thanked the agent.",
+  "next_action": "Call the caller back on Sunday at 7 PM as requested.",
+  "extracted_fields": {
+    "callback_time": "Sunday 7 PM",
+    "phone": "+919876500520",
+    "requested_time": "संडे शाम को 7 बजे"
+  },
+  "facts": {
+    "callback_time": "Sunday 7 PM",
+    "phone": "+919876500520",
+    "requested_time": "संडे शाम को 7 बजे"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "followup:callback",
+    "outcome:callback_required",
+    "quality:agent_failure",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [
+    "Needs to consult family first"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:02:44.090431Z",
+  "generation_ok": true
+}

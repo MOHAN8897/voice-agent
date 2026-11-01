@@ -1,0 +1,325 @@
+{
+  "scenario": {
+    "id": "B_enquiry_none",
+    "business": "B",
+    "kind": "enquiry",
+    "integration": "none",
+    "policy": "review",
+    "max_turns": 12,
+    "goal": "Learn split versus window AC servicing cost, inspection-fee conditions, coverage, replacement-parts uncertainty and technician timing. Give your locality and appliance when asked. Try to arrange a visit, but distinguish a request from a confirmed calendar booking. Ask what time/date is actually confirmed. Stay curious for roughly 10 caller turns if the conversation remains useful. Around the middle, thank them and ask another relevant question in the SAME turn, without ending the call. At the end, clearly say all your questions are answered and thank them."
+  },
+  "agent": {
+    "id": "B",
+    "key": "appliances",
+    "tenant_id": "29baa57a-2ffd-4ebe-84b4-79cf4e198b9e",
+    "name": "SmartCare Appliance Services",
+    "agent_name": "Suresh",
+    "role": "support",
+    "industry": "home_services",
+    "brief": "Need helpful support agent Suresh for SmartCare Appliance Services.\nPhone customer support and booking inquiries in Telugu.\nHyderabad home appliance repair and maintenance services.\nAC servicing: basic Window AC servicing 499 rupees, Split AC servicing 599 rupees.\nFridge inspection charge 250 rupees; if repair is done by technician, inspection charge is completely waived.\nReplacement parts are extra at actual MRP and technician quotes after inspection; no fixed parts quotes over phone.\nWorking days: Monday to Sunday 9:00 AM to 7:00 PM.\nService areas: Hyderabad West - Madhapur, Gachibowli, Kondapur, Kukatpally.\nSecunderabad and Old City areas are currently not covered.\nSlots: Next-day visit slots between 10 AM and 6 PM. Same-day emergency service not guaranteed.\nGoal: answer service pricing and area questions honestly.\nIf customer requests appointment, take caller name, appliance type, issue, locality and preferred slot.\nNever advise customer to open electrical panels or live wiring themselves.\nDo not sell AMC contracts or courses. Caller declining AC may still need fridge service.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Suresh",
+      "company_name": "SmartCare Appliance Services",
+      "role": "Support and service appointment booking",
+      "permitted_next_steps": "Check locality and appliance issue; collect name, phone, address and preferred slot (10 AM - 6 PM next day) to book or request technician visit.",
+      "service_areas": "Hyderabad West only: Madhapur, Gachibowli, Kondapur, Kukatpally. Secunderabad and Old City are not serviced.",
+      "pricing_terms": "Split AC 599 rupees, Window AC 499 rupees. Fridge inspection 250 rupees (waived if repair accepted). Spare parts extra at actuals.",
+      "safety_rules": "Never advise live electrical inspection. Tell customer to unplug faulty appliances and wait for certified technician.",
+      "forbidden_actions": "Do not promise same-day visit or quote parts prices before technician inspection. No advance payment on call."
+    },
+    "user_id": "8ce449e8-2126-467d-90f3-6d1d8c74ecb5",
+    "agent_id": "da7e8b71-9465-55a3-b920-fae16cb86c5c"
+  },
+  "call_id": "dda65ff3-334e-49d5-abdb-5ab43bf3390f",
+  "session_id": "adaptive-ad5414f6b1744635ab61699ccf70283f",
+  "phone": "+12025550101",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_a73bd74e9849",
+  "turn_index": 2,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నమస్తే సురేష్, నా పేరు శ్రావణి. మాదాపూర్ లో ఉన్నాను. నా ఇంట్లో split AC కి general service కావాలి. దీని servicing cost ఎంత అవుతుంది, అలాగే inspection fee ఏమైనా ఉంటుందా, దయచేసి చెప్తారా?",
+        "intends_end": false,
+        "intent": "Inquire about servicing cost, inspection fee, and coverage for split AC",
+        "elapsed_s": 0.687
+      },
+      "spoken": "Split AC servicing కి five hundred ninety nine rupees అవుతుంది. Inspection fee విషయానికి వస్తే, అది two hundred fifty rupees ఉంటుంది. కానీ technician వచ్చి repair చేస్తే ఆ inspection charge పూర్తిగా మాఫీ అవుతుంది. మీకు appointment కావాలా?",
+      "elapsed_s": 9.297,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "delivery_locality": "మాదాపూర్"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        146,
+        147,
+        148,
+        149,
+        150,
+        151
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "Split AC servicing కి five hundred ninety nine rupees అవుతుంది. Inspection fee విషయానికి వస్తే, అది two hundred fifty rupees ఉంటుంది. కానీ technician వచ్చి repair చేస్తే ఆ inspection charge పూర్తిగా మాఫీ అవుతుంది. మీకు appointment కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4570,
+            "output_tokens": 45,
+            "cached_tokens": 2080,
+            "total_tokens": 4615
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 2,
+      "caller": {
+        "utterance": "సరే, ఐదు వందల తొంభై తొమ్మిది రూపాయలు, అలాగే ఇన్‌స్పెక్షన్ ఫీజు రెండు వందల యాభై రూపాయలు అన్నారు. రేపు ఉదయం 10 గంటలకి మాదాపూర్ లో technician వచ్చేలా నేను request పెట్టుకోవచ్చా? అలాగే ఈ servicing లో ఏమైనా parts replace చేయాల్సి వస్తే దానికి ఎంత అవుతుంది, ఆ cost కూడా ముందే తెలుసుకోవాలి.",
+        "intends_end": false,
+        "intent": "Request a visit for tomorrow 10 AM and ask about replacement parts cost and inspection fee waiver",
+        "elapsed_s": 0.922
+      },
+      "spoken": "అవును శ్రావణి గారు, రేపు ఉదయం 10 గంటల నుండి సాయంత్రం 6 గంటల మధ్యలో మాదాపూర్ కి next-day visit slot available ఉంది. మీరు అడిగినట్లుగా, servicing కి five hundred ninety nine rupees, inspection fee two hundred fifty rupees అవుతుంది. ఒకవేళ technician repair చేస్తే inspection charge పూర్తిగా మాఫీ అవుతుంది.",
+      "elapsed_s": 6.234,
+      "memory_before": {
+        "facts": {
+          "delivery_locality": "మాదాపూర్"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "delivery_locality": "మాదాపూర్"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        153,
+        154,
+        155,
+        156
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "అవును శ్రావణి గారు, రేపు ఉదయం 10 గంటల నుండి సాయంత్రం 6 గంటల మధ్యలో మాదాపూర్ కి next-day visit slot available ఉంది. మీరు అడిగినట్లుగా, servicing కి five hundred ninety nine rupees, inspection fee two hundred fifty rupees అవుతుంది. ఒకవేళ technician repair చేస్తే inspection charge పూర్తిగా మాఫీ అవుతుంది.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4574,
+            "output_tokens": 83,
+            "cached_tokens": 3168,
+            "total_tokens": 4657
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "Split AC servicing కి five hundred ninety nine rupees అవుతుంది. Inspection fee విషయానికి వస్తే, అది two hundred fifty rupees ఉంటుంది. కానీ technician వచ్చి repair చేస్తే ఆ inspection charge పూర్తిగా మాఫీ అవుతుంది. మీకు appointment కావాలా?",
+      "at": 126344.734
+    },
+    {
+      "turn": 2,
+      "text": "అవును శ్రావణి గారు, రేపు ఉదయం 10 గంటల నుండి సాయంత్రం 6 గంటల మధ్యలో మాదాపూర్ కి next-day visit slot available ఉంది. మీరు అడిగినట్లుగా, servicing కి five hundred ninety nine rupees, inspection fee two hundred fifty rupees అవుతుంది. ఒకవేళ technician repair చేస్తే inspection charge పూర్తిగా మాఫీ అవుతుంది.",
+      "at": 126351.906
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "Split AC servicing కి five hundred ninety nine rupees అవుతుంది. Inspection fee విషయానికి వస్తే, అది two hundred fifty rupees ఉంటుంది. కానీ technician వచ్చి repair చేస్తే ఆ inspection charge పూర్తిగా మాఫీ అవుతుంది. మీకు appointment కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4570,
+        "output_tokens": 45,
+        "cached_tokens": 2080,
+        "total_tokens": 4615
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      }
+    },
+    {
+      "done": true,
+      "text": "అవును శ్రావణి గారు, రేపు ఉదయం 10 గంటల నుండి సాయంత్రం 6 గంటల మధ్యలో మాదాపూర్ కి next-day visit slot available ఉంది. మీరు అడిగినట్లుగా, servicing కి five hundred ninety nine rupees, inspection fee two hundred fifty rupees అవుతుంది. ఒకవేళ technician repair చేస్తే inspection charge పూర్తిగా మాఫీ అవుతుంది.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4574,
+        "output_tokens": 83,
+        "cached_tokens": 3168,
+        "total_tokens": 4657
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "దీని servicing cost ఎంత అవుతుంది, అలాగే inspection fee ఏమైనా ఉంటుందా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "delivery_locality",
+            "value": "మాదాపూర్"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నమస్తే సురేష్, నా పేరు శ్రావణి. మాదాపూర్ లో ఉన్నాను. నా ఇంట్లో split AC కి general service కావాలి. దీని servicing cost ఎంత అవుతుంది, అలాగే inspection fee ఏమైనా ఉంటుందా, దయచేసి చెప్తారా?",
+      "at": 126340.718
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, ఐదు వందల తొంభై తొమ్మిది రూపాయలు, అలాగే ఇన్‌స్పెక్షన్ ఫీజు రెండు వందల యాభై రూపాయలు అన్నారు. రేపు ఉదయం 10 గంటలకి మాదాపూర్ లో technician వచ్చేలా నేను request పెట్టుకోవచ్చా? అలాగే ఈ servicing లో ఏమైనా parts replace చేయాల్సి వస్తే దానికి ఎంత అవుతుంది, ఆ cost కూడా ముందే తెలుసుకోవాలి.",
+      "at": 126351.156
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [],
+  "carrier": [],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 126344.765
+    },
+    {
+      "turn_seq": 3,
+      "at": 126351.921
+    }
+  ],
+  "started_at": "2026-10-29T17:26:51.960665+00:00",
+  "errors": [],
+  "brain_checksum": "1555ecdd0f1b37e2e5e384a7a94a63c2b94f41b9ffe3194df9e4d92aa0e55534",
+  "runtime_checksum": "fc57d0ef2dad4eb837ea463acfce68bf132e14f8cee0eca242f28420adfa5140",
+  "available_tools": [
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 126340.14,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 2,
+      "start_s": 126349.718,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 51,
+      "rolling_chars": 0
+    }
+  ]
+}

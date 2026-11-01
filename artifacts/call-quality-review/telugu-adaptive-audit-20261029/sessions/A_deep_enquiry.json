@@ -1,0 +1,966 @@
+{
+  "scenario": {
+    "id": "A_deep_enquiry",
+    "business": "A",
+    "kind": "deep",
+    "integration": "success",
+    "policy": "review",
+    "max_turns": 13,
+    "goal": "Learn standard versus matte visiting-card pricing, minimum quantity, design approval, delivery, rush surcharge and advance-payment conditions. Start with 100 cards, later correct to 200. Ask about wedding-card price once as an unknown fact. Try to submit a quote/internal order request with your final details. Ask what quantity they recorded after intervening conversation. This is an extended information enquiry: do not stop merely because a booking or email is unavailable. Continue with meaningful related questions for at least TEN customer turns, using the actual answers to select the next question. Explore alternatives, conditions, hidden costs, corrections and practical examples. Answer the representative's questions when relevant. You are still deciding, not ready to order or schedule a callback, so do not accept a next-step callback as a substitute for answers. If the representative tries to wrap up before your questions are served, politely state that you still have a relevant question. At turn 12 or 13, end clearly."
+  },
+  "agent": {
+    "id": "A",
+    "key": "printing",
+    "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "name": "Sri Krishna Digital Prints",
+    "agent_name": "Kavitha",
+    "role": "sales",
+    "industry": "printing",
+    "brief": "Agent name Kavitha. Company name Sri Krishna Digital Prints.\nOutbound and inbound customer inquiries in Telugu.\nWe print visiting cards: normal paper visiting cards cost 200 rupees for 100 cards,\nmatte finish cards cost 350 rupees for 100 cards. Minimum order quantity 100 cards.\nWedding invitation cards are customized: pricing depends on design, paper sample and quantity, no fixed price over the phone.\nFlex banners: normal flex 15 rupees per square foot, star flex 20 rupees per square foot.\nDelivery in Vijayawada takes 3 working days after design artwork approval; urgent 24-hour delivery is extra 150 rupees.\nPayment: Cash on delivery accepted for orders up to 1000 rupees; 50% advance payment required for orders above 1000 rupees.\nNo online payment or credit card processing on phone call.\nOffice hours Monday to Saturday 9:30 AM to 8:00 PM, Sunday closed.\nGoal: answer customer questions on cards, banners and pricing; understand their requirement.\nIf interested, take preferred name, quantity and delivery locality for a quote or order request.\nDo not force details before answering questions.\nCustomer refusing visiting cards may still want flex banners or wedding cards.\nNever claim an order is paid or dispatched without artwork approval and design confirmation.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Kavitha",
+      "company_name": "Sri Krishna Digital Prints",
+      "role": "Sales and customer enquiries",
+      "permitted_next_steps": "Collect customer name, item type, quantity and delivery locality in Vijayawada to submit an internal quote/order request. Explain that artwork approval is required before printing.",
+      "payment_rules": "Cash on delivery for orders up to 1000 rupees; 50% advance for orders above 1000 rupees. No online payment collection on call.",
+      "delivery_details": "Local delivery in Vijayawada takes 3 working days after artwork approval. Urgent 24-hour delivery is extra 150 rupees.",
+      "wedding_cards": "Customized quotation only based on design and paper sample. No fixed price on phone.",
+      "visiting_cards": "Standard 200 rupees for 100 cards; Matte finish 350 rupees for 100 cards. Minimum order 100 cards.",
+      "forbidden_actions": "Never confirm external courier shipment or take card payment on phone. Never guarantee delivery without artwork approval."
+    },
+    "user_id": "de625f35-524c-4767-a252-106cb34cdfae",
+    "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e"
+  },
+  "call_id": "6d04e658-9c39-4982-9375-53ece2bd5f43",
+  "session_id": "adaptive-7f81bd6591434596980041904102fe0a",
+  "phone": "+12025550128",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_8649a3d49b8f",
+  "turn_index": 3,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నమస్తే Kavitha, నేను విజయవాడ నుంచి రమేష్ ని మాట్లాడుతున్నా. నాకు visiting cards కావాలి, matte finish అయితే బాగుంటుంది. ముందుగా 100 cards కి standard pricing ఎలా ఉంటుంది, minimum quantity ఎంత పెట్టాలి? నా design ని తర్వాత పంపిస్తాను.",
+        "intends_end": false,
+        "intent": "Inquire about matte visiting card pricing and minimum order quantity",
+        "elapsed_s": 0.719
+      },
+      "spoken": "Matte finish cards one hundred కి three hundred fifty rupees అవుతుంది. Minimum order quantity కూడా one hundred cards ఏ ఉంటుంది. మీరు design తర్వాత పంపిస్తాం అన్నారు కదా, మరి మీ పేరు ఒకసారి చెప్తారా?",
+      "elapsed_s": 1.703,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "visiting cards",
+          "quantity": "100",
+          "delivery_locality": "విజయవాడ"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        1,
+        2,
+        3
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "Matte finish cards one hundred కి three hundred fifty rupees అవుతుంది. Minimum order quantity కూడా one hundred cards ఏ ఉంటుంది. మీరు design తర్వాత పంపిస్తాం అన్నారు కదా, మరి మీ పేరు ఒకసారి చెప్తారా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5174,
+            "output_tokens": 46,
+            "cached_tokens": 4480,
+            "total_tokens": 5220
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": null
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 2,
+      "caller": {
+        "utterance": "నా పేరు రమేష్, email ramesh.audit@example.invalid. 100 cards కి 350 rupees అంటే బాగుంది. మరి 200 cards కి ఏమైనా discount ఉంటుందా? అలాగే wedding cards price కూడా ఎలా ఉంటుందో ఒకసారి చెప్తారా?",
+        "intends_end": false,
+        "intent": "Inquire about pricing for 200 cards and ask an unrelated wedding card price",
+        "elapsed_s": 0.718
+      },
+      "spoken": "two hundred cards కి discount details నాకు అందుబాటులో లేవు. Wedding invitation cards design, paper sample, ఇంకా quantity బట్టి మారుతాయి, కాబట్టి phone లో fixed price చెప్పలేము. మీకు ఈ visiting cards order తో ముందుకు వెళ్దామా?",
+      "elapsed_s": 1.532,
+      "memory_before": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "visiting cards",
+          "quantity": "100",
+          "delivery_locality": "విజయవాడ"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "visiting cards",
+          "quantity": "200",
+          "delivery_locality": "విజయవాడ",
+          "email": "ramesh.audit@example.invalid",
+          "caller_email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call.",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        5,
+        6,
+        7
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "two hundred cards కి discount details నాకు అందుబాటులో లేవు. Wedding invitation cards design, paper sample, ఇంకా quantity బట్టి మారుతాయి, కాబట్టి phone లో fixed price చెప్పలేము. మీకు ఈ visiting cards order తో ముందుకు వెళ్దామా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5277,
+            "output_tokens": 50,
+            "cached_tokens": 4480,
+            "total_tokens": 5327
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": true,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": null
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 3,
+      "caller": {
+        "utterance": "సరే, discount details ఇప్పుడు లేకపోతే పర్లేదు. Wedding cards price కనుక్కోవడానికి నేను తర్వాత call చేస్తాను. ఈ 100 matte cards కి delivery ఎంత time పడుతుంది? అలాగే rush order ఏమైనా ఉంటే extra charges ఉంటాయా?",
+        "intends_end": false,
+        "intent": "Inquire about delivery time and rush surcharge",
+        "elapsed_s": 0.672
+      },
+      "spoken": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 1.5,
+      "memory_before": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "visiting cards",
+          "quantity": "200",
+          "delivery_locality": "విజయవాడ",
+          "email": "ramesh.audit@example.invalid",
+          "caller_email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call.",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "visiting cards",
+          "quantity": "200",
+          "delivery_locality": "విజయవాడ",
+          "email": "ramesh.audit@example.invalid",
+          "caller_email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call.",
+        "summary": "assistant: two hundred cards కి discount details నాకు అందుబాటులో లేవు. Wedding invitation cards design, paper sample, ఇంకా quantity బట్టి మారుతాయి, కాబట్టి phone లో fixed price చెప్పలేము. మీకు ఈ visiting cards order తో ముందుకు వెళ్దామా?\nuser: సరే, discount details ఇప్పుడు లేకపోతే పర్లేదు. Wedding cards price కనుక్కోవడానికి నేను తర్వాత call చేస్తాను. ఈ 100 matte cards కి delivery ఎంత time పడుతుంది? అలాగే rush order ఏమైనా ఉంటే extra charges ఉంటాయా?\nassistant: మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        9
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "end_call": {
+            "should_end": true,
+            "reason": "goal_complete",
+            "farewell": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+            "contact_preference": "callback"
+          },
+          "finish_reason": "rule_close",
+          "usage": {},
+          "memory_update": {
+            "operations": []
+          },
+          "memory_parse_failed": false,
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "Matte finish cards one hundred కి three hundred fifty rupees అవుతుంది. Minimum order quantity కూడా one hundred cards ఏ ఉంటుంది. మీరు design తర్వాత పంపిస్తాం అన్నారు కదా, మరి మీ పేరు ఒకసారి చెప్తారా?",
+      "at": 103986.25
+    },
+    {
+      "turn": 2,
+      "text": "two hundred cards కి discount details నాకు అందుబాటులో లేవు. Wedding invitation cards design, paper sample, ఇంకా quantity బట్టి మారుతాయి, కాబట్టి phone లో fixed price చెప్పలేము. మీకు ఈ visiting cards order తో ముందుకు వెళ్దామా?",
+      "at": 103988.5
+    },
+    {
+      "turn": 3,
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 103989.656
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "Matte finish cards one hundred కి three hundred fifty rupees అవుతుంది. Minimum order quantity కూడా one hundred cards ఏ ఉంటుంది. మీరు design తర్వాత పంపిస్తాం అన్నారు కదా, మరి మీ పేరు ఒకసారి చెప్తారా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5174,
+        "output_tokens": 46,
+        "cached_tokens": 4480,
+        "total_tokens": 5220
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "done": true,
+      "text": "two hundred cards కి discount details నాకు అందుబాటులో లేవు. Wedding invitation cards design, paper sample, ఇంకా quantity బట్టి మారుతాయి, కాబట్టి phone లో fixed price చెప్పలేము. మీకు ఈ visiting cards order తో ముందుకు వెళ్దామా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5277,
+        "output_tokens": 50,
+        "cached_tokens": 4480,
+        "total_tokens": 5327
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": true,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "done": true,
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "end_call": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "farewell": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "callback"
+      },
+      "finish_reason": "rule_close",
+      "usage": {},
+      "memory_update": {
+        "operations": []
+      },
+      "memory_parse_failed": false,
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "రమేష్"
+          },
+          {
+            "op": "set_fact",
+            "key": "product",
+            "value": "visiting cards"
+          },
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "100"
+          },
+          {
+            "op": "set_fact",
+            "key": "delivery_locality",
+            "value": "విజయవాడ"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "transcript": "నమస్తే Kavitha, నేను విజయవాడ నుంచి రమేష్ ని మాట్లాడుతున్నా. నాకు visiting cards కావాలి, matte finish అయితే బాగుంటుంది. ముందుగా 100 cards కి standard pricing ఎలా ఉంటుంది, minimum quantity ఎంత పెట్టాలి? నా design ని తర్వాత పంపిస్తాను.",
+      "at": 103986.265
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "రమేష్"
+          },
+          {
+            "op": "set_fact",
+            "key": "email",
+            "value": "ramesh.audit@example.invalid"
+          },
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "200"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "transcript": "నా పేరు రమేష్, email ramesh.audit@example.invalid. 100 cards కి 350 rupees అంటే బాగుంది. మరి 200 cards కి ఏమైనా discount ఉంటుందా? అలాగే wedding cards price కూడా ఎలా ఉంటుందో ఒకసారి చెప్తారా?",
+      "at": 103988.531
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "farewell": "మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నోట్ చేసుకున్నాను. ధన్యవాదాలు."
+      },
+      "result": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "farewell": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "callback"
+      },
+      "transcript": "సరే, discount details ఇప్పుడు లేకపోతే పర్లేదు. Wedding cards price కనుక్కోవడానికి నేను తర్వాత call చేస్తాను. ఈ 100 matte cards కి delivery ఎంత time పడుతుంది? అలాగే rush order ఏమైనా ఉంటే extra charges ఉంటాయా?",
+      "at": 103989.562
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [
+    {
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 3,
+      "at": 103989.656
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 103990.718,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 103986.281
+    },
+    {
+      "turn_seq": 3,
+      "at": 103988.562
+    },
+    {
+      "turn_seq": 5,
+      "at": 103989.687
+    }
+  ],
+  "started_at": "2026-10-29T11:14:21.065312+00:00",
+  "errors": [],
+  "brain_checksum": "d7487c1b2dea5826404c86011255aca0744ec1e7a417db967a2e864c26523e17",
+  "runtime_checksum": "e7a4cb2ad5f6383f917506c58a138ad23a76a33287296a6c788f43b89218acc5",
+  "available_tools": [
+    "HUBSPOT_CREATE_CONTACT",
+    "GOOGLECALENDAR_CREATE_EVENT",
+    "GOOGLECALENDAR_FIND_FREE_SLOTS",
+    "SAVE_ENQUIRY"
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "callback_required",
+    "disposition_confidence": 0.96,
+    "summary_te": "",
+    "summary_en": "Ramesh from Vijayawada called to ask about matte-finish visiting cards. The agent quoted ₹350 for 100 cards and confirmed the minimum order quantity is 100. Ramesh provided his email address and said the price for 100 cards was acceptable, then asked about a possible discount for 200 cards and wedding invitation card pricing. The agent could not provide the 200-card discount and explained that wedding card pricing depends on the design, paper sample, and quantity. Ramesh said he would call later to ask about wedding card pricing, and then asked about delivery time and rush-order charges for the 100 matte cards. The agent acknowledged the details and callback request, but did not provide delivery or rush-charge information. The call ended with thanks and a goodbye.",
+    "next_action": "Follow up with Ramesh regarding delivery time and rush-order charges for 100 matte-finish cards, and provide wedding card pricing when he calls back.",
+    "extracted_fields": {
+      "caller_email": "ramesh.audit@example.invalid",
+      "caller_name": "రమేష్",
+      "delivery_locality": "విజయవాడ",
+      "email": "ramesh.audit@example.invalid",
+      "location": "Vijayawada",
+      "minimum_order_quantity": "100 cards",
+      "name": "Ramesh",
+      "phone": "+12025550128",
+      "product": "Matte-finish visiting cards",
+      "quantity": "100 cards",
+      "quoted_price": "₹350 for 100 cards"
+    },
+    "objections": [
+      "Discount details for 200 cards were unavailable.",
+      "Delivery time and rush-order charges were not provided.",
+      "Wedding card pricing could not be fixed without design, paper sample, and quantity."
+    ],
+    "notes": "The working memory listed quantity as 200, but the caller’s stated visiting-card quantity and final question were for 100 cards. No order was confirmed.",
+    "tags": [
+      "followup:callback",
+      "intent:information",
+      "intent:pricing",
+      "signal:price_sensitive",
+      "sentiment:neutral"
+    ],
+    "custom_tags": [
+      "custom:matte-visiting-cards",
+      "custom:wedding-cards",
+      "custom:rush-order"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T11:14:34.261059Z",
+    "generation_ok": true,
+    "facts": {
+      "caller_email": "ramesh.audit@example.invalid",
+      "caller_name": "రమేష్",
+      "delivery_locality": "విజయవాడ",
+      "email": "ramesh.audit@example.invalid",
+      "location": "Vijayawada",
+      "minimum_order_quantity": "100 cards",
+      "name": "Ramesh",
+      "phone": "+12025550128",
+      "product": "Matte-finish visiting cards",
+      "quantity": "100 cards",
+      "quoted_price": "₹350 for 100 cards"
+    },
+    "disclosure_status": null,
+    "contact_preference": "callback",
+    "status_tags": [
+      "action:required",
+      "contact:email_known",
+      "contact:name_known",
+      "contact:phone_known",
+      "custom:matte-visiting-cards",
+      "followup:callback",
+      "intent:information",
+      "intent:pricing",
+      "outcome:callback_required",
+      "sentiment:neutral",
+      "signal:objection",
+      "signal:price_sensitive"
+    ],
+    "lead": {
+      "leadId": "d1235792-fd5c-42d8-a885-739ee077a828",
+      "agentId": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+      "stage": "contacted",
+      "action": "created"
+    },
+    "lead_assessment": {
+      "score": 75,
+      "band": "hot",
+      "disposition": "callback_required",
+      "confidence": 0.96,
+      "components": [
+        {
+          "signal": "interest",
+          "points": 40,
+          "max": 40,
+          "evidence": "callback_required"
+        },
+        {
+          "signal": "requirements",
+          "points": 25,
+          "max": 25,
+          "evidence": "product"
+        },
+        {
+          "signal": "timing",
+          "points": 0,
+          "max": 25,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "contact",
+          "points": 10,
+          "max": 10,
+          "evidence": "phone"
+        }
+      ],
+      "version": 1,
+      "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+      "reason": "recorded_signals"
+    },
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "6d04e658-9c39-4982-9375-53ece2bd5f43",
+        "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+        "session_id": "adaptive-7f81bd6591434596980041904102fe0a",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_8649a3d49b8f",
+        "started_at": "2026-10-29 11:14:20.620678+00:00",
+        "ended_at": "2026-10-29 11:14:27.921743+00:00",
+        "duration_sec": 7,
+        "disposition": "callback_required",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/6d04e658-9c39-4982-9375-53ece2bd5f43/",
+        "end_reason": "goal_complete",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "action:required",
+          "contact:email_known",
+          "contact:name_known",
+          "contact:phone_known",
+          "custom:matte-visiting-cards",
+          "followup:callback",
+          "intent:information",
+          "intent:pricing",
+          "outcome:callback_required",
+          "sentiment:neutral",
+          "signal:objection",
+          "signal:price_sensitive"
+        ],
+        "last_heartbeat_at": "2026-10-29 11:14:20.620678+00:00",
+        "created_at": "2026-10-29 11:14:20.622900+00:00"
+      }
+    ],
+    "callbacks": [
+      {
+        "callback_id": "962ee251-6546-4bed-b7de-0731012002b0",
+        "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "user_id": null,
+        "original_call_id": "6d04e658-9c39-4982-9375-53ece2bd5f43",
+        "original_attempt_id": null,
+        "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+        "to_e164": "+12025550128",
+        "from_e164": null,
+        "dial_request_id": "requested:6d04e658-9c39-4982-9375-53ece2bd5f43",
+        "mode": "requested",
+        "status": "requested",
+        "provider": null,
+        "provider_call_control_id": null,
+        "error": null,
+        "created_at": "2026-10-29 11:14:26.784127+00:00",
+        "updated_at": "2026-10-29 11:14:26.785141+00:00"
+      }
+    ],
+    "jobs": [
+      {
+        "id": "ffd7bbd2-8fee-42bc-bbd0-3de039965bbc",
+        "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+        "origin_key": "callback:962ee251-6546-4bed-b7de-0731012002b0",
+        "source_id": "6d04e658-9c39-4982-9375-53ece2bd5f43",
+        "kind": "callback",
+        "phone": "+12025550128",
+        "status": "needs_review",
+        "reason": "approval_required",
+        "payload": {
+          "requestText": "సరే, discount details ఇప్పుడు లేకపోతే పర్లేదు. Wedding cards price కనుక్కోవడానికి నేను తర్వాత call చేస్తాను. ఈ 100 matte cards కి delivery ఎంత time పడుతుంది? అలాగే rush order ఏమైనా ఉంటే extra charges ఉంటాయా?",
+          "requestedWhen": "",
+          "recentTurns": [
+            {
+              "role": "user",
+              "text": "నమస్తే Kavitha, నేను విజయవాడ నుంచి రమేష్ ని మాట్లాడుతున్నా. నాకు visiting cards కావాలి, matte finish అయితే బాగుంటుంది. ముందుగా 100 cards కి standard pricing ఎలా ఉంటుంది, minimum quantity ఎంత పెట్టాలి? నా design ని తర్వాత పంపిస్తాను.",
+              "at": "2026-10-29T11:14:21.812235Z"
+            },
+            {
+              "role": "assistant",
+              "text": "Matte finish cards one hundred కి three hundred fifty rupees అవుతుంది. Minimum order quantity కూడా one hundred cards ఏ ఉంటుంది. మీరు design తర్వాత పంపిస్తాం అన్నారు కదా, మరి మీ పేరు ఒకసారి చెప్తారా?",
+              "at": "2026-10-29T11:14:23.461736Z"
+            },
+            {
+              "role": "user",
+              "text": "నా పేరు రమేష్, email ramesh.audit@example.invalid. 100 cards కి 350 rupees అంటే బాగుంది. మరి 200 cards కి ఏమైనా discount ఉంటుందా? అలాగే wedding cards price కూడా ఎలా ఉంటుందో ఒకసారి చెప్తారా?",
+              "at": "2026-10-29T11:14:24.248593Z"
+            },
+            {
+              "role": "assistant",
+              "text": "two hundred cards కి discount details నాకు అందుబాటులో లేవు. Wedding invitation cards design, paper sample, ఇంకా quantity బట్టి మారుతాయి, కాబట్టి phone లో fixed price చెప్పలేము. మీకు ఈ visiting cards order తో ముందుకు వెళ్దామా?",
+              "at": "2026-10-29T11:14:25.727335Z"
+            },
+            {
+              "role": "user",
+              "text": "సరే, discount details ఇప్పుడు లేకపోతే పర్లేదు. Wedding cards price కనుక్కోవడానికి నేను తర్వాత call చేస్తాను. ఈ 100 matte cards కి delivery ఎంత time పడుతుంది? అలాగే rush order ఏమైనా ఉంటే extra charges ఉంటాయా?",
+              "at": "2026-10-29T11:14:26.480485Z"
+            }
+          ],
+          "callbackId": "962ee251-6546-4bed-b7de-0731012002b0",
+          "timezone": "Asia/Kolkata",
+          "llm": {
+            "provider": "openai",
+            "model": "gpt-5.6-luna",
+            "options": {},
+            "purpose": "configured_post_call_analysis"
+          },
+          "requestedAt": "2026-10-29T11:14:26.808245+00:00"
+        },
+        "due_at": null,
+        "expires_at": "2026-11-05 11:14:26.808245+00:00",
+        "attempts": 0,
+        "lease_token": null,
+        "lease_until": null,
+        "control_id": null,
+        "authorized_by": "de625f35-524c-4767-a252-106cb34cdfae",
+        "billing_tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "created_at": "2026-10-29 11:14:26.813272+00:00",
+        "updated_at": "2026-10-29 11:14:26.813272+00:00"
+      }
+    ],
+    "dnd": [],
+    "leads": [
+      {
+        "lead_id": "d1235792-fd5c-42d8-a885-739ee077a828",
+        "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+        "name": "Ramesh",
+        "phone": "+12025550128",
+        "email": "ramesh.audit@example.invalid",
+        "stage": "contacted",
+        "notes": "[Call reference: 6d04e658-9c39-4982-9375-53ece2bd5f43]\nRamesh from Vijayawada called to ask about matte-finish visiting cards. The agent quoted ₹350 for 100 cards and confirmed the minimum order quantity is 100. Ramesh provided his email address and said the price for 100 cards was acceptable, then asked about a possible discount for 200 cards and wedding invitation card pricing. The agent could not provide the 200-card discount and explained that wedding card pricing depends on the design, paper sample, and quantity. Ramesh said he would call later to ask about wedding card pricing, and then asked about delivery time and rush-order charges for the 100 matte cards. The agent acknowledged the details and callback request, but did not provide delivery or rush-charge information. The call ended with thanks and a goodbye.\n\nNext step: Follow up with Ramesh regarding delivery time and rush-order charges for 100 matte-finish cards, and provide wedding card pricing when he calls back.\n\nObjections: Discount details for 200 cards were unavailable., Delivery time and rush-order charges were not provided., Wedding card pricing could not be fixed without design, paper sample, and quanti\n\nCall outcome: callback required (96% confidence)",
+        "created_at": "2026-10-29 11:14:34.298655+00:00",
+        "updated_at": "2026-10-29 11:14:34.298655+00:00"
+      }
+    ],
+    "tools": [],
+    "assessments": [
+      {
+        "id": "c1a7ee8e-f4b1-4d92-8923-45bda5648c1e",
+        "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "lead_id": "d1235792-fd5c-42d8-a885-739ee077a828",
+        "source_call_id": "6d04e658-9c39-4982-9375-53ece2bd5f43",
+        "assessment": {
+          "score": 75,
+          "band": "hot",
+          "disposition": "callback_required",
+          "confidence": 0.96,
+          "components": [
+            {
+              "signal": "interest",
+              "points": 40,
+              "max": 40,
+              "evidence": "callback_required"
+            },
+            {
+              "signal": "requirements",
+              "points": 25,
+              "max": 25,
+              "evidence": "product"
+            },
+            {
+              "signal": "timing",
+              "points": 0,
+              "max": 25,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "contact",
+              "points": 10,
+              "max": 10,
+              "evidence": "phone"
+            }
+          ],
+          "version": 1,
+          "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+          "reason": "recorded_signals"
+        },
+        "updated_at": "2026-10-29 11:14:27.921743+00:00"
+      }
+    ]
+  },
+  "metadata": {
+    "call_id": "6d04e658-9c39-4982-9375-53ece2bd5f43",
+    "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "session_id": "adaptive-7f81bd6591434596980041904102fe0a",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_8649a3d49b8f",
+    "started_at": "2026-10-29T11:14:20.620678+00:00",
+    "status": "active",
+    "storage_path": "data/calls/6d04e658-9c39-4982-9375-53ece2bd5f43/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550128",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 23901,
+        "output_tokens": 802,
+        "cached_tokens": 21600
+      }
+    },
+    "callback_request": {
+      "id": "962ee251-6546-4bed-b7de-0731012002b0",
+      "status": "requested",
+      "requestedWhen": "సరే, discount details ఇప్పుడు లేకపోతే పర్లేదు. Wedding cards price కనుక్కోవడానికి నేను తర్వాత call చేస్తాను. ఈ 100 matte cards కి delivery ఎంత time పడుతుంది? అలాగే rush order ఏమైనా ఉంటే extra charges ఉంటాయా?",
+      "requestText": "సరే, discount details ఇప్పుడు లేకపోతే పర్లేదు. Wedding cards price కనుక్కోవడానికి నేను తర్వాత call చేస్తాను. ఈ 100 matte cards కి delivery ఎంత time పడుతుంది? అలాగే rush order ఏమైనా ఉంటే extra charges ఉంటాయా?"
+    },
+    "contact_preference": "callback",
+    "hangup_reason": "goal_complete",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 46,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": true,
+    "callback_close_phase": "closing_allowed",
+    "disconnected_at": "2026-10-29T11:14:27.921743+00:00",
+    "ended_at": "2026-10-29T11:14:27.921743+00:00",
+    "end_reason": "goal_complete",
+    "duration_sec": 7.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 7.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.0014583333333333332,
+      "telephony_inr": 0.13886249999999997,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.0014583333333333332,
+      "telnyx_inr": 0.13886249999999997,
+      "telnyx_voice_api_usd": 0.00023333333333333333,
+      "telnyx_sip_usd": 0.0005833333333333334,
+      "telnyx_media_stream_usd": 0.00040833333333333336,
+      "telnyx_call_recording_usd": 0.00023333333333333333,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.22,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-28",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.012499999999999999,
+      "telephony_inr_per_min": 1.1902499999999998,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.012499999999999999,
+      "telnyx_inr_per_min": 1.1902499999999998,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_0197571d7afc402b016ae32a9677a487d2933e7460bd2116a8": {
+          "input_tokens": 1435,
+          "output_tokens": 427,
+          "cached_tokens": 0,
+          "cache_write_tokens": 1432,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.000871
+        }
+      },
+      "post_call_analysis_usd": 0.000871,
+      "post_call_analysis_inr": 0.08293662
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నమస్తే Kavitha, నేను విజయవాడ నుంచి రమేష్ ని మాట్లాడుతున్నా. నాకు visiting cards కావాలి, matte finish అయితే బాగుంటుంది. ముందుగా 100 cards కి standard pricing ఎలా ఉంటుంది, minimum quantity ఎంత పెట్టాలి? నా design ని తర్వాత పంపిస్తాను.",
+      "ts": "2026-10-29T11:14:21.812235Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "Matte finish cards one hundred కి three hundred fifty rupees అవుతుంది. Minimum order quantity కూడా one hundred cards ఏ ఉంటుంది. మీరు design తర్వాత పంపిస్తాం అన్నారు కదా, మరి మీ పేరు ఒకసారి చెప్తారా?",
+      "ts": "2026-10-29T11:14:23.461736Z",
+      "brain_latency_ms": 1395
+    },
+    {
+      "seq": 3,
+      "role": "user",
+      "text": "నా పేరు రమేష్, email ramesh.audit@example.invalid. 100 cards కి 350 rupees అంటే బాగుంది. మరి 200 cards కి ఏమైనా discount ఉంటుందా? అలాగే wedding cards price కూడా ఎలా ఉంటుందో ఒకసారి చెప్తారా?",
+      "ts": "2026-10-29T11:14:24.248593Z",
+      "partial": false
+    },
+    {
+      "seq": 4,
+      "role": "assistant",
+      "text": "two hundred cards కి discount details నాకు అందుబాటులో లేవు. Wedding invitation cards design, paper sample, ఇంకా quantity బట్టి మారుతాయి, కాబట్టి phone లో fixed price చెప్పలేము. మీకు ఈ visiting cards order తో ముందుకు వెళ్దామా?",
+      "ts": "2026-10-29T11:14:25.727335Z",
+      "brain_latency_ms": 1184
+    },
+    {
+      "seq": 5,
+      "role": "user",
+      "text": "సరే, discount details ఇప్పుడు లేకపోతే పర్లేదు. Wedding cards price కనుక్కోవడానికి నేను తర్వాత call చేస్తాను. ఈ 100 matte cards కి delivery ఎంత time పడుతుంది? అలాగే rush order ఏమైనా ఉంటే extra charges ఉంటాయా?",
+      "ts": "2026-10-29T11:14:26.480485Z",
+      "partial": false
+    },
+    {
+      "seq": 6,
+      "role": "assistant",
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T11:14:26.842348Z",
+      "brain_latency_ms": 9
+    }
+  ],
+  "wall_elapsed_s": 13.453,
+  "simulated_exchange_timeline_s": 60,
+  "request_count": 10
+}

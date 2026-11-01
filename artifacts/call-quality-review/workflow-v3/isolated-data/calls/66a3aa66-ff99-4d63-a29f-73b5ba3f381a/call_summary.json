@@ -1,0 +1,47 @@
+{
+  "call_id": "66a3aa66-ff99-4d63-a29f-73b5ba3f381a",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller requested to book a visit for tomorrow at 11 AM and immediately asked for a booking confirmation and number. The agent noted the time but explained that the booking was not yet confirmed and no booking number had been generated. The agent asked for the caller's locality to verify service area coverage and proceed with final confirmation. The caller accepted this by saying 'Okay, thanks,' and the call ended with the booking remaining pending because the necessary locality information was not provided.",
+  "next_action": "Call back to collect the caller's locality and finalize the booking confirmation.",
+  "extracted_fields": {
+    "phone": "+919876500003",
+    "requested_time": "రేపు ఉదయం 11",
+    "slot": "tomorrow 11 AM"
+  },
+  "facts": {
+    "phone": "+919876500003",
+    "requested_time": "రేపు ఉదయం 11",
+    "slot": "tomorrow 11 AM"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:locality-pending",
+    "custom:service-area",
+    "followup:callback",
+    "intent:booking",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "action:required",
+    "followup:callback",
+    "intent:booking",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:service-area",
+    "custom:locality-pending"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Caller requested immediate confirmation and a booking number, which the agent could not provide."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:42:51.851594Z",
+  "generation_ok": true
+}

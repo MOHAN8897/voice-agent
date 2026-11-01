@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "For two split ACs and one window AC, what will the total come to?", "ts": "2026-10-29T19:28:54.640532Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "For two split ACs, that is one thousand one hundred and ninety eight rupees, and one window AC is four hundred and ninety nine rupees. So, the total comes to one thousand six hundred and ninety seven rupees.", "ts": "2026-10-29T19:28:55.318226Z", "brain_latency_ms": 674}

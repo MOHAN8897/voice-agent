@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "I live in Secunderabad. Can a technician come there?", "ts": "2026-10-29T19:37:50.892644Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Unfortunately, we don't cover Secunderabad right now. Our service areas are limited to Madhapur, Gachibowli, Kondapur, and Kukatpally only.", "ts": "2026-10-29T19:37:51.445042Z", "brain_latency_ms": 555}

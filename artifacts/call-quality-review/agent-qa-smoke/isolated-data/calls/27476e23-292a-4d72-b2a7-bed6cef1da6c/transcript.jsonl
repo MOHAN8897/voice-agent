@@ -1,0 +1,12 @@
+{"seq": 1, "role": "user", "text": "నమస్తే అండి. మీ దగ్గర అలోవెరా జ్యూస్ ఉందా? దాని ప్రైస్ మరియు సైజ్ ఎంత అండి?", "ts": "2026-10-31T12:51:35.435713Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "అవును, మా దగ్గర అలోవెరా జ్యూస్ ఉంది. దీని ధర ₹399 మరియు సైజ్ 500 ml ఉంటుంది.", "ts": "2026-10-31T12:51:37.431512Z"}
+{"seq": 3, "role": "user", "text": "సరేనండి. ఈ అలోవెరా జ్యూస్ ఎలా తీసుకోవాలి? రోజుకి ఎంత డోసేజ్ వాడాలి?", "ts": "2026-10-31T12:51:50.483587Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "రోజుకి ఎంత డోసేజ్ వాడాలి అనే సమాచారం మాకు అందుబాటులో లేదు. దయచేసి దీని వాడకం గురించి అర్హత కలిగిన ఆరోగ్య సంరక్షణ నిపుణులను సంప్రదించండి.", "ts": "2026-10-31T12:51:52.515303Z"}
+{"seq": 5, "role": "user", "text": "Okay, thank you. Actually, I would prefer to continue in English now. Could you please repeat the price of the aloe vera juice?", "ts": "2026-10-31T12:52:35.642148Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "Sure, the aloe vera juice is priced at ₹399 for 500 ml.", "ts": "2026-10-31T12:52:37.311437Z"}
+{"seq": 7, "role": "user", "text": "Okay, got it. Can you also tell me about the ingredients in your hair oil?", "ts": "2026-10-31T12:52:52.438855Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Our Herbal Hair Oil contains Amla, Bhringraj, Hibiscus, and Coconut Oil. It is priced at ₹499 for 200 ml and is meant for routine hair and scalp care.", "ts": "2026-10-31T12:52:54.171788Z"}
+{"seq": 9, "role": "user", "text": "Thank you for that. So, what would be the total price if I order one aloe vera juice and one hair oil together?", "ts": "2026-10-31T12:53:44.989354Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "The aloe vera juice is ₹399 and the hair oil is ₹499, so the total would be ₹898.", "ts": "2026-10-31T12:53:46.913711Z"}
+{"seq": 11, "role": "user", "text": "Alright, thank you so much for the details. That is all I needed to know today. Have a good evening!", "ts": "2026-10-31T12:55:12.332116Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-31T12:55:13.042974Z"}

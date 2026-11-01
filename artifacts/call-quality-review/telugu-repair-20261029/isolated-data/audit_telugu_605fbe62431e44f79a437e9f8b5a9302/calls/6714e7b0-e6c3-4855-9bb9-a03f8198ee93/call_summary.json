@@ -1,0 +1,60 @@
+{
+  "call_id": "6714e7b0-e6c3-4855-9bb9-a03f8198ee93",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller asked about matte-finish visiting cards and pricing. The agent quoted ₹350 for 100 cards with a 100-card minimum. The caller considered this expensive but requested pricing for 200 cards, which the agent quoted at ₹750 total. The caller again noted the price was somewhat high, asked about how to send the design later, and asked whether there would be extra charges. The agent could not confirm extra charges and said the design details could be provided later. The caller then said the current price was acceptable and asked how to proceed with placing an order. The agent requested the caller’s name, quantity, and delivery locality in order to prepare a quote. The call ended before those details were provided and before the order was placed.",
+  "next_action": "Collect the caller’s name, confirm the 200-card quantity and delivery locality, clarify any extra charges, and prepare the quote.",
+  "extracted_fields": {
+    "design": "Caller will provide design details later",
+    "minimum_order": "100 cards",
+    "phone": "+12025550124",
+    "product": "Matte-finish visiting cards",
+    "quantity": "200 cards",
+    "quoted_price": "₹750 total"
+  },
+  "facts": {
+    "design": "Caller will provide design details later",
+    "minimum_order": "100 cards",
+    "phone": "+12025550124",
+    "product": "Matte-finish visiting cards",
+    "quantity": "200 cards",
+    "quoted_price": "₹750 total"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:200-cards",
+    "custom:design-details",
+    "custom:matte-visiting-cards",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "signal:objection",
+    "signal:price_sensitive",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:purchase",
+    "intent:pricing",
+    "signal:ready_to_buy",
+    "signal:price_sensitive",
+    "signal:objection",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards",
+    "custom:200-cards",
+    "custom:design-details"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Caller felt the ₹350 price for 100 cards was too high.",
+    "Caller felt the ₹750 price for 200 cards was somewhat high.",
+    "Extra charges were not confirmed."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:50:17.277291Z",
+  "generation_ok": true
+}

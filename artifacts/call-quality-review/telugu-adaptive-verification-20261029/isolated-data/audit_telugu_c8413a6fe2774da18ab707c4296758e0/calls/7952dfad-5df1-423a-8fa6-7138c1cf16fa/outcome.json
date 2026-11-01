@@ -1,0 +1,127 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, a working professional, first asked for details about Python and SQL/PowerBI courses, including duration, fees, eligibility, and evening or weekend availability. The agent explained that the Python with Data Analytics course lasts 8 weeks, costs ₹8,999 total, and is open to graduates or final-year students with basic computer knowledge. SQL/PowerBI details were unavailable. Python classes were stated to run on weekday evenings from 8:00–9:00 PM or weekend mornings from 10:00 AM–1:00 PM, with no installment option. The caller asked about placement support and job guarantees; the agent described resume building, interview preparation, and job referrals, but clarified that there is no strict job guarantee or salary promise. The caller requested a free demo, provided the name Kiran and email kiran.audit@example.invalid, and preferred an evening batch. The agent asked for qualification and batch details, but did not confirm that the information was recorded or that the demo registration was completed, and also did not restate the course duration when asked again. The caller ended the call after confirming that the questions were clear. The final agent message stated that the caller's details and a request to call again had been recorded, but the caller did not explicitly request a callback, so no callback should be treated as confirmed.",
+  "next_action": "Verify whether Kiran's details and evening-batch free demo request were actually recorded, then contact the caller only if appropriate to confirm registration and provide the missing SQL/PowerBI information.",
+  "extracted_fields": {
+    "alternative_batch": "Weekend morning batch, 10:00 AM–1:00 PM",
+    "batch_preference": "Weekday evening batch, 8:00–9:00 PM",
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "మాధవి గారు",
+    "course_duration": "8 weeks",
+    "course_fee": "₹8,999 total",
+    "demo_request": "Free demo session requested; registration not confirmed",
+    "eligibility": "Any graduate or final-year student with basic computer knowledge",
+    "email": "kiran.audit@example.invalid",
+    "installments": "Not available; full fee payable at once",
+    "job_guarantee": "No strict job guarantee or salary promise",
+    "name": "Kiran",
+    "phone": "+12025550113",
+    "placement_support": "Resume building, interview preparation, and job referrals",
+    "product": "Python with Data Analytics course",
+    "qualification": "Working professional; specific qualification not provided"
+  },
+  "objections": [
+    "SQL/PowerBI course information was unavailable.",
+    "Installment payment was not available.",
+    "The caller could not get confirmation that their details or demo request had been recorded.",
+    "No strict job guarantee or salary promise was available."
+  ],
+  "notes": "The caller expressed positive interest in the Python course and free demo, but the demo arrangement and data capture were not reliably confirmed. The final agent message claimed the details and callback request were recorded, although the transcript does not establish that the caller requested a callback.",
+  "tags": [
+    "intent:information",
+    "intent:demo",
+    "intent:purchase",
+    "followup:schedule_pending",
+    "signal:objection",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-data-analytics",
+    "custom:evening-batch",
+    "custom:sql-powerbi"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:41:56.630923Z",
+  "generation_ok": true,
+  "facts": {
+    "alternative_batch": "Weekend morning batch, 10:00 AM–1:00 PM",
+    "batch_preference": "Weekday evening batch, 8:00–9:00 PM",
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "మాధవి గారు",
+    "course_duration": "8 weeks",
+    "course_fee": "₹8,999 total",
+    "demo_request": "Free demo session requested; registration not confirmed",
+    "eligibility": "Any graduate or final-year student with basic computer knowledge",
+    "email": "kiran.audit@example.invalid",
+    "installments": "Not available; full fee payable at once",
+    "job_guarantee": "No strict job guarantee or salary promise",
+    "name": "Kiran",
+    "phone": "+12025550113",
+    "placement_support": "Resume building, interview preparation, and job referrals",
+    "product": "Python with Data Analytics course",
+    "qualification": "Working professional; specific qualification not provided"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "followup:callback",
+    "followup:schedule_pending",
+    "intent:demo",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "81d0679d-02c7-57a6-b906-8b8a4bcee0cc",
+    "agentId": "4c5270a8-990a-5800-868d-9d685eca9a09",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.96,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

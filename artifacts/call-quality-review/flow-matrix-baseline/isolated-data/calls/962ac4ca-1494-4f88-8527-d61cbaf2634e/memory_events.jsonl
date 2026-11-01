@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-30T10:39:52.400825Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-30T10:39:55.563620Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-30T10:39:56.394810Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-30T10:39:56.403148Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: मैं अभी busy हूँ, मुझे बाद में call करना।\nassistant: ठीक है, मैं समझ गया। जब आप free हों, तब हमें call कर लीजिएगा।\nuser: मुझे नहीं पता, बाद में कभी।\nassistant: ठीक है, कोई बात नहीं। जब भी आपको ठीक लगे, आप call कर लीजिएगा। अगर बाद में कोई और जानकारी चाहिए हो तो बता दीजिएगा।\nuser: ठीक है, bye।\nassistant: समय देने के लिए धन्यवाद। नमस्कार।"}], "applied": true, "validation_errors": []}

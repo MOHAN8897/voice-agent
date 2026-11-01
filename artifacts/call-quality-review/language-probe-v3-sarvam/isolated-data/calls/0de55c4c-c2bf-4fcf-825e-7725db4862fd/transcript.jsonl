@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "ನನ್ನ fridgeಗೆ new compressor ಹಾಕೋಕೆ exact price ಎಷ್ಟು", "ts": "2026-10-29T19:28:46.334799Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Fridge-ಗೆ ಹೊಸ compressor price ಬಗ್ಗೆ exact details phone-ಅಲ್ಲಿ ಹೇಳೋಕೆ ಆಗಲ್ಲ. ನಮ್ಮ technician ಬಂದು inspection ಮಾಡಿದ ಮೇಲೆ actual MRP ಎಷ್ಟಾಗುತ್ತೆ ಅಂತ ಹೇಳ್ತಾರೆ, ಆ inspection charge ₹250 ಇರುತ್ತೆ. ಆದ್ರೆ ನೀವು repair ಮಾಡಿಸಿದ್ರೆ ಆ inspection charge waive off ಆಗುತ್ತೆ.", "ts": "2026-10-29T19:28:47.083026Z", "brain_latency_ms": 750}
+{"seq": 3, "role": "user", "text": "fridge ಹೊಸ compressor total price exact ಆಗಿ ಹೇಳಿ", "ts": "2026-10-29T19:28:47.098089Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಕ್ಷಮಿಸಿ, exact price ಈಗಲೇ ಹೇಳೋಕೆ ಆಗಲ್ಲ. Technician ಬಂದು inspection ಮಾಡಿದ ಮೇಲೆ ಮಾತ್ರ actual MRP ಎಷ್ಟಾಗುತ್ತೆ ಅಂತ ಹೇಳ್ತಾರೆ. ನಿಮ್ಮ area Madhapur, Gachibowli, Kondapur ಅಥವಾ Kukatpally ಒಳಗಡೆ ಬರುತ್ತಾ?", "ts": "2026-10-29T19:28:47.869029Z", "brain_latency_ms": 777}

@@ -1,0 +1,13 @@
+{
+  "facts": {
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "product": "split AC",
+    "caller_name": "శ్రావణి",
+    "email": "sravani.audit@example.invalid"
+  },
+  "preferences": {
+    "confirmation_message": "confirmation message కచ్చితంగా రావాలి"
+  },
+  "important_context": "",
+  "summary": "assistant: అవును, split AC servicing కి five hundred ninety nine rupees అవుతుంది. రేపు technician వచ్చినప్పుడు cooling issue కూడా check చేస్తారు. ఈ slot ని record చేయడానికి మీ పేరు, locality చెప్పండి.\nuser: నా పేరు శ్రావణి, నేను మాదాపూర్ లో ఉంటున్నాను. ఈ cooling issue కూడా check చేస్తారు కదా, మరి రేపు 10 గంటలకి technician వస్తే సరిపోతుందా లేక ఇంకేమైనా details కావాలా?\nassistant: అవును శ్రావణి గారు, రేపు ఉదయం 10 గంటలకి technician వస్తే మీ split AC cooling issue కూడా check చేస్తారు. ఈ slot ని booking record చేయడానికి మీ locality వివరాలు చెప్పండి."
+}

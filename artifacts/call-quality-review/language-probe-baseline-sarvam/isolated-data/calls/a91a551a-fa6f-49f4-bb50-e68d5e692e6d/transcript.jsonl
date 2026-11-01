@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "ಎರಡು split ACಗಳು ಮತ್ತು ಒಂದು window AC service ಮಾಡಿದರೆ total ಎಷ್ಟು?", "ts": "2026-10-29T18:42:53.995178Z", "partial": false}
+{"seq": 2, "role": "user", "text": "ಎರಡು split ಮತ್ತು ಒಂದು window ACಗಳ service charges ಸೇರಿಸಿ total ಹೇಳಿ.", "ts": "2026-10-29T18:42:55.109761Z", "partial": false}

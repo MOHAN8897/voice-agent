@@ -1,0 +1,12 @@
+{"seq": 1, "role": "user", "text": "नमस्ते प्रिया जी। हाँ, बताइए, आपके पास face cream के बारे में क्या है?", "ts": "2026-10-31T14:56:04.699458Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "हमारी NatureVeda Herbal Face Cream ₹599 में 50 ग्राम की आती है। इसमें Neem, Turmeric, और Aloe Vera हैं, जो moisturizing और routine skin care के लिए अच्छी है। बताइए, आपको इसका order करना है या delivery के बारे में जानना है?", "ts": "2026-10-31T14:56:06.516289Z"}
+{"seq": 3, "role": "user", "text": "ठीक है, मैं 2 bottles hair oil और 1 face cream लेना चाहती हूँ, total price कितना हुआ?", "ts": "2026-10-31T14:56:28.378924Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "देखिए, 2 bottles hair oil और 1 face cream का total ₹1497 होगा। Hair oil 499 रुपये per bottle है और face cream 599 रुपये की है। बताइए, order place करना है या delivery details जाननी हैं?", "ts": "2026-10-31T14:56:30.527486Z"}
+{"seq": 5, "role": "user", "text": "ठीक है, फिर आप order confirm कर दीजिए, आगे क्या करना होगा?", "ts": "2026-10-31T14:56:48.445198Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "order confirm करने के लिए मुझे आपका नाम और delivery address चाहिए होगा। आप details बता दीजिए, फिर आगे process कर देते हैं।", "ts": "2026-10-31T14:56:50.573616Z"}
+{"seq": 7, "role": "user", "text": "मेरा नाम लक्ष्मी रेड्डी है और मेरा एड्रेस है फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072।", "ts": "2026-10-31T14:57:05.868699Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "मैंने note कर लिया है। तो confirm कर दूँ — 2 bottles NatureVeda Herbal Hair Oil और 1 NatureVeda Herbal Face Cream, total ₹1497, delivery address flat 302, Sai Residency, Kukatpally, Hyderabad 500072। क्या मैं order place कर दूँ?", "ts": "2026-10-31T14:57:09.284379Z"}
+{"seq": 9, "role": "user", "text": "हाँ, सब सही है, order confirm कर दीजिए।", "ts": "2026-10-31T14:57:27.335664Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "आपका order confirm हो गया है। अब बस delivery के लिए team आपसे जल्दी ही संपर्क करेगी।", "ts": "2026-10-31T14:57:29.395838Z"}
+{"seq": 11, "role": "user", "text": "ठीक है, धन्यवाद।", "ts": "2026-10-31T14:57:37.226878Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "समय देने के लिए धन्यवाद। नमस्कार।", "ts": "2026-10-31T14:57:37.857392Z"}

@@ -1,0 +1,44 @@
+{
+  "call_id": "d920d578-c9bc-4696-a1de-2eecbcee739f",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.94,
+  "summary_te": "",
+  "summary_en": "The caller initially asked for the price of split AC servicing, then corrected the request to window AC servicing and said they wanted it now. The agent quoted a price of ₹499 and twice asked whether the caller wanted to book an appointment. The caller confirmed that window AC service was the intended request, but did not book an appointment and ended the call after saying their questions were finished. No appointment was scheduled.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+12025550138",
+    "preferred_timing": "Now",
+    "product": "window AC service",
+    "quoted_price": "₹499",
+    "service": "Window AC servicing"
+  },
+  "facts": {
+    "phone": "+12025550138",
+    "preferred_timing": "Now",
+    "product": "window AC service",
+    "quoted_price": "₹499",
+    "service": "Window AC servicing"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:window-ac-service",
+    "intent:information",
+    "intent:pricing",
+    "outcome:interested",
+    "sentiment:positive"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:pricing",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:window-ac-service"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T11:18:07.660906Z",
+  "generation_ok": true
+}

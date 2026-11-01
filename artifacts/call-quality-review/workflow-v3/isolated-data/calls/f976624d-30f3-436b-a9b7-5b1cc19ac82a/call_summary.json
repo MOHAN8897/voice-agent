@@ -1,0 +1,35 @@
+{
+  "call_id": "f976624d-30f3-436b-a9b7-5b1cc19ac82a",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 1.0,
+  "summary_te": "",
+  "summary_en": "The caller immediately stated that they had no interest and thanked the agent before ending the call. The agent acknowledged the caller's time and said goodbye. The call concluded with the caller's clear rejection of the offer.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500012"
+  },
+  "facts": {
+    "phone": "+919876500012"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "sentiment:neutral",
+    "intent:information",
+    "signal:objection"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [
+    "Caller explicitly stated they had no interest in the product or service."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:44:05.821213Z",
+  "generation_ok": true
+}

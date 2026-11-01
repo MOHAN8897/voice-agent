@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_name": "Kiran"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: Where is my order? The order ID is FC10234 and it has not come yet.\nassistant: I’m sorry, but I cannot check the live order status over the phone. I can note down your order ID FC10234 for our support team to check and call you back. May I have your name?\nuser: My name is Kiran.\nassistant: I have noted your order ID FC10234 and your name Kiran for our support team. They will check the status and call you back.\nuser: Okay, thanks.\nassistant: Thank you for your time. Goodbye."
+}

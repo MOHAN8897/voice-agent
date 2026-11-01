@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "requested_time": "రేపు 10 గంటలకి",
+    "caller_name": "శ్రావణి",
+    "product": "split AC",
+    "issue": "general service"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: అవును, నేను record చేయించుకుంటాను. నా పేరు శ్రావణి, appliance type split AC, issue general service. ఇంకో విషయం, ఇది కేవలం AC service మాత్రమే, refrigerator repair కాదు. మరి రేపు 10 గంటలకి technician confirm అయిందా?\nassistant: లేదు, technician ఇంకా confirm కాలేదు. మీరు Madhapur లో split AC general service కోసం రేపు ఉదయం 10 గంటలకి appointment కావాలని అడిగారు కదా, ఆ details నేను record చేస్తాను."
+}

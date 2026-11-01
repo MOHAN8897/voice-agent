@@ -1,0 +1,36 @@
+{"seq": 1, "role": "user", "text": "हाँ, मुझे products के बारे में जानना है। क्या face cream में क्या-क्या ingredients हैं?", "ts": "2026-10-31T16:56:59.047047Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "NatureVeda Herbal Face Cream में Neem, Turmeric और Aloe Vera होते हैं। इसकी जानकारी मेरे पास और भी है, बताइए क्या जानना चाहेंगे?", "ts": "2026-10-31T16:57:00.395132Z"}
+{"seq": 3, "role": "user", "text": "नीम और एलोवेरा तो अच्छे हैं, पर ये skin के लिए कैसे काम करता है?", "ts": "2026-10-31T16:57:16.013316Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ये moisturizing और routine skin care के लिए है। आपको कौन सी details चाहिए?", "ts": "2026-10-31T16:57:17.315096Z"}
+{"seq": 5, "role": "user", "text": "अच्छा, moisturizing के लिए ठीक रहेगा। मुझे इसके साथ 2 bottles hair oil भी लेना है, ये कैसे काम करता है?", "ts": "2026-10-31T16:57:31.668939Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "NatureVeda Herbal Hair Oil ₹499 का 200 ml मिलता है, जिसमें Amla, Bhringraj, Hibiscus और Coconut Oil हैं और ये routine hair and scalp care के लिए है। Order place करना हो तो बता दीजिए।", "ts": "2026-10-31T16:57:33.441171Z"}
+{"seq": 7, "role": "user", "text": "अच्छा, hair oil के लिए भी ठीक है। इसका total price कितना होगा?", "ts": "2026-10-31T16:57:51.885482Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Hair oil ₹499 का है, तो 2 bottles का total ₹998 होगा। Face cream का price अलग है। क्या आप इनमें से कोई order place करना चाहते हैं?", "ts": "2026-10-31T16:57:53.957717Z"}
+{"seq": 9, "role": "user", "text": "Face cream का कितना रहेगा?", "ts": "2026-10-31T16:58:05.845071Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "Face cream ₹599 का 50 g मिलता है।", "ts": "2026-10-31T16:58:07.089171Z"}
+{"seq": 11, "role": "user", "text": "ठीक है, तो दोनों मिलाकर total कितना होगा?", "ts": "2026-10-31T16:58:13.674306Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "दोनों मिलाकर total ₹1,597 होगा। Hair oil 2 bottles का ₹998 और face cream का ₹599। Order place करना हो तो बता दीजिए।", "ts": "2026-10-31T16:58:15.350173Z"}
+{"seq": 13, "role": "user", "text": "ठीक है, ये total ठीक लग रहा है। Delivery में कितना time लगेगा?", "ts": "2026-10-31T16:58:29.327304Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "माफ़ कीजिए, इस जानकारी के बारे में मेरे पास अभी details नहीं हैं। Delivery time के बारे में team confirm करेगी।", "ts": "2026-10-31T16:58:31.091919Z"}
+{"seq": 15, "role": "user", "text": "ठीक है, कोई बात नहीं। discount का क्या scene है? कोई offer चल रहा है क्या?", "ts": "2026-10-31T16:58:45.970730Z", "partial": false}
+{"seq": 16, "role": "assistant", "text": "इसकी जानकारी मेरे पास उपलब्ध नहीं है। आपको कौन सी details चाहिए?", "ts": "2026-10-31T16:58:47.143638Z"}
+{"seq": 17, "role": "user", "text": "अच्छा, discount का कोई option नहीं है तो कोई बात नहीं। मैं order करना चाहूँगी।", "ts": "2026-10-31T16:58:58.769630Z", "partial": false}
+{"seq": 18, "role": "assistant", "text": "Order करने के लिए अपना नाम और delivery address बता दीजिए।", "ts": "2026-10-31T16:59:00.507753Z"}
+{"seq": 19, "role": "user", "text": "ठीक है, मेरा नाम लक्ष्मी रेड्डी है।", "ts": "2026-10-31T16:59:08.284642Z", "partial": false}
+{"seq": 20, "role": "assistant", "text": "ठीक है लक्ष्मी रेड्डी, noted। अब अपना delivery address बता दीजिए।", "ts": "2026-10-31T16:59:11.152482Z"}
+{"seq": 21, "role": "user", "text": "Address है Flat 302, Sai Residency, Kukatpally, Hyderabad 500072।", "ts": "2026-10-31T16:59:20.247978Z", "partial": false}
+{"seq": 22, "role": "assistant", "text": "address note कर लिया है। तो एक बार confirm कर लेती हूँ, 2 bottles Herbal Hair Oil और 1 Herbal Face Cream, total ₹1,597, लक्ष्मी रेड्डी के नाम से Flat 302, Sai Residency, Kukatpally, Hyderabad 500072 पर। सही है?", "ts": "2026-10-31T16:59:22.109167Z"}
+{"seq": 23, "role": "user", "text": "हाँ, बिल्कुल सही है।", "ts": "2026-10-31T16:59:38.918609Z", "partial": false}
+{"seq": 24, "role": "assistant", "text": "आपका order confirm हो गया है। Team जल्दी ही delivery के लिए आपसे संपर्क करेगी।", "ts": "2026-10-31T16:59:41.067958Z"}
+{"seq": 25, "role": "user", "text": "ठीक है, तो आगे क्या process है?", "ts": "2026-10-31T16:59:50.333251Z", "partial": false}
+{"seq": 26, "role": "assistant", "text": "ठीक है।", "ts": "2026-10-31T16:59:51.665501Z"}
+{"seq": 27, "role": "user", "text": "ठीक है, लेकिन मुझे अपना mobile number भी confirm करना था, वो है mohansaiteja.99@gmail.com।", "ts": "2026-10-31T16:59:58.822001Z", "partial": false}
+{"seq": 28, "role": "assistant", "text": "Email mohansaiteja.99@gmail.com note कर लिया है।", "ts": "2026-10-31T17:00:00.085694Z"}
+{"seq": 29, "role": "user", "text": "ठीक है, email note हो गया। मेरा mobile number 9876543210 है, ये भी add कर लीजिएगा।", "ts": "2026-10-31T17:00:10.782133Z", "partial": false}
+{"seq": 30, "role": "assistant", "text": "Mobile number भी note कर लिया है।", "ts": "2026-10-31T17:00:12.364813Z"}
+{"seq": 31, "role": "user", "text": "Mobile number note हो गया, तो बस मुझे ये बता दीजिए कि payment कैसे करना होगा?", "ts": "2026-10-31T17:00:22.032369Z", "partial": false}
+{"seq": 32, "role": "assistant", "text": "इसकी जानकारी मेरे पास अभी उपलब्ध नहीं है। Team आपको payment के तरीके के बारे में बता देगी।", "ts": "2026-10-31T17:00:23.317801Z"}
+{"seq": 33, "role": "user", "text": "अच्छा, payment की details team बाद में बता देगी तो कोई बात नहीं। Order के लिए और कुछ जानकारी चाहिए क्या आपको?", "ts": "2026-10-31T17:00:39.419241Z", "partial": false}
+{"seq": 34, "role": "assistant", "text": "नहीं, अभी और कुछ नहीं चाहिए। अगर आगे कोई order करना हो तो बता दीजिए।", "ts": "2026-10-31T17:00:40.707330Z"}
+{"seq": 35, "role": "user", "text": "ठीक है, मैं order confirm करती हूँ।", "ts": "2026-10-31T17:00:49.264507Z", "partial": false}
+{"seq": 36, "role": "assistant", "text": "आपका order पहले ही confirm हो चुका है। Team जल्दी ही delivery के लिए आपसे संपर्क करेगी।", "ts": "2026-10-31T17:00:50.718004Z"}

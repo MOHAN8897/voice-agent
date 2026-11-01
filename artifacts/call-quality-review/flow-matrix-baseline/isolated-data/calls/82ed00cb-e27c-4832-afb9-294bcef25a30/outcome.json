@@ -1,0 +1,40 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call with extreme hostility, immediately labeling the organization as a fraud and insulting the agent. The agent attempted to de-escalate the situation by expressing empathy and asking for details regarding the issue. However, the caller responded with further verbal abuse and refused to engage. Due to the clear and hostile rejection, the call was terminated without reaching any resolution or agreeing on any next steps.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500529"
+  },
+  "objections": [
+    "Claimed the company is a fraud and refused to communicate"
+  ],
+  "notes": "",
+  "tags": [
+    "sentiment:negative",
+    "signal:objection"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:42:09.642513Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500529"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "contact:phone_known",
+    "outcome:not_interested",
+    "sentiment:negative",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

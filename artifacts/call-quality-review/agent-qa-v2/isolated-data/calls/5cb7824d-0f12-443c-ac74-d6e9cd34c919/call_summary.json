@@ -1,0 +1,56 @@
+{
+  "call_id": "5cb7824d-0f12-443c-ac74-d6e9cd34c919",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "एजेंट ने ग्राहक को एलोवेरा जूस की कीमत ₹399 और 500 ml की बोतल के बारे में बताया, और हेयर ऑयल के साथ कुल ₹898 का हिसाब भी दिया। ग्राहक ने अभी ऑर्डर न करने का फैसला किया और कॉल समाप्त कर दी।",
+  "summary_language": "hi-IN",
+  "summary_en": "The agent called the customer to provide details about aloe vera juice and herbal hair oil. They shared that the aloe vera juice costs ₹399 for a 500 ml bottle and that one unit of each product totals ₹898. The customer asked for ingredient information and pricing, which the agent provided, but she declined to place an order at this time. The call ended with the customer thanking the agent and saying goodbye.",
+  "next_action": "No further action required.",
+  "extracted_fields": {
+    "phone": "+919700000015",
+    "price_1": "₹399",
+    "price_2": "₹499",
+    "product_1": "Aloe Vera Juice",
+    "product_2": "Herbal Hair Oil",
+    "size_1": "500 ml",
+    "total": "₹898"
+  },
+  "facts": {
+    "phone": "+919700000015",
+    "price_1": "₹399",
+    "price_2": "₹499",
+    "product_1": "Aloe Vera Juice",
+    "product_2": "Herbal Hair Oil",
+    "size_1": "500 ml",
+    "total": "₹898"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:aloe-vera",
+    "custom:hair-oil",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:aloe-vera",
+    "custom:hair-oil"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [
+    "How should the aloe vera juice be consumed?",
+    "What are the ingredients in the hair oil?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T13:52:05.368619Z",
+  "generation_ok": true
+}

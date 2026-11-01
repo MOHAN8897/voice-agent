@@ -1,0 +1,62 @@
+{
+  "call_id": "90bb06ce-6b40-4b4e-9aac-ebda4d29024f",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "Shravani, who lives in Madhapur, called to book a general service for her split AC and requested a technician visit at 10:00 AM the next day. She provided her email address, sravani.audit@example.invalid, and asked for the appointment and calendar event to be confirmed. The agent stated that the slot was available, the service price was ₹599, and Madhapur was within the service area. The agent also stated that an email confirmation and calendar event had been created. Shravani accepted the ₹599 price and requested final confirmation of the service, location, time, and email details. The agent confirmed the appointment for 30 October from 10:00 AM to 11:00 AM in Madhapur and stated that an email invite was sent. Shravani acknowledged the confirmation and ended the call courteously.\n\nServer check: no confirmed order was recorded for this call, so it was not marked as converted.",
+  "next_action": null,
+  "extracted_fields": {
+    "appointment_date": "30 October",
+    "appointment_time": "10:00 AM-11:00 AM",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "location": "Madhapur",
+    "phone": "+12025550146",
+    "price": "₹599",
+    "service": "Split AC general service"
+  },
+  "facts": {
+    "appointment_date": "30 October",
+    "appointment_time": "10:00 AM-11:00 AM",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "location": "Madhapur",
+    "phone": "+12025550146",
+    "price": "₹599",
+    "service": "Split AC general service"
+  },
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:madhapur",
+    "custom:split-ac-service",
+    "custom:technician-visit",
+    "intent:booking",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:booking",
+    "intent:purchase",
+    "signal:ready_to_buy",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:split-ac-service",
+    "custom:madhapur",
+    "custom:technician-visit"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T16:30:06.791995Z",
+  "generation_ok": true
+}

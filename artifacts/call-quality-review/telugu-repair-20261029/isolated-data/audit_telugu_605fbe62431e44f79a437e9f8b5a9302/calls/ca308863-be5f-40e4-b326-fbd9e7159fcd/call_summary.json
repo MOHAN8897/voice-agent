@@ -1,0 +1,53 @@
+{
+  "call_id": "ca308863-be5f-40e4-b326-fbd9e7159fcd",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Raman called to ask about ordering 200 matte visiting cards and requested pricing and delivery details. The agent quoted ₹700 total for 200 cards, with delivery in Vijayawada within 3 working days after artwork approval; urgent 24-hour delivery would cost an additional ₹150. Raman clarified that he only wanted information about wedding card pricing and was not ordering wedding cards. The agent explained that wedding card pricing depends on design, paper sample, and quantity, so no fixed phone quote was available. Raman confirmed that his name, product, and quantity had been noted. The call ended politely with no order placement or further action agreed.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_name": "రమణ",
+    "name": "Raman",
+    "phone": "+12025550102",
+    "price": "₹700 total",
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "standard_delivery": "Within 3 working days after artwork approval in Vijayawada",
+    "urgent_delivery": "Within 24 hours for an additional ₹150"
+  },
+  "facts": {
+    "caller_name": "రమణ",
+    "name": "Raman",
+    "phone": "+12025550102",
+    "price": "₹700 total",
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "standard_delivery": "Within 3 working days after artwork approval in Vijayawada",
+    "urgent_delivery": "Within 24 hours for an additional ₹150"
+  },
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:matte-visiting-cards",
+    "custom:vijayawada-delivery",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive"
+  ],
+  "tags": [
+    "intent:purchase",
+    "intent:pricing",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards",
+    "custom:vijayawada-delivery"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T16:35:54.791573Z",
+  "generation_ok": true
+}

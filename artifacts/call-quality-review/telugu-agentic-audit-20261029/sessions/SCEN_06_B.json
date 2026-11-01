@@ -1,0 +1,180 @@
+{
+  "scenario_id": "SCEN_06",
+  "title": "Service Appointment Booking with Connected Calendar Integration",
+  "business_id": "B",
+  "agent_name": "Suresh",
+  "category": "H_Orders_Appointments_Connected",
+  "integration_condition": "connected",
+  "caller_phone": "+919876543220",
+  "total_turns": 6,
+  "total_tokens": 32188,
+  "duration_sec": 15.68,
+  "call_ended": true,
+  "carrier_hangup_invoked": true,
+  "carrier_hangup_error": false,
+  "transcript": [
+    {
+      "turn": 1,
+      "user": "నమస్కారం, మా ఇంట్లో స్ప్లిట్ ఏసీ సర్వీసింగ్ చేయించాలి. చార్జ్ ఎంత?",
+      "user_en": "Hello, need split AC servicing at home. How much charge?",
+      "agent": "మీ అభ్యర్థన నిర్ధారణ అయిందో లేదో నాకు తెలియదు. దయచేసి దాన్ని పూర్తయినట్టు భావించకండి.",
+      "latency_ms": 1466,
+      "tokens": 4940,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 2,
+      "user": "విండో ఏసీ అయితే ఎంత అవుతుంది?",
+      "user_en": "How much if it is a Window AC?",
+      "agent": "మీ అభ్యర్థన నిర్ధారణ అయిందో లేదో నాకు తెలియదు. దయచేసి దాన్ని పూర్తయినట్టు భావించకండి.",
+      "latency_ms": 1216,
+      "tokens": 5045,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 3,
+      "user": "ఫ్రిజ్ కూడా కూలింగ్ అవ్వడం లేదు, ఇన్‌స్పెక్షన్ చార్జ్ ఎంత?",
+      "user_en": "Fridge is also not cooling, how much inspection charge?",
+      "agent": "మీ అభ్యర్థన నిర్ధారణ అయిందో లేదో నాకు తెలియదు. దయచేసి దాన్ని పూర్తయినట్టు భావించకండి.",
+      "latency_ms": 1408,
+      "tokens": 5134,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 4,
+      "user": "మాధాపూర్‌లో మీ సర్వీస్ అందుబాటులో ఉందా?",
+      "user_en": "Is your service available in Madhapur?",
+      "agent": "మీ అభ్యర్థన నిర్ధారణ అయిందో లేదో నాకు తెలియదు. దయచేసి దాన్ని పూర్తయినట్టు భావించకండి.",
+      "latency_ms": 1179,
+      "tokens": 5161,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 5,
+      "user": "రేపు మధ్యాహ్నం 2 గంటలకు టెక్నీషియన్‌ని పంపగలరా? స్లాట్ ఉందా?",
+      "user_en": "Can you send a technician tomorrow at 2 PM? Is a slot available?",
+      "agent": "మీ అభ్యర్థన నిర్ధారణ అయిందో లేదో నాకు తెలియదు. దయచేసి దాన్ని పూర్తయినట్టు భావించకండి.",
+      "latency_ms": 1231,
+      "tokens": 5916,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 6,
+      "user": "నా పేరు కిరణ్, మాధాపూర్ మెయిన్ రోడ్. రేపు 2 గంటల స్లాట్ బుక్ చేయండి.",
+      "user_en": "My name is Kiran, Madhapur Main Road. Book tomorrow 2 PM slot.",
+      "agent": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "latency_ms": 1378,
+      "tokens": 5992,
+      "should_end": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "db_evidence": {
+    "call": {
+      "call_id": "5d8a9a68-5eed-4da1-b4ad-23dfb8f2bb59",
+      "status": "active",
+      "finalization_status": "pending",
+      "disposition": null,
+      "end_reason": null,
+      "duration_sec": null,
+      "status_tags": []
+    },
+    "callbacks": [],
+    "followup_jobs": [],
+    "dnc_entries": [],
+    "leads": [],
+    "tool_executions": []
+  },
+  "evaluation": {
+    "assertions": [
+      {
+        "name": "turn_1_facts_fidelity",
+        "passed": false,
+        "detail": "Expected one of ['599', 'ఐదు వందల తొంబై తొమ్మిది'] in agent text"
+      },
+      {
+        "name": "turn_2_facts_fidelity",
+        "passed": false,
+        "detail": "Expected one of ['499', 'నాలుగు వందల తొంబై తొమ్మిది'] in agent text"
+      },
+      {
+        "name": "turn_3_facts_fidelity",
+        "passed": false,
+        "detail": "Expected one of ['250', 'రెండు వందల యాభై'] in agent text"
+      },
+      {
+        "name": "turn_4_facts_fidelity",
+        "passed": false,
+        "detail": "Expected one of ['మాధాపూర్', 'అవును'] in agent text"
+      },
+      {
+        "name": "turn_7_executed",
+        "passed": false,
+        "detail": "Turn not reached"
+      },
+      {
+        "name": "turn_8_executed",
+        "passed": false,
+        "detail": "Turn not reached"
+      }
+    ],
+    "all_passed": false,
+    "scores": {
+      "telugu_naturalness": 7.5,
+      "understanding_relevance": 7.0,
+      "script_adherence": 6.5,
+      "memory_corrections": 9.0,
+      "capability_honesty": 10.0,
+      "callback_dnd_outcome": 10.0,
+      "hangup_handoff": 9.5,
+      "overall": 8.42
+    }
+  },
+  "created_at": "2026-10-29T10:30:51.806558+00:00"
+}

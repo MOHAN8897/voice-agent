@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-29T15:40:06.826519Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T15:40:08.915136Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_name: శ్రావణి | delivery_locality: మాదాపూర్ | product: split AC\n[Context]\nCaller provided contact details in this call."}
+{"turn_seq": 5, "ts": "2026-10-29T15:40:11.477514Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_name: శ్రావణి | delivery_locality: మాదాపూర్ | product: split AC\n[Context]\nCaller provided contact details in this call."}
+{"turn_seq": 7, "ts": "2026-10-29T15:40:13.765082Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: శ్రావణి | delivery_locality: మాదాపూర్ | product: split AC | requested_time: రేపు ఉదయం 10 గంటలకి | caller_email: sravani.audit@example.invalid\n[Context]\nCaller provided contact details in this call. Caller provided contact details in this call."}

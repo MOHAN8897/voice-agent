@@ -1,0 +1,9 @@
+{"turn_seq": 1, "ts": "2026-10-31T13:28:14.500583Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-31T13:28:27.935315Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-31T13:28:43.314524Z", "include_summary": true, "projection": ""}
+{"turn_seq": 7, "ts": "2026-10-31T13:29:05.339379Z", "include_summary": false, "projection": ""}
+{"turn_seq": 9, "ts": "2026-10-31T13:29:24.007902Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1"}
+{"turn_seq": 11, "ts": "2026-10-31T13:29:43.100977Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1"}
+{"turn_seq": 13, "ts": "2026-10-31T13:29:57.361527Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1 | caller_name: లక్ష్మి రెడ్డి"}
+{"turn_seq": 15, "ts": "2026-10-31T13:30:21.769663Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1 | caller_name: లక్ష్మి రెడ్డి | delivery_address: Flat 302, Sai Residency, Kukatpally, Hyderabad 500072"}
+{"turn_seq": 17, "ts": "2026-10-31T13:30:39.159775Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1 | caller_name: లక్ష్మి రెడ్డి | delivery_address: Flat 302, Sai Residency, Kukatpally, Hyderabad 500072"}

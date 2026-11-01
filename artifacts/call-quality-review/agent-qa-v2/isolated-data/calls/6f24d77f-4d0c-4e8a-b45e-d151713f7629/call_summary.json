@@ -1,0 +1,67 @@
+{
+  "call_id": "6f24d77f-4d0c-4e8a-b45e-d151713f7629",
+  "language_callback": {
+    "status": "requested",
+    "kind": "language_switch",
+    "id": "07ef427b-1f1f-4ce7-9aaa-972cd16bf5c8",
+    "caller_language": "hi-IN",
+    "configured_language": "en-IN",
+    "summary": "Caller asked to continue in Hindi; call back in Hindi with the same agent."
+  },
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_language": "en-IN",
+  "summary_en": "The agent called the customer and shared details about several herbal products, including prices for the Aloe Vera Juice. The customer inquired about added sugar and digestive benefits, but the agent explained that this specific information was unavailable. The customer then requested to converse in Hindi and asked for a callback the next morning at 11 AM. The agent agreed to schedule this callback, and the call ended with mutual thanks. Language handoff: Caller asked to continue in Hindi; call back in Hindi with the same agent.",
+  "next_action": "Call back in Hindi with the same agent (Callback needed in another language). No callback time has been booked.",
+  "extracted_fields": {
+    "callback_time": "Tomorrow at 11 AM",
+    "language_preference": "Hindi",
+    "phone": "+919700000019",
+    "preferred_language": "hi-IN",
+    "callback_requested": "true",
+    "requested_language": "hi-IN",
+    "language_switch": "true"
+  },
+  "facts": {
+    "callback_time": "Tomorrow at 11 AM",
+    "language_preference": "Hindi",
+    "phone": "+919700000019",
+    "preferred_language": "hi-IN",
+    "callback_requested": "true",
+    "requested_language": "hi-IN",
+    "language_switch": "true"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "contact:preferred_language",
+    "custom:callback-scheduled",
+    "custom:herbal-products",
+    "followup:callback",
+    "followup:language_switch",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral",
+    "intent:information",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:callback-scheduled"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [
+    "Does the aloe vera juice contain added sugar?",
+    "Does the aloe vera juice help with digestion?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T14:00:02.996592Z",
+  "generation_ok": true
+}

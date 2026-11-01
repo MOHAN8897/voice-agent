@@ -1,0 +1,8 @@
+{"turn_seq": 1, "ts": "2026-10-31T16:22:43.532494Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-31T16:23:02.292946Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-31T16:23:25.301477Z", "include_summary": true, "projection": ""}
+{"turn_seq": 7, "ts": "2026-10-31T16:23:41.709203Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1"}
+{"turn_seq": 9, "ts": "2026-10-31T16:24:04.192934Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1 | delivery_address: Flat 302, Sai Residency, Kukatpally, Hyderabad 500072"}
+{"turn_seq": 11, "ts": "2026-10-31T16:24:19.843785Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1 | delivery_address: Flat 302, Sai Residency, Kukatpally, Hyderabad 500072"}
+{"turn_seq": 13, "ts": "2026-10-31T16:24:35.206484Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1 | delivery_address: Flat 302, Sai Residency, Kukatpally, Hyderabad 500072"}
+{"turn_seq": 15, "ts": "2026-10-31T16:24:51.612605Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1 | delivery_address: Flat 302, Sai Residency, Kukatpally, Hyderabad 500072"}

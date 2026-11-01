@@ -1,0 +1,59 @@
+{
+  "call_id": "b240bef6-5473-4af9-838e-972f65072b21",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller, Ravi Kumar, initiated the call to order 200 matte finish visiting cards. The agent quoted a total price of ₹700, explained the 3-working-day delivery timeline to 12 MG Road, Vijayawada after artwork approval, and confirmed cash on delivery. The caller agreed to the terms and requested to proceed with the order confirmation. The agent summarized the order details, and the caller ended the call after expressing thanks.\n\nServer check: no confirmed order was recorded for this call, so it was not marked as converted.",
+  "next_action": "",
+  "extracted_fields": {
+    "caller_name": "Ravi Kumar",
+    "delivery_address": "12 MG Road, Vijayawada",
+    "name": "Ravi Kumar",
+    "payment_terms": "cash on delivery",
+    "phone": "+919876500004",
+    "price": "₹700",
+    "product": "matte visiting cards",
+    "quantity": "200"
+  },
+  "facts": {
+    "caller_name": "Ravi Kumar",
+    "delivery_address": "12 MG Road, Vijayawada",
+    "name": "Ravi Kumar",
+    "payment_terms": "cash on delivery",
+    "phone": "+919876500004",
+    "price": "₹700",
+    "product": "matte visiting cards",
+    "quantity": "200"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:cash-on-delivery",
+    "custom:visiting-cards",
+    "followup:send_quote",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:purchase",
+    "sentiment:positive",
+    "signal:ready_to_buy",
+    "followup:send_quote",
+    "action:required",
+    "intent:information"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:cash-on-delivery"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:06:23.114833Z",
+  "generation_ok": true
+}

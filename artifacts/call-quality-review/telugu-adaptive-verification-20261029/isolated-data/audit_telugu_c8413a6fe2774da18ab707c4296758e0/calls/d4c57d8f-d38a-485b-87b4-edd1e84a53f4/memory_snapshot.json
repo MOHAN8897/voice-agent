@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "caller_name": "కిరణ్",
+    "email": "kiran.audit@example.invalid",
+    "caller_email": "kiran.audit@example.invalid",
+    "requested_time": "రేపు ఉదయం"
+  },
+  "preferences": {},
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "user: సరేనండి, అర్థమైంది. నా పేరు కిరణ్, నా email kiran.audit@example.invalid. రేపు ఉదయం team review కోసం request pending లో ఉంచండి, నేను wait చేస్తాను.\nassistant: ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇంకేమైనా వివరాలు కావాలా?\nuser: సరేనండి, అర్థమైంది. నా పేరు కిరణ్, email kiran.audit@example.invalid. రేపు ఉదయం team review కోసం request pending లో ఉంచండి, నేను wait చేస్తాను. ఇంకేమీ అవసరం లేదు, thank you.\nassistant: మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+}

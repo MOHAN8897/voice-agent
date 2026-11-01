@@ -1,0 +1,20 @@
+{"seq": 1, "role": "user", "text": "हाँ, मुझे उनके बारे में जानना है। आपका face cream और hair oil का price क्या है?", "ts": "2026-10-31T16:07:16.635455Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "देखिए, Herbal Hair Oil ₹499 में 200 ml मिलता है, और Herbal Face Cream ₹599 में 50 g का है। इसके अलावा हमारे पास Aloe Vera Juice ₹399 और Ashwagandha Capsules ₹699 में भी उपलब्ध हैं। क्या आप इनमें से किसी प्रोडक्ट के बारे में और जानना चाहेंगे?", "ts": "2026-10-31T16:07:18.227326Z"}
+{"seq": 3, "role": "user", "text": "ठीक है, details और price मुझे email कर दीजिए। मेरा email ID है mohansaiteja.99@gmail.com।", "ts": "2026-10-31T16:07:38.858040Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Email भेजने का try किया था, पर अभी connection issue की वजह से नहीं हो पाया। मैं अपनी team को बोल देती हूँ कि वो आपको directly contact करके details भेज दें। क्या मैं ये request note कर लूँ?", "ts": "2026-10-31T16:07:43.963453Z"}
+{"seq": 5, "role": "user", "text": "ठीक है, फिर वो details मुझे email कर दीजिए। क्या आपने email भेज दिया है?", "ts": "2026-10-31T16:08:03.595263Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "नहीं, अभी तक email नहीं भेजा जा सका क्योंकि connection issue आ रहा है। मैं ये request note कर लूँ?", "ts": "2026-10-31T16:08:04.940545Z"}
+{"seq": 7, "role": "user", "text": "अच्छा, ठीक है। क्या face cream अभी stock में है? और Kukatpally में delivery कब तक हो जाएगी?", "ts": "2026-10-31T16:08:19.701340Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Face cream का stock और Kukatpally में delivery कब तक होगी, इसकी जानकारी मेरे पास अभी उपलब्ध नहीं है। मैं आपकी ये request note कर लेती हूँ ताकि team confirm कर सके। क्या मैं इसे save कर दूँ?", "ts": "2026-10-31T16:08:21.972399Z"}
+{"seq": 9, "role": "user", "text": "ठीक है, इसे note कर लीजिए। क्या face cream अभी stock में है और Kukatpally में delivery कब तक होगी?", "ts": "2026-10-31T16:08:43.532197Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "Face cream का stock और Kukatpally में delivery का समय, यह जानकारी मेरे पास अभी उपलब्ध नहीं है। आपकी request save हो गई है, team आपसे संपर्क करके details confirm कर लेगी।", "ts": "2026-10-31T16:08:45.762875Z"}
+{"seq": 11, "role": "user", "text": "ठीक है, team से बात हो जाएगी। एक काम कीजिए, कल सुबह 11 बजे के लिए एक short call book कर दीजिए order place करने के लिए। क्या ये time book हो गया?", "ts": "2026-10-31T16:09:09.438227Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "आपकी request save हो गई है। कल सुबह 11 बजे की callback request भी मैंने team के लिए note कर ली है, वो आपसे संपर्क करके details confirm कर लेंगे।", "ts": "2026-10-31T16:09:11.479905Z"}
+{"seq": 13, "role": "user", "text": "ठीक है, तो कल 11 बजे का call book हो गया है, है ना?", "ts": "2026-10-31T16:09:27.736255Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "हाँ, कल सुबह 11 बजे की callback request मैंने note कर ली है। Team आपसे संपर्क करके order details confirm कर लेगी।", "ts": "2026-10-31T16:09:29.182993Z"}
+{"seq": 15, "role": "user", "text": "ठीक है, तो कल 11 बजे का call confirm हो गया है।", "ts": "2026-10-31T16:09:42.632937Z", "partial": false}
+{"seq": 16, "role": "assistant", "text": "क्या आप अभी कोई order place करना चाहते हैं?", "ts": "2026-10-31T16:09:43.809346Z"}
+{"seq": 17, "role": "user", "text": "नहीं, अभी order place नहीं करना है। बस कल 11 बजे का call confirm हो गया है ना?", "ts": "2026-10-31T16:09:54.865599Z", "partial": false}
+{"seq": 18, "role": "assistant", "text": "हाँ, कल सुबह 11 बजे की callback request मैंने note कर ली है। Team आपसे संपर्क करके details confirm कर लेगी।", "ts": "2026-10-31T16:09:56.551304Z"}
+{"seq": 19, "role": "user", "text": "ठीक है, सब कुछ note हो गया है। मैं कल 11 बजे team के call का wait करूँगी।", "ts": "2026-10-31T16:10:11.924460Z", "partial": false}
+{"seq": 20, "role": "assistant", "text": "ठीक है, आपका callback note कर लिया है। समय देने के लिए धन्यवाद। नमस्कार।", "ts": "2026-10-31T16:10:12.889952Z"}

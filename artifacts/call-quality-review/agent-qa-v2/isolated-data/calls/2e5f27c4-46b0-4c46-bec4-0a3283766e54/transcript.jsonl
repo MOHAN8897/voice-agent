@@ -1,0 +1,12 @@
+{"seq": 1, "role": "user", "text": "Haan, theek hai, bolo. What kind of herbal products do you actually sell?", "ts": "2026-10-31T14:04:00.127198Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "We have Herbal Hair Oil for 499 rupees, Aloe Vera Juice for 399 rupees, Face Cream for 599 rupees, and Ashwagandha Capsules for 699 rupees. Would you like to know more about any of these?", "ts": "2026-10-31T14:04:01.611507Z"}
+{"seq": 3, "role": "user", "text": "Achha, can you tell me what ingredients are actually there in that herbal hair oil?", "ts": "2026-10-31T14:04:22.471607Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "The Herbal Hair Oil contains Amla, Bhringraj, Hibiscus, and Coconut Oil.", "ts": "2026-10-31T14:04:24.731419Z"}
+{"seq": 5, "role": "user", "text": "Achha, and where are these products made?", "ts": "2026-10-31T14:04:35.356614Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "That information is currently unavailable. Which product would you like to explore today?", "ts": "2026-10-31T14:04:36.868388Z"}
+{"seq": 7, "role": "user", "text": "Oh, okay. And are they suitable for all hair types or specifically for hair fall?", "ts": "2026-10-31T14:04:51.386230Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "It is intended for routine hair and scalp care. Would you like to place an order today?", "ts": "2026-10-31T14:04:52.925650Z"}
+{"seq": 9, "role": "user", "text": "Ah, okay. Actually, I am not really interested right now because I already use some other products.", "ts": "2026-10-31T14:05:07.907443Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "No problem at all. I understand. Thank you for your time, and feel free to reach out if you change your mind.", "ts": "2026-10-31T14:05:09.433653Z"}
+{"seq": 11, "role": "user", "text": "Haan, thank you so much, bye-bye.", "ts": "2026-10-31T14:05:21.991982Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-31T14:05:22.738516Z"}

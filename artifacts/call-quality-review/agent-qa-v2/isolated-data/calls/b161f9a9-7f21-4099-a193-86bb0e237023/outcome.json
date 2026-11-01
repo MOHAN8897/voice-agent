@@ -1,0 +1,100 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The agent called the customer to offer details on the NatureVeda Herbal Hair Oil. The customer inquired about the price, ingredients, and weekly application frequency, but the agent could only confirm the price of 499 rupees and the listed components, admitting that the usage frequency was unavailable. After the agent suggested consulting a professional for personalized advice and asked to place an order, the customer explained they were busy at work and requested a callback tomorrow at 6:30 PM on the same number. The agent agreed to the callback and ended the call.",
+  "next_action": "Callback customer tomorrow at 6:30 PM",
+  "extracted_fields": {
+    "callback_time": "tomorrow at 6:30 PM",
+    "ingredients": "Amla, Bhringraj, Hibiscus, Coconut Oil",
+    "phone": "+919700000018",
+    "price": "499 rupees",
+    "product": "NatureVeda Herbal Hair Oil",
+    "volume": "200 ml"
+  },
+  "objections": [
+    "Customer was busy at work and requested a callback instead of continuing the conversation."
+  ],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:herbal-hair-oil"
+  ],
+  "unanswered_questions": [
+    "How many times per week should the herbal hair oil be applied?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T13:58:02.602499Z",
+  "generation_ok": true,
+  "summary_language": "en-IN",
+  "facts": {
+    "callback_time": "tomorrow at 6:30 PM",
+    "ingredients": "Amla, Bhringraj, Hibiscus, Coconut Oil",
+    "phone": "+919700000018",
+    "price": "499 rupees",
+    "product": "NatureVeda Herbal Hair Oil",
+    "volume": "200 ml"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:herbal-hair-oil",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "4ba574bc-f2ad-4dbc-b65a-c96244605d48",
+    "agentId": "d3143c95-348a-5b09-9df1-28739f9a6213",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 60,
+    "band": "warm",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "callback_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,41 @@
+{
+  "call_id": "284a5f04-8e3e-4398-8a26-0f4a3cfb03eb",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller requested to book an appointment for tomorrow at 11 AM and immediately asked for a booking number and confirmation. The agent explained that the booking could not be confirmed until the front desk verified the caller's name, exact date, and problem, and requested this information. The caller agreed to provide the details by saying ' , thanks,' but ultimately ended the call without sharing their name or the specific problem. As a result, no booking was completed, and the agent restated that confirmation is pending front desk verification.",
+  "next_action": "Agent to wait for the caller to provide their name and problem details for front desk verification.",
+  "extracted_fields": {
+    "date": "31 October",
+    "phone": "+919876500015",
+    "slot": "tomorrow at 11 AM"
+  },
+  "facts": {
+    "date": "31 October",
+    "phone": "+919876500015",
+    "slot": "tomorrow at 11 AM"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:appointment-booking",
+    "followup:callback",
+    "intent:booking",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:booking",
+    "followup:callback",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:appointment-booking"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:33:56.762634Z",
+  "generation_ok": true
+}

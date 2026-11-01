@@ -1,0 +1,36 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller clearly requested that this number never be called again and stated that they do not want any calls from the business permanently. The agent acknowledged the request, thanked the caller, and ended the call. No further action was discussed.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+12025550115"
+  },
+  "objections": [],
+  "notes": "Permanent do-not-call request.",
+  "tags": [
+    "signal:do_not_call",
+    "sentiment:negative"
+  ],
+  "custom_tags": [],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:34:52.670173Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+12025550115"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "contact:phone_known",
+    "outcome:not_interested",
+    "sentiment:negative"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

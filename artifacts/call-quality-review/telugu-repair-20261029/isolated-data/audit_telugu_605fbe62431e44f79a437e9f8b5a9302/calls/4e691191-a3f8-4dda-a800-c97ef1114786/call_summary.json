@@ -1,0 +1,70 @@
+{
+  "call_id": "4e691191-a3f8-4dda-a800-c97ef1114786",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.86,
+  "summary_te": "",
+  "summary_en": "Shravani requested servicing for her split AC in Madhapur tomorrow at 10:00 AM and asked whether the technician would also inspect a cooling issue. The agent quoted a service price of ₹599 and said the next-day 10:00 AM slot was available and that the cooling issue would be checked. Shravani provided her name, locality, and email address, and repeatedly requested a definite confirmation message after booking. She objected to the price, expressed frustration that the agent repeatedly asked for Madhapur despite it already being stated, and raised concern that her email was not repeated clearly. The agent said the details were recorded and that the team would process them, but could not guarantee a confirmation message. The transcript does not confirm that the booking was completed or that the technician appointment was definitively scheduled. The call ended with the caller still expecting processing and confirmation.",
+  "next_action": "Confirm whether the booking for tomorrow at 10:00 AM was successfully scheduled, verify the email address, and send or arrange the requested confirmation message.",
+  "extracted_fields": {
+    "caller_name": "Shravani",
+    "email": "sravani.audit@example.invalid",
+    "issue": "Cooling issue inspection requested",
+    "location": "Madhapur",
+    "phone": "+12025550111",
+    "product": "split AC",
+    "quoted_price": "₹599",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "service": "Split AC servicing"
+  },
+  "facts": {
+    "caller_name": "Shravani",
+    "email": "sravani.audit@example.invalid",
+    "issue": "Cooling issue inspection requested",
+    "location": "Madhapur",
+    "phone": "+12025550111",
+    "product": "split AC",
+    "quoted_price": "₹599",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "service": "Split AC servicing"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:cooling-issue",
+    "custom:split-ac-service",
+    "followup:callback",
+    "intent:booking",
+    "intent:pricing",
+    "outcome:callback_required",
+    "sentiment:frustrated",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:booking",
+    "intent:pricing",
+    "followup:callback",
+    "action:required",
+    "signal:objection",
+    "sentiment:frustrated"
+  ],
+  "custom_tags": [
+    "custom:split-ac-service",
+    "custom:cooling-issue",
+    "custom:tomorrow-10am"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Objected to the ₹599 service price and questioned the value.",
+    "Frustrated that the agent repeatedly asked for the locality already provided.",
+    "Concerned that the email address was not repeated clearly.",
+    "Insisted on receiving a definite confirmation message."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:43:13.314069Z",
+  "generation_ok": true
+}

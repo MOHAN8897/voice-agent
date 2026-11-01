@@ -1,0 +1,129 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "Kiran, a working professional, called to ask about Python and SQL/PowerBI courses, including duration, fees, eligibility, evening or weekend batches, installment options, placement support, prerequisites, live projects, and a possible demo or discussion. The agent explained that only the Python with Data Analytics course is currently offered; it lasts 8 weeks, costs ₹8,999 total, is open to graduates and final-year students, and does not require prior coding. Available batches are weekday evenings from 8:00–9:00 PM and weekends from 10:00 AM–1:00 PM. Installments are not available. The course includes 100% placement assistance through resume building, interview preparation, and job referrals, but there is no strict job or salary guarantee. The agent could not confirm that the enquiry, demo request, or live-project question could be forwarded to the team, and initially stated that no follow-up could be guaranteed. Kiran provided his name, email, and phone number and requested that the enquiry be noted and a callback be considered. The call ended with the agent stating that the details and callback request had been recorded and thanking him.",
+  "next_action": "Review the recorded enquiry and contact Kiran at 9876543210 regarding the requested demo or discussion, live-project details, prerequisites, and any further course information.",
+  "extracted_fields": {
+    "batch_options": "Weekday evenings 8:00–9:00 PM; weekends 10:00 AM–1:00 PM",
+    "callback_phone": "9876543210",
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "course_duration": "8 weeks",
+    "course_interest": "Python with Data Analytics; initially also asked about SQL/PowerBI",
+    "eligibility": "Graduates or final-year students",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999 total",
+    "installments": "Not available",
+    "job_guarantee": "No strict job or salary guarantee",
+    "name": "Kiran",
+    "phone": "9876543210",
+    "phone_number": "9876543210",
+    "placement_support": "Resume building, interview preparation, and job referrals",
+    "prerequisites": "No prior coding required",
+    "product": "Python మరియు SQL/PowerBI courses",
+    "requested_follow_up": "Demo session or discussion; callback requested"
+  },
+  "objections": [
+    "Installments are unavailable.",
+    "There is no strict job or salary guarantee.",
+    "The agent could not initially confirm that the enquiry or follow-up request could be forwarded to the team."
+  ],
+  "notes": "Caller also asked about live projects and prerequisites; prerequisites were addressed in the initial course explanation, but live-project details were not provided. Contact details and callback request were stated to be recorded at the end.",
+  "tags": [
+    "intent:information",
+    "intent:demo",
+    "followup:callback",
+    "followup:send_info",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:python-data-analytics",
+    "custom:evening-weekend-batches",
+    "custom:placement-support"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:07:59.388466Z",
+  "generation_ok": true,
+  "facts": {
+    "batch_options": "Weekday evenings 8:00–9:00 PM; weekends 10:00 AM–1:00 PM",
+    "callback_phone": "9876543210",
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "course_duration": "8 weeks",
+    "course_interest": "Python with Data Analytics; initially also asked about SQL/PowerBI",
+    "eligibility": "Graduates or final-year students",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999 total",
+    "installments": "Not available",
+    "job_guarantee": "No strict job or salary guarantee",
+    "name": "Kiran",
+    "phone": "9876543210",
+    "phone_number": "9876543210",
+    "placement_support": "Resume building, interview preparation, and job referrals",
+    "prerequisites": "No prior coding required",
+    "product": "Python మరియు SQL/PowerBI courses",
+    "requested_follow_up": "Demo session or discussion; callback requested"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:python-data-analytics",
+    "followup:callback",
+    "followup:send_info",
+    "intent:demo",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "b7d26254-312d-4ae0-ab81-aea1f94c4a24",
+    "agentId": "4c5270a8-990a-5800-868d-9d685eca9a09",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.96,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

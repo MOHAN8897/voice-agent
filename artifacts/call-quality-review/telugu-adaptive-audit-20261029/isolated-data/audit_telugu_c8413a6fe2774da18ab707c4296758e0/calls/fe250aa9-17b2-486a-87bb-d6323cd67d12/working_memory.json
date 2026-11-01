@@ -1,0 +1,20 @@
+{
+  "facts": {
+    "product": "wedding cards",
+    "quantity": "200",
+    "payment_method": "Advance payment",
+    "email": "ramesh.audit@example.invalid",
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "రమేష్",
+    "delivery_locality": "విజయవాడ",
+    "phone_number": "9876543210",
+    "callback_phone": "9876543210",
+    "phone": "9876543210"
+  },
+  "preferences": {
+    "finish": "matte finish",
+    "contact_time": "ఎప్పుడు contact అవ్వాలో ఒక time"
+  },
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "user: నా phone number 9876543210. మరి నా email ramesh.audit@example.invalid కి confirmation message పంపలేరు కదా, team contact అవ్వడానికి ఎంత time పడుతుంది?\nassistant: Email confirmation పంపించే option నాకు లేదు. Team మిమ్మల్ని ఎప్పుడు contact అవ్వాలో ఒక time చెప్తారా?\nuser: Team నన్ను ఎప్పుడు contact అవ్వాలో ఒక time చెప్పండి. అలాగే నా details అన్నీ correct గా record అయ్యాయా లేదా ఒకసారి confirm చేయండి.\nassistant: మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+}

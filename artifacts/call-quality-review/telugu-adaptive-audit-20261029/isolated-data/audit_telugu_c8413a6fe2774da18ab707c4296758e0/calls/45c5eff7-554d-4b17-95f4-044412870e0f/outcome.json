@@ -1,0 +1,74 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.86,
+  "summary_te": "",
+  "summary_en": "The caller first requested that this number never be called again because they do not like receiving calls. They then stated that they need a technician for split AC service in Madhapur tomorrow at around 10:00 AM. The agent only thanked the caller and ended the call without confirming the service request, scheduling a technician, or addressing the do-not-call request. No follow-up was agreed, and the call ended with a brief farewell.",
+  "next_action": "Honor the do-not-call request and, if service requests can still be processed through another channel, arrange or confirm a technician for split AC service in Madhapur tomorrow around 10:00 AM without calling this number.",
+  "extracted_fields": {
+    "contact_preference": "Do not call this number again",
+    "location": "Madhapur",
+    "phone": "+12025550111",
+    "requested_slot": "Tomorrow around 10:00 AM",
+    "service": "Split AC service"
+  },
+  "objections": [
+    "Caller does not want to receive calls on this number."
+  ],
+  "notes": "The caller expressed a clear do-not-call preference while also requesting service. The request was not confirmed or scheduled during the call.",
+  "tags": [
+    "intent:booking",
+    "intent:support",
+    "followup:site_visit",
+    "signal:do_not_call",
+    "action:required",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:split-ac",
+    "custom:madhapur",
+    "custom:morning-slot"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:07:32.825707Z",
+  "generation_ok": true,
+  "facts": {
+    "contact_preference": "Do not call this number again",
+    "location": "Madhapur",
+    "phone": "+12025550111",
+    "requested_slot": "Tomorrow around 10:00 AM",
+    "service": "Split AC service"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:madhapur",
+    "custom:split-ac",
+    "intent:booking",
+    "intent:support",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "f45bfa44-2120-4011-b09c-304ec9a97ed7",
+    "agentId": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 0,
+    "band": "disqualified",
+    "disposition": "callback_required",
+    "confidence": 0.86,
+    "components": [],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "caller_opt_out"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

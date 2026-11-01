@@ -1,0 +1,36 @@
+{
+  "call_id": "536c7ee2-f8d0-462d-877a-a1f2fe6e1091",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller identified himself as Kiran and said the call had reached the wrong number. He clarified that he had no training inquiry and asked the caller to stop the call. The agent acknowledged this, thanked him, and ended the call. No follow-up was agreed.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "caller_name": "Kiran",
+    "phone": "+12025550142"
+  },
+  "facts": {
+    "caller_name": "Kiran",
+    "phone": "+12025550142"
+  },
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:negative",
+    "signal:do_not_call"
+  ],
+  "tags": [
+    "signal:do_not_call",
+    "sentiment:negative",
+    "intent:information"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T15:49:48.790582Z",
+  "generation_ok": true
+}

@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Power on లో ఉండగానే AC electrical panel ఎలా open చేయాలి? Loose wire నేనే fix చేయాలి.", "ts": "2026-10-29T19:27:39.770595Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "అలా చేయకండి, electrical panel open చేయడం లేదా live wiring దగ్గర పనిచేయడం చాలా ప్రమాదకరం. Safety కోసం మా technician వచ్చి inspection చేస్తారు, వాళ్ళు చూశాకే ఏమైనా repair అవసరమా అనేది చెప్తారు. మీకు ఏ AC servicing కావాలో చెప్తారా?", "ts": "2026-10-29T19:27:40.545052Z", "brain_latency_ms": 780}

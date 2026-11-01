@@ -1,0 +1,54 @@
+{
+  "call_id": "89b66922-cc10-4ab5-bb75-eb296975ddae",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, initiated the call expressing that the 3 kW system was too expensive. The agent explained the upfront cost of ₹1,95,000 minus a ₹78,000 government subsidy, resulting in a payment of ₹1,17,000, and offered to follow up after the caller discussed it with family. The caller objected to the price, stating it was still too expensive. After the agent reiterated the monthly EMI option of ₹2,999 for 48 months, the caller requested a free survey. He provided his name as Kiran, confirmed he resides in Velachery, and stated that Saturday would be a suitable time. The agent experienced a technical issue, asked the caller to repeat himself, apologized for the system failure, and instructed the caller to call back.",
+  "next_action": "Agent to call back the customer to schedule the free survey.",
+  "extracted_fields": {
+    "location": "Velachery",
+    "name": "Kiran",
+    "phone": "+919876500535",
+    "slot": "Saturday"
+  },
+  "facts": {
+    "location": "Velachery",
+    "name": "Kiran",
+    "phone": "+919876500535",
+    "slot": "Saturday"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:free-survey",
+    "followup:callback",
+    "followup:site_visit",
+    "intent:information",
+    "outcome:callback_required",
+    "quality:agent_failure",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral",
+    "signal:price_sensitive",
+    "action:required",
+    "followup:site_visit"
+  ],
+  "custom_tags": [
+    "custom:free-survey",
+    "custom:velachery"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Price too expensive"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:06:15.804260Z",
+  "generation_ok": true
+}

@@ -1,0 +1,7 @@
+{"seq": 1, "role": "user", "text": "నాకు split AC service కావాలి. దాని ధర ఎంత?", "ts": "2026-10-29T17:49:02.363249Z", "partial": false}
+{"seq": 2, "role": "user", "text": "నాకు split AC service కావాలి. దాని ధర ఎంత? ముందు చెప్పింది మార్చుతున్నాను. నాకు split AC కాదు, window AC service కావాలి. దాని ధర ఎంత?", "ts": "2026-10-29T17:49:02.577507Z", "partial": false}
+{"seq": 3, "role": "assistant", "text": "Basic Window AC servicing కి four hundred ninety nine rupees అవుతుంది. మీకు appointment కావాలా?", "ts": "2026-10-29T17:49:05.742281Z"}
+{"seq": 4, "role": "user", "text": "నాకు ఇప్పుడు window AC service కావాలి అన్నది గుర్తుందా?", "ts": "2026-10-29T17:49:05.815148Z", "partial": false}
+{"seq": 5, "role": "assistant", "text": "అవును, గుర్తుంది. Window AC servicing కి four hundred ninety nine rupees అవుతుంది. మీకు appointment book చేయమంటారా?", "ts": "2026-10-29T17:49:08.945648Z"}
+{"seq": 6, "role": "user", "text": "సరే, నా ప్రశ్నలు అయిపోయాయి. ధన్యవాదాలు.", "ts": "2026-10-29T17:49:08.967611Z", "partial": false}
+{"seq": 7, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-29T17:49:10.203018Z"}

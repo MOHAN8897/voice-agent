@@ -1,0 +1,18 @@
+{
+  "facts": {
+    "caller_name": "మాధవి గారు",
+    "product": "Python course",
+    "email": "kiran.audit@example.invalid",
+    "caller_email": "kiran.audit@example.invalid",
+    "qualification": "B.Com",
+    "phone_number": "9876543210",
+    "callback_phone": "9876543210",
+    "phone": "9876543210"
+  },
+  "preferences": {
+    "requested_time": "evening లేదా weekend batches",
+    "batch_preference": "Weekend batch"
+  },
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "user: సరే మాధవి గారు, నా contact number 9876543210. మరి ఈ course complete అయ్యాక guaranteed job ఇస్తామని ఏమైనా promise చేస్తున్నారా? లేక అది కూడా placement assistance లోనే cover అవుతుందా?\nassistant: Strict గా చెప్పాలంటే మేము job guarantee లేదా salary promise ఇవ్వము. Resume building, interview preparation, job referrals తో one hundred% placement assistance మాత్రమే ఇస్తాం. ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు."
+}

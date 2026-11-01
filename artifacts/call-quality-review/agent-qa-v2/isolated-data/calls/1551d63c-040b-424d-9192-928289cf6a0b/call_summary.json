@@ -1,0 +1,52 @@
+{
+  "call_id": "1551d63c-040b-424d-9192-928289cf6a0b",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "வணக்கம் லட்சுமி, நாங்கள் நேச்சர்வேதா ஹெர்பல்ஸ் நிறுவனத்தில் இருந்து பேசுகிறோம். நீங்கள் ஹேர் ஆயில் விலையை கேட்டீர்கள், அதற்கு 200 மில்லி பாட்டிலின் விலை 499 ரூபாய் என்று கூறினோம். டெலிவரி கட்டணம் குறித்த விவரம் எங்கள் குழுவிடம் இல்லை என்று தெரிவித்தோம். டெலிவரி கட்டணத்தை உறுதி செய்யுமாறு நீங்கள் கேட்டீர்கள், ஆனால் டெலிவரி கட்டணம் குறித்து எங்களுக்கு தகவல் இல்லை என்று மீண்டும் கூறினோம். டெலிவரி கட்டணம் இல்லாமல் அனுப்புவீர்களா என்று கேட்டீர்கள், ஆனால் அது குறித்து எங்களால் உறுதியாக கூற முடியவில்லை. டெலிவரி கட்டணம் பற்றிய விவரங்கள் தெரியாததால், பின்னர் பார்ப்பதாக நீங்கள் கூறினீர்கள், மேலும் உங்களுக்கு வரும் அழைப்புகள் பிடிக்கவில்லை என்பதால் உங்கள் எண்ணை டூ நாட் கால் பட்டியலில் சேர்க்கும்படி கேட்டுக்கொண்டீர்கள், அதன் பிறகு அழைப்பு முடிந்தது.",
+  "summary_language": "ta-IN",
+  "summary_en": "An agent from NatureVeda Herbal called the customer, Lakshmi, to discuss products. Lakshmi inquired about the price of the 200 ml hair oil, which the agent quoted at 499 rupees. When Lakshmi asked about delivery charges, the agent stated that this information was not currently available. Lakshmi requested that the item be sent without delivery charges, but the agent could not confirm this detail. Lakshmi then expressed frustration with receiving calls and asked to be added to a do-not-call list, which the agent agreed to honor, ending the call.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "caller_name": "லட்சுமி",
+    "phone": "+919700000025",
+    "price": "499 rupees",
+    "product": "NatureVeda Herbal Hair Oil 200 ml"
+  },
+  "facts": {
+    "caller_name": "லட்சுமி",
+    "phone": "+919700000025",
+    "price": "499 rupees",
+    "product": "NatureVeda Herbal Hair Oil 200 ml"
+  },
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:delivery-charges",
+    "custom:hair-oil",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "tags": [
+    "sentiment:neutral",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:hair-oil",
+    "custom:delivery-charges"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Agent could not provide delivery charge details."
+  ],
+  "unanswered_questions": [
+    "What are the delivery charges?",
+    "Can the product be delivered without delivery charges?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T14:14:57.052868Z",
+  "generation_ok": true
+}

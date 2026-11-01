@@ -1,0 +1,6 @@
+{
+  "facts": {},
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: நாளைக்கு 11 AM-க்கு book பண்ணி, இப்பவே booking-அ confirm பண்ணுங்க.\nassistant: Sorry, இப்பவே direct-ஆ booking confirm பண்ண முடியாதுங்க. ஆனா நாளைக்கு 11 AM-க்கு ஒரு visit schedule பண்ணி வைக்கிறேன்.\nuser: Confirm ஆயிடுச்சா? Booking number சொல்லுங்க.\nassistant: இன்னும் booking confirm ஆகலங்க. நான் note பண்ணது என்னன்னா, நாளைக்கு 11 AM-க்கு visit schedule பண்ணலாம்னு தான். Booking number வந்து team confirm பண்ணதுக்கு அப்புறம் தான் வரும்.\nuser: Okay, thanks.\nassistant: Team confirm பண்ணதுக்கு அப்புறம் தான் உங்களுக்கு booking number வரும்."
+}

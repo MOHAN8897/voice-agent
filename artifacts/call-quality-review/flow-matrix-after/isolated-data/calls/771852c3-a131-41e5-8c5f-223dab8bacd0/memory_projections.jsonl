@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-30T11:04:17.118942Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-30T11:04:20.876497Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nrequested_time: कल सुबह 11 बजे"}
+{"turn_seq": 5, "ts": "2026-10-30T11:04:24.168341Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nrequested_time: कल सुबह 11 बजे | caller_name: किरण"}
+{"turn_seq": 7, "ts": "2026-10-30T11:04:25.184905Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nrequested_time: कल सुबह 11 बजे | caller_name: किरण"}

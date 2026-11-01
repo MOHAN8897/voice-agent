@@ -1,0 +1,48 @@
+{
+  "call_id": "726fbea3-c88f-45bc-a1ee-a7be8f8c323e",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller asked for pricing for 100 visiting cards. The agent explained that 100 normal-paper cards cost ₹200, matte-finish cards cost ₹350, and the minimum order is 100 cards. The caller clarified that they wanted visiting cards rather than mugs and asked what preference had been recorded; the agent recorded visiting cards and asked them to choose between normal paper and matte finish. The caller said their questions had been answered and ended the call without selecting a finish or placing an order.",
+  "next_action": null,
+  "extracted_fields": {
+    "matte_finish_price": "₹350 per 100 cards",
+    "minimum_order": "100 cards",
+    "normal_paper_price": "₹200 per 100 cards",
+    "phone": "+12025550128",
+    "product": "Visiting cards",
+    "quantity": "100 cards"
+  },
+  "facts": {
+    "matte_finish_price": "₹350 per 100 cards",
+    "minimum_order": "100 cards",
+    "normal_paper_price": "₹200 per 100 cards",
+    "phone": "+12025550128",
+    "product": "Visiting cards",
+    "quantity": "100 cards"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:100-card-order",
+    "custom:visiting-cards",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive"
+  ],
+  "tags": [
+    "intent:pricing",
+    "intent:purchase",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:100-card-order"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:54:13.958075Z",
+  "generation_ok": true
+}

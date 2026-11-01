@@ -1,0 +1,220 @@
+{
+  "schema": "audit_telugu_c8413a6fe2774da18ab707c4296758e0",
+  "source_case": "A_callback_dispatch_repeat",
+  "checks": [
+    {
+      "name": "live_Telugu_six_hour_time_resolved",
+      "pass": true
+    },
+    {
+      "name": "six_hours_anchored_to_caller_turn",
+      "pass": true
+    },
+    {
+      "name": "no_early_dispatch",
+      "pass": true
+    },
+    {
+      "name": "dispatch_at_due_time",
+      "pass": true
+    },
+    {
+      "name": "repeat_worker_does_not_redial",
+      "pass": true
+    },
+    {
+      "name": "DND_prevents_callback_dispatch",
+      "pass": true
+    }
+  ],
+  "before": {
+    "id": "0a3c1c60-79f1-472c-8074-8e99a5c75683",
+    "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "origin_key": "callback:3f5c702f-0b92-4d19-908f-7444e721da80",
+    "source_id": "b7cf57e8-31b5-499e-bc1a-a10d67179a1e",
+    "kind": "callback",
+    "phone": "+12025550133",
+    "status": "planning",
+    "reason": "resolve_requested_time",
+    "payload": {
+      "requestText": "నమస్తే, నేను రమేష్. నాకు విజిటింగ్ కార్డ్స్ కావాలి, matte finish అయితే బాగుంటుంది. మీరు నాకు కచ్చితంగా ఆరు గంటల తర్వాత ఇదే నంబర్ కి కాల్ చేస్తారా? ఒకసారి కన్ఫర్మ్ చేయండి.",
+      "requestedWhen": "",
+      "recentTurns": [
+        {
+          "role": "user",
+          "text": "నమస్తే, నేను రమేష్. నాకు విజిటింగ్ కార్డ్స్ కావాలి, matte finish అయితే బాగుంటుంది. మీరు నాకు కచ్చితంగా ఆరు గంటల తర్వాత ఇదే నంబర్ కి కాల్ చేస్తారా? ఒకసారి కన్ఫర్మ్ చేయండి.",
+          "at": "2026-10-29T11:15:55.612239Z"
+        }
+      ],
+      "callbackId": "3f5c702f-0b92-4d19-908f-7444e721da80",
+      "timezone": "Asia/Kolkata",
+      "llm": {
+        "provider": "openai",
+        "model": "gpt-5.6-luna",
+        "options": {},
+        "purpose": "configured_post_call_analysis"
+      },
+      "requestedAt": "2026-10-29T11:15:55.892858+00:00"
+    },
+    "due_at": "2026-10-29 11:15:55.892858+00:00",
+    "expires_at": "2026-11-05 11:15:55.892858+00:00",
+    "attempts": 0,
+    "lease_token": null,
+    "lease_until": null,
+    "control_id": null,
+    "authorized_by": "de625f35-524c-4767-a252-106cb34cdfae",
+    "billing_tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "created_at": "2026-10-29 11:15:55.894151+00:00",
+    "updated_at": "2026-10-29 11:15:55.894151+00:00"
+  },
+  "planned": {
+    "id": "0a3c1c60-79f1-472c-8074-8e99a5c75683",
+    "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "origin_key": "callback:3f5c702f-0b92-4d19-908f-7444e721da80",
+    "source_id": "b7cf57e8-31b5-499e-bc1a-a10d67179a1e",
+    "kind": "callback",
+    "phone": "+12025550133",
+    "status": "scheduled",
+    "reason": "requested_time_resolved",
+    "payload": {
+      "requestText": "నమస్తే, నేను రమేష్. నాకు విజిటింగ్ కార్డ్స్ కావాలి, matte finish అయితే బాగుంటుంది. మీరు నాకు కచ్చితంగా ఆరు గంటల తర్వాత ఇదే నంబర్ కి కాల్ చేస్తారా? ఒకసారి కన్ఫర్మ్ చేయండి.",
+      "requestedWhen": "",
+      "recentTurns": [
+        {
+          "role": "user",
+          "text": "నమస్తే, నేను రమేష్. నాకు విజిటింగ్ కార్డ్స్ కావాలి, matte finish అయితే బాగుంటుంది. మీరు నాకు కచ్చితంగా ఆరు గంటల తర్వాత ఇదే నంబర్ కి కాల్ చేస్తారా? ఒకసారి కన్ఫర్మ్ చేయండి.",
+          "at": "2026-10-29T11:15:55.612239Z"
+        }
+      ],
+      "callbackId": "3f5c702f-0b92-4d19-908f-7444e721da80",
+      "timezone": "Asia/Kolkata",
+      "llm": {
+        "provider": "openai",
+        "model": "gpt-5.6-luna",
+        "options": {},
+        "purpose": "configured_post_call_analysis"
+      },
+      "requestedAt": "2026-10-29T11:15:55.892858+00:00"
+    },
+    "due_at": "2026-10-29 17:15:55.612239+00:00",
+    "expires_at": "2026-11-05 11:15:55.892858+00:00",
+    "attempts": 0,
+    "lease_token": null,
+    "lease_until": null,
+    "control_id": null,
+    "authorized_by": "de625f35-524c-4767-a252-106cb34cdfae",
+    "billing_tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "created_at": "2026-10-29 11:15:55.894151+00:00",
+    "updated_at": "2026-10-29 11:18:37.180381+00:00"
+  },
+  "resolved_delay_seconds": 21600.0,
+  "after_dispatch": {
+    "id": "0a3c1c60-79f1-472c-8074-8e99a5c75683",
+    "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "origin_key": "callback:3f5c702f-0b92-4d19-908f-7444e721da80",
+    "source_id": "b7cf57e8-31b5-499e-bc1a-a10d67179a1e",
+    "kind": "callback",
+    "phone": "+12025550133",
+    "status": "dialed",
+    "reason": "dial_accepted",
+    "payload": {
+      "requestText": "నమస్తే, నేను రమేష్. నాకు విజిటింగ్ కార్డ్స్ కావాలి, matte finish అయితే బాగుంటుంది. మీరు నాకు కచ్చితంగా ఆరు గంటల తర్వాత ఇదే నంబర్ కి కాల్ చేస్తారా? ఒకసారి కన్ఫర్మ్ చేయండి.",
+      "requestedWhen": "",
+      "recentTurns": [
+        {
+          "role": "user",
+          "text": "నమస్తే, నేను రమేష్. నాకు విజిటింగ్ కార్డ్స్ కావాలి, matte finish అయితే బాగుంటుంది. మీరు నాకు కచ్చితంగా ఆరు గంటల తర్వాత ఇదే నంబర్ కి కాల్ చేస్తారా? ఒకసారి కన్ఫర్మ్ చేయండి.",
+          "at": "2026-10-29T11:15:55.612239Z"
+        }
+      ],
+      "callbackId": "3f5c702f-0b92-4d19-908f-7444e721da80",
+      "timezone": "Asia/Kolkata",
+      "llm": {
+        "provider": "openai",
+        "model": "gpt-5.6-luna",
+        "options": {},
+        "purpose": "configured_post_call_analysis"
+      },
+      "requestedAt": "2026-10-29T11:15:55.892858+00:00",
+      "dispatchSequence": 1,
+      "dispatches": [
+        "2026-10-29T17:15:55.612239+00:00"
+      ]
+    },
+    "due_at": "2026-10-29 17:15:55.612239+00:00",
+    "expires_at": "2026-11-05 11:15:55.892858+00:00",
+    "attempts": 1,
+    "lease_token": null,
+    "lease_until": null,
+    "control_id": "audit-scheduled-control",
+    "authorized_by": "de625f35-524c-4767-a252-106cb34cdfae",
+    "billing_tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "created_at": "2026-10-29 11:15:55.894151+00:00",
+    "updated_at": "2026-10-29 17:15:55.612239+00:00"
+  },
+  "dnd_job": {
+    "id": "72283a9f-3fc7-4a94-bce1-13bee220c5f1",
+    "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "origin_key": "audit-dnd-0f72690888564227bec229b70e9d442a",
+    "source_id": "b7cf57e8-31b5-499e-bc1a-a10d67179a1e",
+    "kind": "callback",
+    "phone": "+12025550133",
+    "status": "suppressed",
+    "reason": "do_not_call",
+    "payload": {},
+    "due_at": "2026-10-29 17:15:55.612239+00:00",
+    "expires_at": "2026-10-30 17:15:55.612239+00:00",
+    "attempts": 0,
+    "lease_token": null,
+    "lease_until": null,
+    "control_id": null,
+    "authorized_by": "de625f35-524c-4767-a252-106cb34cdfae",
+    "billing_tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "created_at": "2026-10-29 11:18:40.635996+00:00",
+    "updated_at": "2026-10-29 17:15:55.612239+00:00"
+  },
+  "outbound_mock_calls": 1,
+  "journal": [
+    {
+      "callback_id": "3f5c702f-0b92-4d19-908f-7444e721da80",
+      "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+      "user_id": null,
+      "original_call_id": "b7cf57e8-31b5-499e-bc1a-a10d67179a1e",
+      "original_attempt_id": null,
+      "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+      "to_e164": "+12025550133",
+      "from_e164": null,
+      "dial_request_id": "requested:b7cf57e8-31b5-499e-bc1a-a10d67179a1e",
+      "mode": "requested",
+      "status": "requested",
+      "provider": null,
+      "provider_call_control_id": null,
+      "error": null,
+      "created_at": "2026-10-29 11:15:55.883440+00:00",
+      "updated_at": "2026-10-29 11:15:55.883440+00:00"
+    },
+    {
+      "callback_id": "44c463a2-99ec-4baf-9477-fee6ed85cf74",
+      "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+      "user_id": "de625f35-524c-4767-a252-106cb34cdfae",
+      "original_call_id": "b7cf57e8-31b5-499e-bc1a-a10d67179a1e",
+      "original_attempt_id": null,
+      "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+      "to_e164": "+12025550133",
+      "from_e164": null,
+      "dial_request_id": "fu:0a3c1c60-79f1-472c-8074-8e99a5c75683:1",
+      "mode": "scheduled",
+      "status": "dialed",
+      "provider": null,
+      "provider_call_control_id": "audit-scheduled-control",
+      "error": null,
+      "created_at": "2026-10-29 11:18:40.612288+00:00",
+      "updated_at": "2026-10-29 11:18:40.619287+00:00"
+    }
+  ],
+  "all_pass": true
+}

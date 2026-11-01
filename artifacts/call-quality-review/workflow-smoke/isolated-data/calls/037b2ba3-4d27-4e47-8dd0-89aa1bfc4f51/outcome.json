@@ -1,0 +1,33 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.0,
+  "summary_te": "",
+  "summary_en": "Automatic summary generation failed. Transcript review: User: దయచేసి ఈ number కి మళ్ళీ ఎప్పుడూ call చేయకండి. నా number ని మీ list నుంచి తీసేయండి. Assistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+919876500002"
+  },
+  "facts": {
+    "phone": "+919876500002"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "outcome:not_interested",
+    "signal:do_not_call"
+  ],
+  "tags": [],
+  "custom_tags": [],
+  "objections": [],
+  "notes": "Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quota', 'param': None, 'code': 'credit_bala",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T20:02:46.285038Z",
+  "generation_ok": false,
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

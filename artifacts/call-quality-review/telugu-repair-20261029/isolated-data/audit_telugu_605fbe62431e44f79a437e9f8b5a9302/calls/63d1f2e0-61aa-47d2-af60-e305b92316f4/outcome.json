@@ -1,0 +1,77 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller, Sravani, requested general servicing for a split AC at her home in Madhapur and asked for a technician visit the next day at 10:00 AM. The agent quoted ₹599 and initially stated that no inspection fee would apply, while replacement parts would be charged separately at actual MRP after technician inspection. The caller then asked whether GST was extra, how appointment confirmation would be sent, how long spare-part replacement would take, whether itemized and separate parts bills would be provided, and whether the service included any warranty or guarantee. The agent repeatedly said these details were unavailable and did not confirm or book the appointment. The caller became frustrated, said she could not decide without the information, and ended the call. No appointment or follow-up was confirmed.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_name": "Sravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "inspection_fee": "No extra inspection fee stated",
+    "locality": "Madhapur",
+    "phone": "+12025550113",
+    "preferred_slot": "Tomorrow at 10:00 AM",
+    "quoted_service_price": "₹599",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "service": "Split AC general service",
+    "spare_parts_pricing": "Charged separately at actual MRP after inspection"
+  },
+  "objections": [
+    "GST inclusion was not clarified",
+    "Appointment confirmation method was not clarified",
+    "Spare-part replacement time was not clarified",
+    "Itemized billing and separate spare-parts billing were not clarified",
+    "Warranty or guarantee terms were not clarified",
+    "Caller could not decide without these details"
+  ],
+  "notes": "The working memory incorrectly listed the caller name as Suresh; the caller explicitly identified herself as Sravani. The agent did not confirm booking or provide the requested clarifications.",
+  "tags": [
+    "intent:booking",
+    "intent:pricing",
+    "signal:objection",
+    "sentiment:frustrated",
+    "sentiment:negative"
+  ],
+  "custom_tags": [
+    "custom:split-ac-service",
+    "custom:madhapur",
+    "custom:gst-clarification"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:46:37.729971Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_name": "Sravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "inspection_fee": "No extra inspection fee stated",
+    "locality": "Madhapur",
+    "phone": "+12025550113",
+    "preferred_slot": "Tomorrow at 10:00 AM",
+    "quoted_service_price": "₹599",
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "service": "Split AC general service",
+    "spare_parts_pricing": "Charged separately at actual MRP after inspection"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:gst-clarification",
+    "custom:madhapur",
+    "custom:split-ac-service",
+    "intent:booking",
+    "intent:pricing",
+    "outcome:not_interested",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

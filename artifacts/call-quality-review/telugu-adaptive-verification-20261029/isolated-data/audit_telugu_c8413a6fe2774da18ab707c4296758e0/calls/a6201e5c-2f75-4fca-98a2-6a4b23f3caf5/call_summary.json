@@ -1,0 +1,75 @@
+{
+  "call_id": "a6201e5c-2f75-4fca-98a2-6a4b23f3caf5",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.93,
+  "summary_te": "",
+  "summary_en": "The caller, Shravani, requested general servicing for a split AC in Madhapur and asked about the service fee, inspection fee, replacement-part pricing, and what the servicing covers. The agent quoted ₹599 for servicing and ₹250 for inspection, explaining that the inspection fee would be waived if the technician performed a repair; replacement parts would be charged at actual MRP after inspection. A visit window for October 30 from 10:00 AM to 6:00 PM was mentioned, and the caller requested the 10:00 AM slot, but the agent repeatedly stated that the appointment was not confirmed. The agent also said exact service details could only be explained after technician inspection. The caller provided the name Shravani, Madhapur as the location, and the email sravani.audit@example.invalid. The call ended with the caller saying the questions were clear and ending the call; the agent asked when to call again, and the caller did not provide a time, but the agent stated that the details and callback request had been recorded. No appointment confirmation or service completion was established.",
+  "next_action": "Confirm whether the October 30, 10:00 AM technician slot is available, then contact the caller and provide the appointment status and general servicing scope.",
+  "extracted_fields": {
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "inspection_fee": "₹250, waived if a repair is performed",
+    "location": "Madhapur",
+    "phone": "+12025550109",
+    "product": "Split AC",
+    "replacement_parts": "Actual MRP after technician inspection",
+    "requested_slot": "October 30 at 10:00 AM",
+    "requested_time": "రేపు October 30th ఉదయం 10 గంటల",
+    "service_fee": "₹599",
+    "service_requested": "General servicing"
+  },
+  "facts": {
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "inspection_fee": "₹250, waived if a repair is performed",
+    "location": "Madhapur",
+    "phone": "+12025550109",
+    "product": "Split AC",
+    "replacement_parts": "Actual MRP after technician inspection",
+    "requested_slot": "October 30 at 10:00 AM",
+    "requested_time": "రేపు October 30th ఉదయం 10 గంటల",
+    "service_fee": "₹599",
+    "service_requested": "General servicing"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "followup:callback",
+    "followup:schedule_pending",
+    "followup:site_visit",
+    "intent:booking",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "action:required",
+    "followup:callback",
+    "followup:schedule_pending",
+    "intent:booking",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:split-ac-service",
+    "custom:madhapur",
+    "custom:october-30-slot"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Appointment confirmation remained unclear.",
+    "Caller did not receive an exact explanation of what general servicing covers.",
+    "Replacement-part pricing could not be quoted before inspection."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T15:40:57.820385Z",
+  "generation_ok": true
+}

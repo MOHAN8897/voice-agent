@@ -1,0 +1,61 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "एजेंट ने ग्राहक को NatureVeda Herbal Hair Oil के बारे में जानकारी दी। ग्राहक ने सामग्री और डिलीवरी शुल्क के बारे में पूछा, लेकिन एजेंट के पास डिलीवरी शुल्क की जानकारी नहीं थी। ग्राहक ने अभी ऑर्डर नहीं करने का फैसला किया और दोबारा संपर्क न करने का अनुरोध किया, जिसके बाद एजेंट ने कॉल समाप्त कर दी।",
+  "summary_en": "The agent called the customer and explained the features of NatureVeda Herbal Hair Oil priced at ₹499 for 200 ml. The customer inquired about natural ingredients and delivery charges, but the agent did not have the delivery information. Although the customer initially declined to place an order, she ultimately requested to be removed from the calling list due to receiving too many calls. The agent acknowledged the request, and the call ended politely.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+919700000009",
+    "price": "₹499",
+    "product": "NatureVeda Herbal Hair Oil",
+    "volume": "200 ml"
+  },
+  "objections": [
+    "The customer requested to be removed from the calling list."
+  ],
+  "notes": null,
+  "tags": [
+    "signal:do_not_call",
+    "sentiment:neutral",
+    "intent:information",
+    "action:required",
+    "followup:callback",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:herbal-hair-oil",
+    "custom:delivery-inquiry"
+  ],
+  "unanswered_questions": [
+    "Are there extra delivery charges?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T14:35:30.285069Z",
+  "generation_ok": true,
+  "summary_language": "hi-IN",
+  "facts": {
+    "phone": "+919700000009",
+    "price": "₹499",
+    "product": "NatureVeda Herbal Hair Oil",
+    "volume": "200 ml"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:delivery-inquiry",
+    "custom:herbal-hair-oil",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

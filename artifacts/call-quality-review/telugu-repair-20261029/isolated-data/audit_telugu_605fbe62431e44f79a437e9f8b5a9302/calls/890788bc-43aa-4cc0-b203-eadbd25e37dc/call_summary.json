@@ -1,0 +1,67 @@
+{
+  "call_id": "890788bc-43aa-4cc0-b203-eadbd25e37dc",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller, Shravani, requested general servicing for a split AC in Madhapur, explicitly clarifying that no refrigerator repair was needed. She asked for a technician visit tomorrow around 10:00 AM and was informed that Madhapur is covered and the service charge is ₹599, including the technician visit. Replacement parts, if required, would cost extra at actual MRP after inspection. The caller agreed to the ₹599 charge and provided her name, appliance type, and issue for recording. The technician appointment was not confirmed during the call; the team would review the details and provide an update. The caller requested a confirmation message once the technician was confirmed, but the agent explained that they could not directly send one and that an update would come after team review. The call ended politely with the caller accepting the pending update and saying goodbye.",
+  "next_action": "Team should review and confirm the technician appointment for tomorrow at 10:00 AM in Madhapur, then provide the caller with an update.",
+  "extracted_fields": {
+    "appliance_type": "Split AC",
+    "caller_name": "Shravani",
+    "issue": "general service",
+    "location": "Madhapur, Hyderabad",
+    "parts_policy": "Replacement parts extra at actual MRP after inspection",
+    "phone": "+12025550110",
+    "product": "split AC",
+    "requested_slot": "Tomorrow around 10:00 AM",
+    "requested_time": "రేపు 10 గంటలకి",
+    "service_charge": "₹599",
+    "service_requested": "General service"
+  },
+  "facts": {
+    "appliance_type": "Split AC",
+    "caller_name": "Shravani",
+    "issue": "general service",
+    "location": "Madhapur, Hyderabad",
+    "parts_policy": "Replacement parts extra at actual MRP after inspection",
+    "phone": "+12025550110",
+    "product": "split AC",
+    "requested_slot": "Tomorrow around 10:00 AM",
+    "requested_time": "రేపు 10 గంటలకి",
+    "service_charge": "₹599",
+    "service_requested": "General service"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:split-ac-service",
+    "followup:callback",
+    "followup:schedule_pending",
+    "followup:site_visit",
+    "intent:booking",
+    "intent:purchase",
+    "outcome:callback_required",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:booking",
+    "intent:purchase",
+    "followup:schedule_pending",
+    "action:required",
+    "signal:ready_to_buy",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:split-ac-service",
+    "custom:madhapur",
+    "custom:tomorrow-10am"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:41:46.657105Z",
+  "generation_ok": true
+}

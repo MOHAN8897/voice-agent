@@ -1,0 +1,47 @@
+{
+  "call_id": "112f39e4-e112-4c1d-abe7-932a2378dd4c",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "வணக்கம், அந்த ஹெர்பல் ஹேர் ஆயிலின் விலை என்ன என்று வாடிக்கையாளர் கேட்டார். ஏஜென்ட் 200 மில்லி பாட்டிலின் விலை 499 ரூபாய் என்று கூறினார், மேலும் அதன் பொருட்கள் பற்றியும் விளக்கினார். ஆனால், தினமும் பயன்படுத்தலாமா அல்லது வாரத்திற்கு இரண்டு முறை பயன்படுத்தலாமா என்ற கேள்விக்கு ஏஜென்ட் தன்னிடம் தகவல் இல்லை என்றும், குழுவினர் தெரிவிப்பார்கள் என்றும் கூறினார். வாடிக்கையாளர் தற்போது அலுவலகத்தில் பிஸியாக இருப்பதாகக் கூறி, நாளை மாலை 6:30 மணிக்கு அதே எண்ணிற்கு மீண்டும் அழைக்கக் கோரினார். ஏஜென்ட் அழைப்பைத் திரும்பச் செய்வதாகக் குறித்துக்கொண்டு அழைப்பை முடித்தார்.",
+  "summary_language": "ta-IN",
+  "summary_en": "The agent called the customer to share product details, and the customer inquired about the price of an herbal hair oil. The agent provided the price of 499 rupees for the 200 ml bottle and described its ingredients. When the customer asked about the recommended daily usage frequency, the agent stated they did not have that information available. The customer, who was busy at the office, requested a callback for tomorrow at 6:30 PM. The agent agreed to schedule this callback before ending the call.",
+  "next_action": "Callback the customer at 6:30 PM tomorrow.",
+  "extracted_fields": {
+    "callback_time": "Tomorrow at 6:30 PM",
+    "phone": "+919700000026",
+    "product": "Herbal Hair Oil"
+  },
+  "facts": {
+    "callback_time": "Tomorrow at 6:30 PM",
+    "phone": "+919700000026",
+    "product": "Herbal Hair Oil"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:callback-requested",
+    "custom:herbal-hair-oil",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:herbal-hair-oil",
+    "custom:callback-requested"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [
+    "Can this be used daily or only twice a week?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T14:16:15.967783Z",
+  "generation_ok": true
+}

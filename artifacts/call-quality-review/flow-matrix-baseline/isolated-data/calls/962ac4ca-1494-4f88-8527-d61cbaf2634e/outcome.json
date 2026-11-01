@@ -1,0 +1,40 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller stated they were currently busy and did not want to be contacted at the moment. The agent acknowledged this and suggested the caller reach out when they were free. The caller expressed uncertainty about calling back later and ultimately said goodbye, ending the call.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500522"
+  },
+  "objections": [
+    "Caller is busy and requested not to be called now"
+  ],
+  "notes": "",
+  "tags": [
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:39:58.554327Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500522"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,862 @@
+{
+  "scenario": {
+    "id": "A_carrier_failure",
+    "business": "A",
+    "kind": "carrier_failure",
+    "integration": "none",
+    "policy": "review",
+    "max_turns": 5,
+    "goal": "Ask the visiting-card minimum order, then one relevant follow-up. After answers clearly say that is all you need and goodbye. Do not request any follow-up call."
+  },
+  "agent": {
+    "id": "A",
+    "key": "printing",
+    "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "name": "Sri Krishna Digital Prints",
+    "agent_name": "Kavitha",
+    "role": "sales",
+    "industry": "printing",
+    "brief": "Agent name Kavitha. Company name Sri Krishna Digital Prints.\nOutbound and inbound customer inquiries in Telugu.\nWe print visiting cards: normal paper visiting cards cost 200 rupees for 100 cards,\nmatte finish cards cost 350 rupees for 100 cards. Minimum order quantity 100 cards.\nWedding invitation cards are customized: pricing depends on design, paper sample and quantity, no fixed price over the phone.\nFlex banners: normal flex 15 rupees per square foot, star flex 20 rupees per square foot.\nDelivery in Vijayawada takes 3 working days after design artwork approval; urgent 24-hour delivery is extra 150 rupees.\nPayment: Cash on delivery accepted for orders up to 1000 rupees; 50% advance payment required for orders above 1000 rupees.\nNo online payment or credit card processing on phone call.\nOffice hours Monday to Saturday 9:30 AM to 8:00 PM, Sunday closed.\nGoal: answer customer questions on cards, banners and pricing; understand their requirement.\nIf interested, take preferred name, quantity and delivery locality for a quote or order request.\nDo not force details before answering questions.\nCustomer refusing visiting cards may still want flex banners or wedding cards.\nNever claim an order is paid or dispatched without artwork approval and design confirmation.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Kavitha",
+      "company_name": "Sri Krishna Digital Prints",
+      "role": "Sales and customer enquiries",
+      "permitted_next_steps": "Collect customer name, item type, quantity and delivery locality in Vijayawada to submit an internal quote/order request. Explain that artwork approval is required before printing.",
+      "payment_rules": "Cash on delivery for orders up to 1000 rupees; 50% advance for orders above 1000 rupees. No online payment collection on call.",
+      "delivery_details": "Local delivery in Vijayawada takes 3 working days after artwork approval. Urgent 24-hour delivery is extra 150 rupees.",
+      "wedding_cards": "Customized quotation only based on design and paper sample. No fixed price on phone.",
+      "visiting_cards": "Standard 200 rupees for 100 cards; Matte finish 350 rupees for 100 cards. Minimum order 100 cards.",
+      "forbidden_actions": "Never confirm external courier shipment or take card payment on phone. Never guarantee delivery without artwork approval."
+    },
+    "user_id": "de625f35-524c-4767-a252-106cb34cdfae",
+    "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e"
+  },
+  "call_id": "e8a965c4-6761-44cb-a8c0-2f2080331386",
+  "session_id": "adaptive-2b0b6b0221da42bf8759a2fecb29aacb",
+  "phone": "+12025550125",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_8649a3d49b8f",
+  "turn_index": 3,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నమస్తే Kavitha, నాకు visiting cards కావాలి. Matte finish అయితే బాగుంటుంది. ముందుగా minimum order ఎంత ఉంటుందో చెప్పగలరా?",
+        "intends_end": false,
+        "intent": "Ask for the minimum order quantity for visiting cards",
+        "elapsed_s": 0.657
+      },
+      "spoken": "Matte finish cards కోసం minimum order one hundred cards ఉంటుంది. one hundred cards కి three hundred fifty rupees అవుతుంది. మీకు ఎన్ని cards కావాలో చెప్తారా?",
+      "elapsed_s": 1.375,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "Kavitha",
+          "product": "visiting cards",
+          "finish": "Matte"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        339,
+        340,
+        341
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "Matte finish cards కోసం minimum order one hundred cards ఉంటుంది. one hundred cards కి three hundred fifty rupees అవుతుంది. మీకు ఎన్ని cards కావాలో చెప్తారా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5171,
+            "output_tokens": 36,
+            "cached_tokens": 2080,
+            "total_tokens": 5207
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": null
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 2,
+      "caller": {
+        "utterance": "ప్రస్తుతం నాకు 250 cards కావాలి. దీనికి ఏమైనా extra charges ఉంటాయా?",
+        "intends_end": false,
+        "intent": "Ask for additional charges on a 250-card order",
+        "elapsed_s": 0.516
+      },
+      "spoken": "Extra charges గురించి నాకు సమాచారం లేదు. మీరు proceed అవ్వాలనుకుంటే, మీ పేరు చెప్తారా?",
+      "elapsed_s": 1.312,
+      "memory_before": {
+        "facts": {
+          "caller_name": "Kavitha",
+          "product": "visiting cards",
+          "finish": "Matte"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "Kavitha",
+          "product": "visiting cards",
+          "finish": "Matte",
+          "quantity": "250"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        343,
+        344,
+        345
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "Extra charges గురించి నాకు సమాచారం లేదు. మీరు proceed అవ్వాలనుకుంటే, మీ పేరు చెప్తారా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5237,
+            "output_tokens": 19,
+            "cached_tokens": 4448,
+            "total_tokens": 5256
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": null
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 3,
+      "caller": {
+        "utterance": "సరే, నా పేరు రమేష్. నేను నా email ID ramesh.audit@example.invalid ద్వారా designs తర్వాత పంపిస్తాను, ప్రస్తుతానికి ఇంతే చాలు, goodbye.",
+        "intends_end": true,
+        "intent": "Provide name and consent to email designs, then conclude the call",
+        "elapsed_s": 0.641
+      },
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 1.078,
+      "memory_before": {
+        "facts": {
+          "caller_name": "Kavitha",
+          "product": "visiting cards",
+          "finish": "Matte",
+          "quantity": "250"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "visiting cards",
+          "finish": "Matte",
+          "quantity": "250",
+          "caller_email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call.",
+        "summary": "assistant: Matte finish cards కోసం minimum order one hundred cards ఉంటుంది. one hundred cards కి three hundred fifty rupees అవుతుంది. మీకు ఎన్ని cards కావాలో చెప్తారా?\nuser: ప్రస్తుతం నాకు 250 cards కావాలి. దీనికి ఏమైనా extra charges ఉంటాయా?\nassistant: Extra charges గురించి నాకు సమాచారం లేదు. మీరు proceed అవ్వాలనుకుంటే, మీ పేరు చెప్తారా?\nuser: సరే, నా పేరు రమేష్. నేను నా email ID ramesh.audit@example.invalid ద్వారా designs తర్వాత పంపిస్తాను, ప్రస్తుతానికి ఇంతే చాలు, goodbye.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "projection_log": null,
+      "request_indexes": [],
+      "done": [
+        {
+          "done": true,
+          "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "end_call": {
+            "should_end": true,
+            "reason": "goodbye",
+            "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+            "contact_preference": "end_call"
+          },
+          "finish_reason": "rule_close",
+          "usage": {},
+          "memory_update": {
+            "operations": []
+          },
+          "memory_parse_failed": false,
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "closing",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "Matte finish cards కోసం minimum order one hundred cards ఉంటుంది. one hundred cards కి three hundred fifty rupees అవుతుంది. మీకు ఎన్ని cards కావాలో చెప్తారా?",
+      "at": 103754.437
+    },
+    {
+      "turn": 2,
+      "text": "Extra charges గురించి నాకు సమాచారం లేదు. మీరు proceed అవ్వాలనుకుంటే, మీ పేరు చెప్తారా?",
+      "at": 103756.296
+    },
+    {
+      "turn": 3,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 103757.031
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "Matte finish cards కోసం minimum order one hundred cards ఉంటుంది. one hundred cards కి three hundred fifty rupees అవుతుంది. మీకు ఎన్ని cards కావాలో చెప్తారా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5171,
+        "output_tokens": 36,
+        "cached_tokens": 2080,
+        "total_tokens": 5207
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "done": true,
+      "text": "Extra charges గురించి నాకు సమాచారం లేదు. మీరు proceed అవ్వాలనుకుంటే, మీ పేరు చెప్తారా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5237,
+        "output_tokens": 19,
+        "cached_tokens": 4448,
+        "total_tokens": 5256
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "done": true,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "end_call": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      },
+      "finish_reason": "rule_close",
+      "usage": {},
+      "memory_update": {
+        "operations": []
+      },
+      "memory_parse_failed": false,
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "Kavitha"
+          },
+          {
+            "op": "set_fact",
+            "key": "product",
+            "value": "visiting cards"
+          },
+          {
+            "op": "set_fact",
+            "key": "finish",
+            "value": "Matte"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "transcript": "నమస్తే Kavitha, నాకు visiting cards కావాలి. Matte finish అయితే బాగుంటుంది. ముందుగా minimum order ఎంత ఉంటుందో చెప్పగలరా?",
+      "at": 103754.453
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "250"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "transcript": "ప్రస్తుతం నాకు 250 cards కావాలి. దీనికి ఏమైనా extra charges ఉంటాయా?",
+      "at": 103756.312
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      },
+      "transcript": "సరే, నా పేరు రమేష్. నేను నా email ID ramesh.audit@example.invalid ద్వారా designs తర్వాత పంపిస్తాను, ప్రస్తుతానికి ఇంతే చాలు, goodbye.",
+      "at": 103757.0
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 3,
+      "at": 103757.031
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 103758.078,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": false
+    },
+    {
+      "turn": 3,
+      "at": 103759.125,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [
+    {
+      "kind": "state_after_failed_ack",
+      "status": "active",
+      "phase": "closing"
+    }
+  ],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 103754.484
+    },
+    {
+      "turn_seq": 3,
+      "at": 103756.328
+    },
+    {
+      "turn_seq": 5,
+      "at": 103757.062
+    }
+  ],
+  "started_at": "2026-10-29T11:10:29.661198+00:00",
+  "errors": [],
+  "brain_checksum": "e13acafd95972aee7bb5fb38e469acc564a37d73b8c900459c3eb77a6c514fa1",
+  "runtime_checksum": "a17be14db31846c43a2d1387b18289d4d71c3d8e1ee7b54160095d4b275af6dc",
+  "available_tools": [
+    "SAVE_ENQUIRY"
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "new_lead",
+    "disposition_confidence": 0.95,
+    "summary_te": "",
+    "summary_en": "The caller asked about ordering matte-finish visiting cards, specifically the minimum order quantity and pricing. The agent explained that the minimum order is 100 cards at ₹350 and asked for the required quantity. The caller said they currently need 250 cards and asked whether extra charges would apply. The agent could not confirm extra charges and requested the caller’s name. The caller provided the name Ramesh and the email address ramesh.audit@example.invalid, stating that designs would be sent later and that nothing more was needed for now. The call ended politely without an order being placed or a follow-up appointment being scheduled.",
+    "next_action": "Confirm any extra charges for 250 matte-finish cards and follow up if appropriate; await the caller’s designs by email.",
+    "extracted_fields": {
+      "caller_email": "ramesh.audit@example.invalid",
+      "caller_name": "రమేష్",
+      "email": "ramesh.audit@example.invalid",
+      "finish": "Matte",
+      "minimum_order": "100 cards",
+      "name": "Ramesh",
+      "phone": "+12025550125",
+      "price_for_minimum_order": "₹350",
+      "product": "Visiting cards",
+      "quantity": "250",
+      "quantity_requested": "250 cards"
+    },
+    "objections": [
+      "Extra charges for 250 cards were unknown and not confirmed."
+    ],
+    "notes": "Caller indicated designs would be sent later by email. No purchase was completed.",
+    "tags": [
+      "intent:pricing",
+      "intent:information",
+      "followup:send_info",
+      "signal:price_sensitive"
+    ],
+    "custom_tags": [
+      "custom:matte-finish",
+      "custom:visiting-cards",
+      "custom:250-cards"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T11:10:40.331620Z",
+    "generation_ok": true,
+    "facts": {
+      "caller_email": "ramesh.audit@example.invalid",
+      "caller_name": "రమేష్",
+      "email": "ramesh.audit@example.invalid",
+      "finish": "Matte",
+      "minimum_order": "100 cards",
+      "name": "Ramesh",
+      "phone": "+12025550125",
+      "price_for_minimum_order": "₹350",
+      "product": "Visiting cards",
+      "quantity": "250",
+      "quantity_requested": "250 cards"
+    },
+    "disclosure_status": null,
+    "contact_preference": "end_call",
+    "status_tags": [
+      "action:required",
+      "contact:email_known",
+      "contact:name_known",
+      "contact:phone_known",
+      "custom:matte-finish",
+      "custom:visiting-cards",
+      "followup:send_info",
+      "intent:information",
+      "intent:pricing",
+      "outcome:new_lead",
+      "signal:objection",
+      "signal:price_sensitive"
+    ],
+    "lead": {
+      "leadId": "4e8ea751-d1cc-4c26-8817-e25d0d521380",
+      "agentId": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+      "stage": "new",
+      "action": "created"
+    },
+    "lead_assessment": {
+      "score": 35,
+      "band": "cold",
+      "disposition": "new_lead",
+      "confidence": 0.95,
+      "components": [
+        {
+          "signal": "interest",
+          "points": 0,
+          "max": 40,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "requirements",
+          "points": 25,
+          "max": 25,
+          "evidence": "product"
+        },
+        {
+          "signal": "timing",
+          "points": 0,
+          "max": 25,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "contact",
+          "points": 10,
+          "max": 10,
+          "evidence": "phone"
+        }
+      ],
+      "version": 1,
+      "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+      "reason": "recorded_signals"
+    },
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "e8a965c4-6761-44cb-a8c0-2f2080331386",
+        "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+        "session_id": "adaptive-2b0b6b0221da42bf8759a2fecb29aacb",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_8649a3d49b8f",
+        "started_at": "2026-10-29 11:10:29.645090+00:00",
+        "ended_at": "2026-10-29 11:10:36.310039+00:00",
+        "duration_sec": 6,
+        "disposition": "new_lead",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/e8a965c4-6761-44cb-a8c0-2f2080331386/",
+        "end_reason": "goodbye",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "action:required",
+          "contact:email_known",
+          "contact:name_known",
+          "contact:phone_known",
+          "custom:matte-finish",
+          "custom:visiting-cards",
+          "followup:send_info",
+          "intent:information",
+          "intent:pricing",
+          "outcome:new_lead",
+          "signal:objection",
+          "signal:price_sensitive"
+        ],
+        "last_heartbeat_at": "2026-10-29 11:10:29.645090+00:00",
+        "created_at": "2026-10-29 11:10:29.645090+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [],
+    "dnd": [],
+    "leads": [
+      {
+        "lead_id": "4e8ea751-d1cc-4c26-8817-e25d0d521380",
+        "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+        "name": "Ramesh",
+        "phone": "+12025550125",
+        "email": "ramesh.audit@example.invalid",
+        "stage": "new",
+        "notes": "[Call reference: e8a965c4-6761-44cb-a8c0-2f2080331386]\nThe caller asked about ordering matte-finish visiting cards, specifically the minimum order quantity and pricing. The agent explained that the minimum order is 100 cards at ₹350 and asked for the required quantity. The caller said they currently need 250 cards and asked whether extra charges would apply. The agent could not confirm extra charges and requested the caller’s name. The caller provided the name Ramesh and the email address ramesh.audit@example.invalid, stating that designs would be sent later and that nothing more was needed for now. The call ended politely without an order being placed or a follow-up appointment being scheduled.\n\nNext step: Confirm any extra charges for 250 matte-finish cards and follow up if appropriate; await the caller’s designs by email.\n\nObjections: Extra charges for 250 cards were unknown and not confirmed.\n\nCall outcome: new lead (95% confidence)",
+        "created_at": "2026-10-29 11:10:40.363495+00:00",
+        "updated_at": "2026-10-29 11:10:40.363495+00:00"
+      }
+    ],
+    "tools": [],
+    "assessments": [
+      {
+        "id": "cacd3d99-b7ef-441f-9d7b-3ce888478dda",
+        "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "lead_id": "4e8ea751-d1cc-4c26-8817-e25d0d521380",
+        "source_call_id": "e8a965c4-6761-44cb-a8c0-2f2080331386",
+        "assessment": {
+          "score": 35,
+          "band": "cold",
+          "disposition": "new_lead",
+          "confidence": 0.95,
+          "components": [
+            {
+              "signal": "interest",
+              "points": 0,
+              "max": 40,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "requirements",
+              "points": 25,
+              "max": 25,
+              "evidence": "product"
+            },
+            {
+              "signal": "timing",
+              "points": 0,
+              "max": 25,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "contact",
+              "points": 10,
+              "max": 10,
+              "evidence": "phone"
+            }
+          ],
+          "version": 1,
+          "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+          "reason": "recorded_signals"
+        },
+        "updated_at": "2026-10-29 11:10:36.310039+00:00"
+      }
+    ]
+  },
+  "metadata": {
+    "call_id": "e8a965c4-6761-44cb-a8c0-2f2080331386",
+    "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "session_id": "adaptive-2b0b6b0221da42bf8759a2fecb29aacb",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_8649a3d49b8f",
+    "started_at": "2026-10-29T11:10:29.645090+00:00",
+    "status": "active",
+    "storage_path": "data/calls/e8a965c4-6761-44cb-a8c0-2f2080331386/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550125",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 22804,
+        "output_tokens": 476,
+        "cached_tokens": 18144
+      }
+    },
+    "contact_preference": "end_call",
+    "hangup_reason": "goodbye",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 16,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": false,
+    "callback_close_phase": "idle",
+    "disconnected_at": "2026-10-29T11:10:36.310039+00:00",
+    "ended_at": "2026-10-29T11:10:36.310039+00:00",
+    "end_reason": "goodbye",
+    "duration_sec": 6.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 6.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.0012500000000000002,
+      "telephony_inr": 0.11902500000000002,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.0012500000000000002,
+      "telnyx_inr": 0.11902500000000002,
+      "telnyx_voice_api_usd": 0.0002,
+      "telnyx_sip_usd": 0.0005,
+      "telnyx_media_stream_usd": 0.00035000000000000005,
+      "telnyx_call_recording_usd": 0.0002,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.22,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-28",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.012500000000000002,
+      "telephony_inr_per_min": 1.19025,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.012500000000000002,
+      "telnyx_inr_per_min": 1.19025,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_07416b5f45224eb5016ae329ad244487d2af8bf6f0bf8466e1": {
+          "input_tokens": 1258,
+          "output_tokens": 337,
+          "cached_tokens": 0,
+          "cache_write_tokens": 1255,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.00071875
+        }
+      },
+      "post_call_analysis_usd": 0.00071875,
+      "post_call_analysis_inr": 0.068439375
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నమస్తే Kavitha, నాకు visiting cards కావాలి. Matte finish అయితే బాగుంటుంది. ముందుగా minimum order ఎంత ఉంటుందో చెప్పగలరా?",
+      "ts": "2026-10-29T11:10:30.337092Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "Matte finish cards కోసం minimum order one hundred cards ఉంటుంది. one hundred cards కి three hundred fifty rupees అవుతుంది. మీకు ఎన్ని cards కావాలో చెప్తారా?",
+      "ts": "2026-10-29T11:10:31.638426Z",
+      "brain_latency_ms": 1050
+    },
+    {
+      "seq": 3,
+      "role": "user",
+      "text": "ప్రస్తుతం నాకు 250 cards కావాలి. దీనికి ఏమైనా extra charges ఉంటాయా?",
+      "ts": "2026-10-29T11:10:32.230667Z",
+      "partial": false
+    },
+    {
+      "seq": 4,
+      "role": "assistant",
+      "text": "Extra charges గురించి నాకు సమాచారం లేదు. మీరు proceed అవ్వాలనుకుంటే, మీ పేరు చెప్తారా?",
+      "ts": "2026-10-29T11:10:33.505315Z",
+      "brain_latency_ms": 1022
+    },
+    {
+      "seq": 5,
+      "role": "user",
+      "text": "సరే, నా పేరు రమేష్. నేను నా email ID ramesh.audit@example.invalid ద్వారా designs తర్వాత పంపిస్తాను, ప్రస్తుతానికి ఇంతే చాలు, goodbye.",
+      "ts": "2026-10-29T11:10:34.197585Z",
+      "partial": false
+    },
+    {
+      "seq": 6,
+      "role": "assistant",
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T11:10:34.221717Z",
+      "brain_latency_ms": 3
+    }
+  ],
+  "wall_elapsed_s": 10.907,
+  "simulated_exchange_timeline_s": 60,
+  "request_count": 9
+}

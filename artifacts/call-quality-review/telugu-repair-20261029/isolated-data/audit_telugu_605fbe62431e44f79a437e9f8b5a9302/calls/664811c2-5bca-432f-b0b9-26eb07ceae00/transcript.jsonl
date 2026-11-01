@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "నమస్తే. నాకు visiting cards కావాలి, matte finish అయితే బాగుంటుంది. కనీసం ఎన్ని cards minimum order చేయాలి? నేను design తర్వాత పంపిస్తాను.", "ts": "2026-10-29T17:43:14.507154Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Minimum order quantity one hundred cards ఉంటుంది. Matte finish cards one hundred కి three hundred fifty rupees అవుతుంది. మీరు design పంపిన తర్వాత మేము quote ఇస్తాము.", "ts": "2026-10-29T17:43:19.309770Z"}
+{"seq": 3, "role": "user", "text": "సరే, 100 cards minimum order అంటే నాకు okay. ఈ quote లో GST కూడా కలుపుకుని ఉందా?", "ts": "2026-10-29T17:43:20.210234Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ఈ quote లో GST కలుపుకున్నారా లేదా అనేది ప్రస్తుతం తెలియదు.", "ts": "2026-10-29T17:43:24.191502Z"}
+{"seq": 5, "role": "user", "text": "సరే, GST వివరాలు తర్వాత తెలుసుకుంటాను. నాకు ఈ information చాలు, ఇంకేమీ అవసరం లేదు. ధన్యవాదాలు.", "ts": "2026-10-29T17:43:25.108174Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-29T17:43:26.979893Z"}

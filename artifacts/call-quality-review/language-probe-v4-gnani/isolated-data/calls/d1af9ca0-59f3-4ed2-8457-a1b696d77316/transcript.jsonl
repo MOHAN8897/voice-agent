@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "Cooling ಆಗದ ನನ್ನ fridgeಗೆ ನಾಳೆ morning 10:30ಕ್ಕೆ technician ಬರಬಹುದಾ?", "ts": "2026-10-29T19:39:39.650302Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Fridge inspection-ಗೆ ₹250 ಆಗುತ್ತೆ, ಆದ್ರೆ ನೀವು repair ಮಾಡಿಸಿದ್ರೆ ಆ charge waive off ಆಗುತ್ತೆ. ನಮ್ಮ service area ಬಂದು Madhapur, Gachibowli, Kondapur ಮತ್ತೆ Kukatpally ಮಾತ್ರ. ನಾಳೆ morning 10:30ಕ್ಕೆ next-day slot ಇರುತ್ತೆ. ನಿಮ್ಮ ಹೆಸರು ಮತ್ತೆ area ಹೇಳ್ತೀರಾ?", "ts": "2026-10-29T19:39:40.302169Z", "brain_latency_ms": 654}
+{"seq": 3, "role": "user", "text": "ನನ್ನ fridge cool ಆಗ್ತಿಲ್ಲ. ನಾಳೆ ಬೆಳಗ್ಗೆ 10:30ಕ್ಕೆ visit ಮಾಡೋಕೆ ಆಗುತ್ತಾ?", "ts": "2026-10-29T19:39:40.329202Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಹೌದು, ನಾಳೆ ಬೆಳಗ್ಗೆ 10:30ಕ್ಕೆ slot ಇದೆ. ಆದ್ರೆ ನಮ್ಮ service ಬಂದು Madhapur, Gachibowli, Kondapur ಮತ್ತೆ Kukatpally ಮಾತ್ರ. ನಿಮ್ಮ area ಯಾವುದು ಅಂತ ಹೇಳ್ತೀರಾ?", "ts": "2026-10-29T19:39:40.909263Z", "brain_latency_ms": 582}

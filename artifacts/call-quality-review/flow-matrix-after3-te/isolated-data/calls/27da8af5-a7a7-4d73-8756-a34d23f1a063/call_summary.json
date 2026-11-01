@@ -1,0 +1,63 @@
+{
+  "call_id": "27da8af5-a7a7-4d73-8756-a34d23f1a063",
+  "language_callback": null,
+  "disposition": "site_visit_planned",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call expressing that the product was too expensive. The agent explained the pricing structure, highlighting a government subsidy of 78,000 rupees that reduced the cost to 1,17,000 rupees for a 3 kW system. The caller remained price-sensitive and questioned the monthly EMI, which the agent clarified as starting from 2,999 rupees over 48 months. After some hesitation, the caller agreed to proceed, provided their name as Kiran, confirmed their location as Velachery, and requested a free site survey on Saturday. The agent confirmed the booking of the free site survey for Saturday in Velachery and stated that the team would contact them soon. The caller thanked the agent, and the call ended.",
+  "next_action": "Agent to contact the caller to confirm the Saturday site survey appointment.",
+  "extracted_fields": {
+    "budget": "1,17,000 rupees",
+    "caller_name": "కిరణ్",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "name": "Kiran",
+    "phone": "+919876500501",
+    "requested_time": "శనివారం",
+    "slot": "Saturday"
+  },
+  "facts": {
+    "budget": "1,17,000 rupees",
+    "caller_name": "కిరణ్",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "name": "Kiran",
+    "phone": "+919876500501",
+    "requested_time": "శనివారం",
+    "slot": "Saturday"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:emi-plan",
+    "custom:site-survey",
+    "custom:velachery",
+    "followup:site_visit",
+    "intent:information",
+    "outcome:site_visit_planned",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "signal:price_sensitive",
+    "followup:site_visit",
+    "action:required",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:site-survey",
+    "custom:velachery",
+    "custom:emi-plan"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "The caller initially objected to the price, stating it was too expensive."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:17:37.922888Z",
+  "generation_ok": true
+}

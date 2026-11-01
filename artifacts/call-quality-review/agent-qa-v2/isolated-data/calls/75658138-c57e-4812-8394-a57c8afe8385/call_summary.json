@@ -1,0 +1,50 @@
+{
+  "call_id": "75658138-c57e-4812-8394-a57c8afe8385",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ఏజెంట్ కస్టమర్‌కు ఫోన్ చేశారు. కస్టమర్ హెయిర్ ఆయిల్ లోని పదార్థాలు, తయారీ స్థలం మరియు డెలివరీ ఛార్జీల గురించి అడిగారు. ఏజెంట్ హెయిర్ ఆయిల్ పదార్థాలను వివరించారు కానీ తయారీ స్థలం మరియు డెలివరీ ఛార్జీల వివరాలు తమ వద్ద లేవని చెప్పారు. కస్టమర్ వేరే ఉత్పత్తులను వాడుతున్నందున తనకు ఆసక్తి లేదని, కాల్ ముగించారు.",
+  "summary_language": "te-IN",
+  "summary_en": "The business's agent called the customer to share details about herbal products. The agent shared the ingredients of the hair oil but could not provide information on the manufacturing location or delivery charges. The customer objected, stating they already use different products and had no interest. The agent acknowledged this lack of interest, and the call ended politely.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919700000005",
+    "price": "499 INR for 200 ml",
+    "product_discussed": "Hair Oil"
+  },
+  "facts": {
+    "phone": "+919700000005",
+    "price": "499 INR for 200 ml",
+    "product_discussed": "Hair Oil"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:hair-care",
+    "custom:herbal-products",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:hair-care"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Customer already uses different products and has no interest."
+  ],
+  "unanswered_questions": [
+    "Where are the products manufactured?",
+    "Are there delivery charges?",
+    "Where can I find these details?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T13:32:44.028034Z",
+  "generation_ok": true
+}

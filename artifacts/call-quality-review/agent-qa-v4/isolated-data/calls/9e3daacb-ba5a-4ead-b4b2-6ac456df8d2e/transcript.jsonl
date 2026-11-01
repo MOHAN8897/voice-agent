@@ -1,0 +1,12 @@
+{"seq": 1, "role": "user", "text": "అవును, మాట్లాడతాను. మీరు aloe vera juice గురించి call చేశారా? దాని price ఎంత, ఏ size లో వస్తుంది, ఎలా తీసుకోవాలి అనేది కొంచెం details చెప్పండి.", "ts": "2026-10-31T15:32:09.835886Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "నేను NatureVeda Herbals నుండి call చేస్తున్నాను. మా Aloe Vera Juice 500 ml bottle కి ₹399 అవుతుంది, ఇందులో Aloe Vera మాత్రమే ఉంటుంది. దీన్ని ఎలా తీసుకోవాలి అనే details ప్రస్తుతం నా system లో లేవు.", "ts": "2026-10-31T15:32:12.233132Z"}
+{"seq": 3, "role": "user", "text": "సరే, 500 ml కి ₹399 ఆ? మరి నేను దీన్ని ఎలా తీసుకోవాలి, ఎప్పుడు తీసుకోవాలి అనేది ఏమైనా idea ఉందా?", "ts": "2026-10-31T15:32:33.183206Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "అవును, 500 ml కి ₹399 అవుతుంది. దీన్ని ఎలా, ఎప్పుడు తీసుకోవాలి అనే details ప్రస్తుతం నా system లో అందుబాటులో లేవు. మీకు ఏ details కావాలి?", "ts": "2026-10-31T15:32:34.724778Z"}
+{"seq": 5, "role": "user", "text": "సరే, details ఇప్పుడు లేవంటే పర్లేదు. మనం ఇంగ్లీష్ లోనే continue చేద్దామా? మీరు ఇందాక juice price చెప్పారు కదా, ఒకసారి మళ్ళీ చెప్తారా?", "ts": "2026-10-31T15:32:52.499869Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "Sure, we can continue in English. The Aloe Vera Juice is ₹399 for 500 ml. Which details would you like to know?", "ts": "2026-10-31T15:32:53.808741Z"}
+{"seq": 7, "role": "user", "text": "Okay, got it. By the way, do you have a hair oil also? What are the ingredients in that?", "ts": "2026-10-31T15:33:09.883927Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Yes, we do have Herbal Hair Oil. It is ₹499 for 200 ml, and it contains Amla, Bhringraj, Hibiscus, and Coconut Oil. Which product would you like to know more about?", "ts": "2026-10-31T15:33:11.288700Z"}
+{"seq": 9, "role": "user", "text": "Okay, so one aloe vera juice and one hair oil, what will be the total price?", "ts": "2026-10-31T15:33:29.669321Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "The total comes to ₹898. Would you like to place an order for these today?", "ts": "2026-10-31T15:33:31.475673Z"}
+{"seq": 11, "role": "user", "text": "₹898 ఆ? Okay, I will think about it and let you know. Thank you.", "ts": "2026-10-31T15:33:43.119139Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "Of course — please go ahead.", "ts": "2026-10-31T15:33:44.732629Z"}

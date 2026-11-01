@@ -1,0 +1,33 @@
+{
+  "call_id": "962ac4ca-1494-4f88-8527-d61cbaf2634e",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller stated they were currently busy and did not want to be contacted at the moment. The agent acknowledged this and suggested the caller reach out when they were free. The caller expressed uncertainty about calling back later and ultimately said goodbye, ending the call.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500522"
+  },
+  "facts": {
+    "phone": "+919876500522"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [
+    "Caller is busy and requested not to be called now"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:39:58.554327Z",
+  "generation_ok": true
+}

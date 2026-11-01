@@ -1,0 +1,15 @@
+{
+  "facts": {
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "product": "split AC general service",
+    "email": "sravani.audit@example.invalid",
+    "caller_email": "sravani.audit@example.invalid",
+    "requested_time": "రేపు ఉదయం 10 గంటలకే"
+  },
+  "preferences": {
+    "email": "sravani.audit@example.invalid"
+  },
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "assistant: శ్రావణి గారు, మీ appointment రేపు ఉదయం ten కి confirm అయింది. మా technician మాదాపూర్ కి వస్తారు. ఇంకేమైనా help కావాలా?\nuser: సరే, నా email sravani.audit@example.invalid కి కూడా ఈ appointment details పంపించండి. ఇది calendar లో confirm అయిందని నాకు ఒకసారి చెప్పగలరా?\nassistant: శ్రావణి గారు, మీ appointment already calendar లో confirm అయి record అయింది. నేను మళ్ళీ పంపించలేను, కానీ మా team మీ email కి details పంపిస్తారు. ఇంకేమైనా help కావాలా?"
+}

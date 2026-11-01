@@ -1,0 +1,28 @@
+{
+  "call_id": "95dafe5e-7c43-474d-b1ae-a0c6eeb40732",
+  "language_callback": null,
+  "disposition": "no_outcome",
+  "disposition_confidence": 0.0,
+  "summary_te": "",
+  "summary_en": "No transcript was captured for this call.",
+  "next_action": "Review the call recording and telephony logs.",
+  "extracted_fields": {
+    "phone": "+12025550107"
+  },
+  "facts": {
+    "phone": "+12025550107"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "outcome:no_outcome",
+    "quality:inconclusive"
+  ],
+  "tags": [],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:33:23.169257Z",
+  "generation_ok": false
+}

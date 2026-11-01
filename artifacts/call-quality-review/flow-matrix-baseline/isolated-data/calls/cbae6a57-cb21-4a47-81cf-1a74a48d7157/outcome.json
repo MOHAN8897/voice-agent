@@ -1,0 +1,81 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller contacted support to inquire about the delivery fee for a 300 rupees order. The agent responded that orders below 499 rupees incur a 30 rupees delivery fee, meaning the caller's 300 rupees order would be subject to that charge. The caller did not raise any objections, and no further actions or next steps were agreed upon. The call concluded after the agent provided the fee information.",
+  "next_action": null,
+  "extracted_fields": {
+    "budget": "300 rupees",
+    "delivery_fee": "30 rupees",
+    "phone": "+919876500516"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:37:57.806053Z",
+  "generation_ok": true,
+  "facts": {
+    "budget": "300 rupees",
+    "delivery_fee": "30 rupees",
+    "phone": "+919876500516"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "6ee89d14-e5d3-4028-8b0e-eb6bad8c5fea",
+    "agentId": "943771f5-8d11-49c0-a614-7a550637714b",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.85,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "budget"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

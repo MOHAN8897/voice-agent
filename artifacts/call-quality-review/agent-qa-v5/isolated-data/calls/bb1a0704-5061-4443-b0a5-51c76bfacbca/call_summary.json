@@ -1,0 +1,48 @@
+{
+  "call_id": "bb1a0704-5061-4443-b0a5-51c76bfacbca",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_language": "en-IN",
+  "summary_en": "An agent from NatureVeda Herbals called the customer to discuss herbal products. The customer expressed interest in the Hair Oil after hearing the price of 499 rupees, but objected to the cost and asked about a first-time buyer discount. The agent stated that no discount information was available and shared prices for other items, but the customer ultimately declined to purchase anything. The customer requested to be removed from the calling list, and the agent agreed to stop calling before ending the call.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+919700000005",
+    "price": "499 rupees",
+    "product_discussed": "Herbal Hair Oil"
+  },
+  "facts": {
+    "phone": "+919700000005",
+    "price": "499 rupees",
+    "product_discussed": "Herbal Hair Oil"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:herbal-products",
+    "intent:purchase",
+    "outcome:not_interested",
+    "sentiment:negative",
+    "signal:do_not_call",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "sentiment:negative",
+    "signal:price_sensitive",
+    "intent:purchase",
+    "signal:do_not_call"
+  ],
+  "custom_tags": [
+    "custom:herbal-products"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Price is too high",
+    "No discount available"
+  ],
+  "unanswered_questions": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T16:12:12.646153Z",
+  "generation_ok": true
+}

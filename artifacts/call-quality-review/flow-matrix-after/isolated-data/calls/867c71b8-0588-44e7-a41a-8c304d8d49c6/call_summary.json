@@ -1,0 +1,35 @@
+{
+  "call_id": "867c71b8-0588-44e7-a41a-8c304d8d49c6",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the cost and available subsidies for a system. The agent provided pricing details, explaining that a 3 kW system costs 1,95,000 rupees before a government subsidy of 78,000 rupees, resulting in a net cost of 1,17,000 rupees, with EMI options starting at 2,999 rupees per month for 48 months. The caller responded positively, stating that the pricing sounded reasonable. The agent then requested the caller's name, area, and a preferred day for a free site survey. The caller hesitated with 'Hmm, okay' but did not provide the requested details or refuse the survey, leaving the scheduling open.",
+  "next_action": "callback_required",
+  "extracted_fields": {
+    "phone": "+919876500502"
+  },
+  "facts": {
+    "phone": "+919876500502"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "followup:callback",
+    "followup:site_visit",
+    "intent:pricing",
+    "outcome:interested",
+    "sentiment:positive"
+  ],
+  "tags": [
+    "intent:pricing",
+    "followup:site_visit",
+    "sentiment:positive"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:49:52.373697Z",
+  "generation_ok": true
+}

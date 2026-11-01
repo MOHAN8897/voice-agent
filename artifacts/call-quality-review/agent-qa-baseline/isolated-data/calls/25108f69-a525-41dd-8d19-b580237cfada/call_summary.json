@@ -1,0 +1,50 @@
+{
+  "call_id": "25108f69-a525-41dd-8d19-b580237cfada",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్ కు అశ్వగంధ క్యాప్సూల్స్ గురించి సమాచారం అందించారు. కస్టమర్ తాను బీపీ మందులు వాడుతున్నందున వైద్యుడిని సంప్రదించి నిర్ణయం తీసుకుంటానని చెప్పారు. ఏజెంట్ వైద్య సలహాలు ఇవ్వలేమని స్పష్టం చేసి, తర్వాత సంప్రదించమని సూచించారు. కస్టమర్ వెంటనే ఆర్డర్ చేయనని, డాక్టర్ తో మాట్లాడిన తర్వాత కాల్ చేస్తానని చెప్పారు. చివరగా కస్టమర్ డాక్టర్ తో మాట్లాడి ప్లాన్ చేస్తానని చెప్పి కాల్ ముగించారు.",
+  "summary_language": "te-IN",
+  "summary_en": "The agent called the customer to provide information about Ashwagandha capsules. The customer shared that they use BP tablets and wanted to know if the supplement was safe, to which the agent responded that medical advice could not be provided and they should consult a doctor. The customer objected to purchasing immediately, stating they would think it over after speaking with their doctor. They agreed to contact the business later. The call ended with the customer saying goodbye after planning to consult their physician first.",
+  "next_action": "callback_required",
+  "extracted_fields": {
+    "phone": "+919700000006",
+    "price": "₹699",
+    "product": "Ashwagandha capsules",
+    "callback_requested": "true"
+  },
+  "facts": {
+    "phone": "+919700000006",
+    "price": "₹699",
+    "product": "Ashwagandha capsules",
+    "callback_requested": "true"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:ashwagandha-capsules",
+    "custom:bp-medication-concern",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:ashwagandha-capsules",
+    "custom:bp-medication-concern"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Safety concerns due to existing BP medication"
+  ],
+  "unanswered_questions": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T13:16:55.311084Z",
+  "generation_ok": true
+}

@@ -1,0 +1,105 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller asked about matte-finish visiting cards and pricing. The agent quoted ₹350 for 100 cards with a 100-card minimum. The caller considered this expensive but requested pricing for 200 cards, which the agent quoted at ₹750 total. The caller again noted the price was somewhat high, asked about how to send the design later, and asked whether there would be extra charges. The agent could not confirm extra charges and said the design details could be provided later. The caller then said the current price was acceptable and asked how to proceed with placing an order. The agent requested the caller’s name, quantity, and delivery locality in order to prepare a quote. The call ended before those details were provided and before the order was placed.",
+  "next_action": "Collect the caller’s name, confirm the 200-card quantity and delivery locality, clarify any extra charges, and prepare the quote.",
+  "extracted_fields": {
+    "design": "Caller will provide design details later",
+    "minimum_order": "100 cards",
+    "phone": "+12025550124",
+    "product": "Matte-finish visiting cards",
+    "quantity": "200 cards",
+    "quoted_price": "₹750 total"
+  },
+  "objections": [
+    "Caller felt the ₹350 price for 100 cards was too high.",
+    "Caller felt the ₹750 price for 200 cards was somewhat high.",
+    "Extra charges were not confirmed."
+  ],
+  "notes": "The caller indicated the current price was acceptable and expressed intent to place an order, but required order details were not yet collected.",
+  "tags": [
+    "intent:purchase",
+    "intent:pricing",
+    "signal:ready_to_buy",
+    "signal:price_sensitive",
+    "signal:objection",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards",
+    "custom:200-cards",
+    "custom:design-details"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:50:17.277291Z",
+  "generation_ok": true,
+  "facts": {
+    "design": "Caller will provide design details later",
+    "minimum_order": "100 cards",
+    "phone": "+12025550124",
+    "product": "Matte-finish visiting cards",
+    "quantity": "200 cards",
+    "quoted_price": "₹750 total"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:200-cards",
+    "custom:design-details",
+    "custom:matte-visiting-cards",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "signal:objection",
+    "signal:price_sensitive",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "02dd69e4-e8a0-4c83-8d82-50a75d78ca09",
+    "agentId": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.99,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

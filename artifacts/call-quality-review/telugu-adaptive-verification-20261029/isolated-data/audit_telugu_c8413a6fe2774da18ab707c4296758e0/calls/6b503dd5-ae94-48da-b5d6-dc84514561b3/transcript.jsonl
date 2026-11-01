@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "నాకు వంద విజిటింగ్ కార్డులు కావాలి. వాటి ధర చెప్పండి.", "ts": "2026-10-29T15:53:05.957758Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Normal paper విజిటింగ్ cards one hundred cards కి two hundred rupees అవుతుంది. Matte finish అయితే three hundred fifty rupees అవుతుంది. Minimum order one hundred cards ఉంటుంది. మీకు ఏది కావాలో చెప్తారా?", "ts": "2026-10-29T15:53:07.324435Z"}
+{"seq": 3, "role": "user", "text": "నాకు మగ్స్ వద్దు, విజిటింగ్ కార్డులే కావాలి. నా ఎంపిక ఏదని నమోదు చేసుకున్నారు?", "ts": "2026-10-29T15:53:07.367865Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "సరే, విజిటింగ్ కార్డులే నమోదు చేసుకున్నాను. మీకు normal paper కావాలా లేక matte finish కావాలా?", "ts": "2026-10-29T15:53:08.745612Z"}
+{"seq": 5, "role": "user", "text": "అంతే, నా ప్రశ్నలకు సమాధానాలు వచ్చాయి. ధన్యవాదాలు, కాల్ ముగించండి.", "ts": "2026-10-29T15:53:08.813091Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-29T15:53:10.407961Z"}

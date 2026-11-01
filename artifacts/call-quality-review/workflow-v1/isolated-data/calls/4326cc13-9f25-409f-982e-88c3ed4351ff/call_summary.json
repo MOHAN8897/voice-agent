@@ -1,0 +1,36 @@
+{
+  "call_id": "4326cc13-9f25-409f-982e-88c3ed4351ff",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller stated they were currently busy and requested a callback for tomorrow at 6 PM. The agent acknowledged and logged the callback request, concluding the call.",
+  "next_action": "Call the caller back tomorrow at 6 PM.",
+  "extracted_fields": {
+    "callback_time": "Tomorrow at 6 PM",
+    "phone": "+919876500002",
+    "requested_time": "రేపు సాయంత్రం 6 కి"
+  },
+  "facts": {
+    "callback_time": "Tomorrow at 6 PM",
+    "phone": "+919876500002",
+    "requested_time": "రేపు సాయంత్రం 6 కి"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "followup:callback",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:15:56.262103Z",
+  "generation_ok": true
+}

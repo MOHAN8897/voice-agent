@@ -1,0 +1,1413 @@
+{
+  "scenario": {
+    "id": "A_budget_correction",
+    "business": "A",
+    "kind": "budget_correction",
+    "integration": "none",
+    "policy": "review",
+    "max_turns": 6,
+    "goal": "Ask about visiting cards. Initially choose 100 normal visiting cards and budget 500 rupees. On your next turn explicitly change your selection to 200 matte visiting cards and budget 900 rupees. Ask them to repeat their remembered product, quantity and budget; do not supply the corrected values again until after their answer. Then ask a payment question and end. Never request a callback."
+  },
+  "agent": {
+    "id": "A",
+    "key": "printing",
+    "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "name": "Sri Krishna Digital Prints",
+    "agent_name": "Kavitha",
+    "role": "sales",
+    "industry": "printing",
+    "brief": "Agent name Kavitha. Company name Sri Krishna Digital Prints.\nOutbound and inbound customer inquiries in Telugu.\nWe print visiting cards: normal paper visiting cards cost 200 rupees for 100 cards,\nmatte finish cards cost 350 rupees for 100 cards. Minimum order quantity 100 cards.\nWedding invitation cards are customized: pricing depends on design, paper sample and quantity, no fixed price over the phone.\nFlex banners: normal flex 15 rupees per square foot, star flex 20 rupees per square foot.\nDelivery in Vijayawada takes 3 working days after design artwork approval; urgent 24-hour delivery is extra 150 rupees.\nPayment: Cash on delivery accepted for orders up to 1000 rupees; 50% advance payment required for orders above 1000 rupees.\nNo online payment or credit card processing on phone call.\nOffice hours Monday to Saturday 9:30 AM to 8:00 PM, Sunday closed.\nGoal: answer customer questions on cards, banners and pricing; understand their requirement.\nIf interested, take preferred name, quantity and delivery locality for a quote or order request.\nDo not force details before answering questions.\nCustomer refusing visiting cards may still want flex banners or wedding cards.\nNever claim an order is paid or dispatched without artwork approval and design confirmation.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Kavitha",
+      "company_name": "Sri Krishna Digital Prints",
+      "role": "Sales and customer enquiries",
+      "permitted_next_steps": "Collect customer name, item type, quantity and delivery locality in Vijayawada to submit an internal quote/order request. Explain that artwork approval is required before printing.",
+      "payment_rules": "Cash on delivery for orders up to 1000 rupees; 50% advance for orders above 1000 rupees. No online payment collection on call.",
+      "delivery_details": "Local delivery in Vijayawada takes 3 working days after artwork approval. Urgent 24-hour delivery is extra 150 rupees.",
+      "wedding_cards": "Customized quotation only based on design and paper sample. No fixed price on phone.",
+      "visiting_cards": "Standard 200 rupees for 100 cards; Matte finish 350 rupees for 100 cards. Minimum order 100 cards.",
+      "forbidden_actions": "Never confirm external courier shipment or take card payment on phone. Never guarantee delivery without artwork approval."
+    },
+    "user_id": "de625f35-524c-4767-a252-106cb34cdfae",
+    "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e"
+  },
+  "call_id": "fe9a9e4a-5589-4f45-8e43-945e86a7e348",
+  "session_id": "adaptive-0a9dee2281104d3f86e6f6ae626e0820",
+  "phone": "+12025550143",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_8649a3d49b8f",
+  "turn_index": 6,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నమస్తే కవిత గారు. నాకు 100 normal visiting cards కావాలి, నా budget 500 rupees వరకు ఉంటుంది.",
+        "intends_end": false,
+        "intent": "Ask about visiting cards with initial quantity and budget",
+        "elapsed_s": 0.578
+      },
+      "spoken": "Normal paper visiting cards one hundred కి two hundred rupees అవుతుంది, మీ five hundred rupees budget కి సరిపోతుంది. మీ పేరు చెప్తారా? order process చేద్దాము.",
+      "elapsed_s": 1.469,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "కవిత",
+          "product": "normal visiting cards",
+          "quantity": "100",
+          "budget": "500 rupees"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        763,
+        764,
+        765
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "Normal paper visiting cards one hundred కి two hundred rupees అవుతుంది, మీ five hundred rupees budget కి సరిపోతుంది. మీ పేరు చెప్తారా? order process చేద్దాము.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5564,
+            "output_tokens": 39,
+            "cached_tokens": 4512,
+            "total_tokens": 5603
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 2,
+      "caller": {
+        "utterance": "సరే, నా పేరు రమేష్. కానీ నేను 200 matte visiting cards తీసుకుంటాను, నా budget 900 rupees వరకు ఉంటుంది.",
+        "intends_end": false,
+        "intent": "Update visiting card selection to 200 matte and budget to 900 rupees",
+        "elapsed_s": 0.672
+      },
+      "spoken": "Matte finish cards one hundred కి three hundred and fifty rupees అవుతుంది కదా, సో రెండు వందలకి seven hundred rupees అవుతుంది. ఇది మీ nine hundred rupees budget లోనే సరిపోతుంది. మరి delivery కోసం మీ area ఏంటో చెప్తారా?",
+      "elapsed_s": 1.469,
+      "memory_before": {
+        "facts": {
+          "caller_name": "కవిత",
+          "product": "normal visiting cards",
+          "quantity": "100",
+          "budget": "500 rupees"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "budget": "900 rupees"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call.",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        767,
+        768,
+        769
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "Matte finish cards one hundred కి three hundred and fifty rupees అవుతుంది కదా, సో రెండు వందలకి seven hundred rupees అవుతుంది. ఇది మీ nine hundred rupees budget లోనే సరిపోతుంది. మరి delivery కోసం మీ area ఏంటో చెప్తారా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5706,
+            "output_tokens": 49,
+            "cached_tokens": 4448,
+            "total_tokens": 5755
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 3,
+      "caller": {
+        "utterance": "సరే, విజయవాడ. మీరు గుర్తుంచుకున్న product, quantity, ఇంకా budget ఏంటో ఒకసారి మళ్ళీ చెప్తారా? అలాగే payment ఎలా చేయాలి?",
+        "intends_end": true,
+        "intent": "Confirm details and ask about payment to close the enquiry",
+        "elapsed_s": 0.672
+      },
+      "spoken": "మీరు రెండు వందల matte visiting cards, తొమ్మిది వందల rupees budget తో విజయవాడలో అడుగుతున్నారు. Payment విషయానికి వస్తే, one thousand rupees పైన orders కి 50% advance payment చేయాలి, thousand rupees లోపు అయితే cash on delivery తీసుకోవచ్చు. మీకు ఈ order తో ముందుకు వెళ్లాలా?",
+      "elapsed_s": 1.516,
+      "memory_before": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "budget": "900 rupees"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call.",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "budget": "900 rupees",
+          "delivery_locality": "విజయవాడ"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call.",
+        "summary": "user: సరే, విజయవాడ. మీరు గుర్తుంచుకున్న product, quantity, ఇంకా budget ఏంటో ఒకసారి మళ్ళీ చెప్తారా? అలాగే payment ఎలా చేయాలి?\nassistant: మీరు రెండు వందల matte visiting cards, తొమ్మిది వందల rupees budget తో విజయవాడలో అడుగుతున్నారు. Payment విషయానికి వస్తే, one thousand rupees పైన orders కి 50% advance payment చేయాలి, thousand rupees లోపు అయితే cash on delivery తీసుకోవచ్చు. మీకు ఈ order తో ముందుకు వెళ్లాలా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        771,
+        772,
+        773
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "మీరు రెండు వందల matte visiting cards, తొమ్మిది వందల rupees budget తో విజయవాడలో అడుగుతున్నారు. Payment విషయానికి వస్తే, one thousand rupees పైన orders కి 50% advance payment చేయాలి, thousand rupees లోపు అయితే cash on delivery తీసుకోవచ్చు. మీకు ఈ order తో ముందుకు వెళ్లాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5820,
+            "output_tokens": 63,
+            "cached_tokens": 4448,
+            "total_tokens": 5883
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 4,
+      "caller": {
+        "utterance": "సరే, నేను advance payment చేయలేను, cash on delivery మాత్రమే అవసరం. మరి order confirm చేయవచ్చా?",
+        "intends_end": true,
+        "intent": "Confirm order with cash on delivery and end the call",
+        "elapsed_s": 0.546
+      },
+      "spoken": "మీ order seven hundred rupees అవుతుంది కదా, సో cash on delivery తీసుకోవచ్చు. ముందుగా మీ artwork design approve అవ్వాలి, అప్పుడే order confirm అవుతుంది. మరి మీ design ready గా ఉందా?",
+      "elapsed_s": 1.797,
+      "memory_before": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "budget": "900 rupees",
+          "delivery_locality": "విజయవాడ"
+        },
+        "preferences": {},
+        "important_context": "Caller provided contact details in this call.",
+        "summary": "user: సరే, విజయవాడ. మీరు గుర్తుంచుకున్న product, quantity, ఇంకా budget ఏంటో ఒకసారి మళ్ళీ చెప్తారా? అలాగే payment ఎలా చేయాలి?\nassistant: మీరు రెండు వందల matte visiting cards, తొమ్మిది వందల rupees budget తో విజయవాడలో అడుగుతున్నారు. Payment విషయానికి వస్తే, one thousand rupees పైన orders కి 50% advance payment చేయాలి, thousand rupees లోపు అయితే cash on delivery తీసుకోవచ్చు. మీకు ఈ order తో ముందుకు వెళ్లాలా?"
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "budget": "900 rupees",
+          "delivery_locality": "విజయవాడ"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery"
+        },
+        "important_context": "Caller provided contact details in this call.",
+        "summary": "user: సరే, విజయవాడ. మీరు గుర్తుంచుకున్న product, quantity, ఇంకా budget ఏంటో ఒకసారి మళ్ళీ చెప్తారా? అలాగే payment ఎలా చేయాలి?\nassistant: మీరు రెండు వందల matte visiting cards, తొమ్మిది వందల rupees budget తో విజయవాడలో అడుగుతున్నారు. Payment విషయానికి వస్తే, one thousand rupees పైన orders కి 50% advance payment చేయాలి, thousand rupees లోపు అయితే cash on delivery తీసుకోవచ్చు. మీకు ఈ order తో ముందుకు వెళ్లాలా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        775,
+        776,
+        777
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "మీ order seven hundred rupees అవుతుంది కదా, సో cash on delivery తీసుకోవచ్చు. ముందుగా మీ artwork design approve అవ్వాలి, అప్పుడే order confirm అవుతుంది. మరి మీ design ready గా ఉందా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 6042,
+            "output_tokens": 40,
+            "cached_tokens": 4448,
+            "total_tokens": 6082
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 5,
+      "caller": {
+        "utterance": "నా దగ్గర design ఇంకా లేదు, తర్వాత పంపిస్తాను. నా order details మళ్ళీ ఒకసారి confirm చేస్తారా? 200 matte visiting cards, 900 rupees budget, విజయవాడ delivery. ఇక payment కి నేను cash on delivery మాత్రమే చేస్తాను. ఈ order process చేయవచ్చా?",
+        "intends_end": true,
+        "intent": "Confirm order details and inquire about proceeding with cash on delivery",
+        "elapsed_s": 0.641
+      },
+      "spoken": "సరే, మీ order details రెండు వందల matte visiting cards, తొమ్మిది వందల rupees budget, విజయవాడ delivery, ఇంకా cash on delivery. ముందుగా మీ artwork design పంపి approval తీసుకున్నాకే order process అవుతుంది. ఆ design ఎప్పుడు పంపిస్తారు?",
+      "elapsed_s": 1.5,
+      "memory_before": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "budget": "900 rupees",
+          "delivery_locality": "విజయవాడ"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery"
+        },
+        "important_context": "Caller provided contact details in this call.",
+        "summary": "user: సరే, విజయవాడ. మీరు గుర్తుంచుకున్న product, quantity, ఇంకా budget ఏంటో ఒకసారి మళ్ళీ చెప్తారా? అలాగే payment ఎలా చేయాలి?\nassistant: మీరు రెండు వందల matte visiting cards, తొమ్మిది వందల rupees budget తో విజయవాడలో అడుగుతున్నారు. Payment విషయానికి వస్తే, one thousand rupees పైన orders కి 50% advance payment చేయాలి, thousand rupees లోపు అయితే cash on delivery తీసుకోవచ్చు. మీకు ఈ order తో ముందుకు వెళ్లాలా?"
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "budget": "900 rupees",
+          "delivery_locality": "విజయవాడ",
+          "payment_method": "cash on delivery"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery"
+        },
+        "important_context": "Caller provided contact details in this call.",
+        "summary": "user: సరే, విజయవాడ. మీరు గుర్తుంచుకున్న product, quantity, ఇంకా budget ఏంటో ఒకసారి మళ్ళీ చెప్తారా? అలాగే payment ఎలా చేయాలి?\nassistant: మీరు రెండు వందల matte visiting cards, తొమ్మిది వందల rupees budget తో విజయవాడలో అడుగుతున్నారు. Payment విషయానికి వస్తే, one thousand rupees పైన orders కి 50% advance payment చేయాలి, thousand rupees లోపు అయితే cash on delivery తీసుకోవచ్చు. మీకు ఈ order తో ముందుకు వెళ్లాలా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        779,
+        780,
+        781
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సరే, మీ order details రెండు వందల matte visiting cards, తొమ్మిది వందల rupees budget, విజయవాడ delivery, ఇంకా cash on delivery. ముందుగా మీ artwork design పంపి approval తీసుకున్నాకే order process అవుతుంది. ఆ design ఎప్పుడు పంపిస్తారు?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 6160,
+            "output_tokens": 53,
+            "cached_tokens": 4448,
+            "total_tokens": 6213
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 6,
+      "caller": {
+        "utterance": "నా దగ్గర design ఇంకా లేదు, తర్వాత పంపిస్తాను. ఈ order process చేయడానికి ఇంకేమైనా details కావాలా?",
+        "intends_end": true,
+        "intent": "Confirming if any further details are needed before ending the call",
+        "elapsed_s": 0.562
+      },
+      "spoken": "సరే, మీ artwork design తర్వాత పంపిస్తే సరిపోతుంది. ప్రస్తుతానికి మీ పేరు రమేష్, quantity రెండు వందలు, delivery విజయవాడ అని note చేసుకున్నాను. ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు.",
+      "elapsed_s": 1.672,
+      "memory_before": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "budget": "900 rupees",
+          "delivery_locality": "విజయవాడ",
+          "payment_method": "cash on delivery"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery"
+        },
+        "important_context": "Caller provided contact details in this call.",
+        "summary": "user: సరే, విజయవాడ. మీరు గుర్తుంచుకున్న product, quantity, ఇంకా budget ఏంటో ఒకసారి మళ్ళీ చెప్తారా? అలాగే payment ఎలా చేయాలి?\nassistant: మీరు రెండు వందల matte visiting cards, తొమ్మిది వందల rupees budget తో విజయవాడలో అడుగుతున్నారు. Payment విషయానికి వస్తే, one thousand rupees పైన orders కి 50% advance payment చేయాలి, thousand rupees లోపు అయితే cash on delivery తీసుకోవచ్చు. మీకు ఈ order తో ముందుకు వెళ్లాలా?"
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "రమేష్",
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "budget": "900 rupees",
+          "delivery_locality": "విజయవాడ",
+          "payment_method": "cash on delivery"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery"
+        },
+        "important_context": "Caller provided contact details in this call.",
+        "summary": "user: సరే, విజయవాడ. మీరు గుర్తుంచుకున్న product, quantity, ఇంకా budget ఏంటో ఒకసారి మళ్ళీ చెప్తారా? అలాగే payment ఎలా చేయాలి?\nassistant: మీరు రెండు వందల matte visiting cards, తొమ్మిది వందల rupees budget తో విజయవాడలో అడుగుతున్నారు. Payment విషయానికి వస్తే, one thousand rupees పైన orders కి 50% advance payment చేయాలి, thousand rupees లోపు అయితే cash on delivery తీసుకోవచ్చు. మీకు ఈ order తో ముందుకు వెళ్లాలా?"
+      },
+      "projection_log": null,
+      "request_indexes": [
+        783,
+        784,
+        785
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సరే, మీ artwork design తర్వాత పంపిస్తే సరిపోతుంది. ప్రస్తుతానికి మీ పేరు రమేష్, quantity రెండు వందలు, delivery విజయవాడ అని note చేసుకున్నాను. ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 6259,
+            "output_tokens": 56,
+            "cached_tokens": 4448,
+            "total_tokens": 6315
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "Normal paper visiting cards one hundred కి two hundred rupees అవుతుంది, మీ five hundred rupees budget కి సరిపోతుంది. మీ పేరు చెప్తారా? order process చేద్దాము.",
+      "at": 120513.968
+    },
+    {
+      "turn": 2,
+      "text": "Matte finish cards one hundred కి three hundred and fifty rupees అవుతుంది కదా, సో రెండు వందలకి seven hundred rupees అవుతుంది. ఇది మీ nine hundred rupees budget లోనే సరిపోతుంది. మరి delivery కోసం మీ area ఏంటో చెప్తారా?",
+      "at": 120516.125
+    },
+    {
+      "turn": 3,
+      "text": "మీరు రెండు వందల matte visiting cards, తొమ్మిది వందల rupees budget తో విజయవాడలో అడుగుతున్నారు. Payment విషయానికి వస్తే, one thousand rupees పైన orders కి 50% advance payment చేయాలి, thousand rupees లోపు అయితే cash on delivery తీసుకోవచ్చు. మీకు ఈ order తో ముందుకు వెళ్లాలా?",
+      "at": 120518.296
+    },
+    {
+      "turn": 4,
+      "text": "మీ order seven hundred rupees అవుతుంది కదా, సో cash on delivery తీసుకోవచ్చు. ముందుగా మీ artwork design approve అవ్వాలి, అప్పుడే order confirm అవుతుంది. మరి మీ design ready గా ఉందా?",
+      "at": 120520.687
+    },
+    {
+      "turn": 5,
+      "text": "సరే, మీ order details రెండు వందల matte visiting cards, తొమ్మిది వందల rupees budget, విజయవాడ delivery, ఇంకా cash on delivery. ముందుగా మీ artwork design పంపి approval తీసుకున్నాకే order process అవుతుంది. ఆ design ఎప్పుడు పంపిస్తారు?",
+      "at": 120522.843
+    },
+    {
+      "turn": 6,
+      "text": "సరే, మీ artwork design తర్వాత పంపిస్తే సరిపోతుంది. ప్రస్తుతానికి మీ పేరు రమేష్, quantity రెండు వందలు, delivery విజయవాడ అని note చేసుకున్నాను. ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు.",
+      "at": 120525.109
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "Normal paper visiting cards one hundred కి two hundred rupees అవుతుంది, మీ five hundred rupees budget కి సరిపోతుంది. మీ పేరు చెప్తారా? order process చేద్దాము.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5564,
+        "output_tokens": 39,
+        "cached_tokens": 4512,
+        "total_tokens": 5603
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      }
+    },
+    {
+      "done": true,
+      "text": "Matte finish cards one hundred కి three hundred and fifty rupees అవుతుంది కదా, సో రెండు వందలకి seven hundred rupees అవుతుంది. ఇది మీ nine hundred rupees budget లోనే సరిపోతుంది. మరి delivery కోసం మీ area ఏంటో చెప్తారా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5706,
+        "output_tokens": 49,
+        "cached_tokens": 4448,
+        "total_tokens": 5755
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      }
+    },
+    {
+      "done": true,
+      "text": "మీరు రెండు వందల matte visiting cards, తొమ్మిది వందల rupees budget తో విజయవాడలో అడుగుతున్నారు. Payment విషయానికి వస్తే, one thousand rupees పైన orders కి 50% advance payment చేయాలి, thousand rupees లోపు అయితే cash on delivery తీసుకోవచ్చు. మీకు ఈ order తో ముందుకు వెళ్లాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5820,
+        "output_tokens": 63,
+        "cached_tokens": 4448,
+        "total_tokens": 5883
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      }
+    },
+    {
+      "done": true,
+      "text": "మీ order seven hundred rupees అవుతుంది కదా, సో cash on delivery తీసుకోవచ్చు. ముందుగా మీ artwork design approve అవ్వాలి, అప్పుడే order confirm అవుతుంది. మరి మీ design ready గా ఉందా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 6042,
+        "output_tokens": 40,
+        "cached_tokens": 4448,
+        "total_tokens": 6082
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      }
+    },
+    {
+      "done": true,
+      "text": "సరే, మీ order details రెండు వందల matte visiting cards, తొమ్మిది వందల rupees budget, విజయవాడ delivery, ఇంకా cash on delivery. ముందుగా మీ artwork design పంపి approval తీసుకున్నాకే order process అవుతుంది. ఆ design ఎప్పుడు పంపిస్తారు?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 6160,
+        "output_tokens": 53,
+        "cached_tokens": 4448,
+        "total_tokens": 6213
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      }
+    },
+    {
+      "done": true,
+      "text": "సరే, మీ artwork design తర్వాత పంపిస్తే సరిపోతుంది. ప్రస్తుతానికి మీ పేరు రమేష్, quantity రెండు వందలు, delivery విజయవాడ అని note చేసుకున్నాను. ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 6259,
+        "output_tokens": 56,
+        "cached_tokens": 4448,
+        "total_tokens": 6315
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "Confirm availability and details for 100 normal visiting cards within a 500 rupees budget.",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "కవిత",
+            "modality": "asserted"
+          },
+          {
+            "op": "set_fact",
+            "key": "product",
+            "value": "normal visiting cards",
+            "modality": "asserted"
+          },
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "100",
+            "modality": "asserted"
+          },
+          {
+            "op": "set_fact",
+            "key": "budget",
+            "value": "500 rupees",
+            "modality": "asserted"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నమస్తే కవిత గారు. నాకు 100 normal visiting cards కావాలి, నా budget 500 rupees వరకు ఉంటుంది.",
+      "at": 120513.968
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "200 matte visiting cards with a budget of 900 rupees",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "రమేష్",
+            "modality": "asserted"
+          },
+          {
+            "op": "set_fact",
+            "key": "product",
+            "value": "matte visiting cards",
+            "modality": "asserted"
+          },
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "200",
+            "modality": "asserted"
+          },
+          {
+            "op": "set_fact",
+            "key": "budget",
+            "value": "900 rupees",
+            "modality": "asserted"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, నా పేరు రమేష్. కానీ నేను 200 matte visiting cards తీసుకుంటాను, నా budget 900 rupees వరకు ఉంటుంది.",
+      "at": 120516.125
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "Confirm the product, quantity, and budget, and explain how to make payment",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "delivery_locality",
+            "value": "విజయవాడ",
+            "modality": "asserted"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, విజయవాడ. మీరు గుర్తుంచుకున్న product, quantity, ఇంకా budget ఏంటో ఒకసారి మళ్ళీ చెప్తారా? అలాగే payment ఎలా చేయాలి?",
+      "at": 120518.296
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "Can the order be confirmed with cash on delivery?",
+        "memory_operations": [
+          {
+            "op": "set_preference",
+            "key": "payment_method",
+            "value": "cash on delivery",
+            "modality": "asserted"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, నేను advance payment చేయలేను, cash on delivery మాత్రమే అవసరం. మరి order confirm చేయవచ్చా?",
+      "at": 120520.687
+    },
+    {
+      "turn": 5,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "Confirm the order details and process the order",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "payment_method",
+            "value": "cash on delivery",
+            "modality": "asserted"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నా దగ్గర design ఇంకా లేదు, తర్వాత పంపిస్తాను. నా order details మళ్ళీ ఒకసారి confirm చేస్తారా? 200 matte visiting cards, 900 rupees budget, విజయవాడ delivery. ఇక payment కి నేను cash on delivery మాత్రమే చేస్తాను. ఈ order process చేయవచ్చా?",
+      "at": 120522.843
+    },
+    {
+      "turn": 6,
+      "proposal": {
+        "decision": "continue",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "remaining_request": "ఇంకేమైనా details కావాలా?",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నా దగ్గర design ఇంకా లేదు, తర్వాత పంపిస్తాను. ఈ order process చేయడానికి ఇంకేమైనా details కావాలా?",
+      "at": 120525.109
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [],
+  "carrier": [],
+  "events": [
+    {
+      "kind": "audit_caller_transport_closed",
+      "reason": "max_turns_or_error"
+    }
+  ],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 120513.984
+    },
+    {
+      "turn_seq": 3,
+      "at": 120516.156
+    },
+    {
+      "turn_seq": 5,
+      "at": 120518.343
+    },
+    {
+      "turn_seq": 7,
+      "at": 120520.703
+    },
+    {
+      "turn_seq": 9,
+      "at": 120522.859
+    },
+    {
+      "turn_seq": 11,
+      "at": 120525.125
+    }
+  ],
+  "started_at": "2026-10-29T15:49:49.133317+00:00",
+  "errors": [],
+  "brain_checksum": "e13acafd95972aee7bb5fb38e469acc564a37d73b8c900459c3eb77a6c514fa1",
+  "runtime_checksum": "a17be14db31846c43a2d1387b18289d4d71c3d8e1ee7b54160095d4b275af6dc",
+  "available_tools": [
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 120512.546,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 2,
+      "start_s": 120514.687,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 111,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 3,
+      "start_s": 120516.843,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 167,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 4,
+      "start_s": 120518.921,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 196,
+      "rolling_chars": 407
+    },
+    {
+      "turn": 5,
+      "start_s": 120521.39,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 243,
+      "rolling_chars": 407
+    },
+    {
+      "turn": 6,
+      "start_s": 120523.468,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 278,
+      "rolling_chars": 407
+    }
+  ],
+  "ended_by_agent": false,
+  "outcome": {
+    "disposition": "interested",
+    "disposition_confidence": 0.97,
+    "summary_te": "",
+    "summary_en": "The caller initially asked for 100 normal visiting cards with a budget of up to 500 rupees, then changed the request to 200 matte visiting cards with a budget of up to 900 rupees. The agent explained that the estimated price would be 700 rupees, within budget, and collected the caller's name, Ramesh, and delivery location, Vijayawada. The caller asked about payment and required cash on delivery because advance payment was not possible; the agent confirmed COD was applicable for orders below 1,000 rupees. The agent explained that the artwork design must be submitted and approved before the order can be confirmed. The caller said the design was not ready and would be sent later, then reconfirmed the product, quantity, budget, delivery location, and COD preference and asked whether anything else was needed. The agent said the design was the remaining requirement but clarified that no team handoff or follow-up could be promised. The order was not confirmed during the call.",
+    "next_action": "Caller needs to provide the artwork design for approval before the order can be processed; no follow-up or team handoff was confirmed.",
+    "extracted_fields": {
+      "budget": "900 rupees",
+      "caller_name": "రమేష్",
+      "delivery_locality": "విజయవాడ",
+      "delivery_location": "Vijayawada",
+      "estimated_price": "700 rupees",
+      "name": "Ramesh",
+      "order_requirement": "Artwork design approval before processing",
+      "payment_method": "Cash on delivery",
+      "phone": "+12025550143",
+      "product": "Matte visiting cards",
+      "quantity": "200"
+    },
+    "objections": [
+      "Caller cannot make an advance payment and requires cash on delivery.",
+      "Artwork design is not ready yet."
+    ],
+    "notes": "Caller expressed clear purchase intent, but the order remains pending artwork submission and approval. The agent stated that no team handoff or follow-up could be guaranteed.",
+    "tags": [
+      "intent:purchase",
+      "intent:pricing",
+      "signal:ready_to_buy",
+      "followup:send_info",
+      "signal:objection"
+    ],
+    "custom_tags": [
+      "custom:matte-visiting-cards",
+      "custom:vijayawada-delivery",
+      "custom:artwork-pending"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T15:50:08.282736Z",
+    "generation_ok": true,
+    "facts": {
+      "budget": "900 rupees",
+      "caller_name": "రమేష్",
+      "delivery_locality": "విజయవాడ",
+      "delivery_location": "Vijayawada",
+      "estimated_price": "700 rupees",
+      "name": "Ramesh",
+      "order_requirement": "Artwork design approval before processing",
+      "payment_method": "Cash on delivery",
+      "phone": "+12025550143",
+      "product": "Matte visiting cards",
+      "quantity": "200"
+    },
+    "disclosure_status": null,
+    "contact_preference": "none",
+    "status_tags": [
+      "action:required",
+      "contact:name_known",
+      "contact:phone_known",
+      "custom:artwork-pending",
+      "custom:matte-visiting-cards",
+      "custom:vijayawada-delivery",
+      "followup:send_info",
+      "intent:pricing",
+      "intent:purchase",
+      "outcome:interested",
+      "signal:objection",
+      "signal:ready_to_buy"
+    ],
+    "lead": {
+      "leadId": "8a1415d9-8049-4618-922f-4d5910765a17",
+      "agentId": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+      "stage": "contacted",
+      "action": "unchanged"
+    },
+    "lead_assessment": {
+      "score": 75,
+      "band": "hot",
+      "disposition": "interested",
+      "confidence": 0.97,
+      "components": [
+        {
+          "signal": "interest",
+          "points": 40,
+          "max": 40,
+          "evidence": "interested"
+        },
+        {
+          "signal": "requirements",
+          "points": 25,
+          "max": 25,
+          "evidence": "product"
+        },
+        {
+          "signal": "timing",
+          "points": 0,
+          "max": 25,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "contact",
+          "points": 10,
+          "max": 10,
+          "evidence": "phone"
+        }
+      ],
+      "version": 1,
+      "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+      "reason": "recorded_signals"
+    },
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "fe9a9e4a-5589-4f45-8e43-945e86a7e348",
+        "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+        "session_id": "adaptive-0a9dee2281104d3f86e6f6ae626e0820",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_8649a3d49b8f",
+        "started_at": "2026-10-29 15:49:49.122064+00:00",
+        "ended_at": "2026-10-29 15:50:02.353103+00:00",
+        "duration_sec": 13,
+        "disposition": "interested",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/fe9a9e4a-5589-4f45-8e43-945e86a7e348/",
+        "end_reason": "user_stop",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "action:required",
+          "contact:name_known",
+          "contact:phone_known",
+          "custom:artwork-pending",
+          "custom:matte-visiting-cards",
+          "custom:vijayawada-delivery",
+          "followup:send_info",
+          "intent:pricing",
+          "intent:purchase",
+          "outcome:interested",
+          "signal:objection",
+          "signal:ready_to_buy"
+        ],
+        "last_heartbeat_at": "2026-10-29 15:49:49.122064+00:00",
+        "created_at": "2026-10-29 15:49:49.123065+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [],
+    "dnd": [],
+    "leads": [
+      {
+        "lead_id": "8a1415d9-8049-4618-922f-4d5910765a17",
+        "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+        "name": "Ramesh",
+        "phone": "+12025550143",
+        "email": "ramesh.audit@example.invalid",
+        "stage": "contacted",
+        "notes": "[Call reference: 45c39898-68e0-4ebc-9443-ade7d02568a4]\nThe caller initially asked for 100 normal paper visiting cards with a budget of up to ₹500. They then corrected the request to 200 matte-finish visiting cards with a budget of up to ₹900 and asked the agent to confirm the details. The agent quoted approximately ₹700 for 200 cards, confirmed that this fit the budget, and requested the caller’s name. The caller provided the name Ramesh and email ramesh.audit@example.invalid, and explained that they could not authorize payment. The agent stated that orders below ₹1,000 support cash on delivery, while online payment and credit card payment are not accepted by phone, and that artwork/design approval is required before processing. The caller asked to use cash on delivery, received confirmation that the ₹900 order qualified, and stated that they were placing the order. The call ended with the agent thanking the caller; however, the transcript does not confirm that artwork was approved or that the order was actually processed. Server check: no confirmed order was recorded for this call, so it was not marked as converted.\n\nNext step: Obtain artwork/design approval and confirm the order before processing; retain cash-on-delivery as the payment method.\n\nObjections: Caller could not authorize payment and requested a payment option without advanc\n\nCall outcome: interested (89% confidence)\n\n---\n[Call reference: fe9a9e4a-5589-4f45-8e43-945e86a7e348]\nThe caller initially asked for 100 normal visiting cards with a budget of up to 500 rupees, then changed the request to 200 matte visiting cards with a budget of up to 900 rupees. The agent explained that the estimated price would be 700 rupees, within budget, and collected the caller's name, Ramesh, and delivery location, Vijayawada. The caller asked about payment and required cash on delivery because advance payment was not possible; the agent confirmed COD was applicable for orders below 1,000 rupees. The agent explained that the artwork design must be submitted and approved before the order can be confirmed. The caller said the design was not ready and would be sent later, then reconfirmed the product, quantity, budget, delivery location, and COD preference and asked whether anything else was needed. The agent said the design was the remaining requirement but clarified that no team handoff or follow-up could be promised. The order was not confirmed during the call.\n\nNext step: Caller needs to provide the artwork design for approval before the order can be processed; no follow-up or team handoff was confirmed.\n\nObjections: Caller cannot make an advance payment and requires cash on delivery., Artwork design is not ready yet.\n\nCall outcome: interested (97% confidence)",
+        "created_at": "2026-10-29 11:28:39.790865+00:00",
+        "updated_at": "2026-10-29 15:50:08.310178+00:00"
+      }
+    ],
+    "tools": [],
+    "assessments": [
+      {
+        "id": "5656d7d4-4bd7-4eb9-aea2-d4986fb47810",
+        "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+        "lead_id": "8a1415d9-8049-4618-922f-4d5910765a17",
+        "source_call_id": "fe9a9e4a-5589-4f45-8e43-945e86a7e348",
+        "assessment": {
+          "score": 75,
+          "band": "hot",
+          "disposition": "interested",
+          "confidence": 0.97,
+          "components": [
+            {
+              "signal": "interest",
+              "points": 40,
+              "max": 40,
+              "evidence": "interested"
+            },
+            {
+              "signal": "requirements",
+              "points": 25,
+              "max": 25,
+              "evidence": "product"
+            },
+            {
+              "signal": "timing",
+              "points": 0,
+              "max": 25,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "contact",
+              "points": 10,
+              "max": 10,
+              "evidence": "phone"
+            }
+          ],
+          "version": 1,
+          "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+          "reason": "recorded_signals"
+        },
+        "updated_at": "2026-10-29 15:50:02.353103+00:00"
+      }
+    ]
+  },
+  "metadata": {
+    "call_id": "fe9a9e4a-5589-4f45-8e43-945e86a7e348",
+    "tenant_id": "d5b641a1-1bca-4e7a-9eea-a70b8cb5a0a2",
+    "agent_id": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "session_id": "adaptive-0a9dee2281104d3f86e6f6ae626e0820",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_8649a3d49b8f",
+    "started_at": "2026-10-29T15:49:49.122064+00:00",
+    "status": "active",
+    "storage_path": "data/calls/fe9a9e4a-5589-4f45-8e43-945e86a7e348/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550143",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 79825,
+        "output_tokens": 2112,
+        "cached_tokens": 64096
+      }
+    },
+    "disconnected_at": "2026-10-29T15:50:02.353103+00:00",
+    "ended_at": "2026-10-29T15:50:02.353103+00:00",
+    "end_reason": "user_stop",
+    "duration_sec": 13.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 13.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.0027083333333333334,
+      "telephony_inr": 0.25802291666666666,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.0027083333333333334,
+      "telnyx_inr": 0.25802291666666666,
+      "telnyx_voice_api_usd": 0.00043333333333333337,
+      "telnyx_sip_usd": 0.0010833333333333335,
+      "telnyx_media_stream_usd": 0.0007583333333333334,
+      "telnyx_call_recording_usd": 0.00043333333333333337,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.27,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-29",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.0125,
+      "telephony_inr_per_min": 1.190875,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.0125,
+      "telnyx_inr_per_min": 1.190875,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_0c7e368641ba1ef9016ae36b2b2f5087d1b3e1572bebff98ec": {
+          "input_tokens": 1708,
+          "output_tokens": 462,
+          "cached_tokens": 0,
+          "cache_write_tokens": 1705,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.00098125
+        }
+      },
+      "post_call_analysis_usd": 0.00098125,
+      "post_call_analysis_inr": 0.09348368749999998
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నమస్తే కవిత గారు. నాకు 100 normal visiting cards కావాలి, నా budget 500 rupees వరకు ఉంటుంది.",
+      "ts": "2026-10-29T15:49:49.757845Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "Normal paper visiting cards one hundred కి two hundred rupees అవుతుంది, మీ five hundred rupees budget కి సరిపోతుంది. మీ పేరు చెప్తారా? order process చేద్దాము.",
+      "ts": "2026-10-29T15:49:51.157274Z"
+    },
+    {
+      "seq": 3,
+      "role": "user",
+      "text": "సరే, నా పేరు రమేష్. కానీ నేను 200 matte visiting cards తీసుకుంటాను, నా budget 900 rupees వరకు ఉంటుంది.",
+      "ts": "2026-10-29T15:49:51.883211Z",
+      "partial": false
+    },
+    {
+      "seq": 4,
+      "role": "assistant",
+      "text": "Matte finish cards one hundred కి three hundred and fifty rupees అవుతుంది కదా, సో రెండు వందలకి seven hundred rupees అవుతుంది. ఇది మీ nine hundred rupees budget లోనే సరిపోతుంది. మరి delivery కోసం మీ area ఏంటో చెప్తారా?",
+      "ts": "2026-10-29T15:49:53.323924Z"
+    },
+    {
+      "seq": 5,
+      "role": "user",
+      "text": "సరే, విజయవాడ. మీరు గుర్తుంచుకున్న product, quantity, ఇంకా budget ఏంటో ఒకసారి మళ్ళీ చెప్తారా? అలాగే payment ఎలా చేయాలి?",
+      "ts": "2026-10-29T15:49:54.032881Z",
+      "partial": false
+    },
+    {
+      "seq": 6,
+      "role": "assistant",
+      "text": "మీరు రెండు వందల matte visiting cards, తొమ్మిది వందల rupees budget తో విజయవాడలో అడుగుతున్నారు. Payment విషయానికి వస్తే, one thousand rupees పైన orders కి 50% advance payment చేయాలి, thousand rupees లోపు అయితే cash on delivery తీసుకోవచ్చు. మీకు ఈ order తో ముందుకు వెళ్లాలా?",
+      "ts": "2026-10-29T15:49:55.490704Z"
+    },
+    {
+      "seq": 7,
+      "role": "user",
+      "text": "సరే, నేను advance payment చేయలేను, cash on delivery మాత్రమే అవసరం. మరి order confirm చేయవచ్చా?",
+      "ts": "2026-10-29T15:49:56.119938Z",
+      "partial": false
+    },
+    {
+      "seq": 8,
+      "role": "assistant",
+      "text": "మీ order seven hundred rupees అవుతుంది కదా, సో cash on delivery తీసుకోవచ్చు. ముందుగా మీ artwork design approve అవ్వాలి, అప్పుడే order confirm అవుతుంది. మరి మీ design ready గా ఉందా?",
+      "ts": "2026-10-29T15:49:57.877225Z"
+    },
+    {
+      "seq": 9,
+      "role": "user",
+      "text": "నా దగ్గర design ఇంకా లేదు, తర్వాత పంపిస్తాను. నా order details మళ్ళీ ఒకసారి confirm చేస్తారా? 200 matte visiting cards, 900 rupees budget, విజయవాడ delivery. ఇక payment కి నేను cash on delivery మాత్రమే చేస్తాను. ఈ order process చేయవచ్చా?",
+      "ts": "2026-10-29T15:49:58.578144Z",
+      "partial": false
+    },
+    {
+      "seq": 10,
+      "role": "assistant",
+      "text": "సరే, మీ order details రెండు వందల matte visiting cards, తొమ్మిది వందల rupees budget, విజయవాడ delivery, ఇంకా cash on delivery. ముందుగా మీ artwork design పంపి approval తీసుకున్నాకే order process అవుతుంది. ఆ design ఎప్పుడు పంపిస్తారు?",
+      "ts": "2026-10-29T15:50:00.034655Z"
+    },
+    {
+      "seq": 11,
+      "role": "user",
+      "text": "నా దగ్గర design ఇంకా లేదు, తర్వాత పంపిస్తాను. ఈ order process చేయడానికి ఇంకేమైనా details కావాలా?",
+      "ts": "2026-10-29T15:50:00.663359Z",
+      "partial": false
+    },
+    {
+      "seq": 12,
+      "role": "assistant",
+      "text": "సరే, మీ artwork design తర్వాత పంపిస్తే సరిపోతుంది. ప్రస్తుతానికి మీ పేరు రమేష్, quantity రెండు వందలు, delivery విజయవాడ అని note చేసుకున్నాను. ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు.",
+      "ts": "2026-10-29T15:50:02.298656Z"
+    }
+  ],
+  "wall_elapsed_s": 19.375,
+  "simulated_exchange_timeline_s": 120,
+  "request_count": 24
+}

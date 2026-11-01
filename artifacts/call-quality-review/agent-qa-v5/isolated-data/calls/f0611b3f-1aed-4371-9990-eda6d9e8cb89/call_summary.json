@@ -1,0 +1,55 @@
+{
+  "call_id": "f0611b3f-1aed-4371-9990-eda6d9e8cb89",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "व्यवसाय के एजेंट ने ग्राहक को फोन किया। ग्राहक ने फेस क्रीम और हेयर ऑयल की कीमत पूछी। एजेंट ने कीमतें बताईं और स्टॉक तथा डिलीवरी की जानकारी न होने की बात कही। ग्राहक ने कल सुबह 11 बजे ऑर्डर करने के लिए एक कॉल बुक करने को कहा। एजेंट ने इस अनुरोध को नोट कर लिया, और ग्राहक ने पुष्टि की कि वह टीम के कॉल का इंतजार करेगी।",
+  "summary_language": "hi-IN",
+  "summary_en": "The business agent called the customer to provide product information. The customer inquired about prices for face cream and hair oil, and provided their email address. The agent shared the pricing but could not confirm stock or delivery timelines for Kukatpally. After the customer requested a callback at 11 AM the next morning to place an order, the agent noted the request. The customer agreed to wait for the team's call, and the conversation ended.",
+  "next_action": "Team to contact the customer at the requested time to confirm details and assist with the order.",
+  "extracted_fields": {
+    "delivery_locality": "Kukatpally",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919700000004",
+    "product": "face cream",
+    "product_interest": "face cream",
+    "requested_time": "कल सुबह 11 बजे"
+  },
+  "facts": {
+    "delivery_locality": "Kukatpally",
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919700000004",
+    "product": "face cream",
+    "product_interest": "face cream",
+    "requested_time": "कल सुबह 11 बजे"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:phone_known",
+    "custom:callback-booked",
+    "custom:product-inquiry",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:product-inquiry",
+    "custom:callback-booked"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [
+    "Is the face cream currently in stock?",
+    "When will delivery be available in Kukatpally?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T16:10:15.488486Z",
+  "generation_ok": true
+}

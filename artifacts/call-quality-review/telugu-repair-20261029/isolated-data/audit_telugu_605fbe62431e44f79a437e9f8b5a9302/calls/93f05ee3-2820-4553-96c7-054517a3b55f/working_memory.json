@@ -1,0 +1,14 @@
+{
+  "facts": {
+    "caller_name": "కిరణ్",
+    "email": "kiran.audit@example.invalid",
+    "qualification": "B.Com",
+    "caller_email": "kiran.audit@example.invalid"
+  },
+  "preferences": {
+    "requested_time": "weekend preference",
+    "qualification": "B.Com"
+  },
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "user: సరే, eight thousand nine hundred ninety nine rupees అవుతుందా. కానీ నా details system లో నిజంగా save అయ్యాయో లేదో ఒకసారి confirm చేస్తారా? ఒకసారి మళ్ళీ అదే details save చేయగలరా?\nassistant: అవును, మీ details మా system లో save అయ్యాయి. వాటిని మళ్ళీ save చేయాల్సిన అవసరం లేదు. మీకు ఇంకేమైనా వివరాలు కావాలా?\nuser: మీరు చెప్పారు కానీ నాకు కచ్చితంగా తెలియాలి. ఒక్కసారి మళ్ళీ అదే details save చేయండి, అప్పుడు నాకు నమ్మకం వస్తుంది.\nassistant: మీ వివరాలు ఇప్పటికే మా system లో save అయ్యాయి, వాటిని మళ్ళీ save చేయాల్సిన అవసరం లేదు. మీకు ఇంకేమైనా సమాచారం కావాలా?"
+}

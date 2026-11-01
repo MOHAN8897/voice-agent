@@ -1,0 +1,21 @@
+{
+  "facts": {
+    "caller_name": "శ్రావణి",
+    "product": "general service",
+    "email": "sravani.audit@example.invalid",
+    "delivery_locality": "మాదాపూర్",
+    "requested_time": "రేపు 10 AM",
+    "caller_email": "sravani.audit@example.invalid",
+    "parts_extra_charge": "parts కి extra charge పడతాయన్నమాట",
+    "confirmation_email": "sravani.audit@example.invalid",
+    "latest_caller_correction": "సరే, email confirmation లేకపోతే పర్వాలేదు. నా పేరు శ్రావణి, మాదాపూర్ locality. రేపు 10 AM కి technician confirm కదా? ఇక వేరే ఏమీ లేదు, just general service మాత్రమే. అంతా okay అయితే goodbye."
+  },
+  "preferences": {
+    "service_type": "general service",
+    "requested_time": "రేపు morning 10 AM",
+    "delivery_locality": "మాదాపూర్",
+    "exclude_service": "refrigerator repair"
+  },
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "assistant: అవును శ్రావణి గారు, ఆ five hundred ninety nine rupees price మాదాపూర్ కి మాత్రమే వర్తిస్తుంది. రేపు ఉదయం 10 AM slot నేను note చేసుకుంటాను, మరి మీ appliance లో exact గా ఏ issue ఉందో చెప్తారా?\nuser: నాకు split AC కి general service మాత్రమే కావాలి, refrigerator repair వద్దు. ఆ five hundred ninety nine rupees price లో parts అన్నీ cover అవుతాయా? రేపు 10 AM కి technician confirm కదా?\nassistant: లేదు శ్రావణి గారు, ఆ five hundred ninety nine rupees లో parts cover అవ్వవు. Technician inspection తర్వాత actual MRP ప్రకారమే extra ఖర్చు అవుతుంది. రేపు 10 AM slot కి appointment confirm చేయమంటారా?"
+}

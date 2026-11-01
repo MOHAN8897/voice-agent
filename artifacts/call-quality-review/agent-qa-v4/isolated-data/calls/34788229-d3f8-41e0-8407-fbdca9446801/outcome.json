@@ -1,0 +1,51 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపారి లక్ష్మి రెడ్డి గారికి హెర్బల్ ఉత్పత్తుల గురించి సమాచారం ఇవ్వడానికి కాల్ చేశారు. ఏజెంట్ హెయిర్ ఆయిల్ ధర ₹499 మరియు అందులోని పదార్థాలను వివరించారు, కానీ హామీ ఇవ్వలేమని స్పష్టం చేశారు. కస్టమర్ మరిన్ని వివరాలు తెలుసుకోవాలనుకున్నప్పటికీ, పదేపదే కాల్స్ వస్తున్నాయని అభ్యంతరం వ్యక్తం చేశారు. వారు తమ పేరును జాబితా నుండి తొలగించి, ఇకపై కాల్ చేయవద్దని కోరారు. ఏజెంట్ వారి కోరికను అంగీకరించి, కాల్ ముగించారు.",
+  "summary_en": "The agent called Lakshmi Reddy to share details about herbal products. The agent explained that the Hair Oil costs ₹499 and contains Amla, Bhringraj, Hibiscus, and Coconut Oil, while clarifying that no medical guarantees are provided. Although the customer was initially interested in learning more, they objected to receiving frequent calls. The customer requested to be removed from the contact list, which the agent agreed to. The call ended after the agent confirmed no further calls would be made.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "caller_name": "Lakshmi Reddy",
+    "phone": "+919700000001"
+  },
+  "objections": [
+    "Too many calls received."
+  ],
+  "notes": "",
+  "tags": [
+    "signal:do_not_call",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:hair-oil"
+  ],
+  "unanswered_questions": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T15:01:50.276143Z",
+  "generation_ok": true,
+  "summary_language": "te-IN",
+  "facts": {
+    "caller_name": "Lakshmi Reddy",
+    "phone": "+919700000001"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:hair-oil",
+    "custom:herbal-products",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

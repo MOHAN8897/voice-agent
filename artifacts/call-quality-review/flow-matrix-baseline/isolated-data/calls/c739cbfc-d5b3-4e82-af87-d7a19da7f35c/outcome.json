@@ -1,0 +1,45 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to discuss a potential purchase but stated at the beginning that they first needed to discuss the matter with their family. The agent acknowledged the caller's request to be called back and recorded their details. The caller did not provide any further information, and the conversation concluded with the agent thanking the caller for their time.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500537"
+  },
+  "objections": [
+    "Needs to discuss with family before proceeding"
+  ],
+  "notes": null,
+  "tags": [
+    "intent:purchase",
+    "sentiment:neutral",
+    "signal:needs_approval",
+    "followup:callback"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:44:20.470138Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500537"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "contact:phone_known",
+    "followup:callback",
+    "intent:purchase",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:needs_approval",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,110 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "Kiran, a working professional with a B.Com qualification, called to inquire about Python and data training. They preferred weekend or evening classes and asked about fees and recording their details. The agent provided a Saturday-Sunday weekend batch from 10:00 AM to 1:00 PM with a total fee of ₹8,999. Kiran accepted the fee and asked for confirmation that their details were saved; the agent confirmed this, although the transcript does not independently verify that the save was completed. The agent then offered a free demo or admission counselling, but Kiran declined the demo for now and clarified that the main request was confirmation of the saved record. The call ended politely with no admission, demo registration, or counselling appointment scheduled.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "class_preference": "Weekend",
+    "demo_session": "Declined for now",
+    "email": "kiran.audit@example.invalid",
+    "fee_quoted": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550148",
+    "preferred_schedule": "Saturday and Sunday, 10:00 AM-1:00 PM",
+    "qualification": "B.Com"
+  },
+  "objections": [
+    "No demo needed at this time; caller only wanted confirmation that their details were saved."
+  ],
+  "notes": "Caller showed positive interest in the fee and course schedule but did not commit to admission or a demo.",
+  "tags": [
+    "intent:information",
+    "intent:pricing",
+    "sentiment:positive",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:python-training",
+    "custom:data-training",
+    "custom:weekend-classes"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:51:25.117238Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "class_preference": "Weekend",
+    "demo_session": "Declined for now",
+    "email": "kiran.audit@example.invalid",
+    "fee_quoted": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550148",
+    "preferred_schedule": "Saturday and Sunday, 10:00 AM-1:00 PM",
+    "qualification": "B.Com"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:data-training",
+    "custom:python-training",
+    "custom:weekend-classes",
+    "intent:information",
+    "intent:pricing",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "e49401b9-1c35-4800-b098-0719c36e2693",
+    "agentId": "4c5270a8-990a-5800-868d-9d685eca9a09",
+    "stage": "contacted",
+    "action": "advanced"
+  },
+  "lead_assessment": {
+    "score": 50,
+    "band": "warm",
+    "disposition": "interested",
+    "confidence": 0.97,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

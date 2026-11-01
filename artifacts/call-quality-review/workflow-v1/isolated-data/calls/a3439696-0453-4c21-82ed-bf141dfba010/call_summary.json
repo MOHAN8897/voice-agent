@@ -1,0 +1,43 @@
+{
+  "call_id": "a3439696-0453-4c21-82ed-bf141dfba010",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller requested an immediate booking confirmation for tomorrow at 11:00 AM. The agent explained that the booking could not be confirmed immediately, but noted the preferred time for the team's review. The caller insisted on receiving a booking number, which the agent declined, stating it was not yet confirmed. The caller then accepted the situation and thanked the agent, ending the call with the understanding that the team would follow up after reviewing the request.",
+  "next_action": "Awaiting team review of the requested 11:00 AM slot; team to follow up with the caller.",
+  "extracted_fields": {
+    "phone": "+919876500007",
+    "slot": "Tomorrow at 11:00 AM"
+  },
+  "facts": {
+    "phone": "+919876500007",
+    "slot": "Tomorrow at 11:00 AM"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:morning-slot",
+    "followup:callback",
+    "intent:booking",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:booking",
+    "followup:callback",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:morning-slot"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Request for immediate confirmation and booking number declined by agent."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:16:35.944827Z",
+  "generation_ok": true
+}

@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "caller_name": "Ravi Kumar"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "assistant: అర్థమైంది. మీ పేరు Ravi Kumar, 200 matte visiting cards కావాలి, మరియు delivery address 12 MG Road, Vijayawada అని చెప్పారు. ఆర్డర్ confirm చేయడానికి ముందు, artwork approval తర్వాత Vijayawada లో delivery కి 3 working days పడుతుందని గమనించండి. ఇప్పుడు order confirm చేయమంటారా?\nuser: అవును, order confirm చేయండి.\nassistant: అర్థమైంది. ఆర్డర్ కన్ఫర్మ్ చేస్తున్నాను. 200 matte visiting cards కి మొత్తం ₹700 అవుతుంది. Payment cash on delivery. artwork approval తర్వాత Vijayawada లో delivery కి 3 working days పడుతుంది.\nuser: Thanks, అంతే."
+}

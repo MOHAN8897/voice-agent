@@ -1,0 +1,31 @@
+{
+  "call_id": "38b3689e-b8a9-434e-85f0-e89dc0d43dd2",
+  "language_callback": null,
+  "disposition": "new_lead",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call but only responded with hesitant sounds ('ah... hmm...'). The agent, Anjali from Sunrise Dental Clinic, asked for the caller's name, reason for the visit, and their preferred date and time to confirm an appointment. The caller did not provide any of this information, only saying 'hello hello'. The call ended without any concrete details being shared or an appointment being scheduled.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500530"
+  },
+  "facts": {
+    "phone": "+919876500530"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:new_lead",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:42:25.026300Z",
+  "generation_ok": true
+}

@@ -1,0 +1,46 @@
+{
+  "call_id": "c7de4514-343d-4d3f-b199-8b3a597d670e",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller inquired about the cost of a 3 kW system and whether any subsidies were available. The agent explained that the system costs 1,95,000 rupees before a 78,000 rupee government subsidy, leaving a net cost of 1,17,000 rupees, and also mentioned an EMI option starting at 2,999 rupees per month for 48 months. The caller responded positively, stating that the price sounded reasonable. The agent then offered to book a free site survey and requested the caller's name, area, and preferred scheduling day. The caller hesitated and responded vaguely with 'Hmm, okay,' but did not provide the requested details. The agent repeated the request for the name, area, and preferred day to take down the information. The call ended with the caller still needing to provide these details.",
+  "next_action": "Awaiting the caller to provide their name, area, and preferred day for the site survey.",
+  "extracted_fields": {
+    "phone": "+919876500502"
+  },
+  "facts": {
+    "phone": "+919876500502"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:site-survey",
+    "custom:solar-system",
+    "custom:subsidy-query",
+    "followup:schedule_pending",
+    "intent:information",
+    "intent:quote",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:quote",
+    "sentiment:positive",
+    "followup:schedule_pending"
+  ],
+  "custom_tags": [
+    "custom:solar-system",
+    "custom:subsidy-query",
+    "custom:site-survey"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Hesitation to provide scheduling details during the call."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:59:19.628899Z",
+  "generation_ok": true
+}

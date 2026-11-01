@@ -1,0 +1,25 @@
+{
+  "A_dnd_question_then_goodbye": {
+    "passed": true,
+    "observed_preference": "do_not_call"
+  },
+  "A_addressing_agent_name": {
+    "passed": false,
+    "facts": {
+      "caller_name": "ఇంకా"
+    },
+    "no_false_dnd_on_goodbye": false
+  },
+  "A_rejected_product_memory": {
+    "passed": false,
+    "product": "విజిటింగ్ కార్డులు",
+    "selected_product_correct": true,
+    "no_false_dnd_on_goodbye": false
+  },
+  "C_callback_withdrawn_after_question": {
+    "passed": false,
+    "callback_records": 0,
+    "jobs": 0,
+    "preference": "do_not_call"
+  }
+}

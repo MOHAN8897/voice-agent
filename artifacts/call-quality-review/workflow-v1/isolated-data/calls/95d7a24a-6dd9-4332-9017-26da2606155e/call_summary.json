@@ -1,0 +1,47 @@
+{
+  "call_id": "95d7a24a-6dd9-4332-9017-26da2606155e",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller requested to book an appointment for tomorrow at 11 AM and immediately asked for a booking confirmation number. The agent explained that the booking could not be confirmed without the caller's name and the details of the issue, which were required by the front desk. The caller responded with 'okay, thanks' and did not provide the requested information, ending the call without a confirmed booking.",
+  "next_action": "Call the customer back to collect their name and issue details to proceed with the booking.",
+  "extracted_fields": {
+    "phone": "+919876500015",
+    "slot": "tomorrow at 11 AM"
+  },
+  "facts": {
+    "phone": "+919876500015",
+    "slot": "tomorrow at 11 AM"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:appointment-booking",
+    "followup:callback",
+    "followup:schedule_pending",
+    "intent:booking",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:booking",
+    "followup:callback",
+    "action:required",
+    "sentiment:neutral",
+    "followup:schedule_pending",
+    "intent:information"
+  ],
+  "custom_tags": [
+    "custom:appointment-booking"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Caller refused to provide their name and problem details."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:18:02.227936Z",
+  "generation_ok": true
+}

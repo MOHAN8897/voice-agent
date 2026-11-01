@@ -1,0 +1,7 @@
+{"turn_seq": 1, "ts": "2026-10-31T16:34:36.253638Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-31T16:34:50.393624Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_name: Lakshmi | product: aloe vera juice"}
+{"turn_seq": 5, "ts": "2026-10-31T16:35:13.570180Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_name: Lakshmi | product: aloe vera juice | quantity: 500"}
+{"turn_seq": 7, "ts": "2026-10-31T16:35:28.857997Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: Lakshmi | product: aloe vera juice | quantity: 500"}
+{"turn_seq": 9, "ts": "2026-10-31T16:35:47.688318Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: Lakshmi | product: aloe vera juice | quantity: 500"}
+{"turn_seq": 11, "ts": "2026-10-31T16:36:03.908510Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: Lakshmi | product: aloe vera juice | quantity: 500"}
+{"turn_seq": 13, "ts": "2026-10-31T16:36:15.313986Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: Lakshmi | product: aloe vera juice | quantity: 500"}

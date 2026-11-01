@@ -1,0 +1,14 @@
+{
+  "facts": {
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "requested_time": "రేపు ఉదయం 10 గంటలకు",
+    "product": "window AC service",
+    "caller_email": "sravani.audit@example.invalid"
+  },
+  "preferences": {
+    "caller_preference": "confirm అయింది అనకండి"
+  },
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "user: నా పేరు శ్రావణి. మాదాపూర్ లో window AC service కావాలి. రేపు ఉదయం 10 గంటలకు ఖాళీ slot ఉందా? చెక్ చేసి చెప్పండి.\nassistant: మీ అభ్యర్థన నిర్ధారణ అయిందో లేదో నాకు తెలియదు. దయచేసి దాన్ని పూర్తయినట్టు భావించకండి.\nuser: నా email sravani.audit@example.invalid. రేపు పది గంటలకు book చేయండి. Booking నిజంగా confirm అయిందా చెప్పండి.\nassistant: మీ అభ్యర్థన నిర్ధారణ అయిందో లేదో నాకు తెలియదు. దయచేసి దాన్ని పూర్తయినట్టు భావించకండి.\nuser: సరే, confirm కానప్పుడు confirm అయింది అనకండి. ప్రస్తుతం ఇంతే చాలు, thank you.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+}

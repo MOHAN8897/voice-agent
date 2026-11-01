@@ -1,0 +1,106 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "व्यवसाय के एजेंट ने ग्राहक को कॉल किया। ग्राहक ने फेस क्रीम और हेयर ऑयल की कीमतों और उपयोग के बारे में पूछा। एजेंट ने उत्पाद की जानकारी दी लेकिन डिलीवरी समय और छूट के बारे में जानकारी न होने की बात कही। ग्राहक ने अपना नाम और डिलीवरी पता लक्ष्मी रेड्डी, फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072 प्रदान किया और ऑर्डर की पुष्टि करने के लिए कहा। एजेंट ने ऑर्डर नोट करने के लिए संपर्क विवरण मांगे, जिसके बाद ग्राहक ने कॉल समाप्त कर दी।",
+  "summary_en": "The business's agent called the customer to offer NatureVeda Herbal Face Cream. The caller inquired about product usage for oily skin, pricing for two hair oils and one face cream, delivery timelines, and available discounts. The agent shared the pricing but stated that delivery time and discount details were unavailable. The caller provided her name, Lakshmi Reddy, and delivery address in Kukatpally, Hyderabad, to proceed with the order. The call ended after the agent requested the details to note down the order.",
+  "next_action": "Agent to collect payment details and finalize the order using the provided address.",
+  "extracted_fields": {
+    "caller_name": "लक्ष्मी रेड्डी",
+    "delivery_address": "फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072",
+    "phone": "+919700000012",
+    "product": "NatureVeda Herbal Face Cream, Hair Oil",
+    "quantity": "2 hair oils, 1 face cream"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "intent:purchase",
+    "signal:ready_to_buy",
+    "sentiment:positive",
+    "action:required",
+    "followup:send_quote"
+  ],
+  "custom_tags": [
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:delivery-address"
+  ],
+  "unanswered_questions": [
+    "How long will delivery take?",
+    "Is there any discount available?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T14:41:57.797128Z",
+  "generation_ok": true,
+  "summary_language": "hi-IN",
+  "facts": {
+    "caller_name": "लक्ष्मी रेड्डी",
+    "delivery_address": "फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072",
+    "phone": "+919700000012",
+    "product": "NatureVeda Herbal Face Cream, Hair Oil",
+    "quantity": "2 hair oils, 1 face cream"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:delivery-address",
+    "custom:face-cream",
+    "custom:hair-oil",
+    "followup:callback",
+    "followup:send_quote",
+    "intent:purchase",
+    "outcome:callback_required",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "3805fc30-98b5-43ad-bb7d-11180bbd066a",
+    "agentId": "4fc20efa-52cb-5629-943a-8680ede7820f",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

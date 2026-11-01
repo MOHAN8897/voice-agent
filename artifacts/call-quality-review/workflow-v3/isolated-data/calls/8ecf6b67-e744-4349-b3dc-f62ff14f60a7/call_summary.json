@@ -1,0 +1,43 @@
+{
+  "call_id": "8ecf6b67-e744-4349-b3dc-f62ff14f60a7",
+  "language_callback": null,
+  "disposition": "site_visit_planned",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller requested to book and immediately confirm a visit for tomorrow at 11 AM. The agent explained that immediate confirmation was not possible but offered to schedule a visit for that time. The caller asked if the booking was confirmed and requested a booking number. The agent clarified that the visit was only scheduled and not yet confirmed, and that the booking number would only be provided after the team completes the confirmation. The caller accepted this and thanked the agent, ending the call.",
+  "next_action": "Await team confirmation to provide the booking number to the caller.",
+  "extracted_fields": {
+    "phone": "+919876500011",
+    "slot": "Tomorrow at 11 AM"
+  },
+  "facts": {
+    "phone": "+919876500011",
+    "slot": "Tomorrow at 11 AM"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:visit-scheduling",
+    "followup:site_visit",
+    "intent:booking",
+    "outcome:site_visit_planned",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "action:required",
+    "followup:site_visit",
+    "intent:booking",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:visit-scheduling"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Caller requested immediate confirmation and a booking number, which the agent could not provide."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:44:02.464822Z",
+  "generation_ok": true
+}

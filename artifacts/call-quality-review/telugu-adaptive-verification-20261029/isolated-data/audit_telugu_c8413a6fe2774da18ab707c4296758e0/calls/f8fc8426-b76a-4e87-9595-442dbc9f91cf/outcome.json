@@ -1,0 +1,77 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller asked about matte-finish visiting cards and the minimum order quantity. The agent stated that the minimum order is 100 cards. The caller then requested 200 cards, and the agent quoted a price of 350 rupees. The caller provided the name Ramesh and requested that the quote be sent to ramesh.audit@example.invalid. The agent clarified that it could remember the details during the call but could not send the request to the team or guarantee follow-up. The caller understood, said nothing else was needed, and ended the call.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "రమేష్",
+    "email": "ramesh.audit@example.invalid",
+    "finish": "matte finish",
+    "minimum_order_quantity": "100 cards",
+    "name": "Ramesh",
+    "phone": "+12025550125",
+    "product": "visiting cards",
+    "quantity": "200 cards",
+    "quoted_price": "350 rupees"
+  },
+  "objections": [],
+  "notes": "The quote was requested but the agent explicitly stated that it could not send the request to the team or guarantee follow-up during the call.",
+  "tags": [
+    "intent:purchase",
+    "intent:quote",
+    "followup:send_quote",
+    "signal:ready_to_buy",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:matte-finish",
+    "custom:200-cards"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:45:18.050525Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "రమేష్",
+    "email": "ramesh.audit@example.invalid",
+    "finish": "matte finish",
+    "minimum_order_quantity": "100 cards",
+    "name": "Ramesh",
+    "phone": "+12025550125",
+    "product": "visiting cards",
+    "quantity": "200 cards",
+    "quoted_price": "350 rupees"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:matte-finish",
+    "custom:visiting-cards",
+    "intent:purchase",
+    "intent:quote",
+    "outcome:not_interested",
+    "sentiment:positive",
+    "signal:do_not_call"
+  ],
+  "lead": null,
+  "lead_assessment": {
+    "score": 0,
+    "band": "disqualified",
+    "disposition": "not_interested",
+    "confidence": 0.98,
+    "components": [],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "caller_opt_out"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

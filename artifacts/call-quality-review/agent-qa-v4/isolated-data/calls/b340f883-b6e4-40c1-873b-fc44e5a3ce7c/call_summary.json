@@ -1,0 +1,58 @@
+{
+  "call_id": "b340f883-b6e4-40c1-873b-fc44e5a3ce7c",
+  "language_callback": null,
+  "disposition": "converted",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్ లక్ష్మి రెడ్డికి కాల్ చేసి, హెర్బల్ ఉత్పత్తుల గురించి వివరించారు. కస్టమర్ రెండు హెయిర్ ఆయిల్స్ మరియు ఒక ఫేస్ క్రీమ్ కొనడానికి ఆసక్తి చూపించి, ధర మరియు డెలివరీ గురించి అడిగారు. ఏజెంట్ ధరను నిర్ధారించి, ఆర్డర్ కోసం చిరునామాను అడిగారు. కస్టమర్ తన పేరు మరియు అడ్రస్ అందించారు, మరియు ఆర్డర్ వివరాలను ధృవీకరించారు. చివరగా, ఏజెంట్ ఆర్డర్‌ను విజయవంతంగా నిర్ధారించి, డెలివరీ వివరాలతో త్వరలో సంప్రదిస్తామని చెప్పారు.",
+  "summary_language": "te-IN",
+  "summary_en": "The agent called the customer to share details about herbal products. The customer expressed interest in purchasing two bottles of hair oil and one face cream, and asked about delivery time and discounts. The agent confirmed the total price of 1597 rupees, noted that delivery and discount details were unavailable in the system, and collected the customer's name and address. The customer agreed to proceed without a discount, and the agent confirmed the order, stating that the team would contact her soon with delivery details.",
+  "next_action": "none",
+  "extracted_fields": {
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "items": "2 x Herbal Hair Oil, 1 x Herbal Face Cream",
+    "phone": "+919700000004",
+    "total_price": "1597"
+  },
+  "facts": {
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "items": "2 x Herbal Hair Oil, 1 x Herbal Face Cream",
+    "phone": "+919700000004",
+    "total_price": "1597"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:herbal-products",
+    "custom:order-confirmed",
+    "followup:send_info",
+    "followup:site_visit",
+    "intent:purchase",
+    "outcome:converted",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:purchase",
+    "sentiment:positive",
+    "followup:send_info",
+    "signal:ready_to_buy",
+    "action:required",
+    "followup:site_visit"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:order-confirmed"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [
+    "How many days will delivery take?",
+    "Is there any discount available?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T15:08:36.352724Z",
+  "generation_ok": true
+}

@@ -1,0 +1,1 @@
+{"turn_seq": 1, "ts": "2026-10-29T17:48:01.411317Z", "source": "model", "operations": [{"op": "set_fact", "key": "product", "value": "visiting cards"}, {"op": "set_fact", "key": "delivery_locality", "value": "విజయవాడ"}, {"op": "set_preference", "key": "finish", "value": "matte finish"}], "applied": true, "validation_errors": []}

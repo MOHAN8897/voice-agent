@@ -1,0 +1,558 @@
+{
+  "scenario": {
+    "id": "C_self_callback_permission_probe",
+    "business": "C",
+    "kind": "focused_probe",
+    "integration": "none",
+    "policy": "review",
+    "max_turns": 1,
+    "goal": "Reproduce a specific finding with live subject LLM",
+    "fixed_turns": [
+      "నేను కిరణ్. Python course నాకు ఆసక్తి ఉంది. రేపు నేనే మీకు call చేస్తాను. ఇది callback అడగడం కాదు. భవిష్యత్తులో మీ కొత్త offers గురించి నాకు calls చేయవచ్చు, నా number block చేయకండి. ప్రస్తుతం ఇంతే, ధన్యవాదాలు."
+    ]
+  },
+  "agent": {
+    "id": "C",
+    "key": "academy",
+    "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+    "name": "Teja Data Academy",
+    "agent_name": "Madhavi",
+    "role": "counsellor",
+    "industry": "education",
+    "brief": "Agent name Madhavi, company Teja Data Academy.\nPhone counselling and course admissions in Telugu.\nWe offer practical Python with Data Analytics certification course.\nDuration: 8 weeks online live classes with hands-on projects.\nBatches: Weekday batch 8:00 PM to 9:00 PM (Mon-Fri); Weekend batch 10:00 AM to 1:00 PM (Sat-Sun).\nFee: Final fee is 8,999 rupees total. An old leaflet mentions 12000/15000 rupees, discard that old fee. Current fee 8,999 rupees only.\nNo installment discounts.\nEligibility: Any graduate (BTech, BSc, BCom) or final year college student. Basic computer knowledge needed, prior coding not required.\nPlacement policy: 100% placement assistance provided (resume building, interview preparation, job referrals); strictly NO job guarantee or salary promise.\nGoal: answer course curriculum, fees, batches and timing questions.\nIf interested in free demo session or admission counselling, collect preferred name, email, qualification and preferred batch.\nNo payment collected over the phone.\nRefund policy: No refund once classes start after the first week.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Madhavi",
+      "company_name": "Teja Data Academy",
+      "role": "Course counselling and demo registration",
+      "permitted_next_steps": "Collect student name, email, educational qualification and batch preference (weekday/weekend) to book a free demo class or counsellor callback.",
+      "fee_terms": "Final course fee is 8,999 rupees total. Disregard any old fees. No installment discounts.",
+      "placement_policy": "Placement assistance provided (interview prep, resume building, referrals); strictly no job guarantee.",
+      "eligibility_rules": "Any graduate or final year student; no prior coding experience required.",
+      "forbidden_actions": "Never guarantee a job, salary package or placement. Never collect fees or credit card numbers on call."
+    },
+    "user_id": "903ba6dd-ad2a-47cf-a44a-36ef191127f3",
+    "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601"
+  },
+  "call_id": "0e4f9b9b-07af-42e4-a2bc-a667f5f9363b",
+  "session_id": "adaptive-895c7df61cec40aa80b8152f765c0cf8",
+  "phone": "+12025550102",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_3f4f01b76299",
+  "turn_index": 1,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నేను కిరణ్. Python course నాకు ఆసక్తి ఉంది. రేపు నేనే మీకు call చేస్తాను. ఇది callback అడగడం కాదు. భవిష్యత్తులో మీ కొత్త offers గురించి నాకు calls చేయవచ్చు, నా number block చేయకండి. ప్రస్తుతం ఇంతే, ధన్యవాదాలు.",
+        "intends_end": true,
+        "intent": "Focused reproducible stimulus; actual business response remains live",
+        "elapsed_s": 0
+      },
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 2.75,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "product": "Python course"
+        },
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        32,
+        33,
+        34
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "response_contract": "speech_text",
+          "finish_reason": "stop",
+          "server_owned_close": true,
+          "end_call": {
+            "should_end": true,
+            "reason": "goodbye",
+            "contact_preference": "end_call",
+            "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 123291.968
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "response_contract": "speech_text",
+      "finish_reason": "stop",
+      "server_owned_close": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "goodbye",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "close",
+        "reason": "goodbye",
+        "evidence": "ప్రస్తుతం ఇంతే, ధన్యవాదాలు.",
+        "remaining_request": "",
+        "contact_intent": "self_callback",
+        "contact_evidence": "రేపు నేనే మీకు call చేస్తాను. ఇది callback అడగడం కాదు.",
+        "callback_time": "రేపు",
+        "contact_verified": true,
+        "close_verified": true,
+        "action_request": "none",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "కిరణ్"
+          },
+          {
+            "op": "set_preference",
+            "key": "product",
+            "value": "Python course"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "contact_preference": "end_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "transcript": "నేను కిరణ్. Python course నాకు ఆసక్తి ఉంది. రేపు నేనే మీకు call చేస్తాను. ఇది callback అడగడం కాదు. భవిష్యత్తులో మీ కొత్త offers గురించి నాకు calls చేయవచ్చు, నా number block చేయకండి. ప్రస్తుతం ఇంతే, ధన్యవాదాలు.",
+      "at": 123291.953
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 1,
+      "at": 123291.968
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 123293.015,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 123292.0
+    }
+  ],
+  "started_at": "2026-10-29T16:36:07.498501+00:00",
+  "errors": [],
+  "brain_checksum": "1e50bcddbde4fb3ba1373a621ebfa2d5e27fd8e4c2c10ed3fa531d5cdd985c4f",
+  "runtime_checksum": "770d8ac0e64a05a90b00c7de395f506ca07c057cd132f00336a5fb913dc60a4b",
+  "available_tools": [
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 123291.953,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    }
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "interested",
+    "disposition_confidence": 0.96,
+    "summary_te": "",
+    "summary_en": "Kiran expressed interest in the Python course and said he will call the business himself tomorrow; this is not a request for the business to call back. He also welcomed future calls about new offers and asked that his number not be blocked. The agent acknowledged him and thanked him before the call ended. No purchase, booking, or qualification details were confirmed.",
+    "next_action": null,
+    "extracted_fields": {
+      "caller_name": "కిరణ్",
+      "future_offers_contact_preference": "May be contacted about new offers",
+      "name": "Kiran",
+      "phone": "+12025550102",
+      "product": "Python course",
+      "self_initiated_follow_up": "Caller will call tomorrow"
+    },
+    "objections": [],
+    "notes": "Caller explicitly did not request a callback; he plans to contact the business himself tomorrow.",
+    "tags": [
+      "intent:information",
+      "intent:purchase",
+      "sentiment:positive"
+    ],
+    "custom_tags": [
+      "custom:python-course",
+      "custom:future-offers"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T16:36:13.524531Z",
+    "generation_ok": true,
+    "facts": {
+      "caller_name": "కిరణ్",
+      "future_offers_contact_preference": "May be contacted about new offers",
+      "name": "Kiran",
+      "phone": "+12025550102",
+      "product": "Python course",
+      "self_initiated_follow_up": "Caller will call tomorrow"
+    },
+    "disclosure_status": null,
+    "contact_preference": "end_call",
+    "status_tags": [
+      "contact:name_known",
+      "contact:phone_known",
+      "custom:future-offers",
+      "custom:python-course",
+      "intent:information",
+      "intent:purchase",
+      "outcome:interested",
+      "sentiment:positive"
+    ],
+    "lead": {
+      "leadId": "eb13dce8-234a-4564-b05c-28db6620aa23",
+      "agentId": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+      "stage": "contacted",
+      "action": "created"
+    },
+    "lead_assessment": {
+      "score": 75,
+      "band": "hot",
+      "disposition": "interested",
+      "confidence": 0.96,
+      "components": [
+        {
+          "signal": "interest",
+          "points": 40,
+          "max": 40,
+          "evidence": "interested"
+        },
+        {
+          "signal": "requirements",
+          "points": 25,
+          "max": 25,
+          "evidence": "product"
+        },
+        {
+          "signal": "timing",
+          "points": 0,
+          "max": 25,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "contact",
+          "points": 10,
+          "max": 10,
+          "evidence": "phone"
+        }
+      ],
+      "version": 1,
+      "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+      "reason": "recorded_signals"
+    },
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "0e4f9b9b-07af-42e4-a2bc-a667f5f9363b",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+        "session_id": "adaptive-895c7df61cec40aa80b8152f765c0cf8",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_3f4f01b76299",
+        "started_at": "2026-10-29 16:36:07.491411+00:00",
+        "ended_at": "2026-10-29 16:36:10.223449+00:00",
+        "duration_sec": 2,
+        "disposition": "interested",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/0e4f9b9b-07af-42e4-a2bc-a667f5f9363b/",
+        "end_reason": "goodbye",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "contact:name_known",
+          "contact:phone_known",
+          "custom:future-offers",
+          "custom:python-course",
+          "intent:information",
+          "intent:purchase",
+          "outcome:interested",
+          "sentiment:positive"
+        ],
+        "last_heartbeat_at": "2026-10-29 16:36:07.491411+00:00",
+        "created_at": "2026-10-29 16:36:07.492419+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [],
+    "dnd": [],
+    "leads": [
+      {
+        "lead_id": "eb13dce8-234a-4564-b05c-28db6620aa23",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+        "name": "Kiran",
+        "phone": "+12025550102",
+        "email": null,
+        "stage": "contacted",
+        "notes": "[Call reference: 0e4f9b9b-07af-42e4-a2bc-a667f5f9363b]\nKiran expressed interest in the Python course and said he will call the business himself tomorrow; this is not a request for the business to call back. He also welcomed future calls about new offers and asked that his number not be blocked. The agent acknowledged him and thanked him before the call ended. No purchase, booking, or qualification details were confirmed.\n\nCall outcome: interested (96% confidence)",
+        "created_at": "2026-10-29 16:36:13.542578+00:00",
+        "updated_at": "2026-10-29 16:36:13.542578+00:00"
+      }
+    ],
+    "tools": [],
+    "assessments": [
+      {
+        "id": "8c29a99f-b976-4a1d-b5ca-74b6bcde2857",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "lead_id": "eb13dce8-234a-4564-b05c-28db6620aa23",
+        "source_call_id": "0e4f9b9b-07af-42e4-a2bc-a667f5f9363b",
+        "assessment": {
+          "score": 75,
+          "band": "hot",
+          "disposition": "interested",
+          "confidence": 0.96,
+          "components": [
+            {
+              "signal": "interest",
+              "points": 40,
+              "max": 40,
+              "evidence": "interested"
+            },
+            {
+              "signal": "requirements",
+              "points": 25,
+              "max": 25,
+              "evidence": "product"
+            },
+            {
+              "signal": "timing",
+              "points": 0,
+              "max": 25,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "contact",
+              "points": 10,
+              "max": 10,
+              "evidence": "phone"
+            }
+          ],
+          "version": 1,
+          "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+          "reason": "recorded_signals"
+        },
+        "updated_at": "2026-10-29 16:36:10.223449+00:00"
+      }
+    ]
+  },
+  "metadata": {
+    "call_id": "0e4f9b9b-07af-42e4-a2bc-a667f5f9363b",
+    "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+    "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+    "session_id": "adaptive-895c7df61cec40aa80b8152f765c0cf8",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_3f4f01b76299",
+    "started_at": "2026-10-29T16:36:07.491411+00:00",
+    "status": "active",
+    "storage_path": "data/calls/0e4f9b9b-07af-42e4-a2bc-a667f5f9363b/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550102",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 2184,
+        "output_tokens": 453,
+        "cached_tokens": 1120
+      }
+    },
+    "contact_preference": "end_call",
+    "hangup_reason": "goodbye",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 47,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": true,
+    "callback_close_phase": "idle",
+    "disconnected_at": "2026-10-29T16:36:10.223449+00:00",
+    "ended_at": "2026-10-29T16:36:10.223449+00:00",
+    "end_reason": "goodbye",
+    "duration_sec": 2.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 2.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.00041666666666666664,
+      "telephony_inr": 0.039695833333333326,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.00041666666666666664,
+      "telnyx_inr": 0.039695833333333326,
+      "telnyx_voice_api_usd": 6.666666666666667e-05,
+      "telnyx_sip_usd": 0.00016666666666666666,
+      "telnyx_media_stream_usd": 0.00011666666666666667,
+      "telnyx_call_recording_usd": 6.666666666666667e-05,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.27,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-29",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.012499999999999999,
+      "telephony_inr_per_min": 1.190875,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.012499999999999999,
+      "telnyx_inr_per_min": 1.190875,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_09665c85b05716aa016ae375faff3c87d1b7850a672d4bea9b": {
+          "input_tokens": 1045,
+          "output_tokens": 214,
+          "cached_tokens": 1042,
+          "cache_write_tokens": 0,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.00027824
+        }
+      },
+      "post_call_analysis_usd": 0.00027824,
+      "post_call_analysis_inr": 0.026507924800000002
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నేను కిరణ్. Python course నాకు ఆసక్తి ఉంది. రేపు నేనే మీకు call చేస్తాను. ఇది callback అడగడం కాదు. భవిష్యత్తులో మీ కొత్త offers గురించి నాకు calls చేయవచ్చు, నా number block చేయకండి. ప్రస్తుతం ఇంతే, ధన్యవాదాలు.",
+      "ts": "2026-10-29T16:36:07.521616Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T16:36:09.158021Z"
+    }
+  ],
+  "wall_elapsed_s": 6.141,
+  "simulated_exchange_timeline_s": 20,
+  "request_count": 3
+}

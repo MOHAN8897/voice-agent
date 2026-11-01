@@ -1,0 +1,121 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Ramesh initially asked about visiting card pricing, comparing standard and matte finishes and the minimum quantity. The agent quoted ₹200 for 100 standard cards, ₹350 for 100 matte cards, and confirmed a 100-card minimum. The caller then asked about design approval and delivery; the agent explained that delivery in Vijayawada takes 3 working days after artwork approval, or 24 hours for an additional ₹150. Ramesh chose matte finish and also asked about wedding invitation cards and advance payment. The agent explained that wedding card pricing depends on design, paper sample, and quantity, and discussed advance payment requirements, including a 50% advance for orders above the stated threshold and cash on delivery below it. Ramesh said he would take 200 cards, provided his name, Vijayawada delivery location, email, and phone number, and requested an internal order request or confirmation by email. The agent stated that email requests and confirmations were not available, recorded 200 matte-finish cards, and asked when the team should contact him. Ramesh requested a callback time and confirmation that his details were correctly recorded. The agent said the details and callback request were recorded, but no specific callback time was agreed before the call ended politely.",
+  "next_action": "Have the team contact Ramesh at 9876543210 regarding the 200 matte-finish wedding card order and confirm the recorded details; agree on a callback time. Do not promise email confirmation because the agent stated that email confirmation is unavailable.",
+  "extracted_fields": {
+    "callback_phone": "9876543210",
+    "callback_preference": "Caller requested the team to specify a contact time; no specific time agreed",
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "Ramesh",
+    "delivery_locality": "విజయవాడ",
+    "delivery_location": "Vijayawada",
+    "delivery_time": "3 working days after artwork approval; 24-hour urgent option for extra ₹150",
+    "email": "ramesh.audit@example.invalid",
+    "finish": "Matte finish",
+    "payment_method": "Advance payment",
+    "phone": "9876543210",
+    "phone_number": "9876543210",
+    "product": "Wedding invitation cards",
+    "quantity": "200 cards"
+  },
+  "objections": [
+    "Caller does not consent to advance payment.",
+    "Caller requested an internal order request and confirmation by email, but the agent stated that email requests and confirmations are unavailable."
+  ],
+  "notes": "The call ended after the agent recorded the caller's details and callback request. The transcript contains inconsistent advance-payment thresholds: ₹1,000 in one response and ₹2,000 in another; this should be clarified with the caller.",
+  "tags": [
+    "intent:purchase",
+    "followup:callback",
+    "action:required",
+    "signal:objection",
+    "signal:price_sensitive",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:wedding-cards",
+    "custom:matte-finish",
+    "custom:vijayawada"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:06:02.377545Z",
+  "generation_ok": true,
+  "facts": {
+    "callback_phone": "9876543210",
+    "callback_preference": "Caller requested the team to specify a contact time; no specific time agreed",
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "Ramesh",
+    "delivery_locality": "విజయవాడ",
+    "delivery_location": "Vijayawada",
+    "delivery_time": "3 working days after artwork approval; 24-hour urgent option for extra ₹150",
+    "email": "ramesh.audit@example.invalid",
+    "finish": "Matte finish",
+    "payment_method": "Advance payment",
+    "phone": "9876543210",
+    "phone_number": "9876543210",
+    "product": "Wedding invitation cards",
+    "quantity": "200 cards"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:matte-finish",
+    "custom:wedding-cards",
+    "followup:callback",
+    "intent:purchase",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "d7931df6-c0ce-4128-a85b-4d88bd5e7c32",
+    "agentId": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.98,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

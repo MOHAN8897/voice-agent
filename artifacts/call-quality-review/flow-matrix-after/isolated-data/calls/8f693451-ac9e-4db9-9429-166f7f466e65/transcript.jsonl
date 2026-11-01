@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "I have tooth pain. I want an appointment tomorrow at 11 AM.", "ts": "2026-10-30T11:00:37.157816Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I understand you have tooth pain and would like to book an appointment for tomorrow at 11 AM. To proceed, could you please tell me your name and confirm what exactly is troubling you so I can note it for the front desk?", "ts": "2026-10-30T11:00:40.331923Z"}
+{"seq": 3, "role": "user", "text": "My name is Kiran.", "ts": "2026-10-30T11:00:40.332665Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Thank you, Kiran. You mentioned you have tooth pain and want to book an appointment for tomorrow at 11 AM. Could you tell me exactly what is troubling you so I can note it for the front desk?", "ts": "2026-10-30T11:00:43.486513Z"}
+{"seq": 5, "role": "user", "text": "Is my appointment confirmed?", "ts": "2026-10-30T11:00:43.499395Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "I don't have a confirmed booking yet. I have noted your name as Kiran, your tooth pain, and tomorrow at 11 AM for the front desk to confirm.", "ts": "2026-10-30T11:00:46.036413Z"}
+{"seq": 7, "role": "user", "text": "Okay, thanks.", "ts": "2026-10-30T11:00:46.036413Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-30T11:00:47.042972Z"}

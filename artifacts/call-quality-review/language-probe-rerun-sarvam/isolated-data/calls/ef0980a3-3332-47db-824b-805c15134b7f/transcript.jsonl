@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "ரெண்டு split AC-யும் ஒரு window AC-யும் service பண்ணினா total எவ்வளவு?", "ts": "2026-10-29T19:10:18.689274Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Split AC servicing 599 rupees, அப்புறம் window AC servicing 499 rupees. So ரெண்டு split AC அப்புறம் ஒரு window AC-க்கு total-ஆ 1797 rupees வரும். Technician வந்து inspection பண்ணதுக்கு அப்புறம் தான் spare parts-ஓட actual MRP சொல்லி quote பண்ணுவாங்க. நீங்க எந்த area-ல இருக்கீங்க?", "ts": "2026-10-29T19:10:19.510735Z", "brain_latency_ms": 824}

@@ -1,0 +1,1 @@
+{"turn_seq": 1, "ts": "2026-10-29T20:17:18.573780Z", "source": "model", "operations": [{"op": "set_fact", "key": "product", "value": "matte visiting cards"}, {"op": "set_fact", "key": "quantity", "value": "200"}], "applied": true, "validation_errors": []}

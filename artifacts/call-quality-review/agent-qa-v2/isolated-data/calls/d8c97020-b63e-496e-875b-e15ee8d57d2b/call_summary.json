@@ -1,0 +1,52 @@
+{
+  "call_id": "d8c97020-b63e-496e-875b-e15ee8d57d2b",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "एजेंट ने ग्राहक को NatureVeda Herbal Hair Oil के बारे में जानकारी दी और बुकिंग के लिए पूछा। ग्राहक ने उपयोग की आवृत्ति के बारे में पूछा, जिसका एजेंट के पास उत्तर नहीं था। ग्राहक ने बताया कि वह व्यस्त है और एजेंट ने कल शाम 6:30 बजे के लिए एक कॉल बैक नोट कर लिया।",
+  "summary_language": "hi-IN",
+  "summary_en": "The agent called the customer to share information about NatureVeda Herbal Hair Oil priced at ₹499. The customer inquired about how often to apply it, but the agent stated they did not have those details. The customer mentioned being busy and requested a callback tomorrow at 6:30 PM on the same number. The agent agreed to the callback and ended the call.",
+  "next_action": "Call the customer back tomorrow at 6:30 PM.",
+  "extracted_fields": {
+    "callback_time": "Tomorrow at 6:30 PM",
+    "phone": "+919700000010",
+    "price": "₹499",
+    "product": "NatureVeda Herbal Hair Oil"
+  },
+  "facts": {
+    "callback_time": "Tomorrow at 6:30 PM",
+    "phone": "+919700000010",
+    "price": "₹499",
+    "product": "NatureVeda Herbal Hair Oil"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:callback-scheduled",
+    "custom:herbal-hair-oil",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:herbal-hair-oil",
+    "custom:callback-scheduled"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "The agent did not have the usage frequency details the customer requested."
+  ],
+  "unanswered_questions": [
+    "How often should the oil be applied per week?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T13:42:02.250894Z",
+  "generation_ok": true
+}

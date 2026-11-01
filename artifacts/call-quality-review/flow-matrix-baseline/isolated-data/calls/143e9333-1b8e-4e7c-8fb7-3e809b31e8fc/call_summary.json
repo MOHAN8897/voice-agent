@@ -1,0 +1,42 @@
+{
+  "call_id": "143e9333-1b8e-4e7c-8fb7-3e809b31e8fc",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to discuss a purchase, but stated that they needed to consult with their family before proceeding. The agent acknowledged the request and recorded the callback information. The conversation concluded with the agent thanking the caller.",
+  "next_action": "Call the caller back after they have consulted with their family.",
+  "extracted_fields": {
+    "phone": "+919876500520"
+  },
+  "facts": {
+    "phone": "+919876500520"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:family-consultation",
+    "followup:callback",
+    "intent:purchase",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:needs_approval",
+    "signal:objection"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:purchase",
+    "signal:needs_approval",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:family-consultation"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Needs to consult family before making a decision."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:39:17.373080Z",
+  "generation_ok": true
+}

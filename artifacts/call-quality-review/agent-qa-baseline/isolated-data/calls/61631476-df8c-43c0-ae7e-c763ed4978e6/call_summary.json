@@ -1,0 +1,51 @@
+{
+  "call_id": "61631476-df8c-43c0-ae7e-c763ed4978e6",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్కు కాల్ చేశారు. కస్టమర్ హెర్బల్ హెయిర్ ఆయిల్ ధర మరియు పదార్థాల గురించి అడిగారు. ఏజెంట్ 499 రూపాయలకు 200 ml ప్యాక్ అని, అందులో ఉసిరి, భృంగరాజ్, మందార మరియు కొబ్బరి నూనె ఉన్నాయని చెప్పారు. వారానికి రెండు లేదా మూడు సార్లు వాడవచ్చని సూచించారు. కస్టమర్ ఆఫీసులో బిజీగా ఉన్నానని, రేపు సాయంత్రం 6:30 కి కాల్ చేయమని కోరారు. ఏజెంట్ ఈ కాల్ బ్యాక్ అభ్యర్థనను అంగీకరించి కాల్ ముగించారు.",
+  "summary_language": "te-IN",
+  "summary_en": "The agent called the customer to provide information about a product. The caller wanted to know the price and ingredients of the herbal hair oil, and the agent shared that it costs 499 rupees for a 200 ml pack and contains amla, bhringraj, hibiscus, and coconut oil. The agent also advised using it two or three times a week. The caller mentioned having dry hair and requested a callback for tomorrow at 6:30 PM because they were busy at the office. The agent agreed to the callback and ended the call.",
+  "next_action": "Callback the customer tomorrow at 6:30 PM.",
+  "extracted_fields": {
+    "callback_time": "tomorrow at 6:30 PM",
+    "ingredients": "amla, bhringraj, hibiscus, coconut oil",
+    "phone": "+919700000002",
+    "price": "499 rupees",
+    "product": "herbal hair oil",
+    "volume": "200 ml"
+  },
+  "facts": {
+    "callback_time": "tomorrow at 6:30 PM",
+    "ingredients": "amla, bhringraj, hibiscus, coconut oil",
+    "phone": "+919700000002",
+    "price": "499 rupees",
+    "product": "herbal hair oil",
+    "volume": "200 ml"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:dry-hair",
+    "custom:herbal-hair-oil",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:herbal-hair-oil",
+    "custom:dry-hair"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T13:10:30.354696Z",
+  "generation_ok": true
+}

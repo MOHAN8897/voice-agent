@@ -1,0 +1,44 @@
+{
+  "call_id": "d1e0b92b-e712-47b8-8195-da6dc8a2b2d2",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Kiran said they are currently looking for Python/data training but stated they cannot commit to the service at this time. They thanked the agent for the time and ended the call. The agent acknowledged the decision and said goodbye. No follow-up was agreed.",
+  "next_action": null,
+  "extracted_fields": {
+    "interest": "Python/data training",
+    "name": "Kiran",
+    "phone": "+12025550118"
+  },
+  "facts": {
+    "interest": "Python/data training",
+    "name": "Kiran",
+    "phone": "+12025550118"
+  },
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:data-training",
+    "custom:python-training",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-training",
+    "custom:data-training"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Unable to commit to the service at this time"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T11:08:53.517888Z",
+  "generation_ok": true
+}

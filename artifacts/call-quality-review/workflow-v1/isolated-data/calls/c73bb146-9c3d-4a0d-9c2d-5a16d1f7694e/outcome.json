@@ -1,0 +1,79 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the price of matte visiting cards. The agent responded by stating that matte finish visiting cards cost 350 rupees per 100 cards and asked about the desired quantity. The caller indicated that this information was sufficient for their needs and thanked the agent before ending the call. The agent then concluded the conversation.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500036",
+    "product": "matte visiting cards"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:pricing",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T20:20:42.497509Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500036",
+    "product": "matte visiting cards"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "intent:pricing",
+    "outcome:interested",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "7dc8c9e1-4966-45b4-b35a-28f2e05436ef",
+    "agentId": "cfd00977-8fff-453a-9018-fca86f20892c",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.9,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

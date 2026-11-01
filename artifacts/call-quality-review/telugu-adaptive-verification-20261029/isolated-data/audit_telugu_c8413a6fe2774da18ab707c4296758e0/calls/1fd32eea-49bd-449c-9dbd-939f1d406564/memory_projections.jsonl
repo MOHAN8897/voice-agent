@@ -1,0 +1,3 @@
+{"turn_seq": 1, "ts": "2026-10-29T15:48:15.581927Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T15:48:17.234767Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_name: శ్రావణి | product: window AC service | delivery_locality: మాదాపూర్\n[Context]\nCaller provided contact details in this call."}
+{"turn_seq": 5, "ts": "2026-10-29T15:48:18.823714Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_name: శ్రావణి | product: window AC service | delivery_locality: మాదాపూర్ | caller_email: sravani.audit@example.invalid\n[Preferences]\nrequested_time: రేపు పది గంటలకు\n[Context]\nCaller provided contact details in this call. Caller provided contact details in this call."}

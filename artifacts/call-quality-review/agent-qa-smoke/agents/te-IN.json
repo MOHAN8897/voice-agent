@@ -1,0 +1,17 @@
+{
+  "language": "te-IN",
+  "tenant_id": "1df21547-c6a7-46b7-b01c-f621c22bfc62",
+  "agent_id": "06c8aaa5-31d0-5af7-b146-80b4313329c2",
+  "user_id": "d972916f-3b5f-4406-87ef-f4afb92f27e5",
+  "brain_version": "cb_v20261031_c7036f738bee",
+  "brain_chars": 20404,
+  "creation_s": 19.7,
+  "build_attempts": [
+    {
+      "status": 200,
+      "code": null
+    }
+  ],
+  "direction": "outbound",
+  "name": "Priya"
+}

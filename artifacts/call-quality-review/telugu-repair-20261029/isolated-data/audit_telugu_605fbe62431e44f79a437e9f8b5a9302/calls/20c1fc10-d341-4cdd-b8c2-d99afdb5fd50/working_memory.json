@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "product": "విజిటింగ్ కార్డ్స్",
+    "quantity": "200",
+    "email": "ramesh.audit@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "assistant: డిజైన్ artwork approve అయిన తర్వాత Vijayawada లో delivery కి మూడు working days పడుతుంది. రష్ ఆర్డర్ అంటే 24 గంటల లోపల కావాలంటే extra one hundred fifty rupees charge ఉంటుంది. మీ email ramesh. audit@example. invalid note చేసుకున్నాను.\nuser: సరే, advance payment ఏమైనా చేయాలా? అలాగే, wedding cards price ఎంత ఉంటుందో కూడా చెప్పగలరా?\nassistant: మీ order one thousand rupees పైన ఉంటే 50% advance payment చేయాలి. ఇక wedding invitation cards విషయానికి వస్తే, వాటి ధర design, paper sample, quantity మీద ఆధారపడి ఉంటుంది, ఫోన్ లో fixed price చెప్పలేము."
+}

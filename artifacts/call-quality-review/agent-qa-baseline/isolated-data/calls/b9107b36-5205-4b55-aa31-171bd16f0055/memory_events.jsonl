@@ -1,0 +1,5 @@
+{"turn_seq": 1, "ts": "2026-10-31T13:21:46.218414Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T13:22:10.082133Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T13:22:26.152633Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T13:22:26.163625Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: अच्छा, यह हेयर ऑयल काफी सही लग रहा है। इसकी डिलीवरी फ्री है क्या?\nassistant: मुझे free delivery के बारे में अभी confirm नहीं पता, यह जानकारी available नहीं है।\nuser: अच्छा, कोई बात नहीं। वैसे क्या इस हेयर ऑयल से हेयर फॉल सच में कम होता है?\nassistant: देखिए, medical conditions या possible side effects के लिए आप किसी qualified healthcare professional से सलाह लीजिए। इस product के बारे में और कोई details चाहिए आपको?"}], "applied": true, "validation_errors": []}
+{"turn_seq": 8, "ts": "2026-10-31T13:22:55.941433Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

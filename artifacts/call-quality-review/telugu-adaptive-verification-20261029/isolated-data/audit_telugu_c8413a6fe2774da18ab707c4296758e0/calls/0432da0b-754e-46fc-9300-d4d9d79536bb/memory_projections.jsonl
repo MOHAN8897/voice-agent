@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-29T15:50:25.732358Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T15:50:27.992934Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: fridge"}
+{"turn_seq": 5, "ts": "2026-10-29T15:50:30.147154Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: fridge | requested_time: రేపు ఉదయం 10 గంటలకే"}
+{"turn_seq": 7, "ts": "2026-10-29T15:50:32.531146Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: fridge | requested_time: రేపు ఉదయం 10 గంటలకే | caller_name: శ్రావణి | delivery_locality: మాదాపూర్\n[Context]\nCaller provided contact details in this call."}

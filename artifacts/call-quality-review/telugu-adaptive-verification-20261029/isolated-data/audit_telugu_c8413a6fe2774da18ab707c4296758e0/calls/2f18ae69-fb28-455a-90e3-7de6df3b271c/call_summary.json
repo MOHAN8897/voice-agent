@@ -1,0 +1,35 @@
+{
+  "call_id": "2f18ae69-fb28-455a-90e3-7de6df3b271c",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller stated that they do not want to book AC servicing at this time and asked to end the call. They clarified that they were not requesting a permanent block or asking to stop all future calls. The agent acknowledged this, thanked the caller, and ended the call politely. No follow-up action was agreed.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+12025550131"
+  },
+  "facts": {
+    "phone": "+12025550131"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:ac-servicing",
+    "intent:booking",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call"
+  ],
+  "tags": [
+    "intent:booking",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:ac-servicing"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T15:47:39.398570Z",
+  "generation_ok": true
+}

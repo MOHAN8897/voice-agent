@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "caller_email": "sravani.audit@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "assistant: అవును శ్రావణి గారు, మీ appointment confirm అయింది. రేపు 30th October ఉదయం ten AM నుంచి eleven AM వరకు మీ split AC general service కి మాదాపూర్ address లో calendar event create అయింది. మీ email కి కూడా invite పంపించాను. మీకు కావలసిన final confirmation ఇదే.\nuser: సరే సురేష్ గారు, final confirmation ఇచ్చినందుకు ధన్యవాదాలు. appointment confirm అయింది కదా, సరే మరి. ఇక నేను call close చేసుకుంటాను.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+}

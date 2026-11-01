@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "product": "visiting cards",
+    "quantity": "200",
+    "caller_name": "रवि कुमार"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: मेरा नाम रवि कुमार है। Vijayawada में 12 MG Road पर deliver कर देना।\nassistant: आपका order confirm हो गया है, 200 matte finish visiting cards के लिए। Artwork approve होने के बाद Vijayawada में delivery 3 working days में हो जाएगी। आपका नाम रवि कुमार है और delivery address 12 MG Road, Vijayawada है, सही है?\nuser: हाँ, please order confirm कर दो।\nassistant: आपका order confirm हो गया है। Artwork approve होने के बाद 3 working days में delivery हो जाएगी।\nuser: Thanks, बस इतना ही।"
+}

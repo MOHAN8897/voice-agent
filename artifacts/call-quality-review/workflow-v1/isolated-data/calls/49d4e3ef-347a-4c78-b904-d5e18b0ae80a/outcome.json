@@ -1,0 +1,41 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller was contacted by an agent and immediately stated that they were not interested, thanking the agent before ending the call. The agent did not provide any information or attempt to qualify the lead, and the caller clearly rejected the interaction. The call concluded with the caller's refusal.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500056"
+  },
+  "objections": [
+    "Not interested"
+  ],
+  "notes": null,
+  "tags": [
+    "sentiment:neutral",
+    "intent:information"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T20:23:21.481956Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500056"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

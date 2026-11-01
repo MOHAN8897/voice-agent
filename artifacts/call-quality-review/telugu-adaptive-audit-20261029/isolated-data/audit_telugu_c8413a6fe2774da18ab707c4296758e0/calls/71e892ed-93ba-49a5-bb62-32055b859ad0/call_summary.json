@@ -1,0 +1,70 @@
+{
+  "call_id": "71e892ed-93ba-49a5-bb62-32055b859ad0",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "Ramana from Vijayawada called to inquire about approximately 200 matte visiting cards and asked how to submit the artwork. The agent quoted ₹350 per 100 cards, totaling ₹700 for 200 cards, and stated that delivery in Vijayawada takes 3 working days after artwork approval. Ramana also asked about flex banners; the agent quoted ₹15 per square foot for normal flex and ₹20 for star flex, but Ramana decided to consider banners later. For payment, the agent explained that orders below ₹1,000 can use cash on delivery, while orders above ₹1,000 require a 50% advance; phone-based online or credit-card processing is unavailable. Ramana confirmed that cash on delivery was acceptable, and the agent recorded his name and the visiting-card quantity. The agent stated office hours as Monday through Saturday, 9:30 AM to 8:00 PM, with Sunday closed. Ramana again requested details about the artwork approval process, but the agent could not provide them. Ramana said he would send the design files later and ended the call. No concrete order placement or follow-up appointment was confirmed.",
+  "next_action": "Provide the artwork submission and approval process when available; await Ramana's design files or further contact.",
+  "extracted_fields": {
+    "banner_pricing": "₹15/sq ft normal flex; ₹20/sq ft star flex",
+    "caller_name": "Ramana",
+    "delivery_locality": "విజయవాడ",
+    "delivery_time": "3 working days after artwork approval",
+    "location": "Vijayawada",
+    "name": "Ramana",
+    "office_hours": "Monday-Saturday, 9:30 AM-8:00 PM; Sunday closed",
+    "payment_method": "Cash on delivery",
+    "phone": "+12025550139",
+    "product": "Matte visiting cards",
+    "quantity": "200",
+    "quoted_price": "₹700 total for 200 cards"
+  },
+  "facts": {
+    "banner_pricing": "₹15/sq ft normal flex; ₹20/sq ft star flex",
+    "caller_name": "Ramana",
+    "delivery_locality": "విజయవాడ",
+    "delivery_time": "3 working days after artwork approval",
+    "location": "Vijayawada",
+    "name": "Ramana",
+    "office_hours": "Monday-Saturday, 9:30 AM-8:00 PM; Sunday closed",
+    "payment_method": "Cash on delivery",
+    "phone": "+12025550139",
+    "product": "Matte visiting cards",
+    "quantity": "200",
+    "quoted_price": "₹700 total for 200 cards"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:artwork-approval",
+    "custom:matte-visiting-cards",
+    "followup:callback",
+    "followup:send_info",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "followup:send_info",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards",
+    "custom:artwork-approval",
+    "custom:vijayawada-delivery"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Artwork submission and approval process was not explained.",
+    "Online payment or credit-card processing is unavailable by phone."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T11:22:31.452239Z",
+  "generation_ok": true
+}

@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "ಎರಡು ACಗಳಿಗೆ annual maintenance contract AMC ಎಷ್ಟು ಆಗುತ್ತೆ", "ts": "2026-10-29T19:37:31.826053Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ಕ್ಷಮಿಸಿ, ನಮ್ಮ ಹತ್ರ annual maintenance contract details ಇಲ್ಲ. ನಾವು ಬರೀ servicing ಮಾತ್ರ ಮಾಡ್ತೀವಿ, window AC-ಗೆ ₹499 ಮತ್ತೆ split AC-ಗೆ ₹599 ಆಗುತ್ತೆ. ನಿಮಗೆ service ಬೇಕಾ?", "ts": "2026-10-29T19:37:33.502612Z", "brain_latency_ms": 1673}
+{"seq": 3, "role": "user", "text": "ಎರಡು ACಗಳಿಗೆ AMC ಬೇಕು total ಚಾರ್ಜ್ ಎಷ್ಟು", "ts": "2026-10-29T19:37:33.535540Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಕ್ಷಮಿಸಿ, AMC details ನನ್ನ ಬಳಿ ಇಲ್ಲ. ನಾವು ಬರೀ one-time servicing ಮಾತ್ರ ಮಾಡ್ತೀವಿ. Window AC-ಗೆ ₹499 ಮತ್ತೆ split AC-ಗೆ ₹599 ಆಗುತ್ತೆ. ನಿಮಗೆ servicing ಬೇಕಾ?", "ts": "2026-10-29T19:37:34.630329Z", "brain_latency_ms": 1117}

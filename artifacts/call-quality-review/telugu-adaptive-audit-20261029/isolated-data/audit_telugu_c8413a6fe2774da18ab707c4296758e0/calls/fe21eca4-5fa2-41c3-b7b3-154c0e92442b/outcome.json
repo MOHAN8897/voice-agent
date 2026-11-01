@@ -1,0 +1,126 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "Shravani called to request general servicing for a split AC in Madhapur, explicitly excluding refrigerator repair. She asked for a technician at 10:00 AM the next day and asked about the service charge. The agent quoted ₹599 for Madhapur and said the slot was available and would be noted, but did not clearly complete a confirmed booking. The agent clarified that parts are not included and would be charged extra at actual MRP after inspection. Shravani provided her name, locality, and email address, and requested an email confirmation, but the agent said email confirmation was unavailable. She repeatedly asked whether the 10:00 AM appointment was confirmed; near the end, she said she had noted it as confirmed, while the agent stated they could not send the request to the team or promise follow-up. The call ended politely without a verified appointment confirmation, so follow-up is required.",
+  "next_action": "Contact Shravani to verify and formally confirm the next-day 10:00 AM split AC service appointment in Madhapur; communicate that parts are extra and send confirmation through an available channel if possible.",
+  "extracted_fields": {
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "confirmation_email": "sravani.audit@example.invalid",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "excluded_service": "Refrigerator repair",
+    "latest_caller_correction": "సరే, email confirmation లేకపోతే పర్వాలేదు. నా పేరు శ్రావణి, మాదాపూర్ locality. రేపు 10 AM కి technician confirm కదా? ఇక వేరే ఏమీ లేదు, just general service మాత్రమే. అంతా okay అయితే goodbye.",
+    "locality": "Madhapur",
+    "parts_extra_charge": "parts కి extra charge పడతాయన్నమాట",
+    "parts_policy": "Parts not included; extra charge at actual MRP after inspection",
+    "phone": "+12025550122",
+    "product": "general service",
+    "requested_slot": "Next day at 10:00 AM",
+    "requested_time": "రేపు 10 AM",
+    "service": "General service for split AC",
+    "service_charge": "₹599 for Madhapur"
+  },
+  "objections": [
+    "Parts are not included in the ₹599 service charge.",
+    "Email confirmation was unavailable.",
+    "Appointment confirmation remained unclear."
+  ],
+  "notes": "Caller was positive about proceeding but repeatedly sought confirmation of the technician appointment. The agent only noted the slot and explicitly said there was no facility to forward the request to the team or guarantee follow-up.",
+  "tags": [
+    "action:required",
+    "followup:callback",
+    "followup:schedule_pending",
+    "intent:booking",
+    "intent:pricing",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:split-ac",
+    "custom:madhapur",
+    "custom:next-day-service"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:09:48.379771Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "confirmation_email": "sravani.audit@example.invalid",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "excluded_service": "Refrigerator repair",
+    "latest_caller_correction": "సరే, email confirmation లేకపోతే పర్వాలేదు. నా పేరు శ్రావణి, మాదాపూర్ locality. రేపు 10 AM కి technician confirm కదా? ఇక వేరే ఏమీ లేదు, just general service మాత్రమే. అంతా okay అయితే goodbye.",
+    "locality": "Madhapur",
+    "parts_extra_charge": "parts కి extra charge పడతాయన్నమాట",
+    "parts_policy": "Parts not included; extra charge at actual MRP after inspection",
+    "phone": "+12025550122",
+    "product": "general service",
+    "requested_slot": "Next day at 10:00 AM",
+    "requested_time": "రేపు 10 AM",
+    "service": "General service for split AC",
+    "service_charge": "₹599 for Madhapur"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "followup:callback",
+    "followup:schedule_pending",
+    "followup:site_visit",
+    "intent:booking",
+    "intent:pricing",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "815e5b05-845d-56f5-9b86-96437c743c1b",
+    "agentId": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.96,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,13 @@
+{
+  "facts": {
+    "quantity": "2",
+    "caller_name": "लक्ष्मी रेड्डी",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "product": "1 face cream और 2 hair oil",
+    "budget": "1497 रुपये",
+    "email": "mohansaiteja.99@gmail.com"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: हाँ, 1 face cream और 2 hair oil के लिए 1497 रुपये ठीक हैं।\nassistant: आपका order confirm हो गया है। अब team इसे आगे process कर देगी।\nuser: ठीक है, बहुत अच्छा। तो अब आगे क्या process होगा, थोड़ा बता दीजिए।\nassistant: Order confirm हो गया है और team इसे आगे process कर रही है।\nuser: अच्छा, team process कर रही है... ठीक है।\nassistant: और कुछ जानकारी चाहिए आपको?\nuser: Phone number भी बता देती हूँ, ये मेरा number है।\nassistant: number note कर लिया है।"
+}

@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "quantity": "2",
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "email": "mohansaiteja.99@gmail.com"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "assistant: ആ വിവരം എനിക്കറിയില്ല. Order place ചെയ്യണോ?\nuser: ഓ, മനസ്സിലായി. ശരി, എന്നാൽ order place ചെയ്യാം.\nassistant: Order confirm ആയിട്ടുണ്ട്. ഇനി കുറച്ചു സമയത്തിനുള്ളിൽ details നിങ്ങൾക്ക് കിട്ടും.\nuser: ശരി, അടുത്തത് എന്താ സംഭവിക്കുക എന്ന് ഒന്ന് clear ആക്കാമോ?\nassistant: Order confirm ആയിട്ടുണ്ട്. ഇനി കുറച്ചു സമയത്തിനുള്ളിൽ details നിങ്ങൾക്ക് കിട്ടും.\nuser: ശരി, അപ്പോൾ details എപ്പോഴാ കിട്ടുക എന്ന് കൃത്യമായി ഒന്ന് പറയാമോ?\nassistant: ക്ഷമിക്കണം, കൃത്യമായ സമയം ഇപ്പോൾ പറയാൻ കഴിയില്ല. കുറച്ചു സമയത്തിനുള്ളിൽ details നിങ്ങൾക്ക് കിട്ടും."
+}

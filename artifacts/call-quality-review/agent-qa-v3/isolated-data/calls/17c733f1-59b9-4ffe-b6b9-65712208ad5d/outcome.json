@@ -1,0 +1,97 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్ కు కాల్ చేసి ఫేస్ క్రీమ్ మరియు హెయిర్ ఆయిల్ ధరల వివరాలు తెలియజేశారు. కస్టమర్ తన ఇమెయిల్ mohansaiteja.99@gmail.com కు వివరాలు పంపమని మరియు రేపు ఉదయం 11 గంటలకు ఆర్డర్ కోసం కాల్ బుక్ చేయమని కోరారు. ఏజెంట్ సిస్టమ్ సమస్య వల్ల మెయిల్ పంపలేకపోయారు, కానీ కాల్ అభ్యర్థనను నోట్ చేసుకున్నారు. కస్టమర్ స్టాక్ మరియు డెలివరీ సమయం గురించి అడిగారు, కానీ ఏజెంట్ వద్ద ఆ సమాచారం లేదు. చివరగా, ఏజెంట్ ఆ కాల్ అభ్యర్థనను నోట్ చేసి టీమ్ నిర్ధారిస్తుందని చెప్పారు, దీంతో కాల్ ముగిసింది.",
+  "summary_en": "The agent called the customer to provide details about a face cream and hair oil. The customer requested that the pricing and product information be emailed to mohansaiteja.99@gmail.com and asked to book a callback for tomorrow at 11 AM to place an order. The agent explained that a system issue prevented sending the email immediately but noted down the callback request. When asked for stock availability and delivery timelines to Kukatpally, the agent stated they did not have that information. The customer agreed to wait for the team to confirm the callback, and the call concluded.",
+  "next_action": "Team to confirm the callback scheduled for tomorrow at 11 AM and resolve the email sending issue.",
+  "extracted_fields": {
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919700000008",
+    "requested_time": "రేపు ఉదయం 11 గంటలకు"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:delivery-inquiry"
+  ],
+  "unanswered_questions": [
+    "Is the face cream in stock?",
+    "When will the face cream be delivered to Kukatpally?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T14:33:27.586728Z",
+  "generation_ok": true,
+  "summary_language": "te-IN",
+  "facts": {
+    "email": "mohansaiteja.99@gmail.com",
+    "phone": "+919700000008",
+    "requested_time": "రేపు ఉదయం 11 గంటలకు"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:phone_known",
+    "custom:delivery-inquiry",
+    "custom:face-cream",
+    "custom:hair-oil",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "378dbb2f-3a22-4c97-8221-7784bbb178f8",
+    "agentId": "58700315-0379-50ee-81b1-70ec18f28407",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 10,
+    "band": "cold",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

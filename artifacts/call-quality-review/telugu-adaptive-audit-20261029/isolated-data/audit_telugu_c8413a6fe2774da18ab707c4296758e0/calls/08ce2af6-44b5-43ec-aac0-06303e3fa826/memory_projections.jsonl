@@ -1,0 +1,6 @@
+{"turn_seq": 1, "ts": "2026-10-29T11:04:54.468836Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T11:04:57.064228Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-29T11:04:59.003904Z", "include_summary": true, "projection": ""}
+{"turn_seq": 7, "ts": "2026-10-29T11:05:01.296397Z", "include_summary": true, "projection": ""}
+{"turn_seq": 9, "ts": "2026-10-29T11:05:03.561133Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: wedding cards | quantity: 200 | finish: matte finish | caller_name: రమేష్ | email: ramesh.audit@example.invalid | caller_email: ramesh.audit@example.invalid | payment_method: advance payment | requested_time: rush delivery | delivery_locality: విజయవాడ\n[Context]\nCaller provided contact details in this call. Caller provided contact details in this call."}
+{"turn_seq": 11, "ts": "2026-10-29T11:05:06.031672Z", "include_summary": true, "projection": ""}

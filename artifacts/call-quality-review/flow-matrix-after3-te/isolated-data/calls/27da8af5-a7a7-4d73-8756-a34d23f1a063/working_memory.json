@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "caller_name": "కిరణ్",
+    "delivery_locality": "Velachery",
+    "requested_time": "శనివారం"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: లేదు, ఇది మాకు ఇంకా చాలా expensive గానే ఉంది.\nassistant: 3 kW సిస్టమ్ ధర 1,95,000 రూపాయలు, అందులో ప్రభుత్వ సబ్సిడీ 78,000 రూపాయలు పోను మీరు 1,17,000 రూపాయలు చెల్లించాలి. మీరు కుటుంబంతో చర్చించి ఎప్పుడు కాల్ చేయాలో చెప్తారా?\nuser: సరే, monthly EMI మళ్ళీ ఎంత చెప్పారు?\nassistant: నెలకు 2,999 రూపాయల నుండి 48 నెలల పాటు EMI అందుబాటులో ఉంది.\nuser: సరే, free survey book చేయండి. నా పేరు కిరణ్, నేను Velachery లో ఉంటాను, శనివారం కుదురుతుంది."
+}

@@ -1,0 +1,12 @@
+{
+  "facts": {
+    "caller_name": "సురేష్",
+    "delivery_locality": "మాదాపూర్",
+    "product": "split AC",
+    "requested_time": "రేపు 10 గంటలకి",
+    "caller_email": "sravani.audit@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "assistant: రేపు ఉదయం ten కి, అలాగే మధ్యాహ్నం two కి slots available ఉన్నాయి. మీకు ఏ time fix చేయమంటారు?\nuser: రేపు ఉదయం 10 గంటలకి slot fix చేయండి సురేష్. ఈ servicing లో ఏమేమి parts replace అవ్వొచ్చో మీకు ముందే ఏమైనా idea ఉంటుందా? అలాగే నా email sravani.audit@example.invalid కి confirmation message పంపించగలరా?\nassistant: రేపు ఉదయం ten కి మీ appointment confirm అయింది. Parts గురించి ముందే చెప్పలేము, technician inspection తర్వాతే చెప్తారు. Email confirmation పంపించే option నా దగ్గర లేదు, కానీ event మీ email కి invite పంపించాను. ఇంకేమైనా help కావాలా?"
+}

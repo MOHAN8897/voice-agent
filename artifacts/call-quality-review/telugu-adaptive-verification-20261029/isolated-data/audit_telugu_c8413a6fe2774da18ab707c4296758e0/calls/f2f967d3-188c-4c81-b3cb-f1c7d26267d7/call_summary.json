@@ -1,0 +1,67 @@
+{
+  "call_id": "f2f967d3-188c-4c81-b3cb-f1c7d26267d7",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller asked about Python and data training, specifically requesting weekend classes and asking about the fee. The agent explained that the Saturday-Sunday batch runs from 10:00 AM to 1:00 PM and costs ₹8,999. The caller accepted the fee and provided the name Kiran, email kiran.audit@example.invalid, qualification B.Com, and weekend preference, asking for the details to be saved. The agent could not confirm that the record was saved. The caller repeated the request, stated they would not make a payment, and again asked for confirmation, but the agent still could not confirm completion. The caller understood that the details could not be saved, ended the conversation for now, and thanked the agent.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "class_schedule": "Saturday and Sunday, 10:00 AM to 1:00 PM",
+    "course_interest": "Python and data training",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550147",
+    "preference": "Weekend classes",
+    "product": "Python మరియు data training",
+    "qualification": "B.Com"
+  },
+  "facts": {
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "class_schedule": "Saturday and Sunday, 10:00 AM to 1:00 PM",
+    "course_interest": "Python and data training",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550147",
+    "preference": "Weekend classes",
+    "product": "Python మరియు data training",
+    "qualification": "B.Com"
+  },
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:data-training",
+    "custom:python-training",
+    "intent:information",
+    "intent:pricing",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:pricing",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:python-training",
+    "custom:data-training",
+    "custom:weekend-batch"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "The caller did not want to make a payment at this time.",
+    "The caller requested that their details be saved and confirmed, but the agent could not confirm that this was completed."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T15:51:11.101978Z",
+  "generation_ok": true
+}

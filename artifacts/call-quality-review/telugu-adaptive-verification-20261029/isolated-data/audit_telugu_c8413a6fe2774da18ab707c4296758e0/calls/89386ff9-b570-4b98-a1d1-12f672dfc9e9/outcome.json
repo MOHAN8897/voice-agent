@@ -1,0 +1,108 @@
+{
+  "disposition": "site_visit_planned",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "Shravani, who lives in Madhapur, called to book a general service for her split AC. She asked whether a technician could come the next day at 10:00 AM, and the agent said that slot was available, with an additional 2:00 PM option. Shravani selected 10:00 AM and requested that the appointment be created and confirmed in the calendar. The agent stated that the appointment was confirmed for 10:00 AM and that a technician would come to Madhapur. Shravani provided her email address, sravani.audit@example.invalid, and requested that the appointment details also be sent there. The agent said the appointment was already recorded as confirmed in the calendar and that the team would send the details by email, but the transcript does not confirm that the email was actually sent. The caller accepted the confirmation, thanked the agent, and ended the call.",
+  "next_action": "Ensure the appointment details are sent to sravani.audit@example.invalid if required.",
+  "extracted_fields": {
+    "appointment_time": "Tomorrow at 10:00 AM",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "location": "Madhapur",
+    "phone": "+12025550146",
+    "product": "split AC general service",
+    "requested_time": "రేపు ఉదయం 10 గంటలకే",
+    "service": "Split AC general service"
+  },
+  "objections": [],
+  "notes": "Appointment was verbally confirmed for tomorrow at 10:00 AM. Email delivery was requested but not confirmed as completed.",
+  "tags": [
+    "intent:booking",
+    "followup:site_visit",
+    "intent:information",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:split-ac",
+    "custom:general-service",
+    "custom:madhapur"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:50:56.155479Z",
+  "generation_ok": true,
+  "facts": {
+    "appointment_time": "Tomorrow at 10:00 AM",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "location": "Madhapur",
+    "phone": "+12025550146",
+    "product": "split AC general service",
+    "requested_time": "రేపు ఉదయం 10 గంటలకే",
+    "service": "Split AC general service"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:general-service",
+    "custom:madhapur",
+    "custom:split-ac",
+    "followup:site_visit",
+    "intent:booking",
+    "intent:information",
+    "outcome:site_visit_planned",
+    "sentiment:positive"
+  ],
+  "lead": {
+    "leadId": "ad78d8ad-7990-4a54-8ad9-28ba5e114eed",
+    "agentId": "4d27a483-2fd7-5330-9856-6dd40d0284ce",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 100,
+    "band": "hot",
+    "disposition": "site_visit_planned",
+    "confidence": 0.99,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "site_visit_planned"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "appointment_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

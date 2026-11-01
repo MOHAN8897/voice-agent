@@ -1,0 +1,116 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Kiran inquired about learning Python and data analytics while working and asked about evening or weekend batches, fees, duration, eligibility, instalment options, placement support, and job guarantee. The agent explained that the weekday batch runs from 8:00 PM to 9:00 PM, the weekend batch runs Saturday and Sunday from 10:00 AM to 1:00 PM, the course lasts 8 weeks, and the total fee is ₹8,999 with no instalment discounts. The agent clarified that placement assistance includes resume building, interview preparation, and job referrals, but there is no strict job guarantee or salary promise. Kiran also asked about SQL and PowerBI courses and requested a demo class or discussion; the agent said only Python with Data Analytics details were available and asked for a callback time. Kiran provided the email kiran.audit@example.invalid and requested a callback between 5:30 PM and 6:30 PM. The agent stated that the details and callback request were recorded, but eligibility criteria and a concrete demo appointment were not confirmed before the call ended.",
+  "next_action": "Call Kiran between 5:30 PM and 6:30 PM to discuss eligibility and arrange a demo class or discussion; provide SQL/PowerBI information if available.",
+  "extracted_fields": {
+    "batch_options": "Weekday 8:00 PM-9:00 PM; weekend Saturday and Sunday 10:00 AM-1:00 PM",
+    "callback_slot": "5:30 PM-6:30 PM",
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "course": "Python with Data Analytics",
+    "duration": "8 weeks",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550114",
+    "placement_support": "Resume building, interview preparation, and job referrals; no job guarantee or salary promise",
+    "product": "Python, data training"
+  },
+  "objections": [
+    "No instalment discounts are available.",
+    "No strict job guarantee or salary promise is offered."
+  ],
+  "notes": "Caller is interested in the Python course but still needs eligibility details and a confirmed demo/discussion appointment. SQL and PowerBI course availability was not provided.",
+  "tags": [
+    "intent:information",
+    "intent:demo",
+    "followup:callback",
+    "followup:schedule_pending",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:python-data-analytics",
+    "custom:evening-weekend-batch",
+    "custom:placement-assistance"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:08:16.016222Z",
+  "generation_ok": true,
+  "facts": {
+    "batch_options": "Weekday 8:00 PM-9:00 PM; weekend Saturday and Sunday 10:00 AM-1:00 PM",
+    "callback_slot": "5:30 PM-6:30 PM",
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "course": "Python with Data Analytics",
+    "duration": "8 weeks",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550114",
+    "placement_support": "Resume building, interview preparation, and job referrals; no job guarantee or salary promise",
+    "product": "Python, data training"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:python-data-analytics",
+    "followup:callback",
+    "followup:schedule_pending",
+    "intent:demo",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "ebf53bde-f7ab-46e6-b228-11c7bb139610",
+    "agentId": "4c5270a8-990a-5800-868d-9d685eca9a09",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.98,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

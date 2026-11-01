@@ -1,0 +1,232 @@
+{
+  "email": "mohansaiteja.99@gmail.com",
+  "tenants": [
+    {
+      "tenant_id": "6d3fba56-7109-4812-8eb5-4a0d11f558c6",
+      "name": "mohan saiteja's Workspace",
+      "status": "active",
+      "role": "platform_admin",
+      "integrations": [
+        {
+          "app": "hubspot",
+          "status": "ACTIVE",
+          "gateway_verified": false
+        },
+        {
+          "app": "slack",
+          "status": "ACTIVE",
+          "gateway_verified": false
+        },
+        {
+          "app": "TODOIST",
+          "status": "ACTIVE",
+          "gateway_verified": true
+        },
+        {
+          "app": "GOOGLECALENDAR",
+          "status": "ACTIVE",
+          "gateway_verified": true
+        },
+        {
+          "app": "GMAIL",
+          "status": "ACTIVE",
+          "gateway_verified": true
+        }
+      ],
+      "agents": [
+        {
+          "agent_id": "832dd86c-bbd5-4bcc-8466-469b3411c99f",
+          "name": "sai",
+          "status": "archived",
+          "languages": [
+            "te-IN"
+          ],
+          "default_tier": "medium",
+          "brain": "cb_v20261026_6c3159",
+          "agent_integrations": [
+            {
+              "app": "googlecalendar",
+              "enabled": true,
+              "timing": "in_call",
+              "whitelist": [
+                "googlecalendar_find_free_slots",
+                "googlecalendar_create_event"
+              ]
+            },
+            {
+              "app": "hubspot",
+              "enabled": true,
+              "timing": "post_call",
+              "whitelist": [
+                "hubspot_create_contact"
+              ]
+            },
+            {
+              "app": "gmail",
+              "enabled": true,
+              "timing": "post_call",
+              "whitelist": [
+                "gmail_send_email"
+              ]
+            },
+            {
+              "app": "slack",
+              "enabled": true,
+              "timing": "post_call",
+              "whitelist": [
+                "slack_send_message"
+              ]
+            }
+          ]
+        },
+        {
+          "agent_id": "4259d53c-3994-5f05-9489-537ef06d0406",
+          "name": "Meera",
+          "status": "active",
+          "languages": [
+            "te-IN"
+          ],
+          "default_tier": "medium_copy_1",
+          "brain": "cb_v20261029_a684a2bac1b0",
+          "agent_integrations": []
+        },
+        {
+          "agent_id": "6b7c1183-0bee-4b23-81aa-b710027ae4e0",
+          "name": "Hima",
+          "status": "active",
+          "languages": [
+            "te-IN"
+          ],
+          "default_tier": "medium",
+          "brain": "cb_v20261026_4fccfe",
+          "agent_integrations": []
+        },
+        {
+          "agent_id": "69db00f4-fb43-466d-9936-7ec58b0688f0",
+          "name": "ZZ Isolation Probe",
+          "status": "archived",
+          "languages": [
+            "te-IN"
+          ],
+          "default_tier": "medium",
+          "brain": "cb_v20261026_810569",
+          "agent_integrations": []
+        },
+        {
+          "agent_id": "2caff74f-09bf-4629-896e-e57f4eb40ed4",
+          "name": "mohan",
+          "status": "archived",
+          "languages": [
+            "te-IN"
+          ],
+          "default_tier": "medium",
+          "brain": "cb_v20261026_f29f54",
+          "agent_integrations": []
+        },
+        {
+          "agent_id": "82fa89d1-00c6-4d95-a124-e6d3103c0430",
+          "name": "Teja",
+          "status": "archived",
+          "languages": [
+            "te-IN"
+          ],
+          "default_tier": "medium",
+          "brain": "cb_v20261026_85713e",
+          "agent_integrations": []
+        }
+      ]
+    },
+    {
+      "tenant_id": "00000000-0000-4000-8000-000000000001",
+      "name": "default",
+      "status": "deleted",
+      "role": "platform_admin",
+      "integrations": [
+        {
+          "app": "hubspot",
+          "status": "ACTIVE",
+          "gateway_verified": false
+        },
+        {
+          "app": "slack",
+          "status": "ACTIVE",
+          "gateway_verified": false
+        },
+        {
+          "app": "gmail",
+          "status": "ACTIVE",
+          "gateway_verified": false
+        }
+      ],
+      "agents": [
+        {
+          "agent_id": "a9a2dd7b-d1dd-4cdb-bb5a-bba47e0c63ba",
+          "name": "default",
+          "status": "archived",
+          "languages": [
+            "te-IN"
+          ],
+          "default_tier": "medium",
+          "brain": "cb_v20261026_e63a77",
+          "agent_integrations": [
+            {
+              "app": "googlecalendar",
+              "enabled": true,
+              "timing": "in_call",
+              "whitelist": [
+                "googlecalendar_find_free_slots",
+                "googlecalendar_create_event"
+              ]
+            },
+            {
+              "app": "hubspot",
+              "enabled": true,
+              "timing": "post_call",
+              "whitelist": [
+                "hubspot_create_contact"
+              ]
+            },
+            {
+              "app": "gmail",
+              "enabled": true,
+              "timing": "post_call",
+              "whitelist": [
+                "gmail_send_email"
+              ]
+            },
+            {
+              "app": "slack",
+              "enabled": true,
+              "timing": "post_call",
+              "whitelist": [
+                "slack_send_message"
+              ]
+            }
+          ]
+        },
+        {
+          "agent_id": "58910a15-fed7-462e-873d-00a96e3664ee",
+          "name": "Priya",
+          "status": "active",
+          "languages": [
+            "te-IN"
+          ],
+          "default_tier": "medium",
+          "brain": "cb_v20261026_3186be",
+          "agent_integrations": []
+        },
+        {
+          "agent_id": "cb051d32-0b04-4e35-88a2-2361f3a213f7",
+          "name": "Priya",
+          "status": "archived",
+          "languages": [
+            "en-IN"
+          ],
+          "default_tier": "medium",
+          "brain": "cb_v20261026_82b9aa",
+          "agent_integrations": []
+        }
+      ]
+    }
+  ]
+}

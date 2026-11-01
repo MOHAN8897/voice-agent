@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "Course fee எவ்ளோ, weekend batch இருக்கா?", "ts": "2026-10-29T20:34:00.077210Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Course fee ₹8,999 வரும், எந்த instalment-உம் கிடையாது. Weekend batch காலைல 10 மணில இருந்து 1 மணி வரைக்கும் இருக்கு. உங்களுக்கு எந்த batch வசதியா இருக்கும்?", "ts": "2026-10-29T20:34:02.801170Z"}
+{"seq": 3, "role": "user", "text": "Okay, என் enquiry-அ note பண்ணிக்கோங்க. என் பேரு Kiran, எனக்கு interest இருக்கு.", "ts": "2026-10-29T20:34:02.803612Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "சரிங்க Kiran, note பண்ணிக்கிட்டேன். உங்களுக்கு எந்த batch வசதியா இருக்கும், weekday-ஆ இல்ல weekend-ஆ?", "ts": "2026-10-29T20:34:06.495173Z"}
+{"seq": 5, "role": "user", "text": "இப்போதைக்கு அவ்வளவுதான், thank you.", "ts": "2026-10-29T20:34:06.508441Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.", "ts": "2026-10-29T20:34:07.617993Z"}

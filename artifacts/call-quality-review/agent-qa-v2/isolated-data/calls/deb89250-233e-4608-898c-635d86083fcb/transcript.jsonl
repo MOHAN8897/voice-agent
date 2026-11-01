@@ -1,0 +1,14 @@
+{"seq": 1, "role": "user", "text": "Haan, theek hai, thoda time hai. I wanted to ask about your aloe vera juice, like what is the price, bottle size, and how to take it?", "ts": "2026-10-31T14:07:49.525294Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "The NatureVeda Aloe Vera Juice costs 399 rupees for 500 ml and contains Aloe Vera. It is marketed as a general wellness beverage. Would you like to place an order today?", "ts": "2026-10-31T14:07:51.687540Z"}
+{"seq": 3, "role": "user", "text": "Acha, 399 rupees for 500 ml is fine, but I am still thinking about it.", "ts": "2026-10-31T14:08:11.072962Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "No problem at all. Take your time to decide. Just let me know if you'd like to place an order later.", "ts": "2026-10-31T14:08:13.968316Z"}
+{"seq": 5, "role": "user", "text": "Abhi is call ko hum thoda Hindi mein continue karein kya?", "ts": "2026-10-31T14:08:27.530707Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "Ji bilkul, hum Hindi mein baat kar sakte hain. Abhi ke liye hum English mein hi baat karte hain. Kya aap Aloe Vera Juice ke baare mein kuch aur jaanna chahenge?", "ts": "2026-10-31T14:08:29.207161Z"}
+{"seq": 7, "role": "user", "text": "Ji theek hai, aapne aloe vera juice ka price kya bataya tha, wo ek baar firse bataenge?", "ts": "2026-10-31T14:08:49.141362Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "The NatureVeda Aloe Vera Juice costs 399 rupees for 500 ml.", "ts": "2026-10-31T14:08:50.895595Z"}
+{"seq": 9, "role": "user", "text": "Theek hai, aur hair oil mein kya ingredients hain?", "ts": "2026-10-31T14:09:00.628748Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "The NatureVeda Herbal Hair Oil contains Amla, Bhringraj, Hibiscus, and Coconut Oil. It is intended for routine hair and scalp care and costs 499 rupees for 200 ml.", "ts": "2026-10-31T14:09:02.459816Z"}
+{"seq": 11, "role": "user", "text": "Achha, toh ek juice aur ek hair oil ka total kitna ho gaya?", "ts": "2026-10-31T14:09:20.822538Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "One Aloe Vera Juice at 399 rupees and one Herbal Hair Oil at 499 rupees makes a total of 898 rupees.", "ts": "2026-10-31T14:09:23.154366Z"}
+{"seq": 13, "role": "user", "text": "Theek hai, 898 rupees ka total theek hai. Main isko baad mein soch kar bataungi, abhi ke liye shukriya, bye!", "ts": "2026-10-31T14:09:39.945664Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-31T14:09:40.981929Z"}

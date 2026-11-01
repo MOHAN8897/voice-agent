@@ -1,0 +1,468 @@
+{
+  "scenario": {
+    "id": "C_self_callback",
+    "business": "C",
+    "kind": "self_callback",
+    "integration": "none",
+    "policy": "automatic",
+    "max_turns": 4,
+    "goal": "You are interested but YOU will contact this business yourself tomorrow. State clearly in Telugu that YOU will call THEM and you do NOT want THEM to call you. This is not permanent DND; it is your own chosen next step. Do not request a booking or an outbound callback. End this call."
+  },
+  "agent": {
+    "id": "C",
+    "key": "academy",
+    "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+    "name": "Teja Data Academy",
+    "agent_name": "Madhavi",
+    "role": "counsellor",
+    "industry": "education",
+    "brief": "Agent name Madhavi, company Teja Data Academy.\nPhone counselling and course admissions in Telugu.\nWe offer practical Python with Data Analytics certification course.\nDuration: 8 weeks online live classes with hands-on projects.\nBatches: Weekday batch 8:00 PM to 9:00 PM (Mon-Fri); Weekend batch 10:00 AM to 1:00 PM (Sat-Sun).\nFee: Final fee is 8,999 rupees total. An old leaflet mentions 12000/15000 rupees, discard that old fee. Current fee 8,999 rupees only.\nNo installment discounts.\nEligibility: Any graduate (BTech, BSc, BCom) or final year college student. Basic computer knowledge needed, prior coding not required.\nPlacement policy: 100% placement assistance provided (resume building, interview preparation, job referrals); strictly NO job guarantee or salary promise.\nGoal: answer course curriculum, fees, batches and timing questions.\nIf interested in free demo session or admission counselling, collect preferred name, email, qualification and preferred batch.\nNo payment collected over the phone.\nRefund policy: No refund once classes start after the first week.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Madhavi",
+      "company_name": "Teja Data Academy",
+      "role": "Course counselling and demo registration",
+      "permitted_next_steps": "Collect student name, email, educational qualification and batch preference (weekday/weekend) to book a free demo class or counsellor callback.",
+      "fee_terms": "Final course fee is 8,999 rupees total. Disregard any old fees. No installment discounts.",
+      "placement_policy": "Placement assistance provided (interview prep, resume building, referrals); strictly no job guarantee.",
+      "eligibility_rules": "Any graduate or final year student; no prior coding experience required.",
+      "forbidden_actions": "Never guarantee a job, salary package or placement. Never collect fees or credit card numbers on call."
+    },
+    "user_id": "77b8a5cc-673a-4043-88b6-648e7d5f1b45",
+    "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09"
+  },
+  "call_id": "864375e7-8c8b-49f3-a645-775049a41b98",
+  "session_id": "adaptive-158f86cd28ce499fa2e68439e8bb4f38",
+  "phone": "+12025550132",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_fef6bbf1152f",
+  "turn_index": 1,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "ధన్యవాదాలు, నాకు Python training details అన్నీ అర్థమయ్యాయి. కానీ నేను రేపు నేనే మీకు call చేస్తాను, మీరు నాకు call చేయాల్సిన అవసరం లేదు. ప్రస్తుతానికి call cut చేస్తాను.",
+        "intends_end": true,
+        "intent": "Declining further contact and explicitly ending the call",
+        "elapsed_s": 1.063
+      },
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 1.187,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [],
+      "done": [
+        {
+          "done": true,
+          "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "end_call": {
+            "should_end": true,
+            "reason": "firm_refusal",
+            "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+            "contact_preference": "do_not_call"
+          },
+          "finish_reason": "rule_close",
+          "usage": {},
+          "memory_update": {
+            "operations": []
+          },
+          "memory_parse_failed": false,
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 104073.843
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "end_call": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "do_not_call"
+      },
+      "finish_reason": "rule_close",
+      "usage": {},
+      "memory_update": {
+        "operations": []
+      },
+      "memory_parse_failed": false,
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "do_not_call"
+      },
+      "transcript": "ధన్యవాదాలు, నాకు Python training details అన్నీ అర్థమయ్యాయి. కానీ నేను రేపు నేనే మీకు call చేస్తాను, మీరు నాకు call చేయాల్సిన అవసరం లేదు. ప్రస్తుతానికి call cut చేస్తాను.",
+      "at": 104073.812
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 1,
+      "at": 104073.843
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 104074.906,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 104073.859
+    }
+  ],
+  "started_at": "2026-10-29T11:15:49.909550+00:00",
+  "errors": [],
+  "brain_checksum": "a0d2248d789aacbef44e36ae0b3c7208f3311955f3506069e71fa47b6c2ec5d0",
+  "runtime_checksum": "577fe2ad0948529389781388ca49f91aea0b7ba1a62f8fb1fa84d45572ab55ac",
+  "available_tools": [
+    "SAVE_ENQUIRY"
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "callback_required",
+    "disposition_confidence": 0.98,
+    "summary_te": "",
+    "summary_en": "The caller said they understood all the Python training details and stated that they would call back tomorrow themselves, explicitly asking the agent not to call them. The agent acknowledged this and thanked them. The call ended politely with no further details captured.",
+    "next_action": "Wait for the caller to call tomorrow; do not place an outbound call.",
+    "extracted_fields": {
+      "phone": "+12025550132"
+    },
+    "objections": [],
+    "notes": "Caller requested self-initiated follow-up and asked not to be called.",
+    "tags": [
+      "followup:callback",
+      "intent:information",
+      "signal:do_not_call",
+      "sentiment:positive"
+    ],
+    "custom_tags": [
+      "custom:python-training"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T11:15:54.654681Z",
+    "generation_ok": true,
+    "facts": {
+      "phone": "+12025550132"
+    },
+    "disclosure_status": null,
+    "contact_preference": "do_not_call",
+    "status_tags": [
+      "contact:phone_known",
+      "custom:python-training",
+      "intent:information",
+      "outcome:callback_required",
+      "sentiment:positive",
+      "signal:do_not_call"
+    ],
+    "lead": {
+      "leadId": "968cb16a-db89-4ffd-ac85-b26233a59516",
+      "agentId": "4c5270a8-990a-5800-868d-9d685eca9a09",
+      "stage": "contacted",
+      "action": "created"
+    },
+    "lead_assessment": {
+      "score": 0,
+      "band": "disqualified",
+      "disposition": "callback_required",
+      "confidence": 0.98,
+      "components": [],
+      "version": 1,
+      "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+      "reason": "caller_opt_out"
+    },
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "864375e7-8c8b-49f3-a645-775049a41b98",
+        "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09",
+        "session_id": "adaptive-158f86cd28ce499fa2e68439e8bb4f38",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_fef6bbf1152f",
+        "started_at": "2026-10-29 11:15:49.893555+00:00",
+        "ended_at": "2026-10-29 11:15:52.104584+00:00",
+        "duration_sec": 2,
+        "disposition": "callback_required",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/864375e7-8c8b-49f3-a645-775049a41b98/",
+        "end_reason": "firm_refusal",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "contact:phone_known",
+          "custom:python-training",
+          "intent:information",
+          "outcome:callback_required",
+          "sentiment:positive",
+          "signal:do_not_call"
+        ],
+        "last_heartbeat_at": "2026-10-29 11:15:49.893555+00:00",
+        "created_at": "2026-10-29 11:15:49.894782+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [],
+    "dnd": [
+      {
+        "id": "029d7d60-524f-4d6a-96d0-4b57adbada9b",
+        "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "phone_e164": "+12025550132",
+        "reason": "verbal_opt_out_live_call",
+        "added_at": "2026-10-29 11:15:54.727577+00:00",
+        "active": true,
+        "source": "live_call_opt_out",
+        "added_by_user_id": null,
+        "removed_at": null,
+        "removed_by_user_id": null,
+        "removal_reason": null,
+        "reconsent_confirmed": false
+      }
+    ],
+    "leads": [
+      {
+        "lead_id": "968cb16a-db89-4ffd-ac85-b26233a59516",
+        "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09",
+        "name": "New lead",
+        "phone": "+12025550132",
+        "email": null,
+        "stage": "contacted",
+        "notes": "[Call reference: 864375e7-8c8b-49f3-a645-775049a41b98]\nThe caller said they understood all the Python training details and stated that they would call back tomorrow themselves, explicitly asking the agent not to call them. The agent acknowledged this and thanked them. The call ended politely with no further details captured.\n\nNext step: Wait for the caller to call tomorrow; do not place an outbound call.\n\nCall outcome: callback required (98% confidence)",
+        "created_at": "2026-10-29 11:15:54.682647+00:00",
+        "updated_at": "2026-10-29 11:15:54.682647+00:00"
+      }
+    ],
+    "tools": [],
+    "assessments": [
+      {
+        "id": "8350137e-782d-4be4-9070-7834e6787aac",
+        "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+        "lead_id": "968cb16a-db89-4ffd-ac85-b26233a59516",
+        "source_call_id": "864375e7-8c8b-49f3-a645-775049a41b98",
+        "assessment": {
+          "score": 0,
+          "band": "disqualified",
+          "disposition": "callback_required",
+          "confidence": 0.98,
+          "components": [],
+          "version": 1,
+          "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+          "reason": "caller_opt_out"
+        },
+        "updated_at": "2026-10-29 11:15:52.104584+00:00"
+      }
+    ]
+  },
+  "metadata": {
+    "call_id": "864375e7-8c8b-49f3-a645-775049a41b98",
+    "tenant_id": "6d8660cc-e868-4994-b1c2-0876647a7855",
+    "agent_id": "4c5270a8-990a-5800-868d-9d685eca9a09",
+    "session_id": "adaptive-158f86cd28ce499fa2e68439e8bb4f38",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_fef6bbf1152f",
+    "started_at": "2026-10-29T11:15:49.893555+00:00",
+    "status": "active",
+    "storage_path": "data/calls/864375e7-8c8b-49f3-a645-775049a41b98/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550132",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "contact_preference": "do_not_call",
+    "hangup_reason": "firm_refusal",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 63,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": true,
+    "callback_close_phase": "idle",
+    "disconnected_at": "2026-10-29T11:15:52.104584+00:00",
+    "ended_at": "2026-10-29T11:15:52.104584+00:00",
+    "end_reason": "firm_refusal",
+    "duration_sec": 2.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 2.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.00041666666666666664,
+      "telephony_inr": 0.039674999999999995,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.00041666666666666664,
+      "telnyx_inr": 0.039674999999999995,
+      "telnyx_voice_api_usd": 6.666666666666667e-05,
+      "telnyx_sip_usd": 0.00016666666666666666,
+      "telnyx_media_stream_usd": 0.00011666666666666667,
+      "telnyx_call_recording_usd": 6.666666666666667e-05,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.22,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-28",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.012499999999999999,
+      "telephony_inr_per_min": 1.1902499999999998,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.012499999999999999,
+      "telnyx_inr_per_min": 1.1902499999999998,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_03edbe146a771b6c016ae32ae8e88487d282db4185798c9a6d": {
+          "input_tokens": 950,
+          "output_tokens": 152,
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.00037240000000000005
+        }
+      },
+      "post_call_analysis_usd": 0.00037240000000000005,
+      "post_call_analysis_inr": 0.035459928
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "ధన్యవాదాలు, నాకు Python training details అన్నీ అర్థమయ్యాయి. కానీ నేను రేపు నేనే మీకు call చేస్తాను, మీరు నాకు call చేయాల్సిన అవసరం లేదు. ప్రస్తుతానికి call cut చేస్తాను.",
+      "ts": "2026-10-29T11:15:50.992829Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T11:15:51.039420Z",
+      "brain_latency_ms": 3
+    }
+  ],
+  "wall_elapsed_s": 4.985,
+  "simulated_exchange_timeline_s": 20,
+  "request_count": 1
+}

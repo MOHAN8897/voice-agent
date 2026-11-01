@@ -1,0 +1,40 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to report that the milk packet in their order arrived damaged and to inquire about the timeline for receiving a refund. The agent responded by explaining that refunds for damaged items are processed within five working days after the damage has been reported, and asked whether the caller had already reported the issue. The caller replied, 'Okay, that's all,' indicating they had no further questions. The agent then thanked the caller and ended the call.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500509"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:complaint",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T11:00:26.462624Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500509"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "intent:complaint",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

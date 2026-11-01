@@ -1,0 +1,10 @@
+{"seq": 1, "role": "user", "text": "Hello Priya. Haan, I have a few minutes, but actually I wanted to know about your Ashwagandha capsules.", "ts": "2026-10-31T14:05:51.606442Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "The NatureVeda Ashwagandha Capsules cost 699 rupees for 60 capsules. They are an herbal wellness supplement, so for any medical conditions, pregnancy, or medication interactions, please consult a qualified healthcare professional. Would you like to place an order today?", "ts": "2026-10-31T14:05:53.551233Z"}
+{"seq": 3, "role": "user", "text": "Actually, I take blood pressure medicine daily, so is it completely safe for me to use?", "ts": "2026-10-31T14:06:16.312946Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Since you take blood pressure medicine daily, I would recommend consulting a qualified healthcare professional before using it to check for any possible interactions. The information on complete safety is currently unavailable from our side.", "ts": "2026-10-31T14:06:18.336630Z"}
+{"seq": 5, "role": "user", "text": "Achcha, I understand, I should definitely check with my doctor first.", "ts": "2026-10-31T14:06:38.797076Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "That is the right approach. Just let me know if you'd like to place an order today.", "ts": "2026-10-31T14:06:39.943543Z"}
+{"seq": 7, "role": "user", "text": "Also tell me, will this completely cure my stress, and are the results guaranteed?", "ts": "2026-10-31T14:06:53.871639Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Our products do not cure diseases or guarantee side-effect-free results. The information on complete stress relief or guaranteed outcomes is currently unavailable.", "ts": "2026-10-31T14:06:55.694999Z"}
+{"seq": 9, "role": "user", "text": "Theek hai, so I will think about it and talk to my doctor first. Thanks for the info, bye.", "ts": "2026-10-31T14:07:16.607080Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-31T14:07:17.538644Z"}

@@ -1,0 +1,993 @@
+{
+  "scenario": {
+    "id": "C_callback_question_probe",
+    "business": "C",
+    "kind": "focused_probe",
+    "integration": "none",
+    "policy": "review",
+    "max_turns": 3,
+    "goal": "Reproduce a specific finding with live subject LLM",
+    "fixed_turns": [
+      "నా పేరు కిరణ్. Python course గురించి తెలుసుకుంటున్నాను. నాకు రేపు ఉదయం call చేయండి. ఈ course కి eligibility ఏంటి?",
+      "ఆగండి, నా ప్రశ్నకి జవాబు కావాలి. ఈ course కి eligibility ఏంటి?",
+      "సరే, ఇంతే చాలు. ధన్యవాదాలు."
+    ]
+  },
+  "agent": {
+    "id": "C",
+    "key": "academy",
+    "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+    "name": "Teja Data Academy",
+    "agent_name": "Madhavi",
+    "role": "counsellor",
+    "industry": "education",
+    "brief": "Agent name Madhavi, company Teja Data Academy.\nPhone counselling and course admissions in Telugu.\nWe offer practical Python with Data Analytics certification course.\nDuration: 8 weeks online live classes with hands-on projects.\nBatches: Weekday batch 8:00 PM to 9:00 PM (Mon-Fri); Weekend batch 10:00 AM to 1:00 PM (Sat-Sun).\nFee: Final fee is 8,999 rupees total. An old leaflet mentions 12000/15000 rupees, discard that old fee. Current fee 8,999 rupees only.\nNo installment discounts.\nEligibility: Any graduate (BTech, BSc, BCom) or final year college student. Basic computer knowledge needed, prior coding not required.\nPlacement policy: 100% placement assistance provided (resume building, interview preparation, job referrals); strictly NO job guarantee or salary promise.\nGoal: answer course curriculum, fees, batches and timing questions.\nIf interested in free demo session or admission counselling, collect preferred name, email, qualification and preferred batch.\nNo payment collected over the phone.\nRefund policy: No refund once classes start after the first week.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Madhavi",
+      "company_name": "Teja Data Academy",
+      "role": "Course counselling and demo registration",
+      "permitted_next_steps": "Collect student name, email, educational qualification and batch preference (weekday/weekend) to book a free demo class or counsellor callback.",
+      "fee_terms": "Final course fee is 8,999 rupees total. Disregard any old fees. No installment discounts.",
+      "placement_policy": "Placement assistance provided (interview prep, resume building, referrals); strictly no job guarantee.",
+      "eligibility_rules": "Any graduate or final year student; no prior coding experience required.",
+      "forbidden_actions": "Never guarantee a job, salary package or placement. Never collect fees or credit card numbers on call."
+    },
+    "user_id": "903ba6dd-ad2a-47cf-a44a-36ef191127f3",
+    "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601"
+  },
+  "call_id": "c0c511cc-202a-41f7-bf59-316264302ce2",
+  "session_id": "adaptive-5de8323f9daa4b858d791eb614d6a1dc",
+  "phone": "+12025550135",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_3f4f01b76299",
+  "turn_index": 3,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నా పేరు కిరణ్. Python course గురించి తెలుసుకుంటున్నాను. నాకు రేపు ఉదయం call చేయండి. ఈ course కి eligibility ఏంటి?",
+        "intends_end": false,
+        "intent": "Focused reproducible stimulus; actual business response remains live",
+        "elapsed_s": 0
+      },
+      "spoken": "కిరణ్ గారు, eligibility ఏంటంటే ఏదైనా graduate (BTech, BSc, BCom) లేదా final year student ఎవరైనా join అవ్వొచ్చు. Basic computer knowledge ఉంటే చాలు, prior coding అవసరం లేదు. రేపు ఉదయం call చేయాలని note చేసుకున్నాను. ఇంకేమైనా వివరాలు కావాలా?",
+      "elapsed_s": 5.657,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "requested_time": "రేపు ఉదయం"
+        },
+        "important_context": "Caller provided contact details in this call.",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        26,
+        27,
+        28,
+        29,
+        30,
+        31
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "కిరణ్ గారు, eligibility ఏంటంటే ఏదైనా graduate (BTech, BSc, BCom) లేదా final year student ఎవరైనా join అవ్వొచ్చు. Basic computer knowledge ఉంటే చాలు, prior coding అవసరం లేదు. రేపు ఉదయం call చేయాలని note చేసుకున్నాను. ఇంకేమైనా వివరాలు కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4767,
+            "output_tokens": 76,
+            "cached_tokens": 1056,
+            "total_tokens": 4843
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 2,
+      "caller": {
+        "utterance": "ఆగండి, నా ప్రశ్నకి జవాబు కావాలి. ఈ course కి eligibility ఏంటి?",
+        "intends_end": false,
+        "intent": "Focused reproducible stimulus; actual business response remains live",
+        "elapsed_s": 0
+      },
+      "spoken": "ఏదైనా graduate (BTech, BSc, BCom) లేదా final year student ఎవరైనా join అవ్వొచ్చు. Basic computer knowledge ఉంటే చాలు, prior coding అవసరం లేదు. ఇంకేమైనా వివరాలు కావాలా?",
+      "elapsed_s": 4.719,
+      "memory_before": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "requested_time": "రేపు ఉదయం"
+        },
+        "important_context": "Caller provided contact details in this call.",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "requested_time": "రేపు ఉదయం"
+        },
+        "important_context": "Caller provided contact details in this call.",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        32,
+        33,
+        34,
+        35,
+        36,
+        37
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "ఏదైనా graduate (BTech, BSc, BCom) లేదా final year student ఎవరైనా join అవ్వొచ్చు. Basic computer knowledge ఉంటే చాలు, prior coding అవసరం లేదు. ఇంకేమైనా వివరాలు కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4889,
+            "output_tokens": 63,
+            "cached_tokens": 1056,
+            "total_tokens": 4952
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 3,
+      "caller": {
+        "utterance": "సరే, ఇంతే చాలు. ధన్యవాదాలు.",
+        "intends_end": true,
+        "intent": "Focused reproducible stimulus; actual business response remains live",
+        "elapsed_s": 0
+      },
+      "spoken": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 3.985,
+      "memory_before": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "requested_time": "రేపు ఉదయం"
+        },
+        "important_context": "Caller provided contact details in this call.",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "caller_name": "కిరణ్"
+        },
+        "preferences": {
+          "requested_time": "రేపు ఉదయం"
+        },
+        "important_context": "Caller provided contact details in this call.",
+        "summary": "user: ఆగండి, నా ప్రశ్నకి జవాబు కావాలి. ఈ course కి eligibility ఏంటి?\nassistant: ఏదైనా graduate (BTech, BSc, BCom) లేదా final year student ఎవరైనా join అవ్వొచ్చు. Basic computer knowledge ఉంటే చాలు, prior coding అవసరం లేదు. ఇంకేమైనా వివరాలు కావాలా?\nuser: సరే, ఇంతే చాలు. ధన్యవాదాలు.\nassistant: మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        38,
+        39,
+        40,
+        41
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5302,
+            "output_tokens": 26,
+            "cached_tokens": 3680,
+            "total_tokens": 5328
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [
+            "enquiry_saved"
+          ],
+          "order_proof": false,
+          "action_outcome_unconfirmed": false,
+          "end_call": {
+            "should_end": true,
+            "reason": "goal_complete",
+            "contact_preference": "callback",
+            "farewell": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "కిరణ్ గారు, eligibility ఏంటంటే ఏదైనా graduate (BTech, BSc, BCom) లేదా final year student ఎవరైనా join అవ్వొచ్చు. Basic computer knowledge ఉంటే చాలు, prior coding అవసరం లేదు. రేపు ఉదయం call చేయాలని note చేసుకున్నాను. ఇంకేమైనా వివరాలు కావాలా?",
+      "at": 122871.578
+    },
+    {
+      "turn": 2,
+      "text": "ఏదైనా graduate (BTech, BSc, BCom) లేదా final year student ఎవరైనా join అవ్వొచ్చు. Basic computer knowledge ఉంటే చాలు, prior coding అవసరం లేదు. ఇంకేమైనా వివరాలు కావాలా?",
+      "at": 122876.328
+    },
+    {
+      "turn": 3,
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 122879.281
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "కిరణ్ గారు, eligibility ఏంటంటే ఏదైనా graduate (BTech, BSc, BCom) లేదా final year student ఎవరైనా join అవ్వొచ్చు. Basic computer knowledge ఉంటే చాలు, prior coding అవసరం లేదు. రేపు ఉదయం call చేయాలని note చేసుకున్నాను. ఇంకేమైనా వివరాలు కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4767,
+        "output_tokens": 76,
+        "cached_tokens": 1056,
+        "total_tokens": 4843
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "ఏదైనా graduate (BTech, BSc, BCom) లేదా final year student ఎవరైనా join అవ్వొచ్చు. Basic computer knowledge ఉంటే చాలు, prior coding అవసరం లేదు. ఇంకేమైనా వివరాలు కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4889,
+        "output_tokens": 63,
+        "cached_tokens": 1056,
+        "total_tokens": 4952
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5302,
+        "output_tokens": 26,
+        "cached_tokens": 3680,
+        "total_tokens": 5328
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [
+        "enquiry_saved"
+      ],
+      "order_proof": false,
+      "action_outcome_unconfirmed": false,
+      "end_call": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "contact_preference": "callback",
+        "farewell": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "continue",
+        "reason": "goal_complete",
+        "evidence": "",
+        "remaining_request": "ఈ course కి eligibility ఏంటి?",
+        "contact_intent": "callback",
+        "contact_evidence": "నాకు రేపు ఉదయం call చేయండి",
+        "callback_time": "రేపు ఉదయం",
+        "contact_verified": true,
+        "close_verified": false,
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "కిరణ్"
+          },
+          {
+            "op": "set_preference",
+            "key": "requested_time",
+            "value": "రేపు ఉదయం"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నా పేరు కిరణ్. Python course గురించి తెలుసుకుంటున్నాను. నాకు రేపు ఉదయం call చేయండి. ఈ course కి eligibility ఏంటి?",
+      "at": 122869.812
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "decision": "continue",
+        "reason": "goodbye",
+        "evidence": "",
+        "remaining_request": "ఈ course కి eligibility ఏంటి?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "ఆగండి, నా ప్రశ్నకి జవాబు కావాలి. ఈ course కి eligibility ఏంటి?",
+      "at": 122875.609
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "సరే, ఇంతే చాలు. ధన్యవాదాలు.",
+        "remaining_request": "",
+        "contact_intent": "end_this_call",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": true,
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "contact_preference": "callback",
+        "farewell": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "transcript": "సరే, ఇంతే చాలు. ధన్యవాదాలు.",
+      "at": 122879.234
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [
+    {
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 3,
+      "at": 122879.281
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 122880.312,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 122871.593
+    },
+    {
+      "turn_seq": 3,
+      "at": 122876.343
+    },
+    {
+      "turn_seq": 5,
+      "at": 122879.328
+    }
+  ],
+  "started_at": "2026-10-29T16:29:03.158757+00:00",
+  "errors": [],
+  "brain_checksum": "1e50bcddbde4fb3ba1373a621ebfa2d5e27fd8e4c2c10ed3fa531d5cdd985c4f",
+  "runtime_checksum": "770d8ac0e64a05a90b00c7de395f506ca07c057cd132f00336a5fb913dc60a4b",
+  "available_tools": [
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 122867.796,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 2,
+      "start_s": 122873.89,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 138,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 3,
+      "start_s": 122877.859,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 138,
+      "rolling_chars": 0
+    }
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "callback_required",
+    "disposition_confidence": 0.98,
+    "summary_te": "",
+    "summary_en": "Kiran called to learn about the Python course and asked specifically about eligibility. The agent explained that graduates from fields such as BTech, BSc, or BCom, as well as final-year students, can join; basic computer knowledge is sufficient and prior coding experience is not required. Kiran initially requested a call tomorrow morning, and the agent said it was noted. After repeating the eligibility information, Kiran said that was all and thanked the agent. The call ended politely, with the agent stating that the details and request for another call had been recorded.",
+    "next_action": "Call Kiran tomorrow morning.",
+    "extracted_fields": {
+      "caller_name": "కిరణ్",
+      "course": "Python course",
+      "eligibility": "Any graduate, including BTech, BSc, or BCom, or a final-year student; basic computer knowledge required; prior coding not required",
+      "name": "Kiran",
+      "phone": "+12025550135",
+      "requested_callback_time": "Tomorrow morning"
+    },
+    "objections": [],
+    "notes": "The transcript states that contact details were provided, but no specific contact detail was captured in the transcript.",
+    "tags": [
+      "followup:callback",
+      "intent:information",
+      "sentiment:positive"
+    ],
+    "custom_tags": [
+      "custom:python-course",
+      "custom:eligibility-inquiry"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T16:29:21.911529Z",
+    "generation_ok": true,
+    "facts": {
+      "caller_name": "కిరణ్",
+      "course": "Python course",
+      "eligibility": "Any graduate, including BTech, BSc, or BCom, or a final-year student; basic computer knowledge required; prior coding not required",
+      "name": "Kiran",
+      "phone": "+12025550135",
+      "requested_callback_time": "Tomorrow morning"
+    },
+    "disclosure_status": null,
+    "contact_preference": "callback",
+    "status_tags": [
+      "action:required",
+      "contact:name_known",
+      "contact:phone_known",
+      "custom:eligibility-inquiry",
+      "custom:python-course",
+      "followup:callback",
+      "intent:information",
+      "outcome:callback_required",
+      "sentiment:positive"
+    ],
+    "lead": {
+      "leadId": "405e558c-9a3a-595c-8f6d-03deecdf06fb",
+      "agentId": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+      "stage": "contacted",
+      "action": "unchanged"
+    },
+    "lead_assessment": {
+      "score": 50,
+      "band": "warm",
+      "disposition": "callback_required",
+      "confidence": 0.98,
+      "components": [
+        {
+          "signal": "interest",
+          "points": 40,
+          "max": 40,
+          "evidence": "callback_required"
+        },
+        {
+          "signal": "requirements",
+          "points": 0,
+          "max": 25,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "timing",
+          "points": 0,
+          "max": 25,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "contact",
+          "points": 10,
+          "max": 10,
+          "evidence": "phone"
+        }
+      ],
+      "version": 1,
+      "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+      "reason": "recorded_signals"
+    },
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "c0c511cc-202a-41f7-bf59-316264302ce2",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+        "session_id": "adaptive-5de8323f9daa4b858d791eb614d6a1dc",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_3f4f01b76299",
+        "started_at": "2026-10-29 16:29:03.144028+00:00",
+        "ended_at": "2026-10-29 16:29:17.510091+00:00",
+        "duration_sec": 14,
+        "disposition": "callback_required",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/c0c511cc-202a-41f7-bf59-316264302ce2/",
+        "end_reason": "goal_complete",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "action:required",
+          "contact:name_known",
+          "contact:phone_known",
+          "custom:eligibility-inquiry",
+          "custom:python-course",
+          "followup:callback",
+          "intent:information",
+          "outcome:callback_required",
+          "sentiment:positive"
+        ],
+        "last_heartbeat_at": "2026-10-29 16:29:03.144028+00:00",
+        "created_at": "2026-10-29 16:29:03.145052+00:00"
+      }
+    ],
+    "callbacks": [
+      {
+        "callback_id": "e732ea5e-e351-446b-8ada-fa571c72738b",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "user_id": null,
+        "original_call_id": "c0c511cc-202a-41f7-bf59-316264302ce2",
+        "original_attempt_id": null,
+        "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+        "to_e164": "+12025550135",
+        "from_e164": null,
+        "dial_request_id": "requested:c0c511cc-202a-41f7-bf59-316264302ce2",
+        "mode": "requested",
+        "status": "requested",
+        "provider": null,
+        "provider_call_control_id": null,
+        "error": null,
+        "created_at": "2026-10-29 16:29:16.439046+00:00",
+        "updated_at": "2026-10-29 16:29:16.439046+00:00"
+      }
+    ],
+    "jobs": [
+      {
+        "id": "493df174-902e-428a-8ba8-e2fac2155a95",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+        "origin_key": "callback:e732ea5e-e351-446b-8ada-fa571c72738b",
+        "source_id": "c0c511cc-202a-41f7-bf59-316264302ce2",
+        "kind": "callback",
+        "phone": "+12025550135",
+        "status": "needs_review",
+        "reason": "approval_required",
+        "payload": {
+          "requestText": "నా పేరు కిరణ్. Python course గురించి తెలుసుకుంటున్నాను. నాకు రేపు ఉదయం call చేయండి. ఈ course కి eligibility ఏంటి?",
+          "requestedWhen": "రేపు ఉదయం",
+          "recentTurns": [
+            {
+              "role": "user",
+              "text": "నా పేరు కిరణ్. Python course గురించి తెలుసుకుంటున్నాను. నాకు రేపు ఉదయం call చేయండి. ఈ course కి eligibility ఏంటి?",
+              "at": "2026-10-29T16:29:03.182334Z"
+            },
+            {
+              "role": "assistant",
+              "text": "కిరణ్ గారు, eligibility ఏంటంటే ఏదైనా graduate (BTech, BSc, BCom) లేదా final year student ఎవరైనా join అవ్వొచ్చు. Basic computer knowledge ఉంటే చాలు, prior coding అవసరం లేదు. రేపు ఉదయం call చేయాలని note చేసుకున్నాను. ఇంకేమైనా వివరాలు కావాలా?",
+              "at": "2026-10-29T16:29:08.765327Z"
+            },
+            {
+              "role": "user",
+              "text": "ఆగండి, నా ప్రశ్నకి జవాబు కావాలి. ఈ course కి eligibility ఏంటి?",
+              "at": "2026-10-29T16:29:08.831953Z"
+            },
+            {
+              "role": "assistant",
+              "text": "ఏదైనా graduate (BTech, BSc, BCom) లేదా final year student ఎవరైనా join అవ్వొచ్చు. Basic computer knowledge ఉంటే చాలు, prior coding అవసరం లేదు. ఇంకేమైనా వివరాలు కావాలా?",
+              "at": "2026-10-29T16:29:13.517527Z"
+            },
+            {
+              "role": "user",
+              "text": "సరే, ఇంతే చాలు. ధన్యవాదాలు.",
+              "at": "2026-10-29T16:29:13.577910Z"
+            }
+          ],
+          "callbackId": "e732ea5e-e351-446b-8ada-fa571c72738b",
+          "timezone": "Asia/Kolkata",
+          "llm": {
+            "provider": "openai",
+            "model": "gpt-5.6-luna",
+            "options": {},
+            "purpose": "configured_post_call_analysis"
+          },
+          "requestedAt": "2026-10-29T16:29:16.456512+00:00"
+        },
+        "due_at": null,
+        "expires_at": "2026-11-05 16:29:16.456512+00:00",
+        "attempts": 0,
+        "lease_token": null,
+        "lease_until": null,
+        "control_id": null,
+        "authorized_by": "903ba6dd-ad2a-47cf-a44a-36ef191127f3",
+        "billing_tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "created_at": "2026-10-29 16:29:16.458168+00:00",
+        "updated_at": "2026-10-29 16:29:16.458168+00:00"
+      }
+    ],
+    "dnd": [],
+    "leads": [
+      {
+        "lead_id": "405e558c-9a3a-595c-8f6d-03deecdf06fb",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+        "name": "కిరణ్",
+        "phone": "+12025550135",
+        "email": null,
+        "stage": "contacted",
+        "notes": "Caller enquiry — call c0c511cc-202a-41f7-bf59-316264302ce2\n{\"customer_name\": \"కిరణ్\", \"request\": \"Call back tomorrow morning regarding Python with Data Analytics course\"}\n\n---\n[Call reference: c0c511cc-202a-41f7-bf59-316264302ce2]\nKiran called to learn about the Python course and asked specifically about eligibility. The agent explained that graduates from fields such as BTech, BSc, or BCom, as well as final-year students, can join; basic computer knowledge is sufficient and prior coding experience is not required. Kiran initially requested a call tomorrow morning, and the agent said it was noted. After repeating the eligibility information, Kiran said that was all and thanked the agent. The call ended politely, with the agent stating that the details and request for another call had been recorded.\n\nNext step: Call Kiran tomorrow morning.\n\nCall outcome: callback required (98% confidence)",
+        "created_at": "2026-10-29 16:29:15.789772+00:00",
+        "updated_at": "2026-10-29 16:29:21.929466+00:00"
+      }
+    ],
+    "tools": [],
+    "assessments": [
+      {
+        "id": "3b971919-a894-4171-9159-56685f3bd38a",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "lead_id": "405e558c-9a3a-595c-8f6d-03deecdf06fb",
+        "source_call_id": "c0c511cc-202a-41f7-bf59-316264302ce2",
+        "assessment": {
+          "score": 50,
+          "band": "warm",
+          "disposition": "callback_required",
+          "confidence": 0.98,
+          "components": [
+            {
+              "signal": "interest",
+              "points": 40,
+              "max": 40,
+              "evidence": "callback_required"
+            },
+            {
+              "signal": "requirements",
+              "points": 0,
+              "max": 25,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "timing",
+              "points": 0,
+              "max": 25,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "contact",
+              "points": 10,
+              "max": 10,
+              "evidence": "phone"
+            }
+          ],
+          "version": 1,
+          "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+          "reason": "recorded_signals"
+        },
+        "updated_at": "2026-10-29 16:29:17.510091+00:00"
+      }
+    ]
+  },
+  "metadata": {
+    "call_id": "c0c511cc-202a-41f7-bf59-316264302ce2",
+    "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+    "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+    "session_id": "adaptive-5de8323f9daa4b858d791eb614d6a1dc",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_3f4f01b76299",
+    "started_at": "2026-10-29T16:29:03.144028+00:00",
+    "status": "active",
+    "storage_path": "data/calls/c0c511cc-202a-41f7-bf59-316264302ce2/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550135",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 42374,
+        "output_tokens": 1245,
+        "cached_tokens": 14304
+      }
+    },
+    "callback_request": {
+      "id": "e732ea5e-e351-446b-8ada-fa571c72738b",
+      "status": "requested",
+      "requestedWhen": "రేపు ఉదయం",
+      "requestText": "నా పేరు కిరణ్. Python course గురించి తెలుసుకుంటున్నాను. నాకు రేపు ఉదయం call చేయండి. ఈ course కి eligibility ఏంటి?"
+    },
+    "contact_preference": "callback",
+    "hangup_reason": "goal_complete",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 0,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": false,
+    "callback_close_phase": "semantic_pending",
+    "disconnected_at": "2026-10-29T16:29:17.510091+00:00",
+    "ended_at": "2026-10-29T16:29:17.510091+00:00",
+    "end_reason": "goal_complete",
+    "duration_sec": 14.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 14.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.0029166666666666664,
+      "telephony_inr": 0.2778708333333333,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.0029166666666666664,
+      "telnyx_inr": 0.2778708333333333,
+      "telnyx_voice_api_usd": 0.00046666666666666666,
+      "telnyx_sip_usd": 0.0011666666666666668,
+      "telnyx_media_stream_usd": 0.0008166666666666667,
+      "telnyx_call_recording_usd": 0.00046666666666666666,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.27,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-29",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.012499999999999999,
+      "telephony_inr_per_min": 1.1908749999999997,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.012499999999999999,
+      "telnyx_inr_per_min": 1.1908749999999997,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_0b45a7d52642c71f016ae3745e9bd887d1a3d599949ed7911a": {
+          "input_tokens": 1356,
+          "output_tokens": 279,
+          "cached_tokens": 0,
+          "cache_write_tokens": 1353,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.00067365
+        }
+      },
+      "post_call_analysis_usd": 0.00067365,
+      "post_call_analysis_inr": 0.0641786355
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నా పేరు కిరణ్. Python course గురించి తెలుసుకుంటున్నాను. నాకు రేపు ఉదయం call చేయండి. ఈ course కి eligibility ఏంటి?",
+      "ts": "2026-10-29T16:29:03.182334Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "కిరణ్ గారు, eligibility ఏంటంటే ఏదైనా graduate (BTech, BSc, BCom) లేదా final year student ఎవరైనా join అవ్వొచ్చు. Basic computer knowledge ఉంటే చాలు, prior coding అవసరం లేదు. రేపు ఉదయం call చేయాలని note చేసుకున్నాను. ఇంకేమైనా వివరాలు కావాలా?",
+      "ts": "2026-10-29T16:29:08.765327Z"
+    },
+    {
+      "seq": 3,
+      "role": "user",
+      "text": "ఆగండి, నా ప్రశ్నకి జవాబు కావాలి. ఈ course కి eligibility ఏంటి?",
+      "ts": "2026-10-29T16:29:08.831953Z",
+      "partial": false
+    },
+    {
+      "seq": 4,
+      "role": "assistant",
+      "text": "ఏదైనా graduate (BTech, BSc, BCom) లేదా final year student ఎవరైనా join అవ్వొచ్చు. Basic computer knowledge ఉంటే చాలు, prior coding అవసరం లేదు. ఇంకేమైనా వివరాలు కావాలా?",
+      "ts": "2026-10-29T16:29:13.517527Z"
+    },
+    {
+      "seq": 5,
+      "role": "user",
+      "text": "సరే, ఇంతే చాలు. ధన్యవాదాలు.",
+      "ts": "2026-10-29T16:29:13.577910Z",
+      "partial": false
+    },
+    {
+      "seq": 6,
+      "role": "assistant",
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T16:29:16.481695Z"
+    }
+  ],
+  "wall_elapsed_s": 18.828,
+  "simulated_exchange_timeline_s": 60,
+  "request_count": 16
+}

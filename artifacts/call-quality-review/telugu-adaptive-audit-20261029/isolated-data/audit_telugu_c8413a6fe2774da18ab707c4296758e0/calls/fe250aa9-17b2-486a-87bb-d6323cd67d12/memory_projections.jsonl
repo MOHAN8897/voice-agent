@@ -1,0 +1,8 @@
+{"turn_seq": 1, "ts": "2026-10-29T11:05:39.713340Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T11:05:42.052045Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-29T11:05:44.312779Z", "include_summary": true, "projection": ""}
+{"turn_seq": 7, "ts": "2026-10-29T11:05:46.418247Z", "include_summary": true, "projection": ""}
+{"turn_seq": 9, "ts": "2026-10-29T11:05:48.842124Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: wedding cards | quantity: 200 | payment_method: Advance payment | email: ramesh.audit@example.invalid | caller_email: ramesh.audit@example.invalid\n[Preferences]\nfinish: matte finish\n[Context]\nCaller provided contact details in this call."}
+{"turn_seq": 11, "ts": "2026-10-29T11:05:50.871663Z", "include_summary": true, "projection": ""}
+{"turn_seq": 13, "ts": "2026-10-29T11:05:52.833034Z", "include_summary": true, "projection": ""}
+{"turn_seq": 15, "ts": "2026-10-29T11:05:54.914513Z", "include_summary": true, "projection": ""}

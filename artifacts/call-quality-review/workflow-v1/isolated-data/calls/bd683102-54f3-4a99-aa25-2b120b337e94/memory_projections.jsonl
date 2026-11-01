@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-29T20:22:56.638971Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T20:23:01.143658Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: matte visiting cards | quantity: 200"}
+{"turn_seq": 5, "ts": "2026-10-29T20:23:03.793786Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: matte visiting cards | quantity: 200 | caller_name: Ravi Kumar | delivery_address: 12 MG Road, Vijayawada"}
+{"turn_seq": 7, "ts": "2026-10-29T20:23:04.808372Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: matte visiting cards | quantity: 200 | caller_name: Ravi Kumar | delivery_address: 12 MG Road, Vijayawada"}

@@ -1,0 +1,1626 @@
+{
+  "scenario": {
+    "id": "A_memory_latency_probe",
+    "business": "A",
+    "kind": "memory_latency",
+    "integration": "none",
+    "policy": "review",
+    "max_turns": 10,
+    "goal": "Ask about 200 matte visiting cards, give name Ramana and Vijayawada locality once. Continue meaningful information questions about artwork, delivery, flex banners, office hours and payment; do not order or request callbacks. Around turns 4 and 8 ask what name, product and quantity they remember, without re-stating those values. Correct any error, thank them mid-conversation with a new question, then clearly end on turn ten."
+  },
+  "agent": {
+    "id": "A",
+    "key": "printing",
+    "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+    "name": "Sri Krishna Digital Prints",
+    "agent_name": "Kavitha",
+    "role": "sales",
+    "industry": "printing",
+    "brief": "Agent name Kavitha. Company name Sri Krishna Digital Prints.\nOutbound and inbound customer inquiries in Telugu.\nWe print visiting cards: normal paper visiting cards cost 200 rupees for 100 cards,\nmatte finish cards cost 350 rupees for 100 cards. Minimum order quantity 100 cards.\nWedding invitation cards are customized: pricing depends on design, paper sample and quantity, no fixed price over the phone.\nFlex banners: normal flex 15 rupees per square foot, star flex 20 rupees per square foot.\nDelivery in Vijayawada takes 3 working days after design artwork approval; urgent 24-hour delivery is extra 150 rupees.\nPayment: Cash on delivery accepted for orders up to 1000 rupees; 50% advance payment required for orders above 1000 rupees.\nNo online payment or credit card processing on phone call.\nOffice hours Monday to Saturday 9:30 AM to 8:00 PM, Sunday closed.\nGoal: answer customer questions on cards, banners and pricing; understand their requirement.\nIf interested, take preferred name, quantity and delivery locality for a quote or order request.\nDo not force details before answering questions.\nCustomer refusing visiting cards may still want flex banners or wedding cards.\nNever claim an order is paid or dispatched without artwork approval and design confirmation.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Kavitha",
+      "company_name": "Sri Krishna Digital Prints",
+      "role": "Sales and customer enquiries",
+      "permitted_next_steps": "Collect customer name, item type, quantity and delivery locality in Vijayawada to submit an internal quote/order request. Explain that artwork approval is required before printing.",
+      "payment_rules": "Cash on delivery for orders up to 1000 rupees; 50% advance for orders above 1000 rupees. No online payment collection on call.",
+      "delivery_details": "Local delivery in Vijayawada takes 3 working days after artwork approval. Urgent 24-hour delivery is extra 150 rupees.",
+      "wedding_cards": "Customized quotation only based on design and paper sample. No fixed price on phone.",
+      "visiting_cards": "Standard 200 rupees for 100 cards; Matte finish 350 rupees for 100 cards. Minimum order 100 cards.",
+      "forbidden_actions": "Never confirm external courier shipment or take card payment on phone. Never guarantee delivery without artwork approval."
+    },
+    "user_id": "c0afb80f-ba42-4f85-ad75-ac1c23a9873f",
+    "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408"
+  },
+  "call_id": "b0f78777-752e-4734-9efe-ed0ddab566b3",
+  "session_id": "adaptive-1644f7ba130741dcb6ca4b45938a5087",
+  "phone": "+12025550123",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_ce356842dc55",
+  "turn_index": 8,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నమస్తే కవిత గారు. నాకు 200 matte visiting cards కావాలి. నా పేరు రమణ, నేను విజయవాడలో ఉంటున్నాను. వీటి artwork ఎప్పుడు finalize చేయాలో చెప్పగలరా?",
+        "intends_end": false,
+        "intent": "Inquire about artwork approval timeline for matte visiting cards",
+        "elapsed_s": 0.906
+      },
+      "spoken": "రమణ గారు, artwork approve అయిన తర్వాత విజయవాడలో delivery కి 3 working days పడుతుంది.",
+      "elapsed_s": 3.453,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "delivery_locality": "విజయవాడ"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        861,
+        862,
+        863,
+        864,
+        865,
+        866
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "రమణ గారు, artwork approve అయిన తర్వాత విజయవాడలో delivery కి 3 working days పడుతుంది.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4671,
+            "output_tokens": 30,
+            "cached_tokens": 2080,
+            "total_tokens": 4701
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 2,
+      "caller": {
+        "utterance": "సరే, 3 days అంటే బాగుంది. మరి payment ఎలా చేయాలి? online లో చేయొచ్చా?",
+        "intends_end": false,
+        "intent": "Inquire about payment methods",
+        "elapsed_s": 0.593
+      },
+      "spoken": "ఫోన్ కాల్ ద్వారా online payment లేదా credit card processing ఉండదు. one thousand rupeesపాయల పైన ఉన్న orders కు 50% advance payment చేయాలి, అంతకంటే తక్కువ ఉంటే cash on delivery తీసుకోవచ్చు.",
+      "elapsed_s": 3.844,
+      "memory_before": {
+        "facts": {
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "delivery_locality": "విజయవాడ"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "delivery_locality": "విజయవాడ"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        868,
+        869,
+        870,
+        871,
+        872
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "ఫోన్ కాల్ ద్వారా online payment లేదా credit card processing ఉండదు. one thousand rupeesపాయల పైన ఉన్న orders కు 50% advance payment చేయాలి, అంతకంటే తక్కువ ఉంటే cash on delivery తీసుకోవచ్చు.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4697,
+            "output_tokens": 46,
+            "cached_tokens": 3232,
+            "total_tokens": 4743
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 3,
+      "caller": {
+        "utterance": "సరే, cash on delivery అయితే పర్వాలేదు. మరి flex banners కూడా ఏమైనా చేస్తారా? వాటి delivery కి ఎంత time పడుతుంది?",
+        "intends_end": false,
+        "intent": "Inquire about flex banners and delivery time",
+        "elapsed_s": 0.515
+      },
+      "spoken": "విజయవాడలో flex banners delivery కి design artwork approval తర్వాత 3 working days పడుతుంది.",
+      "elapsed_s": 3.657,
+      "memory_before": {
+        "facts": {
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "delivery_locality": "విజయవాడ"
+        },
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "delivery_locality": "విజయవాడ"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery"
+        },
+        "important_context": "",
+        "summary": "assistant: రమణ గారు, artwork approve అయిన తర్వాత విజయవాడలో delivery కి 3 working days పడుతుంది.\nuser: సరే, 3 days అంటే బాగుంది. మరి payment ఎలా చేయాలి? online లో చేయొచ్చా?\nassistant: ఫోన్ కాల్ ద్వారా online payment లేదా credit card processing ఉండదు. one thousand rupeesపాయల పైన ఉన్న orders కు 50% advance payment చేయాలి, అంతకంటే తక్కువ ఉంటే cash on delivery తీసుకోవచ్చు.\nuser: సరే, cash on delivery అయితే పర్వాలేదు. మరి flex banners కూడా ఏమైనా చేస్తారా? వాటి delivery కి ఎంత time పడుతుంది?\nassistant: విజయవాడలో flex banners delivery కి design artwork approval తర్వాత 3 working days పడుతుంది."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        874,
+        875,
+        876,
+        877,
+        878,
+        879
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "విజయవాడలో flex banners delivery కి design artwork approval తర్వాత 3 working days పడుతుంది.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 4785,
+            "output_tokens": 59,
+            "cached_tokens": 3232,
+            "total_tokens": 4844
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 4,
+      "caller": {
+        "utterance": "సరే, flex banners కి కూడా 3 days పడుతుంది కదా. ఒక్క నిమిషం, మీరు నా పేరు, product, quantity ఏమైనా note చేసుకున్నారో లేదో ఒకసారి చెప్తారా?",
+        "intends_end": false,
+        "intent": "Verify remembered details and continue enquiry",
+        "elapsed_s": 0.656
+      },
+      "spoken": "అవును రమణ గారు, మీరు two hundred matte visiting cards కావాలని, delivery విజయవాడలో అని నేను note చేసుకున్నాను. మీకు ఇంకా ఏమైనా details కావాలా?",
+      "elapsed_s": 4.422,
+      "memory_before": {
+        "facts": {
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "delivery_locality": "విజయవాడ"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery"
+        },
+        "important_context": "",
+        "summary": "assistant: రమణ గారు, artwork approve అయిన తర్వాత విజయవాడలో delivery కి 3 working days పడుతుంది.\nuser: సరే, 3 days అంటే బాగుంది. మరి payment ఎలా చేయాలి? online లో చేయొచ్చా?\nassistant: ఫోన్ కాల్ ద్వారా online payment లేదా credit card processing ఉండదు. one thousand rupeesపాయల పైన ఉన్న orders కు 50% advance payment చేయాలి, అంతకంటే తక్కువ ఉంటే cash on delivery తీసుకోవచ్చు.\nuser: సరే, cash on delivery అయితే పర్వాలేదు. మరి flex banners కూడా ఏమైనా చేస్తారా? వాటి delivery కి ఎంత time పడుతుంది?\nassistant: విజయవాడలో flex banners delivery కి design artwork approval తర్వాత 3 working days పడుతుంది."
+      },
+      "memory_after": {
+        "facts": {
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "delivery_locality": "విజయవాడ"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery"
+        },
+        "important_context": "",
+        "summary": "assistant: రమణ గారు, artwork approve అయిన తర్వాత విజయవాడలో delivery కి 3 working days పడుతుంది.\nuser: సరే, 3 days అంటే బాగుంది. మరి payment ఎలా చేయాలి? online లో చేయొచ్చా?\nassistant: ఫోన్ కాల్ ద్వారా online payment లేదా credit card processing ఉండదు. one thousand rupeesపాయల పైన ఉన్న orders కు 50% advance payment చేయాలి, అంతకంటే తక్కువ ఉంటే cash on delivery తీసుకోవచ్చు.\nuser: సరే, cash on delivery అయితే పర్వాలేదు. మరి flex banners కూడా ఏమైనా చేస్తారా? వాటి delivery కి ఎంత time పడుతుంది?\nassistant: విజయవాడలో flex banners delivery కి design artwork approval తర్వాత 3 working days పడుతుంది."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        881,
+        882,
+        883,
+        884,
+        885,
+        886,
+        887
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "అవును రమణ గారు, మీరు two hundred matte visiting cards కావాలని, delivery విజయవాడలో అని నేను note చేసుకున్నాను. మీకు ఇంకా ఏమైనా details కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5009,
+            "output_tokens": 37,
+            "cached_tokens": 3232,
+            "total_tokens": 5046
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "action_proofs": [],
+          "order_proof": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          }
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 5,
+      "caller": {
+        "utterance": "సరే కవిత గారు, note చేసుకున్నందుకు thanks. office hours ఎప్పుడు ఉంటాయి? నేను సాయంత్రం పూట call చేయవచ్చా?",
+        "intends_end": false,
+        "intent": "Inquire about business hours and suitable calling time",
+        "elapsed_s": 0.594
+      },
+      "spoken": "Office hours Monday to Saturday ఉదయం nine thirty నుండి రాత్రి eight వరకు ఉంటాయి, Sunday closed. సాయంత్రం పూట call చేయవచ్చా అని అడిగారు కదా, ఆ time ని note చేసుకున్నాను. మీకు ఏ time కి call చేయమంటారు?",
+      "elapsed_s": 3.328,
+      "memory_before": {
+        "facts": {
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "delivery_locality": "విజయవాడ"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery"
+        },
+        "important_context": "",
+        "summary": "assistant: రమణ గారు, artwork approve అయిన తర్వాత విజయవాడలో delivery కి 3 working days పడుతుంది.\nuser: సరే, 3 days అంటే బాగుంది. మరి payment ఎలా చేయాలి? online లో చేయొచ్చా?\nassistant: ఫోన్ కాల్ ద్వారా online payment లేదా credit card processing ఉండదు. one thousand rupeesపాయల పైన ఉన్న orders కు 50% advance payment చేయాలి, అంతకంటే తక్కువ ఉంటే cash on delivery తీసుకోవచ్చు.\nuser: సరే, cash on delivery అయితే పర్వాలేదు. మరి flex banners కూడా ఏమైనా చేస్తారా? వాటి delivery కి ఎంత time పడుతుంది?\nassistant: విజయవాడలో flex banners delivery కి design artwork approval తర్వాత 3 working days పడుతుంది."
+      },
+      "memory_after": {
+        "facts": {
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "delivery_locality": "విజయవాడ"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery"
+        },
+        "important_context": "",
+        "summary": "assistant: రమణ గారు, artwork approve అయిన తర్వాత విజయవాడలో delivery కి 3 working days పడుతుంది.\nuser: సరే, 3 days అంటే బాగుంది. మరి payment ఎలా చేయాలి? online లో చేయొచ్చా?\nassistant: ఫోన్ కాల్ ద్వారా online payment లేదా credit card processing ఉండదు. one thousand rupeesపాయల పైన ఉన్న orders కు 50% advance payment చేయాలి, అంతకంటే తక్కువ ఉంటే cash on delivery తీసుకోవచ్చు.\nuser: సరే, cash on delivery అయితే పర్వాలేదు. మరి flex banners కూడా ఏమైనా చేస్తారా? వాటి delivery కి ఎంత time పడుతుంది?\nassistant: విజయవాడలో flex banners delivery కి design artwork approval తర్వాత 3 working days పడుతుంది."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        889,
+        890,
+        891,
+        892,
+        893,
+        894
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "Office hours Monday to Saturday ఉదయం nine thirty నుండి రాత్రి eight వరకు ఉంటాయి, Sunday closed. సాయంత్రం పూట call చేయవచ్చా అని అడిగారు కదా, ఆ time ని note చేసుకున్నాను. మీకు ఏ time కి call చేయమంటారు?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5138,
+            "output_tokens": 57,
+            "cached_tokens": 3232,
+            "total_tokens": 5195
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 6,
+      "caller": {
+        "utterance": "సాయంత్రం 6 గంటలకి call చేస్తే బాగుంటుంది. మరి మీ office కి రావాలా లేక ఇక్కడి నుంచే అంతా process చేస్తారా?",
+        "intends_end": false,
+        "intent": "Ask about visiting the office versus remote process",
+        "elapsed_s": 0.609
+      },
+      "spoken": "సాయంత్రం 6 గంటలకి call చేస్తానని note చేసుకున్నాను. మా office కి రావాల్సిన అవసరం లేదు, ఇక్కడి నుంచే process చేస్తాం.",
+      "elapsed_s": 3.766,
+      "memory_before": {
+        "facts": {
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "delivery_locality": "విజయవాడ"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery"
+        },
+        "important_context": "",
+        "summary": "assistant: రమణ గారు, artwork approve అయిన తర్వాత విజయవాడలో delivery కి 3 working days పడుతుంది.\nuser: సరే, 3 days అంటే బాగుంది. మరి payment ఎలా చేయాలి? online లో చేయొచ్చా?\nassistant: ఫోన్ కాల్ ద్వారా online payment లేదా credit card processing ఉండదు. one thousand rupeesపాయల పైన ఉన్న orders కు 50% advance payment చేయాలి, అంతకంటే తక్కువ ఉంటే cash on delivery తీసుకోవచ్చు.\nuser: సరే, cash on delivery అయితే పర్వాలేదు. మరి flex banners కూడా ఏమైనా చేస్తారా? వాటి delivery కి ఎంత time పడుతుంది?\nassistant: విజయవాడలో flex banners delivery కి design artwork approval తర్వాత 3 working days పడుతుంది."
+      },
+      "memory_after": {
+        "facts": {
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "delivery_locality": "విజయవాడ"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery",
+          "callback_time": "సాయంత్రం 6 గంటలకి"
+        },
+        "important_context": "",
+        "summary": "assistant: రమణ గారు, artwork approve అయిన తర్వాత విజయవాడలో delivery కి 3 working days పడుతుంది.\nuser: సరే, 3 days అంటే బాగుంది. మరి payment ఎలా చేయాలి? online లో చేయొచ్చా?\nassistant: ఫోన్ కాల్ ద్వారా online payment లేదా credit card processing ఉండదు. one thousand rupeesపాయల పైన ఉన్న orders కు 50% advance payment చేయాలి, అంతకంటే తక్కువ ఉంటే cash on delivery తీసుకోవచ్చు.\nuser: సరే, cash on delivery అయితే పర్వాలేదు. మరి flex banners కూడా ఏమైనా చేస్తారా? వాటి delivery కి ఎంత time పడుతుంది?\nassistant: విజయవాడలో flex banners delivery కి design artwork approval తర్వాత 3 working days పడుతుంది."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        896,
+        897,
+        898,
+        899,
+        900,
+        901
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సాయంత్రం 6 గంటలకి call చేస్తానని note చేసుకున్నాను. మా office కి రావాల్సిన అవసరం లేదు, ఇక్కడి నుంచే process చేస్తాం.",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5188,
+            "output_tokens": 42,
+            "cached_tokens": 3232,
+            "total_tokens": 5230
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 7,
+      "caller": {
+        "utterance": "సరే, ఇక్కడి నుంచే process చేస్తారంటే బాగుంది. మరి ఈ order status లేదా details అన్నీ నాకు ramesh.audit@example.invalid కి email చేస్తారా?",
+        "intends_end": false,
+        "intent": "Ask for email confirmation of order details",
+        "elapsed_s": 0.672
+      },
+      "spoken": "క్షమించండి, నేను ఇక్కడి నుంచి email పంపలేను. మీరు అడిగిన order details అన్నీ note చేసుకున్నాను. మీకు ఇంకా ఏమైనా సమాచారం కావాలా?",
+      "elapsed_s": 3.313,
+      "memory_before": {
+        "facts": {
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "delivery_locality": "విజయవాడ"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery",
+          "callback_time": "సాయంత్రం 6 గంటలకి"
+        },
+        "important_context": "",
+        "summary": "assistant: రమణ గారు, artwork approve అయిన తర్వాత విజయవాడలో delivery కి 3 working days పడుతుంది.\nuser: సరే, 3 days అంటే బాగుంది. మరి payment ఎలా చేయాలి? online లో చేయొచ్చా?\nassistant: ఫోన్ కాల్ ద్వారా online payment లేదా credit card processing ఉండదు. one thousand rupeesపాయల పైన ఉన్న orders కు 50% advance payment చేయాలి, అంతకంటే తక్కువ ఉంటే cash on delivery తీసుకోవచ్చు.\nuser: సరే, cash on delivery అయితే పర్వాలేదు. మరి flex banners కూడా ఏమైనా చేస్తారా? వాటి delivery కి ఎంత time పడుతుంది?\nassistant: విజయవాడలో flex banners delivery కి design artwork approval తర్వాత 3 working days పడుతుంది."
+      },
+      "memory_after": {
+        "facts": {
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "delivery_locality": "విజయవాడ",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery",
+          "callback_time": "సాయంత్రం 6 గంటలకి"
+        },
+        "important_context": "",
+        "summary": "assistant: రమణ గారు, artwork approve అయిన తర్వాత విజయవాడలో delivery కి 3 working days పడుతుంది.\nuser: సరే, 3 days అంటే బాగుంది. మరి payment ఎలా చేయాలి? online లో చేయొచ్చా?\nassistant: ఫోన్ కాల్ ద్వారా online payment లేదా credit card processing ఉండదు. one thousand rupeesపాయల పైన ఉన్న orders కు 50% advance payment చేయాలి, అంతకంటే తక్కువ ఉంటే cash on delivery తీసుకోవచ్చు.\nuser: సరే, cash on delivery అయితే పర్వాలేదు. మరి flex banners కూడా ఏమైనా చేస్తారా? వాటి delivery కి ఎంత time పడుతుంది?\nassistant: విజయవాడలో flex banners delivery కి design artwork approval తర్వాత 3 working days పడుతుంది."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        903,
+        904,
+        905,
+        906,
+        907,
+        908
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "క్షమించండి, నేను ఇక్కడి నుంచి email పంపలేను. మీరు అడిగిన order details అన్నీ note చేసుకున్నాను. మీకు ఇంకా ఏమైనా సమాచారం కావాలా?",
+          "language_context": {},
+          "usage": {
+            "input_tokens": 5250,
+            "output_tokens": 32,
+            "cached_tokens": 3232,
+            "total_tokens": 5282
+          },
+          "finish_reason": "stop",
+          "retry_count": 0,
+          "requested_max_tokens": 0,
+          "effective_max_tokens": 1280,
+          "reasoning_effort": null,
+          "response_contract": "speech_text",
+          "external_actions_available": false,
+          "end_call": {
+            "should_end": false,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": "semantic_continue"
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "active",
+      "voice_phase": "listening",
+      "armed": false
+    },
+    {
+      "turn": 8,
+      "caller": {
+        "utterance": "అర్థమైంది కవిత గారు, email పంపలేరు కదా. ప్రస్తుతానికి నాకు ఇంకేమీ అవసరం లేదు, ఈ details అన్నీ note చేసుకున్నందుకు thanks. ఇకపై call చేయొద్దు.",
+        "intends_end": true,
+        "intent": "Explicitly ending the call after confirming no further help is needed",
+        "elapsed_s": 0.641
+      },
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 3.187,
+      "memory_before": {
+        "facts": {
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "delivery_locality": "విజయవాడ",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery",
+          "callback_time": "సాయంత్రం 6 గంటలకి"
+        },
+        "important_context": "",
+        "summary": "assistant: రమణ గారు, artwork approve అయిన తర్వాత విజయవాడలో delivery కి 3 working days పడుతుంది.\nuser: సరే, 3 days అంటే బాగుంది. మరి payment ఎలా చేయాలి? online లో చేయొచ్చా?\nassistant: ఫోన్ కాల్ ద్వారా online payment లేదా credit card processing ఉండదు. one thousand rupeesపాయల పైన ఉన్న orders కు 50% advance payment చేయాలి, అంతకంటే తక్కువ ఉంటే cash on delivery తీసుకోవచ్చు.\nuser: సరే, cash on delivery అయితే పర్వాలేదు. మరి flex banners కూడా ఏమైనా చేస్తారా? వాటి delivery కి ఎంత time పడుతుంది?\nassistant: విజయవాడలో flex banners delivery కి design artwork approval తర్వాత 3 working days పడుతుంది."
+      },
+      "memory_after": {
+        "facts": {
+          "product": "matte visiting cards",
+          "quantity": "200",
+          "delivery_locality": "విజయవాడ",
+          "email": "ramesh.audit@example.invalid"
+        },
+        "preferences": {
+          "payment_method": "cash on delivery",
+          "callback_time": "సాయంత్రం 6 గంటలకి"
+        },
+        "important_context": "",
+        "summary": "user: సరే, ఇక్కడి నుంచే process చేస్తారంటే బాగుంది. మరి ఈ order status లేదా details అన్నీ నాకు ramesh.audit@example.invalid కి email చేస్తారా?\nassistant: క్షమించండి, నేను ఇక్కడి నుంచి email పంపలేను. మీరు అడిగిన order details అన్నీ note చేసుకున్నాను. మీకు ఇంకా ఏమైనా సమాచారం కావాలా?\nuser: అర్థమైంది కవిత గారు, email పంపలేరు కదా. ప్రస్తుతానికి నాకు ఇంకేమీ అవసరం లేదు, ఈ details అన్నీ note చేసుకున్నందుకు thanks. ఇకపై call చేయొద్దు.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "projection_log": null,
+      "request_indexes": [
+        910,
+        911,
+        912,
+        913
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "response_contract": "speech_text",
+          "finish_reason": "stop",
+          "server_owned_close": true,
+          "end_call": {
+            "should_end": true,
+            "reason": "firm_refusal",
+            "contact_preference": "do_not_call",
+            "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "రమణ గారు, artwork approve అయిన తర్వాత విజయవాడలో delivery కి 3 working days పడుతుంది.",
+      "at": 127681.781
+    },
+    {
+      "turn": 2,
+      "text": "ఫోన్ కాల్ ద్వారా online payment లేదా credit card processing ఉండదు. one thousand rupeesపాయల పైన ఉన్న orders కు 50% advance payment చేయాలి, అంతకంటే తక్కువ ఉంటే cash on delivery తీసుకోవచ్చు.",
+      "at": 127686.218
+    },
+    {
+      "turn": 3,
+      "text": "విజయవాడలో flex banners delivery కి design artwork approval తర్వాత 3 working days పడుతుంది.",
+      "at": 127690.406
+    },
+    {
+      "turn": 4,
+      "text": "అవును రమణ గారు, మీరు two hundred matte visiting cards కావాలని, delivery విజయవాడలో అని నేను note చేసుకున్నాను. మీకు ఇంకా ఏమైనా details కావాలా?",
+      "at": 127695.484
+    },
+    {
+      "turn": 5,
+      "text": "Office hours Monday to Saturday ఉదయం nine thirty నుండి రాత్రి eight వరకు ఉంటాయి, Sunday closed. సాయంత్రం పూట call చేయవచ్చా అని అడిగారు కదా, ఆ time ని note చేసుకున్నాను. మీకు ఏ time కి call చేయమంటారు?",
+      "at": 127699.437
+    },
+    {
+      "turn": 6,
+      "text": "సాయంత్రం 6 గంటలకి call చేస్తానని note చేసుకున్నాను. మా office కి రావాల్సిన అవసరం లేదు, ఇక్కడి నుంచే process చేస్తాం.",
+      "at": 127703.859
+    },
+    {
+      "turn": 7,
+      "text": "క్షమించండి, నేను ఇక్కడి నుంచి email పంపలేను. మీరు అడిగిన order details అన్నీ note చేసుకున్నాను. మీకు ఇంకా ఏమైనా సమాచారం కావాలా?",
+      "at": 127707.859
+    },
+    {
+      "turn": 8,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 127710.578
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "రమణ గారు, artwork approve అయిన తర్వాత విజయవాడలో delivery కి 3 working days పడుతుంది.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4671,
+        "output_tokens": 30,
+        "cached_tokens": 2080,
+        "total_tokens": 4701
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "ఫోన్ కాల్ ద్వారా online payment లేదా credit card processing ఉండదు. one thousand rupeesపాయల పైన ఉన్న orders కు 50% advance payment చేయాలి, అంతకంటే తక్కువ ఉంటే cash on delivery తీసుకోవచ్చు.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4697,
+        "output_tokens": 46,
+        "cached_tokens": 3232,
+        "total_tokens": 4743
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "విజయవాడలో flex banners delivery కి design artwork approval తర్వాత 3 working days పడుతుంది.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4785,
+        "output_tokens": 59,
+        "cached_tokens": 3232,
+        "total_tokens": 4844
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "అవును రమణ గారు, మీరు two hundred matte visiting cards కావాలని, delivery విజయవాడలో అని నేను note చేసుకున్నాను. మీకు ఇంకా ఏమైనా details కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5009,
+        "output_tokens": 37,
+        "cached_tokens": 3232,
+        "total_tokens": 5046
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "action_proofs": [],
+      "order_proof": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      }
+    },
+    {
+      "done": true,
+      "text": "Office hours Monday to Saturday ఉదయం nine thirty నుండి రాత్రి eight వరకు ఉంటాయి, Sunday closed. సాయంత్రం పూట call చేయవచ్చా అని అడిగారు కదా, ఆ time ని note చేసుకున్నాను. మీకు ఏ time కి call చేయమంటారు?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5138,
+        "output_tokens": 57,
+        "cached_tokens": 3232,
+        "total_tokens": 5195
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "సాయంత్రం 6 గంటలకి call చేస్తానని note చేసుకున్నాను. మా office కి రావాల్సిన అవసరం లేదు, ఇక్కడి నుంచే process చేస్తాం.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5188,
+        "output_tokens": 42,
+        "cached_tokens": 3232,
+        "total_tokens": 5230
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "క్షమించండి, నేను ఇక్కడి నుంచి email పంపలేను. మీరు అడిగిన order details అన్నీ note చేసుకున్నాను. మీకు ఇంకా ఏమైనా సమాచారం కావాలా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 5250,
+        "output_tokens": 32,
+        "cached_tokens": 3232,
+        "total_tokens": 5282
+      },
+      "finish_reason": "stop",
+      "retry_count": 0,
+      "requested_max_tokens": 0,
+      "effective_max_tokens": 1280,
+      "reasoning_effort": null,
+      "response_contract": "speech_text",
+      "external_actions_available": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "replace_speech": true
+    },
+    {
+      "done": true,
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "response_contract": "speech_text",
+      "finish_reason": "stop",
+      "server_owned_close": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "contact_preference": "do_not_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "వీటి artwork ఎప్పుడు finalize చేయాలో చెప్పగలరా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "product",
+            "value": "matte visiting cards"
+          },
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "200"
+          },
+          {
+            "op": "set_fact",
+            "key": "delivery_locality",
+            "value": "విజయవాడ"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "నమస్తే కవిత గారు. నాకు 200 matte visiting cards కావాలి. నా పేరు రమణ, నేను విజయవాడలో ఉంటున్నాను. వీటి artwork ఎప్పుడు finalize చేయాలో చెప్పగలరా?",
+      "at": 127681.265
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "payment ఎలా చేయాలి? online లో చేయొచ్చా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, 3 days అంటే బాగుంది. మరి payment ఎలా చేయాలి? online లో చేయొచ్చా?",
+      "at": 127685.593
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "flex banners delivery కి ఎంత time పడుతుంది?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [
+          {
+            "op": "set_preference",
+            "key": "payment_method",
+            "value": "cash on delivery"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, cash on delivery అయితే పర్వాలేదు. మరి flex banners కూడా ఏమైనా చేస్తారా? వాటి delivery కి ఎంత time పడుతుంది?",
+      "at": 127689.875
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "మీరు నా పేరు, product, quantity ఏమైనా note చేసుకున్నారో లేదో ఒకసారి చెప్తారా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "read",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, flex banners కి కూడా 3 days పడుతుంది కదా. ఒక్క నిమిషం, మీరు నా పేరు, product, quantity ఏమైనా note చేసుకున్నారో లేదో ఒకసారి చెప్తారా?",
+      "at": 127694.968
+    },
+    {
+      "turn": 5,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "office hours ఎప్పుడు ఉంటాయి?",
+        "contact_intent": "self_callback",
+        "contact_evidence": "నేను సాయంత్రం పూట call చేయవచ్చా?",
+        "callback_time": "సాయంత్రం పూట",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే కవిత గారు, note చేసుకున్నందుకు thanks. office hours ఎప్పుడు ఉంటాయి? నేను సాయంత్రం పూట call చేయవచ్చా?",
+      "at": 127698.89
+    },
+    {
+      "turn": 6,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "మరి మీ office కి రావాలా లేక ఇక్కడి నుంచే అంతా process చేస్తారా?",
+        "contact_intent": "callback",
+        "contact_evidence": "సాయంత్రం 6 గంటలకి call చేస్తే బాగుంటుంది",
+        "callback_time": "సాయంత్రం 6 గంటలకి",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [
+          {
+            "op": "set_preference",
+            "key": "callback_time",
+            "value": "సాయంత్రం 6 గంటలకి"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సాయంత్రం 6 గంటలకి call చేస్తే బాగుంటుంది. మరి మీ office కి రావాలా లేక ఇక్కడి నుంచే అంతా process చేస్తారా?",
+      "at": 127703.312
+    },
+    {
+      "turn": 7,
+      "proposal": {
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "ఈ order status లేదా details అన్నీ నాకు ramesh.audit@example.invalid కి email చేస్తారా?",
+        "contact_intent": "none",
+        "contact_evidence": "",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": false,
+        "action_request": "none",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "email",
+            "value": "ramesh.audit@example.invalid"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "semantic_continue"
+      },
+      "transcript": "సరే, ఇక్కడి నుంచే process చేస్తారంటే బాగుంది. మరి ఈ order status లేదా details అన్నీ నాకు ramesh.audit@example.invalid కి email చేస్తారా?",
+      "at": 127707.25
+    },
+    {
+      "turn": 8,
+      "proposal": {
+        "decision": "close",
+        "reason": "firm_refusal",
+        "evidence": "ఇకపై call చేయొద్దు.",
+        "remaining_request": "",
+        "contact_intent": "do_not_call",
+        "contact_evidence": "ఇకపై call చేయొద్దు.",
+        "callback_time": "",
+        "contact_verified": true,
+        "close_verified": true,
+        "action_request": "none",
+        "memory_operations": [],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "contact_preference": "do_not_call",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "transcript": "అర్థమైంది కవిత గారు, email పంపలేరు కదా. ప్రస్తుతానికి నాకు ఇంకేమీ అవసరం లేదు, ఈ details అన్నీ note చేసుకున్నందుకు thanks. ఇకపై call చేయొద్దు.",
+      "at": 127710.562
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 8,
+      "at": 127710.578
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 8,
+      "at": 127711.64,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 127681.812
+    },
+    {
+      "turn_seq": 3,
+      "at": 127686.234
+    },
+    {
+      "turn_seq": 5,
+      "at": 127690.453
+    },
+    {
+      "turn_seq": 7,
+      "at": 127695.515
+    },
+    {
+      "turn_seq": 9,
+      "at": 127699.437
+    },
+    {
+      "turn_seq": 11,
+      "at": 127703.875
+    },
+    {
+      "turn_seq": 13,
+      "at": 127707.875
+    },
+    {
+      "turn_seq": 15,
+      "at": 127710.609
+    }
+  ],
+  "started_at": "2026-10-29T17:49:14.624234+00:00",
+  "errors": [],
+  "brain_checksum": "4377fd6de8acabd850cc23fbb31aa8545a4aaa4741b52def0dc4f5ac243e68ae",
+  "runtime_checksum": "da1755a8f3855edf24bba3433068099b8f7bd1d8ad3adc23a2b077c7631cc482",
+  "available_tools": [
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 127680.75,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 2,
+      "start_s": 127684.921,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 98,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 3,
+      "start_s": 127689.265,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 98,
+      "rolling_chars": 0
+    },
+    {
+      "turn": 4,
+      "start_s": 127693.765,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 145,
+      "rolling_chars": 591
+    },
+    {
+      "turn": 5,
+      "start_s": 127698.296,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 145,
+      "rolling_chars": 591
+    },
+    {
+      "turn": 6,
+      "start_s": 127702.687,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 145,
+      "rolling_chars": 591
+    },
+    {
+      "turn": 7,
+      "start_s": 127706.734,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 180,
+      "rolling_chars": 591
+    },
+    {
+      "turn": 8,
+      "start_s": 127710.546,
+      "local_facts_present": true,
+      "elapsed_s": 0.0,
+      "projection_chars": 218,
+      "rolling_chars": 591
+    }
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "not_interested",
+    "disposition_confidence": 0.98,
+    "summary_te": "",
+    "summary_en": "Raman requested 200 matte visiting cards for delivery in Vijayawada and asked when artwork should be finalized. The agent explained that delivery takes 3 working days after artwork approval. Raman asked about payment and was told that orders above ₹1,000 require 50% advance payment, while lower-value orders can use cash on delivery; Raman preferred cash on delivery. He also asked about flex banners and was told their Vijayawada delivery time is 3 working days after artwork approval. The agent confirmed the visiting-card product, quantity, and delivery location were noted. Office hours were provided as Monday–Saturday, 9:30 AM–8:00 PM, with Sunday closed. Raman requested a call at 6:00 PM, and the agent noted this, although no confirmed follow-up completion was established. The agent explained that the order can be processed remotely without an office visit. Raman requested order details by email at ramesh.audit@example.invalid, but the agent said email could not be sent. Raman ended the call by saying no further information was needed and asked not to be called again; the agent acknowledged and closed the call.",
+    "next_action": "Do not contact this number. The caller opted out.",
+    "extracted_fields": {
+      "additional_product_interest": "Flex banners",
+      "customer_name": "Raman",
+      "delivery_locality": "విజయవాడ",
+      "delivery_location": "Vijayawada",
+      "email": "ramesh.audit@example.invalid",
+      "payment_method": "Cash on delivery",
+      "phone": "+12025550123",
+      "product": "matte visiting cards",
+      "quantity": "200",
+      "requested_call_time": "6:00 PM"
+    },
+    "objections": [
+      "Email delivery of order details was not available.",
+      "Customer requested no further calls."
+    ],
+    "notes": "The customer showed purchase interest but did not explicitly confirm the order or payment. A 6:00 PM call was noted, but the customer subsequently requested not to be called again.",
+    "tags": [
+      "intent:purchase",
+      "intent:information",
+      "signal:price_sensitive",
+      "signal:do_not_call",
+      "sentiment:positive"
+    ],
+    "custom_tags": [
+      "custom:matte-visiting-cards",
+      "custom:flex-banners",
+      "custom:vijayawada"
+    ],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T17:49:54.802057Z",
+    "generation_ok": true,
+    "facts": {
+      "additional_product_interest": "Flex banners",
+      "customer_name": "Raman",
+      "delivery_locality": "విజయవాడ",
+      "delivery_location": "Vijayawada",
+      "email": "ramesh.audit@example.invalid",
+      "payment_method": "Cash on delivery",
+      "phone": "+12025550123",
+      "product": "matte visiting cards",
+      "quantity": "200",
+      "requested_call_time": "6:00 PM"
+    },
+    "disclosure_status": null,
+    "contact_preference": "do_not_call",
+    "status_tags": [
+      "contact:email_known",
+      "contact:name_known",
+      "contact:phone_known",
+      "custom:matte-visiting-cards",
+      "intent:information",
+      "intent:purchase",
+      "outcome:not_interested",
+      "sentiment:positive",
+      "signal:do_not_call",
+      "signal:objection",
+      "signal:price_sensitive"
+    ],
+    "lead": null,
+    "lead_assessment": null,
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "b0f78777-752e-4734-9efe-ed0ddab566b3",
+        "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+        "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+        "session_id": "adaptive-1644f7ba130741dcb6ca4b45938a5087",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_ce356842dc55",
+        "started_at": "2026-10-29 17:49:14.577690+00:00",
+        "ended_at": "2026-10-29 17:49:48.835801+00:00",
+        "duration_sec": 34,
+        "disposition": "not_interested",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/b0f78777-752e-4734-9efe-ed0ddab566b3/",
+        "end_reason": "firm_refusal",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "contact:email_known",
+          "contact:name_known",
+          "contact:phone_known",
+          "custom:matte-visiting-cards",
+          "intent:information",
+          "intent:purchase",
+          "outcome:not_interested",
+          "sentiment:positive",
+          "signal:do_not_call",
+          "signal:objection",
+          "signal:price_sensitive"
+        ],
+        "last_heartbeat_at": "2026-10-29 17:49:14.577690+00:00",
+        "created_at": "2026-10-29 17:49:14.577690+00:00"
+      }
+    ],
+    "callbacks": [],
+    "jobs": [],
+    "dnd": [
+      {
+        "id": "9ca2f8a2-440c-43e9-a54b-170d9eb4e054",
+        "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+        "phone_e164": "+12025550123",
+        "reason": "verbal_opt_out_live_call",
+        "added_at": "2026-10-29 17:49:54.869475+00:00",
+        "active": true,
+        "source": "live_call_opt_out",
+        "added_by_user_id": null,
+        "removed_at": null,
+        "removed_by_user_id": null,
+        "removal_reason": null,
+        "reconsent_confirmed": false
+      }
+    ],
+    "leads": [],
+    "tools": [],
+    "assessments": []
+  },
+  "metadata": {
+    "call_id": "b0f78777-752e-4734-9efe-ed0ddab566b3",
+    "tenant_id": "cebdd504-4afe-4f57-b4d2-48714e779a10",
+    "agent_id": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+    "session_id": "adaptive-1644f7ba130741dcb6ca4b45938a5087",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_ce356842dc55",
+    "started_at": "2026-10-29T17:49:14.577690+00:00",
+    "status": "active",
+    "storage_path": "data/calls/b0f78777-752e-4734-9efe-ed0ddab566b3/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550123",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 81990,
+        "output_tokens": 4296,
+        "cached_tokens": 41792
+      }
+    },
+    "callback_cancelled": true,
+    "callback_withdrawal_pending": false,
+    "callback_generation": 1,
+    "contact_preference": "do_not_call",
+    "hangup_reason": "firm_refusal",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 62,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": true,
+    "callback_close_phase": "idle",
+    "disconnected_at": "2026-10-29T17:49:48.835801+00:00",
+    "ended_at": "2026-10-29T17:49:48.835801+00:00",
+    "end_reason": "firm_refusal",
+    "duration_sec": 34.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 34.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.007083333333333334,
+      "telephony_inr": 0.6748291666666667,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.007083333333333334,
+      "telnyx_inr": 0.6748291666666667,
+      "telnyx_voice_api_usd": 0.0011333333333333334,
+      "telnyx_sip_usd": 0.002833333333333333,
+      "telnyx_media_stream_usd": 0.0019833333333333335,
+      "telnyx_call_recording_usd": 0.0011333333333333334,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.27,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-29",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.0125,
+      "telephony_inr_per_min": 1.1908750000000001,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.0125,
+      "telnyx_inr_per_min": 1.1908750000000001,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_0a07316420ede32d016ae3873df1dc87d1a6a6998678131952": {
+          "input_tokens": 1790,
+          "output_tokens": 466,
+          "cached_tokens": 0,
+          "cache_write_tokens": 1787,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.00100655
+        }
+      },
+      "post_call_analysis_usd": 0.00100655,
+      "post_call_analysis_inr": 0.09589401849999998
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నమస్తే కవిత గారు. నాకు 200 matte visiting cards కావాలి. నా పేరు రమణ, నేను విజయవాడలో ఉంటున్నాను. వీటి artwork ఎప్పుడు finalize చేయాలో చెప్పగలరా?",
+      "ts": "2026-10-29T17:49:15.565292Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "రమణ గారు, artwork approve అయిన తర్వాత విజయవాడలో delivery కి 3 working days పడుతుంది.",
+      "ts": "2026-10-29T17:49:18.979016Z"
+    },
+    {
+      "seq": 3,
+      "role": "user",
+      "text": "సరే, 3 days అంటే బాగుంది. మరి payment ఎలా చేయాలి? online లో చేయొచ్చా?",
+      "ts": "2026-10-29T17:49:19.609048Z",
+      "partial": false
+    },
+    {
+      "seq": 4,
+      "role": "assistant",
+      "text": "ఫోన్ కాల్ ద్వారా online payment లేదా credit card processing ఉండదు. one thousand rupeesపాయల పైన ఉన్న orders కు 50% advance payment చేయాలి, అంతకంటే తక్కువ ఉంటే cash on delivery తీసుకోవచ్చు.",
+      "ts": "2026-10-29T17:49:23.416312Z"
+    },
+    {
+      "seq": 5,
+      "role": "user",
+      "text": "సరే, cash on delivery అయితే పర్వాలేదు. మరి flex banners కూడా ఏమైనా చేస్తారా? వాటి delivery కి ఎంత time పడుతుంది?",
+      "ts": "2026-10-29T17:49:23.995438Z",
+      "partial": false
+    },
+    {
+      "seq": 6,
+      "role": "assistant",
+      "text": "విజయవాడలో flex banners delivery కి design artwork approval తర్వాత 3 working days పడుతుంది.",
+      "ts": "2026-10-29T17:49:27.605260Z"
+    },
+    {
+      "seq": 7,
+      "role": "user",
+      "text": "సరే, flex banners కి కూడా 3 days పడుతుంది కదా. ఒక్క నిమిషం, మీరు నా పేరు, product, quantity ఏమైనా note చేసుకున్నారో లేదో ఒకసారి చెప్తారా?",
+      "ts": "2026-10-29T17:49:28.303687Z",
+      "partial": false
+    },
+    {
+      "seq": 8,
+      "role": "assistant",
+      "text": "అవును రమణ గారు, మీరు two hundred matte visiting cards కావాలని, delivery విజయవాడలో అని నేను note చేసుకున్నాను. మీకు ఇంకా ఏమైనా details కావాలా?",
+      "ts": "2026-10-29T17:49:32.677760Z"
+    },
+    {
+      "seq": 9,
+      "role": "user",
+      "text": "సరే కవిత గారు, note చేసుకున్నందుకు thanks. office hours ఎప్పుడు ఉంటాయి? నేను సాయంత్రం పూట call చేయవచ్చా?",
+      "ts": "2026-10-29T17:49:33.341825Z",
+      "partial": false
+    },
+    {
+      "seq": 10,
+      "role": "assistant",
+      "text": "Office hours Monday to Saturday ఉదయం nine thirty నుండి రాత్రి eight వరకు ఉంటాయి, Sunday closed. సాయంత్రం పూట call చేయవచ్చా అని అడిగారు కదా, ఆ time ని note చేసుకున్నాను. మీకు ఏ time కి call చేయమంటారు?",
+      "ts": "2026-10-29T17:49:36.633097Z"
+    },
+    {
+      "seq": 11,
+      "role": "user",
+      "text": "సాయంత్రం 6 గంటలకి call చేస్తే బాగుంటుంది. మరి మీ office కి రావాలా లేక ఇక్కడి నుంచే అంతా process చేస్తారా?",
+      "ts": "2026-10-29T17:49:37.303978Z",
+      "partial": false
+    },
+    {
+      "seq": 12,
+      "role": "assistant",
+      "text": "సాయంత్రం 6 గంటలకి call చేస్తానని note చేసుకున్నాను. మా office కి రావాల్సిన అవసరం లేదు, ఇక్కడి నుంచే process చేస్తాం.",
+      "ts": "2026-10-29T17:49:41.054228Z"
+    },
+    {
+      "seq": 13,
+      "role": "user",
+      "text": "సరే, ఇక్కడి నుంచే process చేస్తారంటే బాగుంది. మరి ఈ order status లేదా details అన్నీ నాకు ramesh.audit@example.invalid కి email చేస్తారా?",
+      "ts": "2026-10-29T17:49:41.751648Z",
+      "partial": false
+    },
+    {
+      "seq": 14,
+      "role": "assistant",
+      "text": "క్షమించండి, నేను ఇక్కడి నుంచి email పంపలేను. మీరు అడిగిన order details అన్నీ note చేసుకున్నాను. మీకు ఇంకా ఏమైనా సమాచారం కావాలా?",
+      "ts": "2026-10-29T17:49:45.055065Z"
+    },
+    {
+      "seq": 15,
+      "role": "user",
+      "text": "అర్థమైంది కవిత గారు, email పంపలేరు కదా. ప్రస్తుతానికి నాకు ఇంకేమీ అవసరం లేదు, ఈ details అన్నీ note చేసుకున్నందుకు thanks. ఇకపై call చేయొద్దు.",
+      "ts": "2026-10-29T17:49:45.719152Z",
+      "partial": false
+    },
+    {
+      "seq": 16,
+      "role": "assistant",
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T17:49:47.772668Z"
+    }
+  ],
+  "wall_elapsed_s": 40.406,
+  "simulated_exchange_timeline_s": 160,
+  "request_count": 54
+}

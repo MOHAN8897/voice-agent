@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "How much do you charge for split AC servicing?", "ts": "2026-10-29T19:28:59.213194Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Split AC servicing costs 599 rupees. Which area are you located in?", "ts": "2026-10-29T19:28:59.731162Z", "brain_latency_ms": 519}
+{"seq": 3, "role": "user", "text": "Actually, it is a window AC, not a split AC. How much would the service cost?", "ts": "2026-10-29T19:28:59.748151Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Window AC servicing is 499 rupees. Which locality are you in?", "ts": "2026-10-29T19:29:00.264385Z", "brain_latency_ms": 520}

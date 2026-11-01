@@ -1,0 +1,42 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller identified himself as Kiran and said the call had reached the wrong number. He clarified that he had no training inquiry and asked the caller to stop the call. The agent acknowledged this, thanked him, and ended the call. No follow-up was agreed.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "caller_name": "Kiran",
+    "phone": "+12025550142"
+  },
+  "objections": [],
+  "notes": "Caller denied having a training inquiry and requested no further contact during the call.",
+  "tags": [
+    "signal:do_not_call",
+    "sentiment:negative",
+    "intent:information"
+  ],
+  "custom_tags": [],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:49:48.790582Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_name": "Kiran",
+    "phone": "+12025550142"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:negative",
+    "signal:do_not_call"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

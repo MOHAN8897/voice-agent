@@ -1,0 +1,52 @@
+{
+  "call_id": "6a56a7c0-1f37-45ea-a8ee-1a406d4dbc43",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller contacted the service to schedule a dental appointment due to a toothache, requesting a time slot for tomorrow at 11 AM. The caller identified himself as Kiran. The agent acknowledged the request, noted the preferred time, and informed him of a ₹300 consultation fee while inquiring if he also needed scaling or cleaning. When the caller asked if the appointment was confirmed, the agent clarified that it was not yet finalized and that the front desk would need to verify and confirm it. The caller accepted this and ended the call after thanking the agent.",
+  "next_action": "The front desk must verify and confirm the appointment for tomorrow at 11 AM for Kiran.",
+  "extracted_fields": {
+    "caller_name": "కిరణ్",
+    "name": "Kiran",
+    "phone": "+919876500514",
+    "requested_time": "రేపు ఉదయం 11 కి",
+    "slot": "Tomorrow at 11 AM"
+  },
+  "facts": {
+    "caller_name": "కిరణ్",
+    "name": "Kiran",
+    "phone": "+919876500514",
+    "requested_time": "రేపు ఉదయం 11 కి",
+    "slot": "Tomorrow at 11 AM"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:dental-appointment",
+    "custom:toothache",
+    "followup:callback",
+    "followup:schedule_pending",
+    "followup:site_visit",
+    "intent:booking",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:booking",
+    "followup:schedule_pending",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:dental-appointment",
+    "custom:toothache"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:52:07.789130Z",
+  "generation_ok": true
+}

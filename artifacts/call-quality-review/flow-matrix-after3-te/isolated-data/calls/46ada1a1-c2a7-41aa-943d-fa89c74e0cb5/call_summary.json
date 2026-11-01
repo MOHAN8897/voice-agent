@@ -1,0 +1,32 @@
+{
+  "call_id": "46ada1a1-c2a7-41aa-943d-fa89c74e0cb5",
+  "language_callback": null,
+  "disposition": "no_outcome",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call but did not clearly state their intent or share any details. The agent responded by introducing themselves and asking how they could assist. The caller did not provide a clear response, resulting in an inconclusive conversation with no agreed next steps.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500514"
+  },
+  "facts": {
+    "phone": "+919876500514"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:no_outcome",
+    "quality:inconclusive",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "sentiment:neutral",
+    "intent:information"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:20:10.927007Z",
+  "generation_ok": true
+}

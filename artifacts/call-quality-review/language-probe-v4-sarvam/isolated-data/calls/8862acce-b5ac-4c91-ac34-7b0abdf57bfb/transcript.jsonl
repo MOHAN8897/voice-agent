@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "എന്റെ ഫ്രിഡ്ജിന് പുതിയ കംപ്രസറിന്റെ exact പ്രൈസ് എത്ര", "ts": "2026-10-29T19:38:33.777248Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ആ exact പ്രൈസ് എനിക്ക് ഇപ്പോൾ പറയാൻ കഴിയില്ല. Technician വന്ന് inspection കഴിഞ്ഞതിന് ശേഷം മാത്രമേ spare parts-ന്റെ actual MRP പറയാൻ പറ്റൂ. Inspection charge ₹250 ആണ്, പക്ഷെ നിങ്ങൾ repair ചെയ്യാൻ തീരുമാനിച്ചാൽ ആ charge ഒഴിവാക്കി തരുന്നതാണ്.", "ts": "2026-10-29T19:38:34.648685Z", "brain_latency_ms": 870}

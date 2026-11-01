@@ -1,0 +1,101 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్ కు కాల్ చేసి అలోవెరా జ్యూస్ ధర, పరిమాణం మరియు ఇతర ఉత్పత్తుల గురించి సమాచారం పంచుకున్నారు. కస్టమర్ ధరలను మరియు హెయిర్ ఆయిల్ లోని పదార్థాలను అడిగారు, అలాగే ఒక జ్యూస్ మరియు ఒక హెయిర్ ఆయిల్ కలిపితే మొత్తం ₹898 అవుతుందని తెలుసుకున్నారు. కస్టమర్ ఈ వివరాలను పరిశీలించి అవసరమైతే తిరిగి కాల్ చేస్తానని చెప్పారు, దాంతో ప్రతినిధి అంగీకరించారు మరియు సంభాషణ ముగిసింది.",
+  "summary_en": "The business's agent called the customer to share product details, beginning with the price and size of the aloe vera juice. The agent provided the prices for additional items, including herbal hair oil, face cream, and ashwagandha capsules, and calculated a combined total of ₹898 for one unit of the juice and one unit of the hair oil. The customer asked a few clarifying questions and then stated that they would think about the purchase before calling back if needed. The agent agreed to the customer's plan to follow up later, and the call ended.",
+  "next_action": "callback_required",
+  "extracted_fields": {
+    "phone": "+919700000007",
+    "price_product_1": "₹399",
+    "price_product_2": "₹499",
+    "product_1": "Aloe Vera Juice",
+    "product_2": "Herbal Hair Oil",
+    "size_product_1": "500 ml",
+    "size_product_2": "200 ml",
+    "total_price": "₹898"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:aloe-vera-juice",
+    "custom:herbal-hair-oil"
+  ],
+  "unanswered_questions": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T13:19:18.193889Z",
+  "generation_ok": true,
+  "summary_language": "te-IN",
+  "facts": {
+    "phone": "+919700000007",
+    "price_product_1": "₹399",
+    "price_product_2": "₹499",
+    "product_1": "Aloe Vera Juice",
+    "product_2": "Herbal Hair Oil",
+    "size_product_1": "500 ml",
+    "size_product_2": "200 ml",
+    "total_price": "₹898"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:aloe-vera-juice",
+    "custom:herbal-hair-oil",
+    "followup:callback",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "5484028e-730f-4be4-ac9c-5b6a4a75c272",
+    "agentId": "f6d309d7-5f8f-5de2-ac1e-f7ebefcf75f9",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 50,
+    "band": "warm",
+    "disposition": "interested",
+    "confidence": 0.85,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

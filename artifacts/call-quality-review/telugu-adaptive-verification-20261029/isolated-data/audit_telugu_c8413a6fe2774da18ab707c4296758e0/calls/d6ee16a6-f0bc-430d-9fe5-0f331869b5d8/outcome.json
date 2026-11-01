@@ -1,0 +1,102 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "The caller asked about a part-time Python course, including the fee and placement support. The agent stated that the fee is ₹8,999 and that placement assistance includes resume building, interview preparation, and job referrals, but does not include a job guarantee or salary promise. The caller then asked about Hyderabad traffic, which the agent could not answer, and the conversation returned to the course. The agent explained that weekday evening classes run Monday through Friday from 8:00 PM to 9:00 PM, while weekend classes run Saturday and Sunday from 10:00 AM to 1:00 PM; the caller preferred the evening batch. The caller asked whether the fee could increase and requested clarification about placement terms. The agent reiterated that the fee would remain ₹8,999, there are no hidden charges, and only placement assistance—not guaranteed employment—is provided. The caller said they were not ready to enroll, had no further doubts, and would think about the training later. No demo session or admission counselling was registered, and the call ended politely.",
+  "next_action": null,
+  "extracted_fields": {
+    "course": "Part-time Python course",
+    "fee": "₹8,999",
+    "hidden_charges": "None stated",
+    "job_guarantee": "Not provided",
+    "phone": "+12025550123",
+    "placement_support": "Resume building, interview preparation, and job referrals",
+    "preferred_batch": "Weekday evening, Monday-Friday, 8:00 PM-9:00 PM"
+  },
+  "objections": [
+    "No job guarantee or salary promise",
+    "Not ready to enroll yet"
+  ],
+  "notes": "The caller is considering the course but did not register for a demo or counselling session.",
+  "tags": [
+    "intent:information",
+    "intent:pricing",
+    "signal:objection",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-course",
+    "custom:evening-batch",
+    "custom:placement-assistance"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:44:41.765903Z",
+  "generation_ok": true,
+  "facts": {
+    "course": "Part-time Python course",
+    "fee": "₹8,999",
+    "hidden_charges": "None stated",
+    "job_guarantee": "Not provided",
+    "phone": "+12025550123",
+    "placement_support": "Resume building, interview preparation, and job referrals",
+    "preferred_batch": "Weekday evening, Monday-Friday, 8:00 PM-9:00 PM"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:evening-batch",
+    "custom:placement-assistance",
+    "custom:python-course",
+    "intent:information",
+    "intent:pricing",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "edc15cd0-cbe3-499a-b177-73fb36d4ba4d",
+    "agentId": "4c5270a8-990a-5800-868d-9d685eca9a09",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 50,
+    "band": "warm",
+    "disposition": "interested",
+    "confidence": 0.96,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

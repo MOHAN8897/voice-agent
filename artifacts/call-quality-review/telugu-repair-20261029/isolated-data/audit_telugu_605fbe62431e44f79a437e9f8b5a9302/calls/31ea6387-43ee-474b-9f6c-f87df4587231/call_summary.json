@@ -1,0 +1,48 @@
+{
+  "call_id": "31ea6387-43ee-474b-9f6c-f87df4587231",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller requested that this number never be called again, but asked for the price of 100 normal paper visiting cards. The agent quoted ₹200 and stated that the minimum order is 100 cards, and acknowledged the do-not-call request. The caller said the price was understood, needed nothing else, and ended the call. No order was placed.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "minimum_order": "100 cards",
+    "phone": "+12025550103",
+    "price": "₹200",
+    "product": "Normal paper visiting cards",
+    "quantity": "100 cards"
+  },
+  "facts": {
+    "minimum_order": "100 cards",
+    "phone": "+12025550103",
+    "price": "₹200",
+    "product": "Normal paper visiting cards",
+    "quantity": "100 cards"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:100-card-order",
+    "custom:paper-cards",
+    "custom:visiting-cards",
+    "intent:pricing",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call"
+  ],
+  "tags": [
+    "intent:pricing",
+    "signal:do_not_call",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:paper-cards",
+    "custom:100-card-order"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T16:37:08.930606Z",
+  "generation_ok": true
+}

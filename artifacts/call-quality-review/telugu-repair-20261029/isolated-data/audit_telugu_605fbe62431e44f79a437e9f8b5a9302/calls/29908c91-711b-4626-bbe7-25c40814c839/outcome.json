@@ -1,0 +1,84 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.94,
+  "summary_te": "",
+  "summary_en": "The caller said they are currently looking for Python training but do not need the service at this time. They asked the agent to note their enquiry and then ended the call. The agent acknowledged and recorded the Python training enquiry. No follow-up timing or callback was agreed, and the call ended politely with thanks and greetings.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+12025550111",
+    "product": "Python training"
+  },
+  "objections": [
+    "Not needed at present"
+  ],
+  "notes": "Caller ended the call after requesting that the enquiry be noted.",
+  "tags": [
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-training"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:40:26.371509Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+12025550111",
+    "product": "Python training"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:python-training",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "358de9e4-a069-4f93-8773-0f92bb3d580c",
+    "agentId": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.94,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

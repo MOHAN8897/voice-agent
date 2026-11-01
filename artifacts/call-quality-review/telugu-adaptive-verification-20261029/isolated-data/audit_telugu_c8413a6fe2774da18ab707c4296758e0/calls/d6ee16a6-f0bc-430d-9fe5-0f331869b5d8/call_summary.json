@@ -1,0 +1,57 @@
+{
+  "call_id": "d6ee16a6-f0bc-430d-9fe5-0f331869b5d8",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "The caller asked about a part-time Python course, including the fee and placement support. The agent stated that the fee is ₹8,999 and that placement assistance includes resume building, interview preparation, and job referrals, but does not include a job guarantee or salary promise. The caller then asked about Hyderabad traffic, which the agent could not answer, and the conversation returned to the course. The agent explained that weekday evening classes run Monday through Friday from 8:00 PM to 9:00 PM, while weekend classes run Saturday and Sunday from 10:00 AM to 1:00 PM; the caller preferred the evening batch. The caller asked whether the fee could increase and requested clarification about placement terms. The agent reiterated that the fee would remain ₹8,999, there are no hidden charges, and only placement assistance—not guaranteed employment—is provided. The caller said they were not ready to enroll, had no further doubts, and would think about the training later. No demo session or admission counselling was registered, and the call ended politely.",
+  "next_action": null,
+  "extracted_fields": {
+    "course": "Part-time Python course",
+    "fee": "₹8,999",
+    "hidden_charges": "None stated",
+    "job_guarantee": "Not provided",
+    "phone": "+12025550123",
+    "placement_support": "Resume building, interview preparation, and job referrals",
+    "preferred_batch": "Weekday evening, Monday-Friday, 8:00 PM-9:00 PM"
+  },
+  "facts": {
+    "course": "Part-time Python course",
+    "fee": "₹8,999",
+    "hidden_charges": "None stated",
+    "job_guarantee": "Not provided",
+    "phone": "+12025550123",
+    "placement_support": "Resume building, interview preparation, and job referrals",
+    "preferred_batch": "Weekday evening, Monday-Friday, 8:00 PM-9:00 PM"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:evening-batch",
+    "custom:placement-assistance",
+    "custom:python-course",
+    "intent:information",
+    "intent:pricing",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:pricing",
+    "signal:objection",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-course",
+    "custom:evening-batch",
+    "custom:placement-assistance"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "No job guarantee or salary promise",
+    "Not ready to enroll yet"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T15:44:41.765903Z",
+  "generation_ok": true
+}

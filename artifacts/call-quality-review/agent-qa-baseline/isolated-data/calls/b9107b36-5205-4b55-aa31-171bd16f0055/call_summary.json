@@ -1,0 +1,44 @@
+{
+  "call_id": "b9107b36-5205-4b55-aa31-171bd16f0055",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "व्यवसायी ने ग्राहक को फोन किया। ग्राहक ने हेयर ऑयल के बारे में पूछा, लेकिन एजेंट डिलीवरी और बालों के झड़ने के बारे में जानकारी नहीं दे सका। अंत में ग्राहक ने आगे से संपर्क न करने का अनुरोध किया, और एजेंट ने कॉल समाप्त कर दिया।",
+  "summary_language": "hi-IN",
+  "summary_en": "The agent called the customer to present four products, and the customer expressed interest in the Herbal Hair Oil. The agent could not confirm free delivery or provide medical advice regarding hair fall. The customer then requested to be removed from the calling list due to receiving frequent calls. The agent agreed not to call the number again, and the call ended politely.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+919700000009",
+    "product_of_interest": "Herbal Hair Oil"
+  },
+  "facts": {
+    "phone": "+919700000009",
+    "product_of_interest": "Herbal Hair Oil"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "tags": [
+    "signal:do_not_call",
+    "sentiment:neutral",
+    "intent:information",
+    "followup:callback"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [
+    "Receiving too many calls"
+  ],
+  "unanswered_questions": [
+    "Is the delivery free?",
+    "Does this hair oil really reduce hair fall?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T13:22:58.069580Z",
+  "generation_ok": true
+}

@@ -1,0 +1,52 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The agent called the customer to introduce NatureVeda Herbals and share pricing for Hair Oil, Aloe Vera Juice, Face Cream, and Ashwagandha Capsules. The customer asked about reducing hair fall and suitability for sensitive skin, and the agent explained the ingredients while noting that sensitive skin compatibility was unavailable. After receiving this information, the customer requested to be removed from the database to stop future sales calls. The agent agreed to stop calling, and the conversation ended.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+919700000017",
+    "price_face_cream": "599 rupees for 50 g",
+    "price_hair_oil": "499 rupees for 200 ml",
+    "product_mentioned": "Hair Oil, Aloe Vera Juice, Face Cream, Ashwagandha Capsules"
+  },
+  "objections": [
+    "Customer stated they receive too many sales calls and requested to be removed from the database."
+  ],
+  "notes": "",
+  "tags": [
+    "sentiment:neutral",
+    "signal:do_not_call"
+  ],
+  "custom_tags": [],
+  "unanswered_questions": [
+    "Is the Hair Oil good for reducing hair fall?",
+    "Is the Face Cream suitable for sensitive skin?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T13:56:30.438898Z",
+  "generation_ok": true,
+  "summary_language": "en-IN",
+  "facts": {
+    "phone": "+919700000017",
+    "price_face_cream": "599 rupees for 50 g",
+    "price_hair_oil": "499 rupees for 200 ml",
+    "product_mentioned": "Hair Oil, Aloe Vera Juice, Face Cream, Ashwagandha Capsules"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:phone_known",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

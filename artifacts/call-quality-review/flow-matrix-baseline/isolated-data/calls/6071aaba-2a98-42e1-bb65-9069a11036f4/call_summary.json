@@ -1,0 +1,46 @@
+{
+  "call_id": "6071aaba-2a98-42e1-bb65-9069a11036f4",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the consultation fee and the clinic's operating hours. The agent responded by stating that the consultation fee is 300 rupees and that the clinic is open from Monday to Saturday, between 10 AM and 8 PM. The caller did not raise any objections, and no further steps or agreements were made before the call concluded.",
+  "next_action": null,
+  "extracted_fields": {
+    "budget": "300 rupees",
+    "phone": "+919876500534",
+    "slot": "Monday to Saturday, 10 AM to 8 PM"
+  },
+  "facts": {
+    "budget": "300 rupees",
+    "phone": "+919876500534",
+    "slot": "Monday to Saturday, 10 AM to 8 PM"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:clinic-hours",
+    "custom:consultation-fee",
+    "followup:send_info",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "signal:price_sensitive",
+    "action:required",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:consultation-fee",
+    "custom:clinic-hours"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:43:23.901655Z",
+  "generation_ok": true
+}

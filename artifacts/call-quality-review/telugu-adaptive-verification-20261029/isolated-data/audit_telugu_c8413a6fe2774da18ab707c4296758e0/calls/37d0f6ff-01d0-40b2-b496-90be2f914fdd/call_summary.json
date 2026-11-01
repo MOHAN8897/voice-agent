@@ -1,0 +1,40 @@
+{
+  "call_id": "37d0f6ff-01d0-40b2-b496-90be2f914fdd",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, said they were unable to talk at the moment and explicitly requested a call back after approximately six hours at the same number. The agent acknowledged and recorded the caller's details and callback request, then ended the call politely. No product or service details were discussed.",
+  "next_action": "Call Kiran back at the same number in approximately six hours.",
+  "extracted_fields": {
+    "callback_number": "Same number",
+    "callback_time": "Approximately six hours later",
+    "caller_name": "Kiran",
+    "phone": "+12025550116"
+  },
+  "facts": {
+    "callback_number": "Same number",
+    "callback_time": "Approximately six hours later",
+    "caller_name": "Kiran",
+    "phone": "+12025550116"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "followup:callback",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "followup:callback",
+    "action:required",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T15:43:02.304482Z",
+  "generation_ok": true
+}

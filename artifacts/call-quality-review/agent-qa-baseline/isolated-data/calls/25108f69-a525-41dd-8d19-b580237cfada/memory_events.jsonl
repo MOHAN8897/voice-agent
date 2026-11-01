@@ -1,0 +1,6 @@
+{"turn_seq": 1, "ts": "2026-10-31T13:15:34.614180Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T13:15:58.826268Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 6, "ts": "2026-10-31T13:16:27.779604Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 8, "ts": "2026-10-31T13:16:40.749832Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 10, "ts": "2026-10-31T13:16:53.216812Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 10, "ts": "2026-10-31T13:16:53.228570Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: అవును, డాక్టర్ తో మాట్లాడాక నేను ఒకసారి ఆలోచించి చెప్తాను అండి.\nuser: సరే అండీ, నేను డాక్టర్ తో మాట్లాడి తర్వాత మిమ్మల్ని కాంటాక్ట్ అవుతాను.\nassistant: మీరు డాక్టర్ తో మాట్లాడాక మమ్మల్ని సంప్రదించండి.\nuser: సరే అండీ, నేను డాక్టర్ తో మాట్లాడి ప్లాన్ చేస్తాను. ఇప్పుడైతే ఆర్డర్ చేయట్లేదు, తర్వాత కాల్ చేస్తాను.\nassistant: మీరు డాక్టర్ తో మాట్లాడిన తర్వాత ఎప్పుడు కావాలంటే అప్పుడు మమ్మల్ని సంప్రదించవచ్చు. మేము ఇక్కడే ఉంటాము.\nuser: సరే అండి, మాట్లాడాక చెప్తాను, బాయ్.\nassistant: పర్లేదు."}], "applied": true, "validation_errors": []}

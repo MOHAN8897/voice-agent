@@ -1,0 +1,7 @@
+{"turn_seq": 1, "ts": "2026-10-31T16:25:23.038936Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T16:25:43.821085Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T16:25:57.568348Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T16:25:57.579373Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: இந்த products எல்லாம் எங்க manufacture பண்றீங்க? இதோட ingredients என்னென்னன்னு தெரிஞ்சுக்கலாமா?\nassistant: மன்னிக்கவும், அந்த விவரம் எனக்குத் தெரியலைங்க. எங்க team அதை confirm பண்ணி சொல்லுவாங்க.\nuser: சரி, team-கிட்ட கேட்டு சொல்றதா? அப்போ இந்த products எல்லாம் எங்க manufacture பண்றீங்கன்னு கொஞ்சம் சொல்ல முடியுமா?\nassistant: உங்களுக்கு எந்த தயாரிப்பு வேணும்னு மட்டும் சொல்லுங்க."}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T16:26:07.947035Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T16:26:26.158072Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-31T16:26:42.245902Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

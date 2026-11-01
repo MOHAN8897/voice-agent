@@ -1,0 +1,16 @@
+{"seq": 1, "role": "user", "text": "నమస్కారం అండి, అవును మాట్లాడొచ్చు. మీ దగ్గర ఉన్న aloe vera juice price ఎంత, బాటిల్ సైజ్ ఎంత మరియు అది ఎలా తీసుకోవాలి?", "ts": "2026-10-31T13:17:19.092493Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "మా నేచర్‌వేద అలోవెరా జ్యూస్ ధర ₹399, బాటిల్ సైజ్ 500 ml ఉంటుంది. అది ఎలా తీసుకోవాలి అనే విషయం ప్రస్తుతం నాకు తెలియదు.", "ts": "2026-10-31T13:17:21.067969Z"}
+{"seq": 3, "role": "user", "text": "సరేండి, పర్వాలేదు.", "ts": "2026-10-31T13:17:31.990992Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "సరే.", "ts": "2026-10-31T13:17:33.844281Z"}
+{"seq": 5, "role": "user", "text": "సరే అండి, ఇంకేం ఉత్పత్తులు ఉన్నాయి మీ దగ్గర?", "ts": "2026-10-31T13:17:39.154065Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "మా దగ్గర ఇంకా మూడు ఉత్పత్తులు ఉన్నాయి. హెర్బల్ హెయిర్ ఆయిల్ 499 రూపాయలు, ఫేస్ క్రీమ్ 599 రూపాయలు, మరియు అశ్వగంధ క్యాప్సూల్స్ 699 రూపాయలు. వీటి గురించి వివరాలు చెప్పమంటారా?", "ts": "2026-10-31T13:17:41.232972Z"}
+{"seq": 7, "role": "user", "text": "Actually, I would prefer to continue in Indian English now.", "ts": "2026-10-31T13:17:58.845348Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Sure, we can continue in Indian English. I was just sharing that we have Herbal Hair Oil at ₹499 for 200 ml, Face Cream at ₹599 for 50 g, and Ashwagandha Capsules at ₹699 for 60 capsules. Would you like to know more about any of these?", "ts": "2026-10-31T13:18:00.444693Z"}
+{"seq": 9, "role": "user", "text": "Could you please repeat the juice price that you told me earlier?", "ts": "2026-10-31T13:18:21.302866Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "The NatureVeda Aloe Vera Juice is ₹399 for 500 ml.", "ts": "2026-10-31T13:18:23.089262Z"}
+{"seq": 11, "role": "user", "text": "Could you tell me what ingredients are in the hair oil?", "ts": "2026-10-31T13:18:32.913236Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "The NatureVeda Herbal Hair Oil contains Amla, Bhringraj, Hibiscus, and Coconut Oil. It is priced at ₹499 for 200 ml and is meant for routine hair and scalp care. Would you like to know more about it?", "ts": "2026-10-31T13:18:34.559265Z"}
+{"seq": 13, "role": "user", "text": "How much will the total be for one juice and one hair oil?", "ts": "2026-10-31T13:18:55.388051Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "One Aloe Vera Juice and one Herbal Hair Oil will be ₹898 in total.", "ts": "2026-10-31T13:18:57.471765Z"}
+{"seq": 15, "role": "user", "text": "Okay, thank you for letting me know. I will think about it and call back if needed.", "ts": "2026-10-31T13:19:11.281617Z", "partial": false}
+{"seq": 16, "role": "assistant", "text": "Understood. Please call back whenever you decide.", "ts": "2026-10-31T13:19:12.984163Z"}

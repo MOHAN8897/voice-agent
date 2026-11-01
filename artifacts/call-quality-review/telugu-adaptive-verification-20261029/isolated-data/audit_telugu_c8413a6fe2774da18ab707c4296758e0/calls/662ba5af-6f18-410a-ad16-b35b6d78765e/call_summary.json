@@ -1,0 +1,76 @@
+{
+  "call_id": "662ba5af-6f18-410a-ad16-b35b6d78765e",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "Kiran enquired about part-time Python, SQL, and PowerBI courses, asking about duration, fees, evening or weekend batches, eligibility, instalments, and placement support. The agent provided details for the Python with Data Analytics course: 8 weeks, ₹8,999, a weekday 8–9 PM batch, and a weekend Saturday/Sunday 10 AM–1 PM batch. The agent clarified that there are no instalment discounts and the full fee must be paid upfront. Placement assistance includes resume building, interview preparation, and job referrals, but it is not a job guarantee. Kiran requested that the enquiry be saved and asked for a demo or counselling session, preferring the weekend batch and proposing October 30 from 6–7 PM. The agent gave inconsistent statements about whether the enquiry was saved, later confirmed that it was saved, but did not provide an exact demo time or confirm that the requested slot was scheduled. Eligibility was eventually explained as any graduate or final-year college student with basic computer knowledge. Kiran ended the call after stating that the questions were clear and thanking the agent; the agent said the details and a request to call again were recorded, but no confirmed demo appointment was established.",
+  "next_action": "Confirm whether the enquiry was recorded and whether the demo can be scheduled for October 30 from 6–7 PM; provide the exact demo time and follow up with Kiran.",
+  "extracted_fields": {
+    "caller_name": "Kiran",
+    "course_duration": "8 weeks",
+    "course_fee": "₹8,999",
+    "course_interest": "Python with Data Analytics; also initially asked about SQL and PowerBI",
+    "eligibility": "Any graduate or final-year college student with basic computer knowledge",
+    "instalment_option": "No instalment discounts; full fee payable upfront",
+    "phone": "+12025550115",
+    "placement_support": "100% placement assistance including resume building, interview preparation, and job referrals; no job guarantee",
+    "preferred_batch": "Weekend batch",
+    "product": "Python course",
+    "requested_demo_date": "October 30",
+    "requested_demo_time": "6:00 PM–7:00 PM",
+    "requested_time": "evening 6 to 7 PM"
+  },
+  "facts": {
+    "caller_name": "Kiran",
+    "course_duration": "8 weeks",
+    "course_fee": "₹8,999",
+    "course_interest": "Python with Data Analytics; also initially asked about SQL and PowerBI",
+    "eligibility": "Any graduate or final-year college student with basic computer knowledge",
+    "instalment_option": "No instalment discounts; full fee payable upfront",
+    "phone": "+12025550115",
+    "placement_support": "100% placement assistance including resume building, interview preparation, and job referrals; no job guarantee",
+    "preferred_batch": "Weekend batch",
+    "product": "Python course",
+    "requested_demo_date": "October 30",
+    "requested_demo_time": "6:00 PM–7:00 PM",
+    "requested_time": "evening 6 to 7 PM"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:python-course",
+    "followup:callback",
+    "followup:schedule_pending",
+    "intent:demo",
+    "intent:information",
+    "intent:pricing",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:demo",
+    "intent:pricing",
+    "followup:schedule_pending",
+    "signal:objection",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-course",
+    "custom:weekend-batch",
+    "custom:demo-scheduling"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "No instalment option or discount",
+    "Placement assistance is not a job guarantee",
+    "Inconsistent confirmation of enquiry status",
+    "Exact demo time was not provided and the requested slot was not confirmed"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T15:42:55.561096Z",
+  "generation_ok": true
+}

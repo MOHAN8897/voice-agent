@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "The milk packet in my order came damaged. When will I get my refund?", "ts": "2026-10-30T10:35:32.186275Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Refunds for damaged items are processed within 5 working days after you report the damage. Would you like me to note down your order ID and name for the support team to check your order status?", "ts": "2026-10-30T10:35:34.787377Z"}
+{"seq": 3, "role": "user", "text": "Okay, that's all.", "ts": "2026-10-30T10:35:34.787377Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-30T10:35:35.778410Z"}

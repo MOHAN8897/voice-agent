@@ -1,0 +1,78 @@
+{
+  "scenario_id": "SCEN_04",
+  "title": "Explicit DND Opt-Out and Non-Erasure by Later Neutral Turn",
+  "business_id": "A",
+  "agent_name": "Kavitha",
+  "category": "D_Explicit_DND",
+  "integration_condition": "none",
+  "caller_phone": "+919876543213",
+  "total_turns": 1,
+  "total_tokens": 0,
+  "duration_sec": 4.61,
+  "call_ended": true,
+  "carrier_hangup_invoked": true,
+  "carrier_hangup_error": false,
+  "transcript": [
+    {
+      "turn": 1,
+      "user": "నాకు ఏమీ వద్దు, ఈ నంబర్‌కి మళ్లీ ఎప్పుడూ కాల్ చేయకండి.",
+      "user_en": "I want nothing, do not ever call this number again.",
+      "agent": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "latency_ms": 45,
+      "tokens": 0,
+      "should_end": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "do_not_call"
+      },
+      "finish_reason": "rule_close"
+    }
+  ],
+  "db_evidence": {
+    "call": {
+      "call_id": "21123242-0062-45bd-b608-f88d6ad19605",
+      "status": "active",
+      "finalization_status": "pending",
+      "disposition": null,
+      "end_reason": null,
+      "duration_sec": null,
+      "status_tags": []
+    },
+    "callbacks": [],
+    "followup_jobs": [],
+    "dnc_entries": [
+      {
+        "id": "d697df88-836d-4cff-b67a-ce83449442ff",
+        "phone": "+919876543213",
+        "active": true,
+        "source": "live_call_opt_out",
+        "reason": "verbal_opt_out_live_call"
+      }
+    ],
+    "leads": [],
+    "tool_executions": []
+  },
+  "evaluation": {
+    "assertions": [
+      {
+        "name": "dnd_persisted_in_database",
+        "passed": true,
+        "detail": "DncEntry active count: 1"
+      }
+    ],
+    "all_passed": true,
+    "scores": {
+      "telugu_naturalness": 9.0,
+      "understanding_relevance": 9.5,
+      "script_adherence": 9.0,
+      "memory_corrections": 9.0,
+      "capability_honesty": 10.0,
+      "callback_dnd_outcome": 10.0,
+      "hangup_handoff": 9.5,
+      "overall": 9.5
+    }
+  },
+  "created_at": "2026-10-29T10:30:30.432575+00:00"
+}

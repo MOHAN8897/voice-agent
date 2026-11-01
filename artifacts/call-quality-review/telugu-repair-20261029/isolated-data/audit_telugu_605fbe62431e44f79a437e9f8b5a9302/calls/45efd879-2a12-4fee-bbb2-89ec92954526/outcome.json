@@ -1,0 +1,90 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, expressed interest in the Python course and stated that he will call the business himself tomorrow; this is not a request for the business to call back. He also said the business may contact him in the future about new offers and asked that his number not be blocked. No pricing, enrollment, or other course details were discussed. The agent acknowledged him and thanked him, and the call ended politely.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_follow_up": "Caller will call tomorrow",
+    "caller_name": "కిరణ్",
+    "name": "Kiran",
+    "phone": "+12025550137",
+    "product": "Python course"
+  },
+  "objections": [],
+  "notes": "Caller permits future calls about new offers and requests that his number not be blocked.",
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:python-course"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T16:29:30.160926Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_follow_up": "Caller will call tomorrow",
+    "caller_name": "కిరణ్",
+    "name": "Kiran",
+    "phone": "+12025550137",
+    "product": "Python course"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:python-course",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive"
+  ],
+  "lead": {
+    "leadId": "3934e595-73de-5e80-906f-7b8a5b26b78c",
+    "agentId": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.98,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

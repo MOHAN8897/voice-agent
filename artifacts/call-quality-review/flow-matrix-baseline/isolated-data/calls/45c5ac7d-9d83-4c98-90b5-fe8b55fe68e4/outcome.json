@@ -1,0 +1,96 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller inquired about the cost of a three-kilowatt system and whether any subsidy was available. The agent explained that the system costs ₹1,95,00{0}, the government subsidy is ₹78,000, and the caller's out-of-pocket expense would be ₹1,17,000. The caller found this pricing reasonable and agreed to proceed. The agent then requested the caller's name, location, and a preferred day for a free site survey to move forward. The caller hesitated briefly but verbally agreed to provide these details. However, the caller did not actually share their personal information or a preferred date during the call, leaving the scheduling of the site survey pending. The call ended with the agent still waiting for the caller to provide the required details.",
+  "next_action": "Awaiting the caller to provide their name, location, and preferred survey date to schedule the free site survey.",
+  "extracted_fields": {
+    "budget": "₹1,17,000",
+    "phone": "+919876500536"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "intent:quote",
+    "sentiment:positive",
+    "followup:schedule_pending",
+    "signal:price_sensitive",
+    "signal:ready_to_buy",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:site-survey",
+    "custom:subsidy-inquiry",
+    "custom:three-kilowatt"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:44:09.236638Z",
+  "generation_ok": true,
+  "facts": {
+    "budget": "₹1,17,000",
+    "phone": "+919876500536"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:site-survey",
+    "custom:subsidy-inquiry",
+    "custom:three-kilowatt",
+    "followup:schedule_pending",
+    "intent:information",
+    "intent:quote",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:price_sensitive",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "bf85cc27-c911-4807-b3b6-96532727466e",
+    "agentId": "2a346d7e-04a9-4682-8a0d-3ca0aceca555",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "budget"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

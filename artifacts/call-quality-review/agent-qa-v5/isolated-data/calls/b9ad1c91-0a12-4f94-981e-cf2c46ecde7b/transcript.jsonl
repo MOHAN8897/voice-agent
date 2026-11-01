@@ -1,0 +1,12 @@
+{"seq": 1, "role": "user", "text": "हाँ, बताइए। आपके पास कौन से products हैं?", "ts": "2026-10-31T16:55:09.191840Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "हमारे पास NatureVeda Herbal Hair Oil ₹499 में 200 ml, Aloe Vera Juice ₹399 में 500 ml, Herbal Face Cream ₹599 में 50 g, और Ashwagandha Capsules ₹699 में 60 capsules हैं। क्या आप इनमें से किसी के बारे में और जानना चाहेंगे?", "ts": "2026-10-31T16:55:11.873704Z"}
+{"seq": 3, "role": "user", "text": "Aloe Vera Juice का price ठीक है। इसका delivery charge कितना लगेगा?", "ts": "2026-10-31T16:55:31.759049Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "इसकी जानकारी मेरे पास उपलब्ध नहीं है। बाकी products के बारे में कुछ पूछना है?", "ts": "2026-10-31T16:55:33.076665Z"}
+{"seq": 5, "role": "user", "text": "ठीक है, कोई बात नहीं। क्या इन products की कोई offer या discount चल रहा है?", "ts": "2026-10-31T16:55:46.480938Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "अभी कोई offer या discount चल रहा है, इसकी जानकारी मेरे पास नहीं है।", "ts": "2026-10-31T16:55:47.816542Z"}
+{"seq": 7, "role": "user", "text": "अच्छा, तो अभी कोई offer नहीं है। क्या इन products के ingredients की details मिल सकती हैं?", "ts": "2026-10-31T16:56:00.165857Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "NatureVeda Aloe Vera Juice ₹399 में 500 ml मिलता है और इसमें सिर्फ Aloe Vera है। बाकी products के ingredients की details भी बता दूँ?", "ts": "2026-10-31T16:56:01.669732Z"}
+{"seq": 9, "role": "user", "text": "हाँ, बाकी products के ingredients भी बता दीजिए।", "ts": "2026-10-31T16:56:14.931082Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "ठीक है। NatureVeda Herbal Hair Oil में Amla, Bhringraj, Hibiscus और Coconut Oil हैं। क्या आप इनमें से कोई order करना चाहेंगे?", "ts": "2026-10-31T16:56:16.780588Z"}
+{"seq": 11, "role": "user", "text": "देखिए, मुझे Telugu ज़्यादा comfortable आती है। क्या आप मुझे कल सुबह 11 बजे call back कर सकते हैं?", "ts": "2026-10-31T16:56:33.743295Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "ज़रूर, हम आपको तेलुगु में वापस call करेंगे। मैंने कल सुबह 11 बजे का callback note कर लिया है।", "ts": "2026-10-31T16:56:35.474267Z"}

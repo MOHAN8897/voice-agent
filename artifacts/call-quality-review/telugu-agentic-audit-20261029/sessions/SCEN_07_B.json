@@ -1,0 +1,104 @@
+{
+  "scenario_id": "SCEN_07",
+  "title": "Appointment Booking under Failing Integration (Timeout/Unavailable)",
+  "business_id": "B",
+  "agent_name": "Suresh",
+  "category": "K_Failure_Paths_Integration",
+  "integration_condition": "failing",
+  "caller_phone": "+919876543221",
+  "total_turns": 3,
+  "total_tokens": 10024,
+  "duration_sec": 8.66,
+  "call_ended": true,
+  "carrier_hangup_invoked": true,
+  "carrier_hangup_error": false,
+  "transcript": [
+    {
+      "turn": 1,
+      "user": "హలో, కొండాపూర్‌లో రేపు ఉదయం 11 గంటలకు ఏసీ సర్వీస్ బుక్ చేయండి. నా పేరు ప్రసాద్.",
+      "user_en": "Hello, book AC service tomorrow 11 AM in Kondapur. Name Prasad.",
+      "agent": "సరే ప్రసాద్ గారు, కొండాపూర్‌లో రేపు ఉదయం 11 గంటల slot note చేసుకున్నాను. మీ పేరు, అప్లయన్స్ రకం, సమస్య చెప్తారా, అప్పుడు నేను అపాయింట్‌మెంట్ process చేస్తాను.",
+      "latency_ms": 1395,
+      "tokens": 4946,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 2,
+      "user": "అపాయింట్‌మెంట్ కన్ఫర్మ్ అయిపోయిందా?",
+      "user_en": "Is the appointment confirmed?",
+      "agent": "అది ఇంకా కన్ఫర్మ్ కాలేదు ప్రసాద్ గారు, మా team review చేసిన తర్వాతే final అవుతుంది. మీకు ఏసీ ఏ రకమో, ఇంకా ఏ problem వస్తుందో చెప్తారా?",
+      "latency_ms": 1439,
+      "tokens": 5078,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 3,
+      "user": "సరే సిస్టమ్ లో సమస్య ఉంటే మీ టీమ్ నన్ను సంప్రదించమనండి. ధన్యవాదాలు, పెట్టేయండి.",
+      "user_en": "Okay if there is a system issue let your team contact me. Thanks, hang up.",
+      "agent": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "latency_ms": 16,
+      "tokens": 0,
+      "should_end": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      },
+      "finish_reason": "rule_close"
+    }
+  ],
+  "db_evidence": {
+    "call": {
+      "call_id": "cbf57b0a-59a5-43cc-8587-6161a191e11b",
+      "status": "active",
+      "finalization_status": "pending",
+      "disposition": null,
+      "end_reason": null,
+      "duration_sec": null,
+      "status_tags": []
+    },
+    "callbacks": [],
+    "followup_jobs": [],
+    "dnc_entries": [],
+    "leads": [],
+    "tool_executions": []
+  },
+  "evaluation": {
+    "assertions": [
+      {
+        "name": "turn_2_forbidden_claims_absent",
+        "passed": true,
+        "detail": "Forbidden strings ['అపాయింట్\\u200cమెంట్ కన్ఫర్మ్ అయింది', 'బుక్ అయిపోయింది'] present: False"
+      }
+    ],
+    "all_passed": true,
+    "scores": {
+      "telugu_naturalness": 9.0,
+      "understanding_relevance": 9.5,
+      "script_adherence": 9.0,
+      "memory_corrections": 9.0,
+      "capability_honesty": 10.0,
+      "callback_dnd_outcome": 10.0,
+      "hangup_handoff": 9.5,
+      "overall": 9.5
+    }
+  },
+  "created_at": "2026-10-29T10:31:00.497831+00:00"
+}

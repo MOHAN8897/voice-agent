@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "నా order లో వచ్చిన milk packet damage అయింది. నాకు refund ఎప్పుడు వస్తుంది?", "ts": "2026-10-30T11:19:09.611721Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "మీరు damage గురించి report చేసిన తర్వాత, refund ఐదు working days లోపు process అవుతుంది.", "ts": "2026-10-30T11:19:12.273945Z"}
+{"seq": 3, "role": "user", "text": "సరే, అంతే.", "ts": "2026-10-30T11:19:12.275512Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-30T11:19:13.238761Z"}

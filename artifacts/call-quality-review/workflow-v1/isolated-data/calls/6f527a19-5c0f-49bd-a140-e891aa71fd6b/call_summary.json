@@ -1,0 +1,34 @@
+{
+  "call_id": "6f527a19-5c0f-49bd-a140-e891aa71fd6b",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 1.0,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to request that the agent stop calling their number and remove it from the contact list. The agent acknowledged the request but did not perform the removal during the call. The caller refused further contact, and the call concluded without any next steps agreed upon.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+919876500019"
+  },
+  "facts": {
+    "phone": "+919876500019"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "tags": [
+    "signal:do_not_call",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [
+    "The caller explicitly objected to receiving further calls on this number."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:18:29.525888Z",
+  "generation_ok": true
+}

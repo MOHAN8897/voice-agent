@@ -1,0 +1,59 @@
+{
+  "call_id": "058f7188-078e-4ec7-9048-5f8552250bce",
+  "tenant_id": "b1d9ee2e-6913-4e30-b8a5-063e1f3c5bd4",
+  "agent_id": "4fc1d0f2-6a6f-502f-8c77-617bf53899b4",
+  "session_id": "qa-379f62e2279c4d229c3bbc5270b19a2f",
+  "channel": "pstn",
+  "direction": "outbound",
+  "environment": "development",
+  "tier": "medium",
+  "combination_id": "5b3ecb0dcd721b7f",
+  "compiled_brain_version": "cb_v20261031_93518abbadc8",
+  "started_at": "2026-10-31T14:16:22.319992+00:00",
+  "status": "active",
+  "storage_path": "data/calls/058f7188-078e-4ec7-9048-5f8552250bce/",
+  "resolved_stack": {
+    "combination_id": "5b3ecb0dcd721b7f",
+    "tier": "medium",
+    "mode": "frontend",
+    "language": "ta-IN",
+    "voice_preset": "telugu_natural",
+    "stt": {
+      "provider": "sarvam",
+      "model": "saaras:v3-realtime",
+      "config": {
+        "mode": "realtime"
+      }
+    },
+    "llm": {
+      "provider": "sarvam",
+      "model": "sarvam-105b-conversations",
+      "config": {
+        "api_mode": "chat_completions_v1"
+      }
+    },
+    "tts": {
+      "provider": "sarvam",
+      "model": "bulbul:v3",
+      "config": {
+        "speaker": "shubh",
+        "api_mode": "websocket"
+      }
+    }
+  },
+  "pipeline": "composed_voice",
+  "callee_e164": "+919700000027",
+  "caller_id": "+914000000000",
+  "is_test": true,
+  "call_end_policy": {
+    "allowedReasons": [
+      "goodbye",
+      "firm_refusal",
+      "not_interested",
+      "goal_complete",
+      "abuse"
+    ],
+    "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+    "farewellSource": "default"
+  }
+}

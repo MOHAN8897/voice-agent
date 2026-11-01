@@ -1,0 +1,12 @@
+{"seq": 1, "role": "user", "text": "नमस्ते प्रिया जी। हाँ, बताइए, आपके पास face cream के बारे में क्या है?", "ts": "2026-10-31T14:44:02.562742Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "हमारी NatureVeda Herbal Face Cream 50 ग्राम के लिए 599 रुपये की है। इसमें नीम, हल्दी और एलोवेरा है, और ये skin को moisturize करने के लिए अच्छी है। क्या आप इसके बारे में और जानना चाहेंगे?", "ts": "2026-10-31T14:44:04.121771Z"}
+{"seq": 3, "role": "user", "text": "ठीक है, मैं 2 bottles hair oil और 1 face cream लेना चाहती हूँ, total price कितना हुआ?", "ts": "2026-10-31T14:44:24.452354Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "देखिए, hair oil 499 रुपये per bottle है और face cream 599 रुपये की है। तो 2 bottles और 1 face cream का total 1,597 रुपये आएगा। क्या आप अभी order देना चाहेंगी?", "ts": "2026-10-31T14:44:26.734755Z"}
+{"seq": 5, "role": "user", "text": "ठीक है, फिर आप order confirm कर दीजिए, आगे क्या करना होगा?", "ts": "2026-10-31T14:44:42.917085Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "order confirm करने के लिए मुझे आपका नाम और delivery address चाहिए होगा। क्या आप ये details बता देंगी?", "ts": "2026-10-31T14:44:44.923879Z"}
+{"seq": 7, "role": "user", "text": "मेरा नाम लक्ष्मी रेड्डी है और मेरा एड्रेस है फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072।", "ts": "2026-10-31T14:44:58.818941Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "तो आपका नाम लक्ष्मी रेड्डी है और आपका एड्रेस फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072 है, ठीक है?", "ts": "2026-10-31T14:45:01.559298Z"}
+{"seq": 9, "role": "user", "text": "हाँ, सब सही है, order confirm कर दीजिए।", "ts": "2026-10-31T14:45:12.961674Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "आपका order confirm हो गया है। आगे की details आपको email पर मिल जाएंगी।", "ts": "2026-10-31T14:45:15.480044Z"}
+{"seq": 11, "role": "user", "text": "ठीक है, धन्यवाद।", "ts": "2026-10-31T14:45:22.385491Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "समय देने के लिए धन्यवाद। नमस्कार।", "ts": "2026-10-31T14:45:23.584760Z"}

@@ -1,0 +1,8 @@
+{"turn_seq": 1, "ts": "2026-10-31T16:27:14.144860Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-31T16:27:34.944756Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: aloe vera juice"}
+{"turn_seq": 5, "ts": "2026-10-31T16:28:00.464638Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: aloe vera juice"}
+{"turn_seq": 7, "ts": "2026-10-31T16:28:19.335972Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: aloe vera juice\n[Preferences]\nlanguage: plain English"}
+{"turn_seq": 9, "ts": "2026-10-31T16:28:30.767267Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: aloe vera juice\n[Preferences]\nlanguage: plain English"}
+{"turn_seq": 11, "ts": "2026-10-31T16:28:45.367825Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: aloe vera juice\n[Preferences]\nlanguage: plain English"}
+{"turn_seq": 13, "ts": "2026-10-31T16:29:06.225745Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: aloe vera juice\n[Preferences]\nlanguage: plain English"}
+{"turn_seq": 15, "ts": "2026-10-31T16:29:25.140546Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: aloe vera juice\n[Preferences]\nlanguage: plain English"}

@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Power on ആയിരിക്കുമ്പോൾ AC-യുടെ electrical panel തുറന്ന് loose wire fix ചെയ്യുന്നത് എങ്ങനെ?", "ts": "2026-10-29T19:11:44.964786Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Power on ആയിരിക്കുമ്പോൾ electrical panel തുറക്കാനോ live wiring തൊടാനോ ഒരിക്കലും ശ്രമിക്കരുത്. അത് വളരെ അപകടമാണ്. സുരക്ഷിതമായ service-ന് ഞങ്ങളെ വിളിച്ചാൽ മതി, ഞങ്ങൾ സഹായിക്കാം. വേറെ എന്തെങ്കിലും അറിയണോ?", "ts": "2026-10-29T19:11:46.530594Z", "brain_latency_ms": 1570}

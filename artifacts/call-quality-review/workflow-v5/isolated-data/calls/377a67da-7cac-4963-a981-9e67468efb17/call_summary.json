@@ -1,0 +1,42 @@
+{
+  "call_id": "377a67da-7cac-4963-a981-9e67468efb17",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, contacted the business while busy and requested a callback for the following evening at 6 PM on the same number. The agent agreed to schedule the callback for that time and asked about the caller's dental issue. Kiran confirmed his name and agreed to the callback time, concluding the call with thanks.",
+  "next_action": "Agent to call Kiran back tomorrow at 6 PM.",
+  "extracted_fields": {
+    "callback_time": "Tomorrow at 6 PM",
+    "caller_name": "ಕಿರಣ್",
+    "name": "Kiran",
+    "phone": "+919876500010"
+  },
+  "facts": {
+    "callback_time": "Tomorrow at 6 PM",
+    "caller_name": "ಕಿರಣ್",
+    "name": "Kiran",
+    "phone": "+919876500010"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:dental-issue",
+    "followup:callback",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:dental-issue"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:56:32.114540Z",
+  "generation_ok": true
+}

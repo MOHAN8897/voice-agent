@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "quantity": "1",
+    "caller_name": "లక్ష్మి రెడ్డి",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: నా అడ్రస్ వచ్చి Flat 302, Sai Residency, Kukatpally, Hyderabad 500072 అండి.\nassistant: సరే, మీ address Flat 302, Sai Residency, Kukatpally, Hyderabad 500072 అని నోట్ చేసుకున్నాను. లక్ష్మి రెడ్డి గారు, మీరు 2 బాటిల్స్ హెయిర్ ఆయిల్, 1 ఫేస్ క్రీమ్ ఆర్డర్ చేయాలనుకుంటున్నారని కూడా నోట్ చేసుకున్నాను.\nuser: ఇంకా నా ఫోన్ నంబర్ కావాలంటే ఇదే నంబర్ అండి. ఈ ఆర్డర్ కన్ఫర్మ్ అయ్యాక నెక్స్ట్ ఏం జరుగుతుంది?\nassistant: మీ ఆర్డర్ కన్ఫర్మ్ అయ్యాక, మా బృందం దానిని ప్రాసెస్ చేస్తుంది. ప్రస్తుతానికి నా వద్ద డెలివరీ timeline వివరాలు లేవు. ఆర్డర్ ప్లేస్ చేయమని చెప్తారా?"
+}

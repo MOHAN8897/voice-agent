@@ -1,0 +1,92 @@
+{
+  "scenario_id": "SCEN_08",
+  "title": "Scoped Product Objection vs Complete Refusal",
+  "business_id": "B",
+  "agent_name": "Suresh",
+  "category": "C_Scoped_Objection_vs_Rejection",
+  "integration_condition": "none",
+  "caller_phone": "+919876543222",
+  "total_turns": 2,
+  "total_tokens": 9927,
+  "duration_sec": 7.63,
+  "call_ended": true,
+  "carrier_hangup_invoked": true,
+  "carrier_hangup_error": false,
+  "transcript": [
+    {
+      "turn": 1,
+      "user": "స్ప్లిట్ ఏసీ సర్వీసింగ్ ధర ఎంత?",
+      "user_en": "What is split AC servicing price?",
+      "agent": "స్ప్లిట్ ఏసీ సర్వీసింగ్ five hundred ninety nine rupees అవుతుంది. మీరు ఏ ప్రాంతం నుండి మాట్లాడుతున్నారు?",
+      "latency_ms": 1155,
+      "tokens": 4903,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 2,
+      "user": "599 రూపాయలు చాలా ఎక్కువ, నాకు ఏసీ సర్వీస్ వద్దు.",
+      "user_en": "599 is too high, I do not want AC service.",
+      "agent": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "latency_ms": 1265,
+      "tokens": 5024,
+      "should_end": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "not_interested",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "db_evidence": {
+    "call": {
+      "call_id": "f7c459c8-e022-4a92-a912-83d7b45296d0",
+      "status": "active",
+      "finalization_status": "pending",
+      "disposition": null,
+      "end_reason": null,
+      "duration_sec": null,
+      "status_tags": []
+    },
+    "callbacks": [],
+    "followup_jobs": [],
+    "dnc_entries": [],
+    "leads": [],
+    "tool_executions": []
+  },
+  "evaluation": {
+    "assertions": [
+      {
+        "name": "turn_3_executed",
+        "passed": false,
+        "detail": "Turn not reached"
+      },
+      {
+        "name": "turn_4_executed",
+        "passed": false,
+        "detail": "Turn not reached"
+      }
+    ],
+    "all_passed": false,
+    "scores": {
+      "telugu_naturalness": 7.5,
+      "understanding_relevance": 7.0,
+      "script_adherence": 6.5,
+      "memory_corrections": 9.0,
+      "capability_honesty": 10.0,
+      "callback_dnd_outcome": 10.0,
+      "hangup_handoff": 9.5,
+      "overall": 8.42
+    }
+  },
+  "created_at": "2026-10-29T10:31:08.142808+00:00"
+}

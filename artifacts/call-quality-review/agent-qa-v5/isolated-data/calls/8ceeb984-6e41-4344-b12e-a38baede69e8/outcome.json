@@ -1,0 +1,105 @@
+{
+  "disposition": "converted",
+  "disposition_confidence": 0.95,
+  "summary_te": "வணக்கம். பிரியா வாடிக்கையாளரான லட்சுமி ரெட்டியை அழைத்து எங்கள் தயாரிப்புகள் பற்றிய விவரங்களை வழங்கினார். வாடிக்கையாளர் 2 ஹேர் ஆயில் மற்றும் 1 ஃபேஸ் கிரீம் ஆர்டர் செய்ய விரும்பினார், மேலும் முகவரி மற்றும் கட்டண விவரங்களை வழங்கினார். தள்ளுபடி மற்றும் டெலிவரி நேரம் குறித்த கேள்விகளுக்கு ஏஜென்ட் தற்போதைக்கு தகவல் இல்லை என்று பதிலளித்தார். தள்ளுபடி மற்றும் டெலிவரி விவரங்கள் இல்லாவிட்டாலும் வாடிக்கையாளர் ஆர்டரை உறுதி செய்தார், அதன் பிறகு ஏஜென்ட் ஆர்டரை உறுதி செய்து அடுத்த கட்டத்தை விளக்கினார்.",
+  "summary_en": "The agent called the customer to share product details. The customer expressed interest in purchasing two bottles of hair oil and one face cream, providing her name and delivery address. When asked about discounts and delivery timelines, the agent stated that this information was currently unavailable. Despite these unanswered questions, the customer agreed to proceed, and the agent confirmed the order, explaining that the team would process it next.",
+  "next_action": "Our team will process the confirmed order and share delivery details.",
+  "extracted_fields": {
+    "customer_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "phone": "+919700000010",
+    "product": "NatureVeda Herbal Hair Oil 200 ml and Herbal Face Cream 50 g",
+    "quantity": "2 hair oil, 1 face cream",
+    "total_amount": "1597 rupees"
+  },
+  "objections": [
+    "Discount availability",
+    "Delivery timeline"
+  ],
+  "notes": "",
+  "tags": [
+    "intent:purchase",
+    "sentiment:positive",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:order-confirmed"
+  ],
+  "unanswered_questions": [
+    "Is there a discount available on this order?",
+    "When will the delivery arrive?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T16:25:01.038400Z",
+  "generation_ok": true,
+  "summary_language": "ta-IN",
+  "facts": {
+    "customer_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "phone": "+919700000010",
+    "product": "NatureVeda Herbal Hair Oil 200 ml and Herbal Face Cream 50 g",
+    "quantity": "2 hair oil, 1 face cream",
+    "total_amount": "1597 rupees"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:herbal-products",
+    "custom:order-confirmed",
+    "followup:send_info",
+    "intent:purchase",
+    "outcome:converted",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "6db25416-0a9c-4a3f-8206-075671f205d3",
+    "agentId": "9295bb00-e2e7-4636-a14b-6072ed060ba1",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "converted",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "converted"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

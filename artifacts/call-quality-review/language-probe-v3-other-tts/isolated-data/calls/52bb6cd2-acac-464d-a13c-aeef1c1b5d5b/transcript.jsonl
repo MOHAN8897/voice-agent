@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Can you send someone tomorrow morning at ten-thirty? The fridge is not cooling.", "ts": "2026-10-29T19:32:43.373974Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I can note that for you. Our visits are next-day slots between 10 AM and 6 PM, so tomorrow morning at ten thirty AM is possible. Could you share your name and locality so I can pass that along?", "ts": "2026-10-29T19:32:44.373217Z", "brain_latency_ms": 999}

@@ -1,0 +1,56 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "The caller asked that this number never be called again, then requested the price for 100 normal-paper visiting cards. The agent stated that 100 cards cost ₹200 and asked whether the caller wanted matte finish or normal paper. The caller said the price was understood, had no further needs, and ended the call. The do-not-call request was noted during the call; no order was placed.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "contact_preference": "Do not call this number again",
+    "paper_type": "Normal paper",
+    "phone": "+12025550126",
+    "price": "₹200",
+    "product": "Visiting cards",
+    "quantity": "100 cards"
+  },
+  "objections": [],
+  "notes": "The caller declined further discussion after receiving the price and requested no future calls to this number.",
+  "tags": [
+    "intent:pricing",
+    "signal:do_not_call",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:100-cards",
+    "custom:normal-paper"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:53:51.845164Z",
+  "generation_ok": true,
+  "facts": {
+    "contact_preference": "Do not call this number again",
+    "paper_type": "Normal paper",
+    "phone": "+12025550126",
+    "price": "₹200",
+    "product": "Visiting cards",
+    "quantity": "100 cards"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:100-cards",
+    "custom:normal-paper",
+    "custom:visiting-cards",
+    "intent:pricing",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

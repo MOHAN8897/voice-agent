@@ -1,0 +1,42 @@
+{
+  "call_id": "0f103e8a-aebd-45d5-86c7-e4c1207de551",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "व्यवसाय के एजेंट ने ग्राहक को फोन किया। ग्राहक ने उत्पादों के बारे में जानकारी मांगी, लेकिन निर्माता के विवरण और बालों के प्रकार की जानकारी के बारे में एजेंट के पास कोई जानकारी नहीं थी। ग्राहक ने स्पष्ट किया कि वह वर्तमान में अन्य उत्पादों का उपयोग कर रही है, इसलिए उसे इनकी आवश्यकता नहीं है, और कॉल विनम्रतापूर्वक समाप्त हो गई।",
+  "summary_language": "hi-IN",
+  "summary_en": "The business agent called the customer to share details about four main products. The customer asked where the face cream and hair oil were manufactured, and whether the hair oil suited all hair types, but the agent stated they did not have that specific information. After receiving the main ingredient list, the customer politely declined the offer because she is currently using other products. The call ended amicably with no further action planned.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919700000013"
+  },
+  "facts": {
+    "phone": "+919700000013"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "followup:send_info",
+    "intent:information",
+    "intent:purchase",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "signal:objection",
+    "followup:send_info",
+    "intent:purchase"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [
+    "Where are the face cream and hair oil manufactured?",
+    "Is the hair oil suitable for all hair types?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T13:48:13.938480Z",
+  "generation_ok": true
+}

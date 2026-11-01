@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "call_id": "83ed7701-b688-4951-b831-55d77e96aaba",
+  "tenant_id": "640b9d77-91e6-462a-bf9d-924d9eb81bd7",
+  "agent_id": "d0b530de-067b-4c30-b03a-f9dc4581ddcf",
+  "status": "confirmed",
+  "quantity": 3,
+  "customer_name": "Lakshmi",
+  "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+  "product": "2 x Herbal Hair Oil, 1 x Herbal Face Cream",
+  "confirmed_at": "2026-10-31T16:44:12.174540Z"
+}

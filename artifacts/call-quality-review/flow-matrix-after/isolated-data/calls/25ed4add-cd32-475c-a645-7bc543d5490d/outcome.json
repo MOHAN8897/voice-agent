@@ -1,0 +1,42 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call by aggressively insulting the agent and labeling the company as a fraud. The agent attempted to apologize for any inconvenience and offered to schedule an appointment. The caller responded with further verbal abuse, telling the agent to be quiet. The agent then thanked the caller for their time and ended the call.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500529"
+  },
+  "objections": [
+    "Caller expressed severe dissatisfaction and labeled the business as fraudulent."
+  ],
+  "notes": "",
+  "tags": [
+    "sentiment:negative",
+    "intent:information",
+    "signal:objection"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T11:04:46.008207Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500529"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:negative",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

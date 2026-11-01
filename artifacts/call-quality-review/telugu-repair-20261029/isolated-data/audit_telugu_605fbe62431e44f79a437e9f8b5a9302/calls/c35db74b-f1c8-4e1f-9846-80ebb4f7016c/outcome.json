@@ -1,0 +1,107 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, asked about part-time Python training and specifically requested the fee. The agent stated that the Python with Data Analytics course costs ₹8,999. Kiran said the price seemed somewhat high and asked for the enquiry to be saved in the CRM, providing the name Kiran and email kiran.audit@example.invalid. The agent reported that saving the enquiry failed and later confirmed it could not be saved. Kiran asked whether it could be sent for review, but the agent said that was also not currently possible. Kiran stated that they would call again later and ended the call politely. No CRM save or review submission was confirmed.",
+  "next_action": "If possible, save Kiran's enquiry and send it for review when the system is available; otherwise wait for Kiran to call again.",
+  "extracted_fields": {
+    "caller_name": "కిరణ్",
+    "course": "Python with Data Analytics",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550114",
+    "training_format": "Part-time"
+  },
+  "objections": [
+    "The caller felt that the ₹8,999 course fee was somewhat high.",
+    "The enquiry could not be saved to the CRM or sent for review during the call."
+  ],
+  "notes": "The caller expressed interest in the course but did not commit to enrollment. The agent's attempted CRM save and review submission were unsuccessful.",
+  "tags": [
+    "intent:information",
+    "intent:pricing",
+    "sentiment:neutral",
+    "signal:price_sensitive",
+    "action:required",
+    "followup:callback"
+  ],
+  "custom_tags": [
+    "custom:python-training",
+    "custom:data-analytics",
+    "custom:crm-save-failure"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:44:29.830577Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_name": "కిరణ్",
+    "course": "Python with Data Analytics",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550114",
+    "training_format": "Part-time"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:python-training",
+    "followup:callback",
+    "intent:information",
+    "intent:pricing",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "d9fc85b2-ad23-4eae-8643-ad2195d643df",
+    "agentId": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 50,
+    "band": "warm",
+    "disposition": "interested",
+    "confidence": 0.98,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

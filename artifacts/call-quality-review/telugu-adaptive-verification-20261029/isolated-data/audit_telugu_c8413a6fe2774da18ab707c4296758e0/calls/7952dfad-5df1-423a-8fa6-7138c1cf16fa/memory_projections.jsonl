@@ -1,0 +1,11 @@
+{"turn_seq": 1, "ts": "2026-10-29T15:41:20.934479Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T15:41:23.785190Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-29T15:41:26.430774Z", "include_summary": true, "projection": ""}
+{"turn_seq": 7, "ts": "2026-10-29T15:41:29.064232Z", "include_summary": false, "projection": ""}
+{"turn_seq": 9, "ts": "2026-10-29T15:41:31.364138Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: మాధవి"}
+{"turn_seq": 11, "ts": "2026-10-29T15:41:34.114390Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: మాధవి"}
+{"turn_seq": 13, "ts": "2026-10-29T15:41:36.926484Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: కిరణ్ | email: kiran.audit@example.invalid | caller_email: kiran.audit@example.invalid\n[Context]\nCaller provided contact details in this call."}
+{"turn_seq": 15, "ts": "2026-10-29T15:41:39.794735Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: మాధవి గారు | email: kiran.audit@example.invalid | caller_email: kiran.audit@example.invalid\n[Preferences]\nbatch_preference: evening batch\n[Context]\nCaller provided contact details in this call."}
+{"turn_seq": 17, "ts": "2026-10-29T15:41:42.672925Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: మాధవి గారు | email: kiran.audit@example.invalid | caller_email: kiran.audit@example.invalid | product: Python course\n[Preferences]\nbatch_preference: evening batch\n[Context]\nCaller provided contact details in this call."}
+{"turn_seq": 19, "ts": "2026-10-29T15:41:44.991695Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: మాధవి గారు | email: kiran.audit@example.invalid | caller_email: kiran.audit@example.invalid | product: Python course\n[Preferences]\nbatch_preference: evening batch\n[Context]\nCaller provided contact details in this call."}
+{"turn_seq": 21, "ts": "2026-10-29T15:41:47.392724Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: మాధవి గారు | email: kiran.audit@example.invalid | caller_email: kiran.audit@example.invalid | product: Python course\n[Preferences]\nbatch_preference: evening batch\n[Context]\nCaller provided contact details in this call."}

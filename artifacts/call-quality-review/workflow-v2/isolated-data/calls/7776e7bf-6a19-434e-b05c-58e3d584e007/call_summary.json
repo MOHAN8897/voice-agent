@@ -1,0 +1,41 @@
+{
+  "call_id": "7776e7bf-6a19-434e-b05c-58e3d584e007",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller requested to book a slot for tomorrow at 11 AM and asked for an immediate booking confirmation and booking number. The agent explained that the booking could not be confirmed without the caller's name and details of the issue, which the agent needed to process the request. The caller asked again if it was confirmed and requested the booking number. The agent reiterated that the booking was not yet confirmed and that this information was required to proceed. The caller then accepted the situation, thanked the agent, and ended the call.",
+  "next_action": "No further action.",
+  "extracted_fields": {
+    "phone": "+919876500047",
+    "requested_time": "આવતીકાલે સવારે 11 વાગ્યાનું",
+    "slot": "tomorrow at 11 AM"
+  },
+  "facts": {
+    "phone": "+919876500047",
+    "requested_time": "આવતીકાલે સવારે 11 વાગ્યાનું",
+    "slot": "tomorrow at 11 AM"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "intent:booking",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:booking",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [
+    "Agent requested name and issue details before confirming.",
+    "Caller wanted immediate confirmation and a booking number without providing details."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:38:15.290249Z",
+  "generation_ok": true
+}

@@ -1,0 +1,107 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.93,
+  "summary_te": "",
+  "summary_en": "Kiran called to learn about Python and data training and requested a callback tomorrow morning at 10:00 AM India time for a team review. He provided his name and email address and repeatedly asked that the request remain pending while he waited. The agent initially explained that it could remember the information but could not send it to the team or guarantee follow-up. At the end, the agent stated that Kiran’s details and request for a return call had been recorded, but the transcript does not confirm that a callback was actually scheduled or that the team review request was submitted. The call ended with thanks and a goodbye.",
+  "next_action": "Review Kiran’s request for Python and data training and arrange a callback for tomorrow at 10:00 AM India time if possible.",
+  "extracted_fields": {
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "Kiran",
+    "email": "kiran.audit@example.invalid",
+    "interest": "Python and data training",
+    "phone": "+12025550120",
+    "request": "Team review request pending",
+    "requested_callback_time": "Tomorrow at 10:00 AM India time",
+    "requested_time": "రేపు ఉదయం"
+  },
+  "objections": [
+    "The agent stated that it could not send the request to the team or guarantee follow-up."
+  ],
+  "notes": "The agent’s closing statement says the details and callback request were recorded, but no completed callback arrangement or team submission is confirmed.",
+  "tags": [
+    "followup:callback",
+    "followup:schedule_pending",
+    "intent:information",
+    "intent:demo",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-training",
+    "custom:data-training",
+    "custom:team-review"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:43:36.779968Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "Kiran",
+    "email": "kiran.audit@example.invalid",
+    "interest": "Python and data training",
+    "phone": "+12025550120",
+    "request": "Team review request pending",
+    "requested_callback_time": "Tomorrow at 10:00 AM India time",
+    "requested_time": "రేపు ఉదయం"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:python-training",
+    "followup:callback",
+    "followup:schedule_pending",
+    "intent:demo",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "0713313e-d45f-49b0-bd97-a504fac4e702",
+    "agentId": "4c5270a8-990a-5800-868d-9d685eca9a09",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 50,
+    "band": "warm",
+    "disposition": "callback_required",
+    "confidence": 0.93,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

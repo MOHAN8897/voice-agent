@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "I asked simple question just tell me clearly fridge inspection charge", "ts": "2026-10-29T19:37:58.326406Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "The fridge inspection costs 250 rupees. If you go ahead with the repair, that inspection charge is waived. Would you like to book an inspection?", "ts": "2026-10-29T19:37:58.974341Z", "brain_latency_ms": 650}

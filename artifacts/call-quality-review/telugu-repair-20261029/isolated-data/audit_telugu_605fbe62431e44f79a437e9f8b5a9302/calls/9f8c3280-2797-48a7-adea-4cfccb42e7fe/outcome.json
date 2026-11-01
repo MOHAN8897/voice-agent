@@ -1,0 +1,95 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "The caller wanted 100 visiting cards and asked about the price. The agent explained that standard paper cards cost ₹200 per 100 and matte-finish cards cost ₹350 per 100, with a minimum order quantity of 100 cards. The caller clarified that they wanted visiting cards, not mugs, and asked which preference had been recorded. The agent confirmed that visiting cards were recorded and noted the caller did not want mugs. The caller said their questions were answered and ended the call. No specific card finish or order was selected, and no purchase was completed.",
+  "next_action": null,
+  "extracted_fields": {
+    "excluded_product": "Mugs",
+    "matte_finish_price": "₹350 per 100 cards",
+    "minimum_order_quantity": "100 cards",
+    "phone": "+12025550152",
+    "product": "Visiting cards",
+    "quantity": "100 cards",
+    "standard_paper_price": "₹200 per 100 cards"
+  },
+  "objections": [],
+  "notes": "Caller received pricing information and confirmed the preferred product, but did not place an order or choose a finish.",
+  "tags": [
+    "intent:pricing",
+    "intent:purchase",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:100-cards"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T16:31:36.081081Z",
+  "generation_ok": true,
+  "facts": {
+    "excluded_product": "Mugs",
+    "matte_finish_price": "₹350 per 100 cards",
+    "minimum_order_quantity": "100 cards",
+    "phone": "+12025550152",
+    "product": "Visiting cards",
+    "quantity": "100 cards",
+    "standard_paper_price": "₹200 per 100 cards"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:100-cards",
+    "custom:visiting-cards",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive"
+  ],
+  "lead": {
+    "leadId": "e7f3d608-1343-4f70-8c23-3a898de6ffc0",
+    "agentId": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.96,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

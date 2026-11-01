@@ -1,0 +1,72 @@
+[
+  {
+    "id": "A_callback_auto",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 9.64
+  },
+  {
+    "id": "A_memory_probe",
+    "turns": 4,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 16.391
+  },
+  {
+    "id": "C_callback_question_probe",
+    "turns": 3,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 12.344
+  },
+  {
+    "id": "C_self_callback_permission_probe",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 6.141
+  },
+  {
+    "id": "B_booking_success",
+    "turns": 4,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 22.078
+  },
+  {
+    "id": "C_crm_success",
+    "turns": 5,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 24.563
+  },
+  {
+    "id": "A_dnd_question_then_goodbye",
+    "turns": 2,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 8.672
+  },
+  {
+    "id": "A_addressing_agent_name",
+    "turns": 2,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 8.063
+  },
+  {
+    "id": "A_rejected_product_memory",
+    "turns": 3,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 12.266
+  },
+  {
+    "id": "C_callback_withdrawn_after_question",
+    "turns": 3,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 12.016
+  }
+]

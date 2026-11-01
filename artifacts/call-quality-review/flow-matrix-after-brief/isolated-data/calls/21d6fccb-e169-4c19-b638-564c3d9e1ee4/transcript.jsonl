@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "I am busy right now, call me later.", "ts": "2026-10-30T10:48:33.668306Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "No problem at all. I have noted that you would like a callback when you are free.", "ts": "2026-10-30T10:48:36.571770Z"}
+{"seq": 3, "role": "user", "text": "I don't know, sometime later.", "ts": "2026-10-30T10:48:36.571770Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Understood. I will arrange for a callback at a later time.", "ts": "2026-10-30T10:48:39.310397Z"}
+{"seq": 5, "role": "user", "text": "Okay, bye.", "ts": "2026-10-30T10:48:39.312403Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "I've saved your details and your request for a follow-up call. Thank you for your time. Goodbye.", "ts": "2026-10-30T10:48:40.429219Z"}

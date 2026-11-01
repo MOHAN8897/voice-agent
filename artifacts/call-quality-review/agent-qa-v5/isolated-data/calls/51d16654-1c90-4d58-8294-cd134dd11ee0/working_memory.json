@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: ആകെ എത്രയാകും price?\nassistant: Face cream-ന് ₹599-ഉം hair oil-ന് ₹499-ഉം ആണ് വില. 2 hair oil എടുത്താൽ ആകെ ₹1,497 ആകും. ഓർഡർ place ചെയ്യണോ?\nuser: ശരി, total price എത്രയാകും?\nassistant: Face cream-ന് ₹599-ഉം 2 hair oil-ന് ₹998-ഉം ആണ് വരുന്നത്. അപ്പോൾ ആകെ ₹1,597 ആകും.\nuser: Okay, total price 1,597 rupees. ഇതിൽ എന്തെങ്കിലും discount ഉണ്ടോ?\nassistant: ആ വിവരം എനിക്കറിയില്ല.\nuser: ഓ, discount ഇല്ലാത്തത് ഒരു ബുദ്ധിമുട്ടാണ്. ഞാൻ ആലോചിച്ചിട്ട് വിളിക്കാം, അല്ലെങ്കിൽ വേറെ എന്തെങ്കിലും offer ഉണ്ടോ?\nassistant: ശരി, മനസ്സിലായി. വേറെ എന്തെങ്കിലും details അറിയണമെന്നുണ്ടോ? അതോ പിന്നീട് വിളിക്കാമോ?"
+}

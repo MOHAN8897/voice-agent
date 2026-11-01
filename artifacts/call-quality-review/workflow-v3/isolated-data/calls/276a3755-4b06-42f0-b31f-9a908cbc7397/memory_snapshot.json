@@ -1,0 +1,6 @@
+{
+  "facts": {},
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: इसे कल सुबह 11 बजे के लिए बुक करो और अभी booking confirm कर दो।\nassistant: कल सुबह 11 बजे की appointment के लिए मुझे आपका नाम और समस्या जाननी होगी, ताकि front desk इसे confirm कर सके। आपका नाम क्या है?\nuser: क्या ये confirm हो गया? मुझे booking number दो।\nassistant: अभी तक booking confirm नहीं हुई है, इसलिए कोई booking number नहीं है।\nuser: ठीक है, thanks.\nassistant: अभी तक booking confirm नहीं हुई है। कल सुबह 11 बजे का slot confirm करने के लिए मुझे आपका नाम और समस्या जाननी होगी। आपका नाम क्या है?"
+}

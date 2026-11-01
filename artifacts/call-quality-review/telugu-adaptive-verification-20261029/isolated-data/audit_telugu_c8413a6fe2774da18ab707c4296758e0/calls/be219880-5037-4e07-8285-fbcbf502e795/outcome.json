@@ -1,0 +1,62 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "The caller first asked for a call tomorrow at 10:00 AM and requested the Python with Data Analytics course fee. The agent quoted a fee of ₹8,999 and asked which batch the caller wanted. The caller then clarified that they would call back themselves and explicitly asked not to receive a callback, before asking for the SQL course fee. The agent said they did not have the SQL fee details and stated that the team would not call the caller. The caller said they had received the needed information and ended the call politely.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "course_interest": "Python with Data Analytics",
+    "phone": "+12025550153",
+    "python_course_fee": "₹8,999",
+    "requested_course_information": "SQL course fee",
+    "requested_time": "Tomorrow at 10:00 AM"
+  },
+  "objections": [
+    "SQL course fee was not available during the call",
+    "Caller declined a callback and said they would call themselves"
+  ],
+  "notes": "The caller requested course pricing and showed interest, but no purchase or enrollment was completed. Do not initiate a callback.",
+  "tags": [
+    "intent:pricing",
+    "intent:information",
+    "signal:price_sensitive",
+    "signal:do_not_call",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-course",
+    "custom:sql-course",
+    "custom:course-fee"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:53:25.979939Z",
+  "generation_ok": true,
+  "facts": {
+    "course_interest": "Python with Data Analytics",
+    "phone": "+12025550153",
+    "python_course_fee": "₹8,999",
+    "requested_course_information": "SQL course fee",
+    "requested_time": "Tomorrow at 10:00 AM"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:course-fee",
+    "custom:python-course",
+    "custom:sql-course",
+    "intent:information",
+    "intent:pricing",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

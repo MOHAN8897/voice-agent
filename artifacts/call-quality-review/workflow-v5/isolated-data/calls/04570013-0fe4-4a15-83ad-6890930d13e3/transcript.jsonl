@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "Course fee કેટલી છે અને weekend batch છે ખરી?", "ts": "2026-10-29T20:57:08.572646Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Course ની fee ₹8,999 છે અને હા, weekend batch છે, જે સવારે 10 થી 1 વાગ્યા સુધી ચાલે છે.", "ts": "2026-10-29T20:57:11.451169Z"}
+{"seq": 3, "role": "user", "text": "ઠીક છે, મારે બસ આટલું જ જોઈતું હતું. આભાર, આવજો.", "ts": "2026-10-29T20:57:11.451169Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "તમારા સમય માટે આભાર. આવજો.", "ts": "2026-10-29T20:57:12.593640Z"}

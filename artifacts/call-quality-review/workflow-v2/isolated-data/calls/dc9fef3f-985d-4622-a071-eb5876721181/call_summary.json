@@ -1,0 +1,44 @@
+{
+  "call_id": "dc9fef3f-985d-4622-a071-eb5876721181",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the consultation fee and clinic operating hours. The agent provided the details, stating the fee is ₹300 and the clinic is open Monday through Saturday from 10:00 AM to 8:00 PM. The caller, introducing himself as Kiran, requested that his inquiry be noted and expressed interest in the services. The agent acknowledged the inquiry and asked for the specific health issue prompting the consultation, but the caller declined to provide further details, stating that was all for the moment. The agent thanked the caller for his time, and the call ended.",
+  "next_action": "followup:send_info",
+  "extracted_fields": {
+    "caller_name": "Kiran",
+    "name": "Kiran",
+    "phone": "+919876500041"
+  },
+  "facts": {
+    "caller_name": "Kiran",
+    "name": "Kiran",
+    "phone": "+919876500041"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "followup:send_info",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "sentiment:positive",
+    "signal:objection",
+    "followup:send_info",
+    "action:required"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:37:25.381435Z",
+  "generation_ok": true
+}

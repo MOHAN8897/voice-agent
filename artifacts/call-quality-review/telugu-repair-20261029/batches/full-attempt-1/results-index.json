@@ -1,0 +1,16 @@
+[
+  {
+    "id": "A_enquiry_none",
+    "turns": 6,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 38.907
+  },
+  {
+    "id": "A_enquiry_success",
+    "turns": 8,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 61.688
+  }
+]

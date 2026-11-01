@@ -1,0 +1,12 @@
+{
+  "language": "ta-IN",
+  "tenant_id": "c06163fd-3237-4d2e-9c81-b7ce0ac18eb3",
+  "agent_id": "9295bb00-e2e7-4636-a14b-6072ed060ba1",
+  "user_id": "8531136d-d284-42d1-9b47-9eb5052ca5f3",
+  "brain_version": "cb_qa_31a5011f8e2d487e",
+  "brain_chars": 20562,
+  "brain_source": "pipeline:artifacts\\call-quality-review\\agent-qa-v2\\agents\\ta-IN-brain.txt",
+  "direction": "outbound",
+  "name": "Priya",
+  "brain_path": "artifacts\\call-quality-review\\agent-qa-v5\\agents\\ta-IN-brain.txt"
+}

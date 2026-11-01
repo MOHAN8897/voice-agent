@@ -1,0 +1,121 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "ഉപഭോക്താവിനെ ഏജന്റ് വിളിച്ചു. ഉപഭോക്താവ് അലോ വേര ജ്യൂസിന്റെ വിലയും ഡിസ്കൗണ്ട് ഓഫറുകളും ചോദിച്ചു. ഏജന്റിന് ഡിസ്കൗണ്ട് വിവരങ്ങൾ നൽകാൻ കഴിഞ്ഞില്ല. അതിനാൽ ഉപഭോക്താവ് മറ്റ് ഉൽപ്പന്നങ്ങളെക്കുറിച്ച് അന്വേഷിക്കുകയും ഹെയർ ഓയിലിന്റെ വിവരങ്ങൾ മനസ്സിലാക്കുകയും ചെയ്തു. ഉപഭോക്താവിന് ഇംഗ്ലീഷിൽ സംസാരിക്കാൻ ബുദ്ധിമുട്ടുള്ളതിനാൽ നാളെ രാവിലെ 11 മണിക്ക് ഹിന്ദിയിൽ വിളിക്കാൻ ഏജന്റ് സമ്മതിച്ചു.",
+  "summary_en": "The agent called the customer to offer herbal products. The customer asked for the price of Aloe Vera Juice and requested a discount, but the agent stated they did not have that information. After hearing about the pricing, the customer inquired about other items and received details on the Herbal Hair Oil. Because the customer was more comfortable speaking in Hindi, they requested a callback for tomorrow at 11 AM. The agent agreed to call back at that scheduled time. Language handoff: Caller asked to continue in Hindi; call back in Hindi with the same agent.",
+  "next_action": "Call back in Hindi with the same agent (Callback needed in another language). No callback time has been booked.",
+  "extracted_fields": {
+    "callback_time": "Tomorrow at 11 AM",
+    "language_preference": "Hindi",
+    "phone": "+919700000021",
+    "product_interest": "Aloe Vera Juice, Herbal Hair Oil",
+    "preferred_language": "hi-IN",
+    "callback_requested": "true",
+    "requested_language": "hi-IN",
+    "language_switch": "true"
+  },
+  "objections": [
+    "Customer could not afford the product without a discount."
+  ],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:language-preference"
+  ],
+  "unanswered_questions": [
+    "Are there any discounts available on the Aloe Vera Juice?",
+    "Are there any other offers available?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T16:50:26.520806Z",
+  "generation_ok": true,
+  "summary_language": "ml-IN",
+  "language_callback": {
+    "status": "requested",
+    "kind": "language_switch",
+    "id": "50c68b89-bf72-4ff1-8d25-28b29166e476",
+    "caller_language": "hi-IN",
+    "configured_language": "ml-IN",
+    "summary": "Caller asked to continue in Hindi; call back in Hindi with the same agent."
+  },
+  "language_switch": {
+    "requested_language": "hi-IN",
+    "original_language": "ml-IN"
+  },
+  "facts": {
+    "callback_time": "Tomorrow at 11 AM",
+    "language_preference": "Hindi",
+    "phone": "+919700000021",
+    "product_interest": "Aloe Vera Juice, Herbal Hair Oil",
+    "preferred_language": "hi-IN",
+    "callback_requested": "true",
+    "requested_language": "hi-IN",
+    "language_switch": "true"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "contact:preferred_language",
+    "custom:herbal-products",
+    "custom:language-preference",
+    "followup:callback",
+    "followup:language_switch",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "2d7fd462-992f-434e-b79c-4f84ea4fa2db",
+    "agentId": "a3e5b2a7-8d8c-422d-925b-c137d41bebc5",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 60,
+    "band": "warm",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product_interest"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "callback_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Can I open the AC electrical panel with the power on and tighten the loose wire myself?", "ts": "2026-10-29T19:29:00.446676Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "No, please do not open the electrical panel or work on live wiring. It is unsafe and can damage the unit. If you have a loose wire, our technician can inspect and fix it safely during a visit. Would you like to book a slot?", "ts": "2026-10-29T19:29:01.618670Z", "brain_latency_ms": 1175}

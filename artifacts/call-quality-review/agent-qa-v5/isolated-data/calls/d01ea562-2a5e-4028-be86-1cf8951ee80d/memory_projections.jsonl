@@ -1,0 +1,13 @@
+{"turn_seq": 1, "ts": "2026-10-31T16:15:01.826035Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-31T16:15:17.338941Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-31T16:15:37.854398Z", "include_summary": true, "projection": ""}
+{"turn_seq": 7, "ts": "2026-10-31T16:15:57.657985Z", "include_summary": false, "projection": ""}
+{"turn_seq": 9, "ts": "2026-10-31T16:16:24.002293Z", "include_summary": false, "projection": ""}
+{"turn_seq": 11, "ts": "2026-10-31T16:16:40.630046Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1"}
+{"turn_seq": 13, "ts": "2026-10-31T16:16:56.016708Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1"}
+{"turn_seq": 15, "ts": "2026-10-31T16:17:16.010704Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1"}
+{"turn_seq": 17, "ts": "2026-10-31T16:17:27.065231Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1"}
+{"turn_seq": 19, "ts": "2026-10-31T16:17:37.254785Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1 | caller_name: Lakshmi Reddy"}
+{"turn_seq": 21, "ts": "2026-10-31T16:17:55.542507Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1 | caller_name: Lakshmi Reddy | delivery_address: Flat 302, Sai Residency, Kukatpally, Hyderabad 500072"}
+{"turn_seq": 23, "ts": "2026-10-31T16:18:13.360372Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1 | caller_name: Lakshmi Reddy | delivery_address: Flat 302, Sai Residency, Kukatpally, Hyderabad 500072 | email: mohansaiteja.99@gmail.com"}
+{"turn_seq": 25, "ts": "2026-10-31T16:18:34.179364Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1 | caller_name: Lakshmi Reddy | delivery_address: Flat 302, Sai Residency, Kukatpally, Hyderabad 500072 | email: mohansaiteja.99@gmail.com"}

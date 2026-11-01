@@ -1,0 +1,118 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller inquired about matte-finish visiting cards, initially asking for the minimum quantity and price. The agent stated that 100 matte cards cost ₹350 and the minimum order is 100 cards. The caller considered ordering 200 cards and asked whether the per-card price would decrease, how design approval works, and about delivery charges. The agent could not provide the exact 200-card matte price reduction, stated that delivery takes three working days after artwork approval, and quoted a ₹150 charge for 24-hour rush delivery. The caller also asked about wedding invitation card pricing, for which the agent said pricing depends on design, paper sample, and quantity. Standard-finish cards were quoted at ₹200 for 100 cards. Payment terms were explained: orders above ₹1,000 require 50% advance, while lower orders can be paid cash on delivery. The caller provided the email ramesh.audit@example.invalid and requested that an enquiry or quote be recorded for 200 matte cards; the agent confirmed that the enquiry and quantity were recorded. The caller repeatedly requested the exact order-confirmation and design-approval timelines, explaining that these details were needed before placing the order. The agent only reiterated the three-working-day delivery period after artwork approval and could not provide the confirmation or approval timeline. The caller viewed this lack of clarity as an inconvenience, stated that no payment would be made yet, and ended the call saying they would think about ordering later. No order was placed.",
+  "next_action": "Provide the exact 200-card matte price and confirm the design-approval and order-confirmation timelines before the caller decides whether to place the order.",
+  "extracted_fields": {
+    "delivery_time_after_artwork_approval": "3 working days",
+    "email": "ramesh.audit@example.invalid",
+    "finish_options": "Matte and standard",
+    "matte_price_100_cards": "₹350",
+    "minimum_order_quantity": "100 cards",
+    "payment_terms": "50% advance for orders above ₹1,000; cash on delivery for lower orders",
+    "phone": "+12025550120",
+    "product": "Visiting cards",
+    "quantity": "200 cards",
+    "rush_delivery_charge": "₹150 for 24-hour delivery",
+    "standard_price_100_cards": "₹200",
+    "wedding_card_pricing": "Depends on design, paper sample, and quantity"
+  },
+  "objections": [
+    "The caller considered ₹350 for 100 matte cards somewhat expensive.",
+    "The exact price reduction for 200 matte cards was unavailable.",
+    "The design-approval and order-confirmation timelines were not provided, which prevented the caller from finalizing the order."
+  ],
+  "notes": "The enquiry was recorded, but the caller explicitly said they were not placing an order now and would consider it later.",
+  "tags": [
+    "intent:pricing",
+    "intent:purchase",
+    "followup:send_quote",
+    "signal:price_sensitive",
+    "signal:objection",
+    "sentiment:frustrated"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:matte-finish",
+    "custom:wedding-cards"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:45:39.658598Z",
+  "generation_ok": true,
+  "facts": {
+    "delivery_time_after_artwork_approval": "3 working days",
+    "email": "ramesh.audit@example.invalid",
+    "finish_options": "Matte and standard",
+    "matte_price_100_cards": "₹350",
+    "minimum_order_quantity": "100 cards",
+    "payment_terms": "50% advance for orders above ₹1,000; cash on delivery for lower orders",
+    "phone": "+12025550120",
+    "product": "Visiting cards",
+    "quantity": "200 cards",
+    "rush_delivery_charge": "₹150 for 24-hour delivery",
+    "standard_price_100_cards": "₹200",
+    "wedding_card_pricing": "Depends on design, paper sample, and quantity"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:phone_known",
+    "custom:matte-finish",
+    "custom:visiting-cards",
+    "followup:send_quote",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:frustrated",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "54583290-48ba-51ad-9dec-6789bbf7551d",
+    "agentId": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.98,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

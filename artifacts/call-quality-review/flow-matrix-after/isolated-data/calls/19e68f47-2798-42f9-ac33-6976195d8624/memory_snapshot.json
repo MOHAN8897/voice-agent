@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "caller_name": "Kiran",
+    "delivery_locality": "Velachery",
+    "requested_time": "Saturday"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: No, it is still too expensive for us.\nassistant: I hear you. We also have an EMI option from 2,999 rupees per month for 48 months, which can make it easier to manage. Would you like to book the free site survey so we can check what works best for your budget?\nuser: Okay, what is the monthly EMI again?\nassistant: The monthly EMI is 2,999 rupees per month for 48 months.\nuser: Fine, book the free survey. My name is Kiran, I live in Velachery, Saturday works."
+}

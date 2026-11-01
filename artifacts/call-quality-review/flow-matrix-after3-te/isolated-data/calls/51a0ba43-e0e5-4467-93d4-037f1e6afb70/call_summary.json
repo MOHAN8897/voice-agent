@@ -1,0 +1,32 @@
+{
+  "call_id": "51a0ba43-e0e5-4467-93d4-037f1e6afb70",
+  "language_callback": null,
+  "disposition": "new_lead",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller contacted support to report a damaged milk packet in their order and inquired about the refund timeline. The agent explained that the refund would be processed within five working days after the damage was reported. The caller accepted this information, and the call concluded with the agent thanking them.",
+  "next_action": "No further action was requested or agreed upon.",
+  "extracted_fields": {
+    "phone": "+919876500509"
+  },
+  "facts": {
+    "phone": "+919876500509"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "intent:support",
+    "outcome:new_lead",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:support",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:19:15.218864Z",
+  "generation_ok": true
+}

@@ -1,0 +1,92 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.86,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, inquired about Python training suitable for a working professional, initially asking about evening or weekend options and the course fee. The agent quoted ₹8,999 for an eight-week Python with Data Analytics course, including online live classes and hands-on projects, and described weekday evening and weekend batch timings. Kiran said the fee was higher than their budget and asked what was included. Kiran provided an email address and repeatedly asked whether the enquiry had been saved in the CRM or forwarded to a supervisor for review. The agent clarified that they could remember the conversation but could not save the details in the system, forward them to the team or supervisor, or guarantee follow-up. Kiran preferred the weekend batch, specifically Saturday and Sunday from 10 AM to 1 PM, but later requested not to be called for now and asked whether the enquiry could be forwarded by someone else. No booking or follow-up was arranged, and the call ended politely after the agent thanked Kiran.",
+  "next_action": "If system access becomes available, review and forward Kiran's enquiry to the appropriate supervisor or team; do not call unless Kiran requests contact.",
+  "extracted_fields": {
+    "budget": "Lower than ₹8,999",
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "contact_preference": "Do not call for now",
+    "course_duration": "8 weeks",
+    "course_fee": "₹8,999",
+    "email": "kiran.audit@example.invalid",
+    "included": "Online live classes and hands-on projects",
+    "name": "Kiran",
+    "phone": "+12025550127",
+    "preferred_batch": "Weekend batch",
+    "preferred_schedule": "Saturday and Sunday, 10 AM to 1 PM",
+    "product": "Python with Data Analytics course"
+  },
+  "objections": [
+    "Course fee of ₹8,999 is higher than the caller's budget.",
+    "Caller was not confident that the enquiry details had been saved and requested confirmation or supervisor review."
+  ],
+  "notes": "The caller explicitly requested no call for now. The agent confirmed they lacked CRM and forwarding access; no transfer, save, or follow-up was completed.",
+  "tags": [
+    "action:required",
+    "signal:do_not_call",
+    "followup:callback",
+    "intent:information",
+    "intent:pricing",
+    "sentiment:frustrated"
+  ],
+  "custom_tags": [
+    "custom:python-training",
+    "custom:weekend-batch",
+    "custom:budget-sensitive"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:11:16.502284Z",
+  "generation_ok": true,
+  "facts": {
+    "budget": "Lower than ₹8,999",
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "contact_preference": "Do not call for now",
+    "course_duration": "8 weeks",
+    "course_fee": "₹8,999",
+    "email": "kiran.audit@example.invalid",
+    "included": "Online live classes and hands-on projects",
+    "name": "Kiran",
+    "phone": "+12025550127",
+    "preferred_batch": "Weekend batch",
+    "preferred_schedule": "Saturday and Sunday, 10 AM to 1 PM",
+    "product": "Python with Data Analytics course"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:python-training",
+    "intent:information",
+    "intent:pricing",
+    "outcome:callback_required",
+    "sentiment:frustrated",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "7ee18be9-e3b1-54f9-8169-8f1bf8e10d07",
+    "agentId": "4c5270a8-990a-5800-868d-9d685eca9a09",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 0,
+    "band": "disqualified",
+    "disposition": "callback_required",
+    "confidence": 0.86,
+    "components": [],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "caller_opt_out"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "నా పేరు రమణ. నాకు 200 matte visiting cards కావాలి. ధర, delivery వివరాలు చెప్పండి.", "ts": "2026-10-29T16:48:20.634002Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "సరే రమణ గారు, two hundred matte visiting cards కి seven hundred rupees అవుతుంది. Vijayawada లో artwork approval తర్వాత 3 working days లో delivery అవుతుంది. Urgent 24-hour delivery కావాలంటే extra one hundred fifty rupees పడుతుంది.", "ts": "2026-10-29T16:48:23.296086Z"}
+{"seq": 3, "role": "user", "text": "Visiting cards నే కావాలి. Wedding cards ధరలు ఎలా ఉంటాయో కేవలం తెలుసుకోవడానికి అడుగుతున్నాను. Wedding cards ఆర్డర్ చేయడం లేదు.", "ts": "2026-10-29T16:48:23.357679Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Wedding invitation cards customized కాబట్టి, design, paper sample, ఇంకా quantity బట్టి pricing మారుతుంది. దానికి fixed price phone లో చెప్పలేము. మీకు visiting cards details అన్నీ చెప్పాను కదా, ఇంకేమైనా తెలుసుకోవాలా?", "ts": "2026-10-29T16:48:25.866552Z"}
+{"seq": 5, "role": "user", "text": "ఇప్పటివరకు నా పేరు, నాకు కావాల్సిన product, quantity ఏం గుర్తు పెట్టుకున్నారు?", "ts": "2026-10-29T16:48:25.912607Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "అవును రమణ గారు, మీ పేరు, two hundred matte visiting cards details అన్నీ note చేసుకున్నాను. ఇప్పటివరకు మీ quantity two hundred అని, product matte visiting cards అని మాత్రమే record అయ్యింది. మరి quote కోసం మీ delivery area ఏంటో చెప్తారా?", "ts": "2026-10-29T16:48:28.714302Z"}
+{"seq": 7, "role": "user", "text": "సరే, ఇంతే చాలు. ధన్యవాదాలు, నమస్కారం.", "ts": "2026-10-29T16:48:28.751590Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-29T16:48:29.900279Z"}

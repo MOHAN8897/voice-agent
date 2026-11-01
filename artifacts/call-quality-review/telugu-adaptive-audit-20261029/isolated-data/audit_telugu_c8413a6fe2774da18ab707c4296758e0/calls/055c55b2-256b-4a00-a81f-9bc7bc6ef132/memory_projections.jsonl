@@ -1,0 +1,7 @@
+{"turn_seq": 1, "ts": "2026-10-29T11:10:57.141416Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T11:10:59.408675Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-29T11:11:02.304974Z", "include_summary": true, "projection": ""}
+{"turn_seq": 7, "ts": "2026-10-29T11:11:04.517938Z", "include_summary": true, "projection": ""}
+{"turn_seq": 9, "ts": "2026-10-29T11:11:06.640978Z", "include_summary": true, "projection": ""}
+{"turn_seq": 11, "ts": "2026-10-29T11:11:08.839818Z", "include_summary": true, "projection": ""}
+{"turn_seq": 13, "ts": "2026-10-29T11:11:09.619062Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_name: కిరణ్ | product: Python training | budget: కొంచెం తక్కువ | caller_email: kiran.audit@example.invalid\n[Preferences]\nrequested_time: evenings లేదా weekends | preferred_batch: weekend batch\n[Context]\nCaller provided contact details in this call."}

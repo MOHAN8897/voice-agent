@@ -1,0 +1,8 @@
+{"turn_seq": 1, "ts": "2026-10-31T14:29:01.786904Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T14:29:17.974747Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T14:29:33.116453Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T14:29:33.136619Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: నమస్తేండి, మీ అలోవెరా జ్యూస్ ధర ఎంత, బాటిల్ సైజ్ ఎంత, అదీ ఎలా వాడాలి?\nassistant: NatureVeda Aloe Vera Juice 500 ml బాటిల్ ధర 399 రూపాయలు. ఇది సాధారణ వెల్నెస్ పానీయంగా వాడతారు. మీరు తరచుగా అలోవెరా ఉత్పత్తులను ఉపయోగిస్తారా?\nuser: అలాగా, నేనైతే రెగ్యులర్ గా వాడనుండి, కానీ ట్రై చేద్దామని.\nassistant: సరే, ఇది general wellness కోసం వాడతారు. మీకు ఇంకేదైనా product గురించి details కావాలా?\nuser: అదండీ, మన కాల్ ఇప్పుడు 45 సెకన్లు దాటింది కదా, నేను కొంచెం ఇంగ్లీష్ లో కంటిన్యూ చేయొచ్చా?\nassistant: తప్పకుండా, మీరు English లో కంటిన్యూ చేయొచ్చు."}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T14:29:46.996207Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T14:30:00.087799Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-31T14:30:24.135255Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 13, "ts": "2026-10-31T14:30:43.400582Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

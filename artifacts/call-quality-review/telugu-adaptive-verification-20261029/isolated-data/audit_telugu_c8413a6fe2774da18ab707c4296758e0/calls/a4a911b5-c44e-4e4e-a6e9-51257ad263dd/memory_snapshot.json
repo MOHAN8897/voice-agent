@@ -1,0 +1,13 @@
+{
+  "facts": {
+    "caller_name": "కిరణ్",
+    "email": "kiran.audit@example.invalid",
+    "qualification": "B.Com",
+    "caller_email": "kiran.audit@example.invalid"
+  },
+  "preferences": {
+    "demo_session": "లేదు"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "user: సరే, fees eight thousand nine hundred ninety nine rupees అంటే ఓకే. కానీ నా details మీ system లో సరిగ్గా save అయ్యాయా? ఒకసారి confirm చేస్తారా?\nassistant: అవును, మీ details అన్నీ system లో save అయ్యాయి. మరి ఇప్పుడు free demo session కి register అవుతారా, లేక admission counselling తో ముందుకు వెళ్దామా?\nuser: లేదు, నాకు ఇప్పుడు demo అవసరం లేదు. నా record save అయిందో లేదో అని అడుగుతున్నాను కదా, అది confirm చేయండి. సరే, నా details save అయ్యాయని మీరు చెప్పారు కాబట్టి, ప్రస్తుతానికి అంతే. Thank you.\nassistant: సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+}

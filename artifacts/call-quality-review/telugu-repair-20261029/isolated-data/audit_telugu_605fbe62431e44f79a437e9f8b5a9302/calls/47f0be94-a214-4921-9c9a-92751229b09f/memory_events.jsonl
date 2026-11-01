@@ -1,0 +1,1 @@
+{"turn_seq": 1, "ts": "2026-10-29T17:37:47.338318Z", "source": "model", "operations": [{"op": "set_preference", "key": "contact_intent", "value": "callback"}], "applied": true, "validation_errors": []}

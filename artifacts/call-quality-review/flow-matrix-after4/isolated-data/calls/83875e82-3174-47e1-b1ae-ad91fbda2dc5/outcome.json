@@ -1,0 +1,107 @@
+{
+  "disposition": "site_visit_planned",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initially expressed that the 3-kilowatt solar system was too costly. The agent explained the total cost of ₹1,95,000, the government subsidy of ₹78,000, and the net payment of ₹1,17,000. The caller then requested the monthly EMI details, which the agent provided as starting from ₹2,999 for 48 months. After hearing the EMI option, the caller agreed to book the free survey. The caller shared their name as Kiran, their location as Velachery, and requested the survey for Saturday. The agent confirmed that the details were saved and that the team would confirm the Saturday survey. The call ended with the caller thanking the agent.",
+  "next_action": "Team to confirm the Saturday site survey with Kiran.",
+  "extracted_fields": {
+    "budget": "₹1,17,000 (after subsidy)",
+    "caller_name": "Kiran",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "phone": "+919876500507",
+    "requested_time": "சனிக்கிழமை",
+    "slot": "Saturday"
+  },
+  "objections": [
+    "The caller initially objected that the system was too costly."
+  ],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "signal:price_sensitive",
+    "followup:site_visit",
+    "sentiment:neutral",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:solar-survey",
+    "custom:emi-financing",
+    "custom:saturday-slot"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T11:35:00.252704Z",
+  "generation_ok": true,
+  "facts": {
+    "budget": "₹1,17,000 (after subsidy)",
+    "caller_name": "Kiran",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "phone": "+919876500507",
+    "requested_time": "சனிக்கிழமை",
+    "slot": "Saturday"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:emi-financing",
+    "custom:solar-survey",
+    "followup:site_visit",
+    "intent:information",
+    "intent:purchase",
+    "outcome:site_visit_planned",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "06fca9b1-baf4-5e64-9149-e289525a71fb",
+    "agentId": "354ae699-42bc-4a27-9b85-762ff98c7d23",
+    "stage": "qualified",
+    "action": "advanced"
+  },
+  "lead_assessment": {
+    "score": 100,
+    "band": "hot",
+    "disposition": "site_visit_planned",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "site_visit_planned"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "budget"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "slot"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

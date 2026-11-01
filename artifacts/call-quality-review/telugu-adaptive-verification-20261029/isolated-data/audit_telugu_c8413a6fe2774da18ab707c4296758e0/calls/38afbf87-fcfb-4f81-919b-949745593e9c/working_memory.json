@@ -1,0 +1,15 @@
+{
+  "facts": {
+    "caller_name": "Madhavi",
+    "product": "Python ఇంకా SQL/PowerBI courses",
+    "delivery_locality": "హైదరాబాద్",
+    "email": "kiran.audit@example.invalid",
+    "qualification": "graduation",
+    "caller_email": "kiran.audit@example.invalid"
+  },
+  "preferences": {
+    "batch_preference_pending_confirmation": "hidden costs, study material, certificate details confirm చేసిన తర్వాతే నేను నా batch preference చెప్తాను"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "user: సరే Madhavi, ప్రస్తుతానికి వేరే details ఏమీ అవసరం లేదు. కానీ మీరు team నుంచి hidden costs, study material, certificate details confirm చేసిన తర్వాతే నేను నా batch preference చెప్తాను. మరి ఈ confirmation ఎప్పటిలోగా వస్తుందో చెప్పగలరా? అలాగే నా enquiry save చేసినట్టు నాకు ఏమైనా reference number లేదా update వస్తుందా?\nassistant: ఆ confirmation ఎప్పుడు వస్తుందో నేను కచ్చితంగా చెప్పలేను. మీ enquiry save అవ్వాలంటే, ప్రస్తుతానికి మీ details తో record చేయమంటారా? లేక తర్వాత మళ్లీ call చేయమంటారా?"
+}

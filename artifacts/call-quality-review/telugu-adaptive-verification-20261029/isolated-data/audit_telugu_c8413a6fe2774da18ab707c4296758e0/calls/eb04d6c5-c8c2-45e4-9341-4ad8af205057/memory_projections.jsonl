@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-29T15:49:12.987251Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T15:49:15.152631Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-29T15:49:17.571361Z", "include_summary": true, "projection": ""}
+{"turn_seq": 7, "ts": "2026-10-29T15:49:20.005383Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nemail: ramesh.audit@example.invalid | caller_email: ramesh.audit@example.invalid\n[Context]\nCaller provided contact details in this call."}

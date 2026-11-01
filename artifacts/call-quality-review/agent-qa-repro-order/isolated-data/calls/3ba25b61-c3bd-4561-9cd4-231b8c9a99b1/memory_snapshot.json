@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "product": "2 bottles hair oil और 1 face cream",
+    "quantity": "1",
+    "caller_name": "लक्ष्मी रेड्डी",
+    "delivery_address": "फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: ठीक है, मैं 2 bottles hair oil और 1 face cream लेना चाहती हूँ, total price कितना हुआ?\nassistant: देखिए, hair oil 499 रुपये per bottle है और face cream 599 रुपये की है। तो 2 bottles और 1 face cream का total 1,597 रुपये आएगा। क्या आप अभी order देना चाहेंगी?\nuser: ठीक है, फिर आप order confirm कर दीजिए, आगे क्या करना होगा?\nassistant: order confirm करने के लिए मुझे आपका नाम और delivery address चाहिए होगा। क्या आप ये details बता देंगी?"
+}

@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "फ्रिज कूलिंग नहीं कर रहा technician कल मॉर्निंग दस तीस पर आ सकता है", "ts": "2026-10-29T18:42:31.659851Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Fridge की cooling की problem के लिए inspection charge two hundred fifty rupees है, लेकिन अगर आप repair करवाते हैं तो ये charge waive हो जाएगा। कल सुबह ten thirty का slot available है, बस ये ध्यान रखिएगा कि same-day visit guaranteed नहीं होती, next-day slot ही मिलेगा। आप किस area में रहते हैं?", "ts": "2026-10-29T18:42:32.844087Z", "brain_latency_ms": 1187}

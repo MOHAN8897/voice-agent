@@ -1,0 +1,43 @@
+{
+  "call_id": "c43a1dfd-1920-4848-8983-ebdf11b3e9cb",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller contacted support to report that a milk packet in their order was damaged and inquired about when the refund would be processed. The agent explained that the refund would be processed within 5 working days of reporting the damage and requested the caller's order ID and name for the team to verify. The caller agreed to provide this information and the call concluded with the agent promising that the team would call back to assist.",
+  "next_action": "Agent to call back the customer once they provide the order ID and name to process the refund.",
+  "extracted_fields": {
+    "issue": "damaged milk packet",
+    "phone": "+919876500543"
+  },
+  "facts": {
+    "issue": "damaged milk packet",
+    "phone": "+919876500543"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:damaged-goods",
+    "custom:refund-query",
+    "followup:callback",
+    "intent:support",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:support",
+    "followup:callback",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:damaged-goods",
+    "custom:refund-query"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:45:51.409470Z",
+  "generation_ok": true
+}

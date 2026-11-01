@@ -1,0 +1,78 @@
+{
+  "call_id": "7593b926-9b53-4cea-ab3d-db293c1d916c",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "Kiran, a working professional with a B.Com qualification, enquired about Python, SQL, and PowerBI training, including eligibility, fees, evening or weekend batches, placement support, job guarantee, demo availability, enquiry recording, and course duration. The agent explained that graduates or final-year students are eligible without prior coding experience; the total stated fee was ₹8,999; weekday classes run 8:00–9:00 PM and weekend classes 10:00 AM–1:00 PM. Kiran considered the fee high and asked about instalments; the agent could not confirm instalment availability. The agent stated that 100% placement assistance includes resume building, interview preparation, and job referrals, but there is no job or salary guarantee. Kiran requested that the enquiry be recorded and a demo or discussion arranged. Kiran provided the name Kiran, B.Com qualification, email kiran.audit@example.invalid, and preference for the 8:00–9:00 PM evening batch. The agent initially said the details were noted and attempted to save the enquiry, but later confirmed that a system issue prevented saving it and that no alternative recording method was available. The exact demo time was not known. The agent provided Python duration as 8 weeks and Python fee as ₹8,999, but could not provide SQL or PowerBI duration or fees. The call ended politely after Kiran said the current doubts were clear, although the enquiry was not successfully recorded and no demo was scheduled.",
+  "next_action": "Provide a reliable way to record Kiran's enquiry and confirm a demo session time; clarify instalment availability and the SQL/PowerBI course fees and durations.",
+  "extracted_fields": {
+    "caller_name": "కిరణ్",
+    "course_interest": "Python, SQL, PowerBI",
+    "email": "kiran.audit@example.invalid",
+    "fee_stated": "₹8,999",
+    "instalment_availability": "Unknown",
+    "name": "Kiran",
+    "phone": "+12025550103",
+    "placement_support": "Resume building, interview preparation, and job referrals; no job guarantee",
+    "preferred_batch": "Evening, 8:00 PM–9:00 PM",
+    "python_duration": "8 weeks",
+    "qualification": "B.Com",
+    "weekday_batch": "8:00 PM–9:00 PM",
+    "weekend_batch": "10:00 AM–1:00 PM"
+  },
+  "facts": {
+    "caller_name": "కిరణ్",
+    "course_interest": "Python, SQL, PowerBI",
+    "email": "kiran.audit@example.invalid",
+    "fee_stated": "₹8,999",
+    "instalment_availability": "Unknown",
+    "name": "Kiran",
+    "phone": "+12025550103",
+    "placement_support": "Resume building, interview preparation, and job referrals; no job guarantee",
+    "preferred_batch": "Evening, 8:00 PM–9:00 PM",
+    "python_duration": "8 weeks",
+    "qualification": "B.Com",
+    "weekday_batch": "8:00 PM–9:00 PM",
+    "weekend_batch": "10:00 AM–1:00 PM"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:python-training",
+    "followup:send_info",
+    "intent:demo",
+    "intent:information",
+    "intent:pricing",
+    "outcome:interested",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:demo",
+    "intent:pricing",
+    "signal:objection",
+    "signal:price_sensitive",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:python-training",
+    "custom:sql-powerbi",
+    "custom:evening-batch"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "The stated ₹8,999 fee seemed high.",
+    "Instalment availability was not confirmed.",
+    "No job guarantee was offered.",
+    "The enquiry could not be saved due to a system issue.",
+    "The exact demo session time was unknown.",
+    "SQL and PowerBI fees and durations were unavailable."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:38:49.461219Z",
+  "generation_ok": true
+}

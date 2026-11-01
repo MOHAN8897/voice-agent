@@ -1,0 +1,104 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "കോളർ ആയ ലക്ഷ്മി റെഡ്ഡി ഔട്ട്ബൗണ്ട് ഏജന്റിനെ വിളിച്ചു. അവർ ഒരു ഫേസ് ക്രീമിന്റെയും രണ്ട് ഹെയർ ഓയിലുകളുടെയും വിലയും വിശദാംശങ്ങളും ചോദിച്ചു മനസ്സിലാക്കി. എന്നാൽ ഡെലിവറി സമയം അറിയാൻ ഏജന്റിന് കഴിഞ്ഞില്ല, അതിനാൽ ഓർഡർ പൂർത്തിയാക്കാൻ സാധിച്ചില്ല. ഡെലിവറി സമയം ഉറപ്പാക്കാതെ ഓർഡർ ചെയ്യാൻ കഴിയില്ലെന്ന് കോളർ വ്യക്തമാക്കി. ഡെലിവറി വിവരങ്ങൾ ലഭ്യമാകുമ്പോൾ ഏജന്റ് വീണ്ടും വിളിക്കുമെന്ന് സമ്മതിച്ചു, അങ്ങനെ കോൾ അവസാനിച്ചു.",
+  "summary_en": "The agent called Lakshmi Reddy, who inquired about the ingredients and pricing for a face cream and two hair oils. The agent provided the product details and quoted a total of 1,497 rupees. However, the caller objected to placing the order because the agent could not confirm the delivery time or offer a discount. Lakshmi Reddy shared her name, address in Kukatpally, Hyderabad, and phone number 99. Since the delivery timeline was unavailable, the agent could not place the order and agreed to follow up once the information is confirmed.",
+  "next_action": "Call back Lakshmi Reddy once delivery time and discount details are confirmed.",
+  "extracted_fields": {
+    "address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "caller_name": "Lakshmi Reddy",
+    "phone_number": "99",
+    "products": "2 Herbal Hair Oil, 1 Herbal Face Cream",
+    "total_price": "1497"
+  },
+  "objections": [
+    "Delivery time is unknown.",
+    "Discount information is unavailable."
+  ],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral",
+    "signal:objection",
+    "intent:purchase"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:delivery-query"
+  ],
+  "unanswered_questions": [
+    "What is the delivery time?",
+    "Is there any discount available?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T17:13:41.122859Z",
+  "generation_ok": true,
+  "summary_language": "ml-IN",
+  "facts": {
+    "address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "caller_name": "Lakshmi Reddy",
+    "phone_number": "99",
+    "products": "2 Herbal Hair Oil, 1 Herbal Face Cream",
+    "total_price": "1497"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:delivery-query",
+    "custom:herbal-products",
+    "followup:callback",
+    "intent:purchase",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "3f9ee949-0215-4f38-9196-b4ae8024341d",
+    "agentId": "a3e5b2a7-8d8c-422d-925b-c137d41bebc5",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 50,
+    "band": "warm",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "intent:purchase"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone_number"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

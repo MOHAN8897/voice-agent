@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "రేపు ఉదయం 11 కి బుక్ చేయండి, ఇప్పుడే booking confirm చేయండి.", "ts": "2026-10-29T20:42:41.399092Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "రేపు ఉదయం 11 కి మీ visit note చేశాను. మా service areas Madhapur, Gachibowli, Kondapur మరియు Kukatpally మాత్రమే. మీరు ఏ locality లో ఉన్నారో చెప్తారా?", "ts": "2026-10-29T20:42:44.762447Z"}
+{"seq": 3, "role": "user", "text": "Confirm అయిందా లేదా? నాకు booking number ఇవ్వండి.", "ts": "2026-10-29T20:42:44.764446Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ఇంకా booking number generate కాలేదు. మీకు booking confirm అయిందో లేదో చెప్పడానికి నా దగ్గర ఆ వివరాలు లేవు. చేయమంటారా?", "ts": "2026-10-29T20:42:48.358792Z"}
+{"seq": 5, "role": "user", "text": "Okay, thanks.", "ts": "2026-10-29T20:42:48.358792Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ఇంకా booking confirm కాలేదు, booking number కూడా generate కాలేదు. మీ locality చెప్తే, మా team visit confirm చేస్తుంది. మీరు ఏ area లో ఉన్నారో చెప్పండి?", "ts": "2026-10-29T20:42:50.501668Z"}

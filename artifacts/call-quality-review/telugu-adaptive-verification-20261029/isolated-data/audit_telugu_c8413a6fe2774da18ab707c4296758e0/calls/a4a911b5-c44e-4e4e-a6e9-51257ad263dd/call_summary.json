@@ -1,0 +1,65 @@
+{
+  "call_id": "a4a911b5-c44e-4e4e-a6e9-51257ad263dd",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "Kiran, a working professional with a B.Com qualification, called to inquire about Python and data training. They preferred weekend or evening classes and asked about fees and recording their details. The agent provided a Saturday-Sunday weekend batch from 10:00 AM to 1:00 PM with a total fee of ₹8,999. Kiran accepted the fee and asked for confirmation that their details were saved; the agent confirmed this, although the transcript does not independently verify that the save was completed. The agent then offered a free demo or admission counselling, but Kiran declined the demo for now and clarified that the main request was confirmation of the saved record. The call ended politely with no admission, demo registration, or counselling appointment scheduled.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "class_preference": "Weekend",
+    "demo_session": "Declined for now",
+    "email": "kiran.audit@example.invalid",
+    "fee_quoted": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550148",
+    "preferred_schedule": "Saturday and Sunday, 10:00 AM-1:00 PM",
+    "qualification": "B.Com"
+  },
+  "facts": {
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "class_preference": "Weekend",
+    "demo_session": "Declined for now",
+    "email": "kiran.audit@example.invalid",
+    "fee_quoted": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550148",
+    "preferred_schedule": "Saturday and Sunday, 10:00 AM-1:00 PM",
+    "qualification": "B.Com"
+  },
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:data-training",
+    "custom:python-training",
+    "custom:weekend-classes",
+    "intent:information",
+    "intent:pricing",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:pricing",
+    "sentiment:positive",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:python-training",
+    "custom:data-training",
+    "custom:weekend-classes"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "No demo needed at this time; caller only wanted confirmation that their details were saved."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T15:51:25.117238Z",
+  "generation_ok": true
+}

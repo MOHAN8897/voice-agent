@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "Where is my order? The order ID is FC10234 and it has not come yet.", "ts": "2026-10-30T10:49:38.373736Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I’m sorry, but I cannot check the live order status over the phone. I can note down your order ID FC10234 for our support team to check and call you back. May I have your name?", "ts": "2026-10-30T10:49:41.410271Z"}
+{"seq": 3, "role": "user", "text": "My name is Kiran.", "ts": "2026-10-30T10:49:41.411271Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "I have noted your order ID FC10234 and your name Kiran for our support team. They will check the status and call you back.", "ts": "2026-10-30T10:49:45.065303Z"}
+{"seq": 5, "role": "user", "text": "Okay, thanks.", "ts": "2026-10-30T10:49:45.065303Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-30T10:49:46.264150Z"}

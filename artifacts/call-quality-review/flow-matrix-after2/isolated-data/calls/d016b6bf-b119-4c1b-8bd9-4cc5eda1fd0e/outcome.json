@@ -1,0 +1,105 @@
+{
+  "disposition": "site_visit_planned",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, initiated the call to inquire about a 3 kW solar system. Initially, the caller expressed that the pricing was too costly. The agent responded by explaining the breakdown of the ₹1,95,000 pre-subsidy cost, the ₹78,000 government subsidy, the resulting net price of ₹1,17,000, and the monthly EMI option of ₹2,999 over 48 months. Although the caller initially objected to the cost, they asked for the EMI details to be repeated. After confirming the monthly EMI, the caller agreed to proceed and requested to book a free site survey. The agent collected the caller's name (Kiran), location (Velachery), and preferred day (Saturday) and confirmed that the request for the free site survey was noted. The caller thanked the agent, and the call ended.",
+  "next_action": "Agent to conduct the free site survey in Velachery on Saturday.",
+  "extracted_fields": {
+    "budget": "Costly",
+    "caller_name": "Kiran",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "phone": "+919876500501",
+    "requested_time": "சனிக்கிழமை",
+    "slot": "Saturday"
+  },
+  "objections": [
+    "Pricing is too costly"
+  ],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "signal:price_sensitive",
+    "signal:objection",
+    "followup:site_visit",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:free-site-survey",
+    "custom:solar-system"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T11:02:08.827206Z",
+  "generation_ok": true,
+  "facts": {
+    "budget": "Costly",
+    "caller_name": "Kiran",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "phone": "+919876500501",
+    "requested_time": "சனிக்கிழமை",
+    "slot": "Saturday"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:free-site-survey",
+    "custom:solar-system",
+    "followup:site_visit",
+    "intent:information",
+    "intent:purchase",
+    "outcome:site_visit_planned",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "8b3cf128-9267-50cf-a893-ec1e74ded605",
+    "agentId": "735f3d40-2a6d-48fb-a94b-5b7ab731cb05",
+    "stage": "qualified",
+    "action": "advanced"
+  },
+  "lead_assessment": {
+    "score": 100,
+    "band": "hot",
+    "disposition": "site_visit_planned",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "site_visit_planned"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "budget"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "slot"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

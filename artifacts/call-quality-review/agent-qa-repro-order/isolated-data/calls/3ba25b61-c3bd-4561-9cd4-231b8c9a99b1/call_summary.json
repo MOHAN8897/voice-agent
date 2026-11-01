@@ -1,0 +1,58 @@
+{
+  "call_id": "3ba25b61-c3bd-4561-9cd4-231b8c9a99b1",
+  "language_callback": null,
+  "disposition": "converted",
+  "disposition_confidence": 0.95,
+  "summary_te": "व्यवसाय के एजेंट ने ग्राहक को फोन किया। ग्राहक ने फेस क्रीम और हेयर ऑयल के ऑर्डर के बारे में पूछताछ की, और कुल कीमत 1,597 रुपये जानने के बाद अपना नाम और डिलीवरी पता साझा किया। एजेंट ने ऑर्डर की पुष्टि की और बताया कि आगे की जानकारी ईमेल पर भेजी जाएगी। ग्राहक ने पुष्टि स्वीकार की और कॉल समाप्त हो गई।",
+  "summary_language": "hi-IN",
+  "summary_en": "The business agent called the customer to offer products. The customer inquired about purchasing two bottles of hair oil and one face cream, and the agent calculated the total price to be 1,597 rupees. To proceed, the agent requested the customer's name and delivery address. The customer, Lakshmi Reddy, provided her details, and the agent confirmed the order before concluding the call.",
+  "next_action": "no_action_required",
+  "extracted_fields": {
+    "caller_name": "लक्ष्मी रेड्डी",
+    "delivery_address": "फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072",
+    "phone": "+919700000001",
+    "product": "2 bottles hair oil और 1 face cream",
+    "products": "2 bottles hair oil, 1 face cream",
+    "quantity": "1",
+    "total_price": "1,597 rupees"
+  },
+  "facts": {
+    "caller_name": "लक्ष्मी रेड्डी",
+    "delivery_address": "फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072",
+    "phone": "+919700000001",
+    "product": "2 bottles hair oil और 1 face cream",
+    "products": "2 bottles hair oil, 1 face cream",
+    "quantity": "1",
+    "total_price": "1,597 rupees"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:order-confirmed",
+    "followup:send_info",
+    "intent:purchase",
+    "outcome:converted",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:purchase",
+    "sentiment:positive",
+    "signal:ready_to_buy",
+    "followup:send_info"
+  ],
+  "custom_tags": [
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:order-confirmed"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T14:45:27.039399Z",
+  "generation_ok": true
+}

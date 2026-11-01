@@ -1,0 +1,115 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.88,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, enquired about Python with Data Analytics training as a working professional, asking for the fee and a weekend-only schedule. The agent quoted a fee of ₹8,999 and explained that the weekend batch runs on Saturdays and Sundays from 10:00 AM to 1:00 PM. Kiran accepted the fee as okay and provided the name Kiran, email kiran.audit@example.invalid, qualification B.Com, and weekend preference, requesting that the contact be created and the details saved and verified. The agent clarified multiple times that the system could not directly save or check the record, and offered to send the details for team review and asked about a callback. Kiran declined a callback but repeated the request to note the enquiry and confirm whether it was saved. The agent did not confirm any save or review action, and the caller ended the conversation stating it was the last enquiry.",
+  "next_action": "Route Kiran's enquiry and contact details to the appropriate team for manual review or CRM entry, then follow up only if permitted, since the caller declined a callback.",
+  "extracted_fields": {
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "course": "Python with Data Analytics",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550147",
+    "preferred_schedule": "Saturday and Sunday, 10:00 AM to 1:00 PM",
+    "preferred_time": "weekend",
+    "product": "Python/data training",
+    "qualification": "B.Com"
+  },
+  "objections": [
+    "The caller requested direct system saving and verification, but the agent could not perform or confirm that action.",
+    "The caller declined a callback."
+  ],
+  "notes": "Do not claim that the contact was saved or verified; the transcript explicitly states that this was not possible.",
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "signal:price_sensitive",
+    "action:required",
+    "followup:send_info",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-data-training",
+    "custom:weekend-batch",
+    "custom:crm-entry"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T11:29:37.932612Z",
+  "generation_ok": true,
+  "facts": {
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "course": "Python with Data Analytics",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550147",
+    "preferred_schedule": "Saturday and Sunday, 10:00 AM to 1:00 PM",
+    "preferred_time": "weekend",
+    "product": "Python/data training",
+    "qualification": "B.Com"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "followup:callback",
+    "followup:send_info",
+    "intent:information",
+    "intent:purchase",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "20ebfc5c-ed92-4eb5-baca-a39183412dd3",
+    "agentId": "4c5270a8-990a-5800-868d-9d685eca9a09",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 100,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.88,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "preferred_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

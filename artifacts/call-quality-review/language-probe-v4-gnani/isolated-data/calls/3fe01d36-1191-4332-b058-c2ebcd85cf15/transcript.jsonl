@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "ಸ್ಪ್ಲಿಟ್ AC servicing ಗೆ ಎಷ್ಟು cost ಆಗುತ್ತೆ?", "ts": "2026-10-29T19:39:35.357938Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Split AC servicing-ಗೆ ₹599 ಆಗುತ್ತೆ. ನಿಮಗೆ visit arrange ಮಾಡ್ಬೇಕಾ?", "ts": "2026-10-29T19:39:35.864727Z", "brain_latency_ms": 509}
+{"seq": 3, "role": "user", "text": "ನನ್ನ split AC ಗೆ service ಮಾಡಿಸಬೇಕು, charges ಎಷ್ಟು?", "ts": "2026-10-29T19:39:35.878875Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Split AC servicing-ಗೆ ₹599 ಆಗುತ್ತೆ. ನಿಮ್ಮ area Madhapur, Gachibowli, Kondapur ಅಥವಾ Kukatpally-ನಲ್ಲಿ ಇದೆಯಾ? ಯಾಕಂದ್ರೆ ನಾವು ಈ areas-ನಲ್ಲಿ ಮಾತ್ರ service ಮಾಡ್ತೀವಿ.", "ts": "2026-10-29T19:39:36.522559Z", "brain_latency_ms": 646}

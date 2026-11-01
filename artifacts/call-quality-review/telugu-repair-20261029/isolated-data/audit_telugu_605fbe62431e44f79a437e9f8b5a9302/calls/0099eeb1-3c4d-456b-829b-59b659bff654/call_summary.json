@@ -1,0 +1,44 @@
+{
+  "call_id": "0099eeb1-3c4d-456b-829b-59b659bff654",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller, Ramesh from Vijayawada, said he was unable to talk at that moment and explicitly requested a call back to the same number after 6:00 PM. The agent acknowledged and recorded the request. The call ended politely with no further discussion.",
+  "next_action": "Call Ramesh at the same number after 6:00 PM.",
+  "extracted_fields": {
+    "callback_number": "Same number",
+    "callback_time": "After 6:00 PM",
+    "caller_name": "రమేష్",
+    "location": "Vijayawada",
+    "name": "Ramesh",
+    "phone": "+12025550111"
+  },
+  "facts": {
+    "callback_number": "Same number",
+    "callback_time": "After 6:00 PM",
+    "caller_name": "రమేష్",
+    "location": "Vijayawada",
+    "name": "Ramesh",
+    "phone": "+12025550111"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "followup:callback",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "followup:callback",
+    "action:required",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:26:35.828991Z",
+  "generation_ok": true
+}

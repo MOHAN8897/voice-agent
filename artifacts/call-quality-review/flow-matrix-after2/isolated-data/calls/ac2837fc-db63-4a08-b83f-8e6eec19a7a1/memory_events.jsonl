@@ -1,0 +1,2 @@
+{"turn_seq": 1, "ts": "2026-10-30T11:02:22.544042Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-30T11:02:23.922246Z", "source": "model", "operations": [{"op": "set_preference", "key": "callback_time", "value": "ஞாயிற்றுக்கிழமை ஈவினிங் 7 மணிக்கு"}], "applied": true, "validation_errors": []}

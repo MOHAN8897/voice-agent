@@ -1,0 +1,29 @@
+{
+  "call_id": "4edd8791-fac9-4868-9183-8a1a5382f3aa",
+  "language_callback": null,
+  "disposition": "no_outcome",
+  "disposition_confidence": 0.0,
+  "summary_te": "",
+  "summary_en": "Automatic summary generation failed. Transcript review: User: నేను ఇప్పుడు busy గా ఉన్నాను. రేపు సాయంత్రం 6 కి మళ్ళీ call చేయగలరా? Assistant: మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+  "next_action": "Review the transcript and captured facts.",
+  "extracted_fields": {
+    "phone": "+919876500001"
+  },
+  "facts": {
+    "phone": "+919876500001"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "followup:callback",
+    "outcome:no_outcome",
+    "quality:inconclusive"
+  ],
+  "tags": [],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:02:29.475661Z",
+  "generation_ok": false
+}

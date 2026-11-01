@@ -1,0 +1,13 @@
+{"turn_seq": 1, "ts": "2026-10-31T16:01:48.946633Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-31T16:02:02.550504Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-31T16:02:15.692714Z", "include_summary": true, "projection": ""}
+{"turn_seq": 7, "ts": "2026-10-31T16:02:40.083145Z", "include_summary": false, "projection": ""}
+{"turn_seq": 9, "ts": "2026-10-31T16:02:51.876645Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1"}
+{"turn_seq": 11, "ts": "2026-10-31T16:03:01.213908Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1"}
+{"turn_seq": 13, "ts": "2026-10-31T16:03:14.229484Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1"}
+{"turn_seq": 15, "ts": "2026-10-31T16:03:34.366177Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1"}
+{"turn_seq": 17, "ts": "2026-10-31T16:03:44.652520Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1 | caller_name: Lakshmi Reddy"}
+{"turn_seq": 19, "ts": "2026-10-31T16:03:58.423777Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1 | caller_name: Lakshmi Reddy"}
+{"turn_seq": 21, "ts": "2026-10-31T16:04:07.516939Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1 | caller_name: Lakshmi Reddy | email: mohansaiteja.99@gmail.com"}
+{"turn_seq": 23, "ts": "2026-10-31T16:04:21.435022Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1 | caller_name: Lakshmi Reddy | email: mohansaiteja.99@gmail.com"}
+{"turn_seq": 25, "ts": "2026-10-31T16:04:36.684542Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 1 | caller_name: Lakshmi Reddy | email: mohansaiteja.99@gmail.com"}

@@ -1,0 +1,56 @@
+[
+  {
+    "id": "A_deep_enquiry",
+    "business": "A",
+    "kind": "deep",
+    "integration": "success",
+    "policy": "review",
+    "max_turns": 13,
+    "goal": "Learn standard versus matte visiting-card pricing, minimum quantity, design approval, delivery, rush surcharge and advance-payment conditions. Start with 100 cards, later correct to 200. Ask about wedding-card price once as an unknown fact. Try to submit a quote/internal order request with your final details. Ask what quantity they recorded after intervening conversation. This is an extended information enquiry: do not stop merely because a booking or email is unavailable. Continue with meaningful related questions for at least TEN customer turns, using the actual answers to select the next question. Explore alternatives, conditions, hidden costs, corrections and practical examples. Answer the representative's questions when relevant. You are still deciding, not ready to order or schedule a callback, so do not accept a next-step callback as a substitute for answers. If the representative tries to wrap up before your questions are served, politely state that you still have a relevant question. At turn 12 or 13, end clearly."
+  },
+  {
+    "id": "B_deep_enquiry",
+    "business": "B",
+    "kind": "deep",
+    "integration": "success",
+    "policy": "review",
+    "max_turns": 13,
+    "goal": "Learn split versus window AC servicing cost, inspection-fee conditions, coverage, replacement-parts uncertainty and technician timing. Give your locality and appliance when asked. Try to arrange a visit, but distinguish a request from a confirmed calendar booking. Ask what time/date is actually confirmed. This is an extended information enquiry: do not stop merely because a booking or email is unavailable. Continue with meaningful related questions for at least TEN customer turns, using the actual answers to select the next question. Explore alternatives, conditions, hidden costs, corrections and practical examples. Answer the representative's questions when relevant. You are still deciding, not ready to order or schedule a callback, so do not accept a next-step callback as a substitute for answers. If the representative tries to wrap up before your questions are served, politely state that you still have a relevant question. At turn 12 or 13, end clearly."
+  },
+  {
+    "id": "C_deep_enquiry",
+    "business": "C",
+    "kind": "deep",
+    "integration": "success",
+    "policy": "review",
+    "max_turns": 13,
+    "goal": "Compare Python and SQL/PowerBI courses, duration, fees, instalments, evening/weekend batches and eligibility. Ask whether a job is guaranteed. Ask to save an enquiry and arrange a discussion/demo if supported, and clarify what has actually been done. This is an extended information enquiry: do not stop merely because a booking or email is unavailable. Continue with meaningful related questions for at least TEN customer turns, using the actual answers to select the next question. Explore alternatives, conditions, hidden costs, corrections and practical examples. Answer the representative's questions when relevant. You are still deciding, not ready to order or schedule a callback, so do not accept a next-step callback as a substitute for answers. If the representative tries to wrap up before your questions are served, politely state that you still have a relevant question. At turn 12 or 13, end clearly."
+  },
+  {
+    "id": "B_refusal_clean_repeat",
+    "business": "B",
+    "kind": "refusal",
+    "integration": "none",
+    "policy": "review",
+    "max_turns": 3,
+    "goal": "In your FIRST utterance clearly refuse buying AC servicing and end only THIS call. Explicitly distinguish that you are not requesting permanent blocking or future-contact suppression. Do not say call me later or do not call me again. Ignore the background profile's booking need."
+  },
+  {
+    "id": "C_self_callback",
+    "business": "C",
+    "kind": "self_callback",
+    "integration": "none",
+    "policy": "automatic",
+    "max_turns": 4,
+    "goal": "You are interested but YOU will contact this business yourself tomorrow. State clearly in Telugu that YOU will call THEM and you do NOT want THEM to call you. This is not permanent DND; it is your own chosen next step. Do not request a booking or an outbound callback. End this call."
+  },
+  {
+    "id": "A_callback_dispatch_repeat",
+    "business": "A",
+    "kind": "callback_dispatch",
+    "integration": "none",
+    "policy": "automatic",
+    "max_turns": 4,
+    "goal": "You cannot speak now, remain interested, and explicitly ask THE BUSINESS to call YOU on this same number exactly six hours later. State your name. Do not say you will call them. Confirm the request, then end."
+  }
+]

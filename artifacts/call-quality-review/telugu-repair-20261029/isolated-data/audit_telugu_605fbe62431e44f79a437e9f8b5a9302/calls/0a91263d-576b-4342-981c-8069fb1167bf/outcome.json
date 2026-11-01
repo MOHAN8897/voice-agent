@@ -1,0 +1,122 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller asked about ordering matte-finish visiting cards, including the price difference from standard cards and the minimum quantity. The agent stated that 100 standard cards cost ₹200, 100 matte cards cost ₹350, and the minimum order is 100 cards. The caller then asked about design approval and delivery; the agent could not explain the approval process but said delivery to Vijayawada takes three working days after artwork approval. The caller also asked about wedding-card pricing and pricing for 200 cards; the agent said wedding-card pricing varies by design, paper sample, and quantity, while 200 cards on regular paper cost ₹400. The caller asked about rush-order charges and advance payment, and the agent stated that rush orders incur an additional ₹150 and orders above ₹1,000 require 50% advance payment. The caller confirmed a quantity of 200 matte visiting cards, and the agent stated the total would be ₹700 and claimed the quantity was noted. The caller provided the name Ramesh, email ramesh.audit@example.invalid, quantity 200 matte visiting cards, and Vijayawada delivery, and asked how to place the order or submit a quote/internal order request. The agent said it did not know how to submit the request and only partially repeated the caller’s details. The caller repeated the email and delivery location and again asked how to place the order, but the call ended with a generic thank-you without instructions, order submission, quote, or confirmed follow-up.",
+  "next_action": "Provide the caller with the correct order-placement process and clarify design approval and quote/internal order request procedures.",
+  "extracted_fields": {
+    "advance_payment": "50% for orders above ₹1,000",
+    "caller_name": "రమేష్",
+    "delivery_locality": "విజయవాడ",
+    "delivery_location": "Vijayawada",
+    "delivery_time": "3 working days after artwork approval",
+    "email": "ramesh.audit@example.invalid",
+    "matte_price": "₹350 per 100 cards",
+    "minimum_quantity": "100 cards",
+    "name": "Ramesh",
+    "phone": "+12025550107",
+    "product": "Matte-finish visiting cards",
+    "quantity": "200",
+    "rush_order_charge": "₹150 extra",
+    "standard_price": "₹200 per 100 cards",
+    "total_price": "₹700"
+  },
+  "objections": [
+    "The agent could not explain the design approval process.",
+    "The agent did not know how to submit a quote or internal order request and did not provide order-placement instructions."
+  ],
+  "notes": "The caller was positively engaged and discussed concrete purchasing details, but the order was not placed and no follow-up was confirmed. The stated ₹700 total for 200 matte cards is based on the quoted ₹350 per 100 cards.",
+  "tags": [
+    "intent:purchase",
+    "intent:pricing",
+    "signal:ready_to_buy",
+    "followup:send_quote",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards",
+    "custom:200-card-order",
+    "custom:vijayawada-delivery"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:22:33.419349Z",
+  "generation_ok": true,
+  "facts": {
+    "advance_payment": "50% for orders above ₹1,000",
+    "caller_name": "రమేష్",
+    "delivery_locality": "విజయవాడ",
+    "delivery_location": "Vijayawada",
+    "delivery_time": "3 working days after artwork approval",
+    "email": "ramesh.audit@example.invalid",
+    "matte_price": "₹350 per 100 cards",
+    "minimum_quantity": "100 cards",
+    "name": "Ramesh",
+    "phone": "+12025550107",
+    "product": "Matte-finish visiting cards",
+    "quantity": "200",
+    "rush_order_charge": "₹150 extra",
+    "standard_price": "₹200 per 100 cards",
+    "total_price": "₹700"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:200-card-order",
+    "custom:matte-visiting-cards",
+    "followup:send_quote",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "signal:objection",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "f5d8626f-882b-4b5f-a576-390cc645e414",
+    "agentId": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.98,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

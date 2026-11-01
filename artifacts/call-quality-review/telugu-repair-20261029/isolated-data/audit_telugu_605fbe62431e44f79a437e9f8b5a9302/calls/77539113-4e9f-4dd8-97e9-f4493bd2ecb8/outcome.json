@@ -1,0 +1,37 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "The caller said they would call the business themselves tomorrow and explicitly requested not to be called. They stated they do not need anything now and ended the call. The agent acknowledged this and politely thanked them; no follow-up action was agreed from the business side.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+12025550116"
+  },
+  "objections": [],
+  "notes": "Caller declined a business callback but did not necessarily reject all future contact; they said they may call tomorrow.",
+  "tags": [
+    "signal:do_not_call",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:47:58.193142Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+12025550116"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:phone_known",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,33 @@
+{
+  "call_id": "28289c34-a55b-497a-a922-0710fd0343cb",
+  "language_callback": null,
+  "disposition": "no_outcome",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The call began with the user making an indistinct sound, after which the agent asked them to repeat themselves because the final statement was unclear. The user then said 'hello hello,' but the conversation did not progress further, and the call ended without any meaningful discussion or exchange of information.",
+  "next_action": "No next step was agreed upon.",
+  "extracted_fields": {
+    "phone": "+919876500530"
+  },
+  "facts": {
+    "phone": "+919876500530"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "intent:information",
+    "outcome:no_outcome",
+    "quality:inconclusive",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "sentiment:neutral",
+    "intent:information"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:04:53.278286Z",
+  "generation_ok": true
+}

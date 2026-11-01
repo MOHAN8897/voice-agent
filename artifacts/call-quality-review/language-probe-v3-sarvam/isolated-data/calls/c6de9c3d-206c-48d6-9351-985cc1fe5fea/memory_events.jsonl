@@ -1,0 +1,2 @@
+{"turn_seq": 1, "ts": "2026-10-29T19:28:59.737868Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-29T19:29:00.264385Z", "source": "model", "operations": [{"op": "set_fact", "key": "latest_caller_correction", "value": "Actually, it is a window AC, not a split AC. How much would the service cost?"}], "applied": true, "validation_errors": []}

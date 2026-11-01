@@ -1,0 +1,14 @@
+{
+  "facts": {
+    "product": "visiting cards",
+    "quantity": "200",
+    "caller_name": "రమేష్",
+    "email": "ramesh.audit@example.invalid",
+    "caller_email": "ramesh.audit@example.invalid"
+  },
+  "preferences": {
+    "finish": "matte finish"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "assistant: Matte finish visiting cards కోసం minimum order one hundred cards ఉంటుంది. మీకు ఎన్ని cards కావాలో చెప్తారా?\nuser: సరే, ప్రస్తుతానికి ఒక 200 cards order చేస్తాను. ఇంకేమైనా details కావాలా?\nassistant: సరే, two hundred cards order కి three hundred fifty rupees అవుతుంది. మీ పేరు చెప్తారా, quote కోసం?\nuser: నా పేరు రమేష్. ramesh.audit@example.invalid కి quote పంపించండి. ప్రస్తుతానికి నాకు ఇంతే, ధన్యవాదాలు.\nassistant: ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+}

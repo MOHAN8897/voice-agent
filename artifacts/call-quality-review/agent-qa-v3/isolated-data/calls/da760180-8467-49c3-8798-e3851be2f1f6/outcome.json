@@ -1,0 +1,98 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 1.0,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్ కు కాల్ చేశారు. కస్టమర్ హెర్బల్ హెయిర్ ఆయిల్ ధర ₹499 మరియు పదార్థాల గురించి అడిగారు. ఏజెంట్ ఉపయోగ సూచనల గురించి సమాచారం లేదని చెప్పారు. కస్టమర్ ఇప్పుడు బిజీగా ఉన్నానని, రేపు సాయంత్రం 6:30 కి కాల్ చేయమని కోరారు. ఏజెంట్ ఈ కాల్ బ్యాక్ సమయాన్ని నోట్ చేసుకుని కాల్ ముగించారు.",
+  "summary_en": "The agent called the customer to share details about NatureVeda herbal hair oil. The agent shared the price of ₹499 and listed the ingredients, but could not provide usage instructions when asked. The customer stated they were busy with work and requested a callback for tomorrow evening at 6:30 PM. The agent noted this callback time and concluded the call.",
+  "next_action": "Call customer back tomorrow at 6:30 PM.",
+  "extracted_fields": {
+    "callback_time": "Tomorrow at 6:30 PM",
+    "phone": "+919700000002",
+    "price": "₹499",
+    "product": "NatureVeda herbal hair oil"
+  },
+  "objections": [
+    "Customer stated they were busy with work."
+  ],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:hair-oil",
+    "custom:usage-instructions"
+  ],
+  "unanswered_questions": [
+    "How should this be applied?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T14:20:55.835681Z",
+  "generation_ok": true,
+  "summary_language": "te-IN",
+  "facts": {
+    "callback_time": "Tomorrow at 6:30 PM",
+    "phone": "+919700000002",
+    "price": "₹499",
+    "product": "NatureVeda herbal hair oil"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:hair-oil",
+    "custom:usage-instructions",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "44ce5804-2a0f-4b4b-b471-e828bbedc99e",
+    "agentId": "58700315-0379-50ee-81b1-70ec18f28407",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 60,
+    "band": "warm",
+    "disposition": "callback_required",
+    "confidence": 1.0,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "callback_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

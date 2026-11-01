@@ -1,0 +1,1 @@
+{"ts": "2026-10-30T11:12:14.593196Z", "model": "gpt-5.6-luna", "ok": false, "error": "Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quota', 'param': None, 'code': 'credit_bala", "disposition": "no_outcome"}

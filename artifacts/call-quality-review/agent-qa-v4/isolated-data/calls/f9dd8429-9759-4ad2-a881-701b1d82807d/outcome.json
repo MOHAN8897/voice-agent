@@ -1,0 +1,97 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "NatureVeda Herbals ఏజెంట్ కస్టమర్కు కాల్ చేశారు. కస్టమర్ హెయిర్ ఆయిల్ ధర మరియు పదార్థాల గురించి అడిగారు. ఏజెంట్ ₹499 ధర మరియు పదార్థాలను వివరించారు, కానీ గ్యారెంటీ ఇవ్వలేమని చెప్పారు. కస్టమర్కు గ్యారెంటీ లేకపోవడంతో అభ్యంతరం వ్యక్తం చేసి, రేపు సాయంత్రం 6:30 గంటలకు కాల్ చేయమని కోరారు. ఏజెంట్ ఈ కాల్ బ్యాక్ను నోట్ చేసుకుని కాల్ ముగించారు.",
+  "summary_en": "An agent from NatureVeda Herbals called the customer to share details about their products. The customer inquired about the Herbal Hair Oil, and the agent shared that it costs ₹499 and contains Amla, Bhringraj, Hibiscus, and Coconut Oil. The customer asked about usage and whether it could reduce hair fall, but objected after the agent stated they could not guarantee results or side effects. The customer requested a callback for tomorrow at 6:30 PM, which the agent agreed to note before ending the call.",
+  "next_action": "Call customer back at 6:30 PM tomorrow.",
+  "extracted_fields": {
+    "callback_time": "Tomorrow at 6:30 PM",
+    "phone": "+919700000002",
+    "price": "₹499",
+    "product": "Herbal Hair Oil"
+  },
+  "objections": [
+    "The customer refused to buy the product because the agent could not guarantee a reduction in hair fall or the absence of side effects."
+  ],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:herbal-hair-oil",
+    "custom:callback-requested"
+  ],
+  "unanswered_questions": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T15:03:38.851786Z",
+  "generation_ok": true,
+  "summary_language": "te-IN",
+  "facts": {
+    "callback_time": "Tomorrow at 6:30 PM",
+    "phone": "+919700000002",
+    "price": "₹499",
+    "product": "Herbal Hair Oil"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:callback-requested",
+    "custom:herbal-hair-oil",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "7e2c447c-7465-43d8-b963-5d18a344c76d",
+    "agentId": "60e25f6e-5494-59f3-99a0-dcd3c42c309a",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 60,
+    "band": "warm",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "callback_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,46 @@
+{
+  "call_id": "230d8458-338b-49ff-8a53-211f120c886d",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the status of order ID FC10234, stating that it had not yet been delivered. The agent explained that they could not view live order status over the phone. To facilitate a support team callback, the agent requested the caller's name, which the caller provided as Kiran. The agent confirmed that they had recorded the name and order ID for the support team to review and follow up. The caller accepted this resolution, thanked the agent, and the call concluded.",
+  "next_action": "Support team to call Kiran back regarding order FC10234.",
+  "extracted_fields": {
+    "caller_name": "Kiran",
+    "name": "Kiran",
+    "order_id": "FC10234",
+    "phone": "+919876500508"
+  },
+  "facts": {
+    "caller_name": "Kiran",
+    "name": "Kiran",
+    "order_id": "FC10234",
+    "phone": "+919876500508"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:order-status",
+    "custom:support-query",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:information",
+    "followup:callback",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:order-status",
+    "custom:support-query"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:00:18.031954Z",
+  "generation_ok": true
+}

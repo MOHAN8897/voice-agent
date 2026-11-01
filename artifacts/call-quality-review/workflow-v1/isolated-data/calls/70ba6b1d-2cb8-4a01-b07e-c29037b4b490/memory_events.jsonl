@@ -1,0 +1,3 @@
+{"turn_seq": 2, "ts": "2026-10-29T20:19:55.693501Z", "source": "model", "operations": [{"op": "set_fact", "key": "caller_name", "value": "ರವಿ ಕುಮಾರ್"}], "applied": true, "validation_errors": []}
+{"turn_seq": 4, "ts": "2026-10-29T20:19:59.040456Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 6, "ts": "2026-10-29T20:19:59.822264Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

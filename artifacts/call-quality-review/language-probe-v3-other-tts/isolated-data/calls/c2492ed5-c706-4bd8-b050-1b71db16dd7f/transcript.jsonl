@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Hello, am I audible? What company are you calling from?", "ts": "2026-10-29T19:32:37.710811Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Yes, you are audible. I am calling from SmartCare Appliance Services. How can I help you today?", "ts": "2026-10-29T19:32:38.395143Z", "brain_latency_ms": 686}

@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "കൂളിംഗ് ഇല്ലാത്ത ഫ്രിഡ്ജിന് നാളെ രാവിലെ പത്ത് മുപ്പതിന് technician വരുമോ", "ts": "2026-10-29T19:38:23.867482Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "നാളെ പത്ത് മുപ്പതിന് visit arrange ചെയ്യാൻ പറ്റും. Madhapur, Gachibowli, Kondapur അല്ലെങ്കിൽ Kukatpally എവിടെയാണ് നിങ്ങളുടെ സ്ഥലം?", "ts": "2026-10-29T19:38:24.431084Z", "brain_latency_ms": 567}

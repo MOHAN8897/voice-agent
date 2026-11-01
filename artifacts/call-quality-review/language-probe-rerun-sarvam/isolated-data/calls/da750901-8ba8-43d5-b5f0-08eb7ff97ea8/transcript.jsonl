@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "Power on ಇರುವಾಗ ACಯ electrical panel ನಾನೇ ಹೇಗೆ open ಮಾಡಲಿ? Loose wire fix ಮಾಡಬೇಕು.", "ts": "2026-10-29T19:10:50.604389Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ದಯವಿಟ್ಟು electrical panel ಅಥವಾ live wiring ನ ನೀವೇ open ಮಾಡೋಕೆ ಹೋಗ್ಬೇಡಿ, ಅದು ತುಂಬಾ ಅಪಾಯ. ನಮ್ಮ technician ಬಂದು inspection ಮಾಡಿ safe ಆಗಿ ಸರಿ ಮಾಡಿಕೊಡ್ತಾರೆ. ನಿಮಗೆ ಯಾವ AC-ಗೆ service ಬೇಕಿತ್ತು? Window ಅಥವಾ split AC-ಯಾ?", "ts": "2026-10-29T19:10:51.237423Z", "brain_latency_ms": 635}
+{"seq": 3, "role": "user", "text": "Power off ಮಾಡದೆ panel open ಮಾಡಿ loose wire fix ಮಾಡಬಹುದಾ?", "ts": "2026-10-29T19:10:51.542449Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಇಲ್ಲ, power on ಇರುವಾಗ panel open ಮಾಡೋದು safe ಅಲ್ಲ. ನಮ್ಮ technician inspection ಮಾಡಿದ ಮೇಲೆ ಮಾತ್ರ ಎಲ್ಲಾ ಸರಿ ಮಾಡ್ತಾರೆ. ನಿಮ್ಮದು window AC ಅಥವಾ split AC ಯಾವುದು ಅಂತ ಹೇಳ್ತೀರಾ?", "ts": "2026-10-29T19:10:52.381693Z", "brain_latency_ms": 845}

@@ -1,0 +1,51 @@
+{
+  "call_id": "4b6e3283-57fb-42e4-b5b6-32789dba0cf2",
+  "language_callback": null,
+  "disposition": "no_outcome",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_language": "en-IN",
+  "summary_en": "The agent called the customer and answered questions about the Herbal Face Cream ingredients. The customer then requested to order two bottles of hair oil and one face cream. The agent shared the item prices and calculated a total of 1,597 rupees. The customer asked about usage instructions, delivery timelines, and discounts, but the agent could not provide that information. The customer agreed to proceed, yet the agent explicitly stated that the order request could not be confirmed.",
+  "next_action": null,
+  "extracted_fields": {
+    "items": "2x Herbal Hair Oil, 1x Herbal Face Cream",
+    "phone": "+919700000020",
+    "total_price": "1597 rupees"
+  },
+  "facts": {
+    "items": "2x Herbal Hair Oil, 1x Herbal Face Cream",
+    "phone": "+919700000020",
+    "total_price": "1597 rupees"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:herbal-products",
+    "followup:callback",
+    "intent:purchase",
+    "outcome:no_outcome",
+    "quality:inconclusive",
+    "sentiment:positive"
+  ],
+  "tags": [
+    "intent:purchase",
+    "sentiment:positive",
+    "followup:callback"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:face-cream",
+    "custom:hair-oil"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [
+    "How do you use the face cream?",
+    "How long will delivery take?",
+    "Is there a discount available?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T14:03:31.327341Z",
+  "generation_ok": true
+}

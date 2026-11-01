@@ -1,0 +1,38 @@
+{
+  "call_id": "806f8117-c962-46dd-8c61-16a3dc274084",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller clearly stated that they do not need the visiting cards and asked for the call to end. The agent acknowledged the request, thanked the caller, and ended the call politely. No follow-up was agreed.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+12025550106"
+  },
+  "facts": {
+    "phone": "+12025550106"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:visiting-cards",
+    "intent:purchase",
+    "outcome:not_interested",
+    "sentiment:negative",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:purchase",
+    "sentiment:negative",
+    "signal:do_not_call"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Does not need visiting cards"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T11:06:17.832728Z",
+  "generation_ok": true
+}

@@ -1,0 +1,26 @@
+{"seq": 1, "role": "user", "text": "Yes, yes, this is a good time. Please tell me about your products.", "ts": "2026-10-31T16:15:00.297220Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "We have four main products. Would you like to know about our Herbal Hair Oil, Aloe Vera Juice, Face Cream, or Ashwagandha Capsules?", "ts": "2026-10-31T16:15:01.823741Z"}
+{"seq": 3, "role": "user", "text": "Can you tell me what ingredients are in the face cream?", "ts": "2026-10-31T16:15:16.085806Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "The Herbal Face Cream contains Neem, Turmeric, and Aloe Vera, and it costs 599 rupees for 50 g. It is meant for moisturizing and routine skin care. Which product would you like to explore today?", "ts": "2026-10-31T16:15:17.335966Z"}
+{"seq": 5, "role": "user", "text": "Neem and turmeric, good for skin. How do I use this face cream?", "ts": "2026-10-31T16:15:36.555668Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "The usage instructions for the Herbal Face Cream are currently unavailable. Would you like to know about any of our other products?", "ts": "2026-10-31T16:15:37.852988Z"}
+{"seq": 7, "role": "user", "text": "Oh, usage instructions are not available? That is a bit difficult. Anyway, tell me about the hair oil, how much is it?", "ts": "2026-10-31T16:15:56.332666Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "The Herbal Hair Oil costs 499 rupees for 200 ml. It contains Amla, Bhringraj, Hibiscus, and Coconut Oil, and is intended for routine hair and scalp care. Would you like to place an order today?", "ts": "2026-10-31T16:15:57.656726Z"}
+{"seq": 9, "role": "user", "text": "Okay, the ingredients sound very natural. I want to order 2 bottles of the hair oil and 1 face cream. What is the total price?", "ts": "2026-10-31T16:16:21.699258Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "The total comes to 1,597 rupees. 2 bottles of the hair oil at 499 rupees each, and 1 face cream at 599 rupees. Would you like to place this order today?", "ts": "2026-10-31T16:16:24.001292Z"}
+{"seq": 11, "role": "user", "text": "1597 rupees, okay. How long will the delivery take?", "ts": "2026-10-31T16:16:39.079223Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "The delivery time is currently unavailable. Would you like to place the order today?", "ts": "2026-10-31T16:16:40.628393Z"}
+{"seq": 13, "role": "user", "text": "Delivery time is not available? Hmm, that is not very good. Is there any discount on this order?", "ts": "2026-10-31T16:16:54.466411Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "I don't have any discount details for this order. The information is currently unavailable. Would you like to place it today?", "ts": "2026-10-31T16:16:56.015173Z"}
+{"seq": 15, "role": "user", "text": "No discount and no delivery time, I am not sure. But I will go ahead with the order. What happens next?", "ts": "2026-10-31T16:17:13.746781Z", "partial": false}
+{"seq": 16, "role": "assistant", "text": "Great. To proceed, I will need your name and delivery address. Could you share those with me?", "ts": "2026-10-31T16:17:16.008693Z"}
+{"seq": 17, "role": "user", "text": "My name is Lakshmi Reddy.", "ts": "2026-10-31T16:17:25.439657Z", "partial": false}
+{"seq": 18, "role": "assistant", "text": "Thank you, Lakshmi Reddy. Could you share your delivery address?", "ts": "2026-10-31T16:17:27.063205Z"}
+{"seq": 19, "role": "user", "text": "It is Flat 302, Sai Residency, Kukatpally, Hyderabad 500072.", "ts": "2026-10-31T16:17:36.097406Z", "partial": false}
+{"seq": 20, "role": "assistant", "text": "Lakshmi Reddy. I have noted your address as Flat 302, Sai Residency, Kukatpally, Hyderabad 500072. Would you like to place this order today?", "ts": "2026-10-31T16:17:37.252273Z"}
+{"seq": 21, "role": "user", "text": "Yes, yes, I want to place the order. My mobile number is mohansaiteja.99@gmail.com.", "ts": "2026-10-31T16:17:52.878081Z", "partial": false}
+{"seq": 22, "role": "assistant", "text": "Your order for 2 bottles of Herbal Hair Oil and 1 Herbal Face Cream has been confirmed. I have noted your email as mohansaiteja.99@gmail.com for the confirmation.", "ts": "2026-10-31T16:17:55.539507Z"}
+{"seq": 23, "role": "user", "text": "Okay, email noted. So my order is confirmed now, correct?", "ts": "2026-10-31T16:18:11.593278Z", "partial": false}
+{"seq": 24, "role": "assistant", "text": "Yes, your order is confirmed. It is for 2 bottles of Herbal Hair Oil and 1 Herbal Face Cream for Lakshmi Reddy, delivered to Flat 302, Sai Residency, Kukatpally, Hyderabad 500072.", "ts": "2026-10-31T16:18:13.358061Z"}
+{"seq": 25, "role": "user", "text": "Okay, so it is confirmed. What happens now? Do I need to pay now itself?", "ts": "2026-10-31T16:18:32.400828Z", "partial": false}
+{"seq": 26, "role": "assistant", "text": "The payment timing is currently unavailable. Would you like to place the order today?", "ts": "2026-10-31T16:18:34.178363Z"}

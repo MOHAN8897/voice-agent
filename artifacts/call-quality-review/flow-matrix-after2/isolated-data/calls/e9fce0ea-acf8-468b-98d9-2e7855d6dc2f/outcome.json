@@ -1,0 +1,55 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller contacted support to inquire about a 3 kW system, expressing that the pricing was too high. The agent responded by explaining the total cost of 1,95,000 rupees, highlighting a government subsidy of 78,000 rupees that reduced the out-of-pocket expense to 1,17,000 rupees, and offering a monthly EMI option of 2,999 rupees for 48 months. The caller rejected this revised pricing, stating it was still too expensive, and the agent concluded the call with a goodbye.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500510",
+    "system_size": "3 kW"
+  },
+  "objections": [
+    "Too expensive"
+  ],
+  "notes": "",
+  "tags": [
+    "sentiment:neutral",
+    "signal:price_sensitive",
+    "signal:objection",
+    "intent:information",
+    "followup:callback",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:subsidy",
+    "custom:emi-plan"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T11:04:26.341548Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500510",
+    "system_size": "3 kW"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:emi-plan",
+    "custom:subsidy",
+    "followup:callback",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

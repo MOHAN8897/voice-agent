@@ -1,0 +1,38 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call but did not state a clear intent, only producing hesitant sounds and greetings. The agent asked the caller to repeat themselves, and the caller responded with 'hello hello'. No further details were shared, and the caller did not engage in any substantive conversation. The call ended without any progress or next steps.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500513"
+  },
+  "objections": [],
+  "notes": null,
+  "tags": [
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:37:01.468806Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500513"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "contact:phone_known",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

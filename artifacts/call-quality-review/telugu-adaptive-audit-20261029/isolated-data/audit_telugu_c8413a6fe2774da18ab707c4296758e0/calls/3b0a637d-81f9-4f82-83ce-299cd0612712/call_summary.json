@@ -1,0 +1,34 @@
+{
+  "call_id": "3b0a637d-81f9-4f82-83ce-299cd0612712",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller clearly stated that they were not interested in purchasing AC servicing. They clarified that they were not requesting permanent number blocking or to stop future calls, only that the current call be ended. The agent thanked them and ended the call. No follow-up was requested or agreed.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+12025550131"
+  },
+  "facts": {
+    "phone": "+12025550131"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:ac-servicing",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:ac-servicing"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T11:15:49.631795Z",
+  "generation_ok": true
+}

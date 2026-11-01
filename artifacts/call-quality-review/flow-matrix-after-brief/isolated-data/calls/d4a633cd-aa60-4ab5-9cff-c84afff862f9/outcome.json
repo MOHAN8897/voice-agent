@@ -1,0 +1,85 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the pricing of a 3 kW system and whether any government subsidies were available. The agent responded by quoting the upfront cost of ₹1,95,000, explaining that a government subsidy of ₹78,000 applies, leaving a net payment of ₹1,17,000. The caller found this price reasonable. The agent then requested the caller's name, area, and preferred day to schedule a free site survey. The caller hesitated briefly but agreed to provide these details. The call ended with the agent still waiting for the caller to share their information to proceed with scheduling.",
+  "next_action": "Awaiting the caller to provide their name, area, and preferred day for the free site survey.",
+  "extracted_fields": {
+    "phone": "+919876500509"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "signal:price_sensitive",
+    "followup:site_visit"
+  ],
+  "custom_tags": [
+    "custom:solar-system",
+    "custom:site-survey"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:50:54.813477Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500509"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:site-survey",
+    "custom:solar-system",
+    "followup:site_visit",
+    "intent:information",
+    "outcome:interested",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "20cd490f-fe86-41b2-a53d-b80e0e085f28",
+    "agentId": "d599be6d-3504-4f06-85c8-b2cfe43d662e",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 50,
+    "band": "warm",
+    "disposition": "interested",
+    "confidence": 0.85,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

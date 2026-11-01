@@ -1,0 +1,96 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్ కు అశ్వగంధ క్యాప్సూల్స్ గురించి సమాచారం అందించారు. కస్టమర్ తాను బీపీ మందులు వాడుతున్నందున వైద్యుడిని సంప్రదించి నిర్ణయం తీసుకుంటానని చెప్పారు. ఏజెంట్ వైద్య సలహాలు ఇవ్వలేమని స్పష్టం చేసి, తర్వాత సంప్రదించమని సూచించారు. కస్టమర్ వెంటనే ఆర్డర్ చేయనని, డాక్టర్ తో మాట్లాడిన తర్వాత కాల్ చేస్తానని చెప్పారు. చివరగా కస్టమర్ డాక్టర్ తో మాట్లాడి ప్లాన్ చేస్తానని చెప్పి కాల్ ముగించారు.",
+  "summary_en": "The agent called the customer to provide information about Ashwagandha capsules. The customer shared that they use BP tablets and wanted to know if the supplement was safe, to which the agent responded that medical advice could not be provided and they should consult a doctor. The customer objected to purchasing immediately, stating they would think it over after speaking with their doctor. They agreed to contact the business later. The call ended with the customer saying goodbye after planning to consult their physician first.",
+  "next_action": "callback_required",
+  "extracted_fields": {
+    "phone": "+919700000006",
+    "price": "₹699",
+    "product": "Ashwagandha capsules",
+    "callback_requested": "true"
+  },
+  "objections": [
+    "Safety concerns due to existing BP medication"
+  ],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:ashwagandha-capsules",
+    "custom:bp-medication-concern"
+  ],
+  "unanswered_questions": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T13:16:55.311084Z",
+  "generation_ok": true,
+  "summary_language": "te-IN",
+  "facts": {
+    "phone": "+919700000006",
+    "price": "₹699",
+    "product": "Ashwagandha capsules",
+    "callback_requested": "true"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:ashwagandha-capsules",
+    "custom:bp-medication-concern",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "c4c3d2b1-342f-43c1-b9fa-11d573c6c0f5",
+    "agentId": "f6d309d7-5f8f-5de2-ac1e-f7ebefcf75f9",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 35,
+    "band": "cold",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

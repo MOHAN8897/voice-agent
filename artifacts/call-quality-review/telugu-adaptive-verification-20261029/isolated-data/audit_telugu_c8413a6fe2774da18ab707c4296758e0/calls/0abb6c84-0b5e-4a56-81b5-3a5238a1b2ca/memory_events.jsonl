@@ -1,0 +1,1 @@
+{"turn_seq": 1, "ts": "2026-10-29T15:47:48.675169Z", "source": "model", "operations": [{"op": "set_fact", "key": "caller_name", "value": "రమేష్"}, {"op": "set_fact", "key": "product", "value": "విజిటింగ్ కార్డ్స్"}, {"op": "set_fact", "key": "preference", "value": "matte finish"}], "applied": true, "validation_errors": []}

@@ -1,0 +1,7 @@
+{"turn_seq": 1, "ts": "2026-10-29T15:41:59.972877Z", "source": "model", "operations": [{"op": "set_fact", "key": "caller_name", "value": "Madhavi"}], "applied": true, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-29T15:42:02.835222Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-29T15:42:04.986847Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-29T15:42:05.002169Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: సరే, SQL, PowerBI details ఇప్పుడు లేకపోతే పర్వాలేదు. నా enquiry ని save చేస్తారా? అలాగే demo లేదా discussion ఏమైనా arrange చేయగలరా? ఇప్పటివరకు నా details ఏమైనా note చేసుకున్నారా?\nassistant: మీ details ఇప్పటి వరకు note చేయలేదు. నేను ఇప్పుడు మీ enquiry save చేస్తాను, అలాగే demo లేదా discussion కోసం మీరు ఏ time కి available గా ఉంటారో చెప్తారా?"}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-29T15:42:07.275007Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-29T15:42:09.573718Z", "source": "model", "operations": [{"op": "set_fact", "key": "requested_time", "value": "రేపు ఉదయం 11 గంటలకి"}], "applied": true, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-29T15:42:11.894149Z", "source": "model", "operations": [{"op": "set_fact", "key": "product", "value": "Python, SQL, PowerBI courses"}], "applied": true, "validation_errors": []}

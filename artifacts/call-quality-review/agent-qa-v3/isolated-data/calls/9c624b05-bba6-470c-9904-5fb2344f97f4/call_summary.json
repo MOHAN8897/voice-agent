@@ -1,0 +1,56 @@
+{
+  "call_id": "9c624b05-bba6-470c-9904-5fb2344f97f4",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్ కు కాల్ చేసి అలోవెరా జ్యూస్ ధర, బాటిల్ సైజ్, మరియు ఉపయోగాల గురించి వివరించారు. కస్టమర్ ఇంగ్లీష్ లోకి మారారు, ధర 399 రూపాయలు అని తెలుసుకున్నారు, అలాగే హెయిర్ ఆయిల్ పదార్థాలు మరియు మొత్తం 898 రూపాయల ధరను అడిగి తెలుసుకున్నారు. ఆర్డర్ చేయడానికి సిద్ధంగా లేనని కస్టమర్ చెప్పారు. సమాచారం కోసం ధన్యవాదాలు చెప్పి కాల్ ముగించారు.",
+  "summary_language": "te-IN",
+  "summary_en": "The business agent called the customer to provide details about the aloe vera juice and hair oil. The agent shared the price of the 500 ml aloe vera juice at 399 rupees, the herbal hair oil ingredients, and the combined total of 898 rupees. Although the customer found the pricing acceptable, they stated they were not ready to place an order at that moment. After thanking the agent for the information, the customer ended the call.",
+  "next_action": "No immediate action is required as the customer declined to order.",
+  "extracted_fields": {
+    "phone": "+919700000007",
+    "product_1": "NatureVeda Aloe Vera Juice 500 ml",
+    "product_1_price": "399 rupees",
+    "product_2": "Herbal Hair Oil 200 ml",
+    "product_2_price": "499 rupees",
+    "total_price": "898 rupees"
+  },
+  "facts": {
+    "phone": "+919700000007",
+    "product_1": "NatureVeda Aloe Vera Juice 500 ml",
+    "product_1_price": "399 rupees",
+    "product_2": "Herbal Hair Oil 200 ml",
+    "product_2_price": "499 rupees",
+    "total_price": "898 rupees"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:aloe-vera-juice",
+    "custom:herbal-hair-oil",
+    "followup:send_quote",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "signal:price_sensitive",
+    "followup:send_quote"
+  ],
+  "custom_tags": [
+    "custom:aloe-vera-juice",
+    "custom:herbal-hair-oil"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Customer is not ready to place an order right now."
+  ],
+  "unanswered_questions": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T14:30:46.081740Z",
+  "generation_ok": true
+}

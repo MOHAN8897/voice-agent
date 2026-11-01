@@ -1,0 +1,96 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "व्यवसायी ने ग्राहक को फोन किया। ग्राहक ने अश्वगंधा कैप्सूल की कीमत और उपयोग के बारे में पूछा। एजेंट ने बताया कि यह ₹699 का है, लेकिन सुरक्षा और साइड इफेक्ट्स की जानकारी होने से इनकार कर दिया। ग्राहक ने कहा कि वह बीपी की दवा लेती है, इसलिए पहले डॉक्टर से सलाह लेकर ही खरीदने पर विचार करेगी और फिलहाल ऑर्डर नहीं करेगी। एजेंट ने धन्यवाद कहकर कॉल समाप्त किया।",
+  "summary_en": "The agent called the customer to present product options. The customer inquired about the purpose and price of the Ashwagandha capsules, which the agent stated cost ₹699 for 60 capsules. When the customer asked if the supplement was safe to use while taking blood pressure medication, the agent explained they did not have that medical information and advised consulting a doctor. The customer objected to purchasing immediately, stating she would speak with her doctor first, and agreed to call back later. The agent thanked her and ended the call.",
+  "next_action": "callback_required",
+  "extracted_fields": {
+    "phone": "+919700000014",
+    "price": "₹699",
+    "product_of_interest": "Ashwagandha capsules"
+  },
+  "objections": [
+    "Customer stated she takes blood pressure medication and needs to consult her doctor before using the supplement."
+  ],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "intent:information",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:blood-pressure",
+    "custom:herbal-supplement"
+  ],
+  "unanswered_questions": [
+    "Is it safe to take the Ashwagandha capsules while taking blood pressure medication?",
+    "Are there any side effects or a guarantee that the capsules will completely cure stress?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T13:50:04.426611Z",
+  "generation_ok": true,
+  "summary_language": "hi-IN",
+  "facts": {
+    "phone": "+919700000014",
+    "price": "₹699",
+    "product_of_interest": "Ashwagandha capsules"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:blood-pressure",
+    "custom:herbal-supplement",
+    "followup:callback",
+    "intent:information",
+    "outcome:interested",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "85203c66-facf-440e-83b9-8fe10480beb5",
+    "agentId": "eaea2c23-5008-5e24-b360-60e19a219561",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 50,
+    "band": "warm",
+    "disposition": "interested",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

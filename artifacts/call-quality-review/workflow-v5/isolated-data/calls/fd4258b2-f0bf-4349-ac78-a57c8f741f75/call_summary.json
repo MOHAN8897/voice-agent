@@ -1,0 +1,40 @@
+{
+  "call_id": "fd4258b2-f0bf-4349-ac78-a57c8f741f75",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the price of matte visiting cards. The agent responded by stating that matte finish visiting cards cost 350 rupees per 100 cards, with a minimum order quantity of 100 cards. The caller acknowledged this information, indicated they had everything they needed, and concluded the call by saying goodbye.",
+  "next_action": null,
+  "extracted_fields": {
+    "minimum_order": "100 cards",
+    "phone": "+919876500015",
+    "price": "350 rupees per 100 cards",
+    "product": "matte visiting cards"
+  },
+  "facts": {
+    "minimum_order": "100 cards",
+    "phone": "+919876500015",
+    "price": "350 rupees per 100 cards",
+    "product": "matte visiting cards"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:visiting-cards",
+    "intent:pricing",
+    "outcome:interested",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:pricing",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:56:55.902374Z",
+  "generation_ok": true
+}

@@ -1,0 +1,127 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.86,
+  "summary_te": "",
+  "summary_en": "Ramesh from Vijayawada contacted the business to inquire about matte-finish visiting cards. The agent quoted ₹350 for 100 cards and stated that the minimum order quantity is 100. Ramesh then expressed interest in ordering 200 cards and asked about the price, delivery time, rush charges, advance payment, and design approval process. The agent could not provide the exact 200-card price, but explained that standard Vijayawada delivery takes three working days after design approval and that 24-hour delivery costs an additional ₹150. The agent also stated that orders above ₹1,000 require 50% advance payment and that delivery starts only after artwork approval. Ramesh agreed that the 50% advance was acceptable, provided his name, Vijayawada location, and email address, and consented to proceeding with the order process. He also asked about wedding-card pricing, which the agent said depends on design, paper sample, and quantity. The agent recorded the requirement as 200 matte-finish cards for Vijayawada with 50% advance payment, but could not provide the artwork turnaround time or send details by email. The enquiry was saved for team review; no completed order, payment, quote for 200 cards, or concrete follow-up appointment was confirmed. The caller said his questions were answered and agreed to close the call.",
+  "next_action": "Team should review the enquiry and follow up with the exact price for 200 matte-finish cards, artwork approval turnaround time, and order/payment instructions. Do not assume the order or payment is completed.",
+  "extracted_fields": {
+    "advance_payment": "50% for orders above ₹1,000",
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "రమేష్",
+    "delivery_locality": "విజయవాడ",
+    "email": "ramesh.audit@example.invalid",
+    "finish": "matte finish",
+    "initial_quote": "₹350 for 100 cards",
+    "location": "Vijayawada",
+    "minimum_quantity": "100 cards",
+    "name": "Ramesh",
+    "payment_method": "50% advance payment",
+    "phone": "+12025550102",
+    "product": "Matte-finish visiting cards",
+    "quantity": "200 cards",
+    "rush_delivery": "24-hour delivery with ₹150 extra charge",
+    "standard_delivery": "3 working days after design approval"
+  },
+  "objections": [
+    "Exact price for 200 cards was unavailable.",
+    "Artwork turnaround time was unavailable.",
+    "Details could not be sent by email.",
+    "Wedding-card pricing could not be fixed over the phone."
+  ],
+  "notes": "The agent stated that the enquiry was saved and would be reviewed by the team, but the transcript does not confirm that an order was placed or that any payment was made.",
+  "tags": [
+    "intent:purchase",
+    "intent:pricing",
+    "followup:callback",
+    "action:required",
+    "signal:ready_to_buy",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:matte-finish",
+    "custom:vijayawada-delivery"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T15:38:38.806391Z",
+  "generation_ok": true,
+  "facts": {
+    "advance_payment": "50% for orders above ₹1,000",
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "రమేష్",
+    "delivery_locality": "విజయవాడ",
+    "email": "ramesh.audit@example.invalid",
+    "finish": "matte finish",
+    "initial_quote": "₹350 for 100 cards",
+    "location": "Vijayawada",
+    "minimum_quantity": "100 cards",
+    "name": "Ramesh",
+    "payment_method": "50% advance payment",
+    "phone": "+12025550102",
+    "product": "Matte-finish visiting cards",
+    "quantity": "200 cards",
+    "rush_delivery": "24-hour delivery with ₹150 extra charge",
+    "standard_delivery": "3 working days after design approval"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:visiting-cards",
+    "followup:callback",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:callback_required",
+    "sentiment:positive",
+    "signal:objection",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "ce36224d-44a8-5cf9-9982-98df46016ae1",
+    "agentId": "47cbd1df-c4bf-5fd9-8ee0-1309b873491e",
+    "stage": "contacted",
+    "action": "unchanged"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "callback_required",
+    "confidence": 0.86,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "callback_required"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

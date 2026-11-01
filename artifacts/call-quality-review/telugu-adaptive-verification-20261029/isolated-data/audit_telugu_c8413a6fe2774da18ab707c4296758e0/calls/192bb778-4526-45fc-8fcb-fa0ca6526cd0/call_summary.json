@@ -1,0 +1,47 @@
+{
+  "call_id": "192bb778-4526-45fc-8fcb-fa0ca6526cd0",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "Ramesh said he could not talk at the moment and explicitly requested a call back after approximately six hours. He provided the email address ramesh.audit@example.invalid and requested that the same phone number be used. The agent acknowledged recording his details and callback request, thanked him, and ended the call. No product or service details were discussed.",
+  "next_action": "Call Ramesh on the same number in approximately six hours.",
+  "extracted_fields": {
+    "callback_time": "Approximately six hours later",
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "Ramesh",
+    "email": "ramesh.audit@example.invalid",
+    "phone": "+12025550104",
+    "preferred_contact_method": "Call the same phone number"
+  },
+  "facts": {
+    "callback_time": "Approximately six hours later",
+    "caller_email": "ramesh.audit@example.invalid",
+    "caller_name": "Ramesh",
+    "email": "ramesh.audit@example.invalid",
+    "phone": "+12025550104",
+    "preferred_contact_method": "Call the same phone number"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "followup:callback",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "followup:callback",
+    "action:required",
+    "sentiment:neutral",
+    "intent:information"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T15:39:20.027305Z",
+  "generation_ok": true
+}

@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "how much exactly new fridge compressor cost", "ts": "2026-10-29T19:38:01.235361Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I don't have the price for a new compressor over the phone. The technician will quote the actual MRP for spare parts only after inspecting the fridge. Would you like to go ahead with a fridge inspection?", "ts": "2026-10-29T19:38:02.065650Z", "brain_latency_ms": 832}

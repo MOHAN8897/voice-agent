@@ -1,0 +1,86 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to discuss a potential purchase but stated they needed to consult with their family first. The agent acknowledged this and asked when would be a good time to follow up. The caller requested to be called back on Sunday evening at 7 PM. The agent confirmed they had logged the details and the callback request, thanked the caller, and ended the call.",
+  "next_action": "Call the caller back on Sunday at 7 PM.",
+  "extracted_fields": {
+    "callback_time": "Sunday at 7 PM",
+    "phone": "+919876500503"
+  },
+  "objections": [
+    "I need to discuss with my family first."
+  ],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:family-discussion"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T11:18:14.345566Z",
+  "generation_ok": true,
+  "facts": {
+    "callback_time": "Sunday at 7 PM",
+    "phone": "+919876500503"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:family-discussion",
+    "followup:callback",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "lead": {
+    "leadId": "ba43d08a-5e7d-4301-af52-26e4887d6504",
+    "agentId": "a1c7b568-bc6c-47cf-a0dc-3f42ee829c80",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 35,
+    "band": "cold",
+    "disposition": "callback_required",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "callback_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

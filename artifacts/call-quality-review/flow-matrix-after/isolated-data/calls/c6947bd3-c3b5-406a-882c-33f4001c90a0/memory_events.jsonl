@@ -1,0 +1,2 @@
+{"turn_seq": 1, "ts": "2026-10-30T11:02:38.853989Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-30T11:02:41.440214Z", "source": "model", "operations": [{"op": "set_fact", "key": "requested_time", "value": "संडे शाम को 7 बजे"}], "applied": true, "validation_errors": []}

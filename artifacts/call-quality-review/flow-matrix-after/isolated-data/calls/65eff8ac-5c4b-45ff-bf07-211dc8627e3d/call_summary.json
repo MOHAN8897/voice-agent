@@ -1,0 +1,38 @@
+{
+  "call_id": "65eff8ac-5c4b-45ff-bf07-211dc8627e3d",
+  "language_callback": null,
+  "disposition": "new_lead",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to inquire about the delivery fee for an order valued at 300 rupees. The agent did not provide a response or share any details regarding the fee structure during the interaction. The call concluded immediately after the caller's initial question, without any further discussion or agreement on next steps.",
+  "next_action": null,
+  "extracted_fields": {
+    "order_value": "300 rupees",
+    "phone": "+919876500516"
+  },
+  "facts": {
+    "order_value": "300 rupees",
+    "phone": "+919876500516"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:delivery-fee",
+    "custom:order-value",
+    "intent:information",
+    "outcome:new_lead",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:delivery-fee",
+    "custom:order-value"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:01:40.292304Z",
+  "generation_ok": true
+}

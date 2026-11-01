@@ -1,0 +1,109 @@
+{
+  "disposition": "site_visit_planned",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call expressing that the proposed 3 kW rooftop solar system was too expensive. The agent responded by breaking down the costs, explaining that the system was priced at 1,95,000 rupees before a government subsidy of 78,000 rupees, resulting in a net payment of 1,17,000 rupees, and offered a free site survey. The caller objected again, stating it was still too expensive. The agent then introduced an EMI option of 2,999 rupees per month for 48 months. The caller requested the monthly EMI figure again, which the agent repeated. After hearing the EMI details, the caller agreed to proceed and requested to book a free site survey. The caller provided their name as Kiran, mentioned they live in Velachery, and requested Saturday for the survey. The agent noted these details for the team to confirm the Saturday survey. The caller thanked the agent, and the agent concluded the call with a goodbye.",
+  "next_action": "Confirm the Saturday site survey for the caller named Kiran in Velachery.",
+  "extracted_fields": {
+    "budget": "too expensive",
+    "caller_name": "Kiran",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "name": "Kiran",
+    "phone": "+919876500501",
+    "requested_time": "Saturday",
+    "slot": "Saturday"
+  },
+  "objections": [
+    "The cost of the 3 kW rooftop system is too high."
+  ],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "followup:site_visit",
+    "signal:price_sensitive",
+    "signal:objection",
+    "sentiment:neutral",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:rooftop-system",
+    "custom:emi-financing",
+    "custom:saturday-survey"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T11:32:17.950147Z",
+  "generation_ok": true,
+  "facts": {
+    "budget": "too expensive",
+    "caller_name": "Kiran",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "name": "Kiran",
+    "phone": "+919876500501",
+    "requested_time": "Saturday",
+    "slot": "Saturday"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:emi-financing",
+    "custom:rooftop-system",
+    "custom:saturday-survey",
+    "followup:site_visit",
+    "intent:information",
+    "outcome:site_visit_planned",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "4fd7e12e-2bce-5a0d-b0de-bdb65bd35c79",
+    "agentId": "7e29cad0-9532-4d60-9dab-2261fcaaf966",
+    "stage": "qualified",
+    "action": "advanced"
+  },
+  "lead_assessment": {
+    "score": 100,
+    "band": "hot",
+    "disposition": "site_visit_planned",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "site_visit_planned"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "budget"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "slot"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

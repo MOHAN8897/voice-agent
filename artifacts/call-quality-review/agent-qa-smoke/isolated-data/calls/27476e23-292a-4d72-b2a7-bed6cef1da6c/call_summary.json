@@ -1,0 +1,54 @@
+{
+  "call_id": "27476e23-292a-4d72-b2a7-bed6cef1da6c",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్‌కు కాల్ చేశారు. కస్టమర్ అలోవెరా జ్యూస్ ధర, సైజు, డోసేజ్, హెయిర్ ఆయిల్ పదార్థాలు మరియు కలిపిన ఆర్డర్ ధర గురించి అడిగారు. ఏజెంట్ ధరలను (అలోవెరా జ్యూస్‌కు ₹399 మరియు హెయిర్ ఆయిల్‌కు ₹499) పంచుకున్నారు, కానీ డోసేజ్ సమాచారం లేదని తెలిపారు. కస్టమర్ సమాచారాన్ని స్వీకరించి, ఈ రోజుకు తనకు ఇంకేమీ అవసరం లేదని చెప్పి కాల్ ముగించారు.",
+  "summary_language": "te-IN",
+  "summary_en": "The agent called the customer to provide product information. The customer asked about the price, size, dosage, and ingredients of the aloe vera juice and hair oil, and inquired about a combined order total. The agent shared the pricing details, but explained that dosage guidance was unavailable. The customer accepted the information and concluded the call without placing an order.",
+  "next_action": null,
+  "extracted_fields": {
+    "combined_total": "₹898",
+    "phone": "+919700000001",
+    "price_product_1": "₹399",
+    "price_product_2": "₹499",
+    "product_1": "aloe vera juice",
+    "product_2": "herbal hair oil",
+    "size_product_1": "500 ml"
+  },
+  "facts": {
+    "combined_total": "₹898",
+    "phone": "+919700000001",
+    "price_product_1": "₹399",
+    "price_product_2": "₹499",
+    "product_1": "aloe vera juice",
+    "product_2": "herbal hair oil",
+    "size_product_1": "500 ml"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:aloe-vera",
+    "custom:hair-oil",
+    "followup:send_quote",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "followup:send_quote"
+  ],
+  "custom_tags": [
+    "custom:aloe-vera",
+    "custom:hair-oil"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "unanswered_questions": [
+    "What is the daily dosage for the aloe vera juice?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T12:55:15.698668Z",
+  "generation_ok": true
+}

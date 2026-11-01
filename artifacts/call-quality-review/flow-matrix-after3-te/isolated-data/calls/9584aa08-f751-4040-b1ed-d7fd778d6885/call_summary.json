@@ -1,0 +1,33 @@
+{
+  "call_id": "9584aa08-f751-4040-b1ed-d7fd778d6885",
+  "language_callback": null,
+  "disposition": "no_outcome",
+  "disposition_confidence": 0.9,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call but only produced inarticulate noises and unclear speech. The agent asked the caller to repeat themselves and clarified whether the call was to book an appointment or to inquire about clinic timings and prices. However, the caller did not provide any clear information or response before the call ended.",
+  "next_action": "No further action could be determined due to the lack of clear communication from the caller.",
+  "extracted_fields": {
+    "phone": "+919876500513"
+  },
+  "facts": {
+    "phone": "+919876500513"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "intent:information",
+    "outcome:no_outcome",
+    "quality:inconclusive",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "sentiment:neutral",
+    "intent:information"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:20:03.381415Z",
+  "generation_ok": true
+}

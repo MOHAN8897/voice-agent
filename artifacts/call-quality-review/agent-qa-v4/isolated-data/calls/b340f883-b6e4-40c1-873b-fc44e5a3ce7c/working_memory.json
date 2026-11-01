@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: నా పేరు Lakshmi Reddy, అడ్రస్ వచ్చి Flat 302, Sai Residency, Kukatpally, Hyderabad 500072.\nassistant: సరే Lakshmi Reddy గారు, ఒకసారి confirm చేస్తున్నాను. మీరు 2 x Herbal Hair Oil మరియు 1 x Herbal Face Cream order చేస్తున్నారు కదా? ఇదంతా correct ఏనా?\nuser: అవును, అదంతా కరెక్టేండి.\nassistant: సరేనండి, దీన్ని confirm చేస్తున్నాను. Herbal Hair Oil 2 మరియు Herbal Face Cream 1 ఆర్డర్ చేయాలనుకుంటున్నారు, అంతే కదా?\nuser: అవును, కరెక్టేండి, ఆర్డర్ ప్లేస్ అయిపోయినట్టేనా?\nassistant: మీ order confirm అయిపోయింది Lakshmi Reddy గారు. మా team త్వరలోనే delivery details తో మిమ్మల్ని సంప్రదిస్తారు."
+}

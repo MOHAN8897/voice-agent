@@ -1,0 +1,109 @@
+{
+  "disposition": "site_visit_planned",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, initiated the call expressing that the proposed three-kilowatt system was too expensive. The agent explained the total cost of ₹1,95,000, the government subsidy of ₹78,000, and the resulting out-of-pocket payment of ₹1,17,000. The caller objected to the price but inquired about the monthly EMI, which the agent clarified as starting from ₹2,999 for 48 months. After hearing the EMI details, the caller agreed to proceed and requested a free site survey. The caller provided his name as Kiran and his location as Velachery, specifying that Saturday would be a suitable time. The agent confirmed these details and stated that the team would contact him soon to schedule the survey. The call ended with the caller thanking the agent.",
+  "next_action": "Team to contact the caller to schedule the free site survey for Saturday.",
+  "extracted_fields": {
+    "budget": "Not specified",
+    "caller_name": "కిరణ్",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "name": "Kiran",
+    "phone": "+919876500535",
+    "requested_time": "శనివారం",
+    "slot": "Saturday"
+  },
+  "objections": [
+    "The price of the three-kilowatt system was too high."
+  ],
+  "notes": "Caller was initially price-sensitive but became agreeable after hearing the EMI breakdown and subsidy details.",
+  "tags": [
+    "sentiment:positive",
+    "signal:price_sensitive",
+    "followup:site_visit",
+    "intent:information",
+    "action:required",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:three-kilowatt",
+    "custom:free-survey",
+    "custom:emi-financing"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T10:43:49.454930Z",
+  "generation_ok": true,
+  "facts": {
+    "budget": "Not specified",
+    "caller_name": "కిరణ్",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "name": "Kiran",
+    "phone": "+919876500535",
+    "requested_time": "శనివారం",
+    "slot": "Saturday"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:emi-financing",
+    "custom:free-survey",
+    "custom:three-kilowatt",
+    "followup:callback",
+    "followup:site_visit",
+    "intent:information",
+    "outcome:site_visit_planned",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "lead": {
+    "leadId": "c97c2875-68f3-5339-b8ba-5bb07b0588bf",
+    "agentId": "2a346d7e-04a9-4682-8a0d-3ca0aceca555",
+    "stage": "qualified",
+    "action": "advanced"
+  },
+  "lead_assessment": {
+    "score": 100,
+    "band": "hot",
+    "disposition": "site_visit_planned",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "site_visit_planned"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "budget"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "slot"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

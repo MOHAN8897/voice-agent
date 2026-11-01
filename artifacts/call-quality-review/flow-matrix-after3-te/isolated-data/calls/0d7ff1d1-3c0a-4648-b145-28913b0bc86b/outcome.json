@@ -1,0 +1,49 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to discuss solar services. The agent inquired about the caller's needs, and the caller explicitly stated that they already have solar installed on their roof. Based on this information, the agent thanked the caller for their time and concluded the call.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+919876500507"
+  },
+  "objections": [
+    "Caller stated they already have solar installed on their roof."
+  ],
+  "notes": null,
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:do_not_call",
+    "signal:repeat_customer",
+    "signal:ready_to_buy"
+  ],
+  "custom_tags": [
+    "custom:existing-solar"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-30T11:18:54.049495Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500507"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:existing-solar",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:repeat_customer"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

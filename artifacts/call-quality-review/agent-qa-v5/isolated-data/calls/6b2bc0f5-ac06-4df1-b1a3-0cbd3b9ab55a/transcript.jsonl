@@ -1,0 +1,14 @@
+{"seq": 1, "role": "user", "text": "ഒരു മിനിറ്റ് സംസാരിക്കാം. ഈ aloe vera juice-ന്റെ price എത്രയാണ്?", "ts": "2026-10-31T17:15:36.611052Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "NatureVeda Aloe Vera Juice-ന് 500 ml-ന് ₹399 ആണ് വില. ഇതിൽ Aloe Vera ആണ് ഉള്ളത്, ഒരു general wellness beverage ആയിട്ടാണ് ഇത് ഉപയോഗിക്കുന്നത്.", "ts": "2026-10-31T17:15:38.343423Z"}
+{"seq": 3, "role": "user", "text": "ശരി, 500 ml-ന് 399 രൂപയോ. ഇതിന്റെ size വേറെ ഉണ്ടോ?", "ts": "2026-10-31T17:15:52.540580Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ക്ഷമിക്കണം, അതിന്റെ മറ്റ് size options ഇപ്പോൾ എനിക്ക് അറിയില്ല.", "ts": "2026-10-31T17:15:53.954373Z"}
+{"seq": 5, "role": "user", "text": "ഓ, ശരി. എങ്കിൽ കുപ്പി കുടിച്ചാൽ എങ്ങനെ ഉപയോഗിക്കണം എന്ന് ഒന്ന് പറയാമോ?", "ts": "2026-10-31T17:16:03.421740Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "Aloe Vera Juice ഒരു general wellness beverage ആയിട്ടാണ് ഉപയോഗിക്കുന്നത്. ഇതിന്റെ കൃത്യമായ usage instructions ഇപ്പോൾ എനിക്ക് അറിയില്ല. ഏത് details ആണ് വേണ്ടത്?", "ts": "2026-10-31T17:16:04.708002Z"}
+{"seq": 7, "role": "user", "text": "Actually, I would prefer to continue in English now. Could you please repeat the price of the aloe vera juice you told me earlier?", "ts": "2026-10-31T17:16:25.723762Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Sure, the NatureVeda Aloe Vera Juice is priced at ₹399 for 500 ml. It contains Aloe Vera and is marketed as a general wellness beverage.", "ts": "2026-10-31T17:16:28.034026Z"}
+{"seq": 9, "role": "user", "text": "Got it, 399 rupees for 500 ml. Now, could you tell me what ingredients are in your hair oil?", "ts": "2026-10-31T17:16:45.685660Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "The NatureVeda Herbal Hair Oil costs ₹499 for 200 ml. It contains Amla, Bhringraj, Hibiscus, and Coconut Oil, and is intended for routine hair and scalp care. Would you like to place an order today?", "ts": "2026-10-31T17:16:47.648918Z"}
+{"seq": 11, "role": "user", "text": "Okay, so the hair oil is 499 rupees. What would be the total if I take one juice and one hair oil together?", "ts": "2026-10-31T17:17:10.993785Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "One Aloe Vera Juice and one Herbal Hair Oil together would come to ₹898.", "ts": "2026-10-31T17:17:12.922156Z"}
+{"seq": 13, "role": "user", "text": "Okay, 898 rupees total. That sounds fine. Thank you for the details, I will think about it.", "ts": "2026-10-31T17:17:25.563463Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "Of course — please go ahead.", "ts": "2026-10-31T17:17:26.531549Z"}

@@ -1,0 +1,58 @@
+{
+  "disposition": "no_outcome",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The agent called the customer and answered questions about the Herbal Face Cream ingredients. The customer then requested to order two bottles of hair oil and one face cream. The agent shared the item prices and calculated a total of 1,597 rupees. The customer asked about usage instructions, delivery timelines, and discounts, but the agent could not provide that information. The customer agreed to proceed, yet the agent explicitly stated that the order request could not be confirmed.",
+  "next_action": null,
+  "extracted_fields": {
+    "items": "2x Herbal Hair Oil, 1x Herbal Face Cream",
+    "phone": "+919700000020",
+    "total_price": "1597 rupees"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:purchase",
+    "sentiment:positive",
+    "followup:callback"
+  ],
+  "custom_tags": [
+    "custom:herbal-products",
+    "custom:face-cream",
+    "custom:hair-oil"
+  ],
+  "unanswered_questions": [
+    "How do you use the face cream?",
+    "How long will delivery take?",
+    "Is there a discount available?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T14:03:31.327341Z",
+  "generation_ok": true,
+  "summary_language": "en-IN",
+  "facts": {
+    "items": "2x Herbal Hair Oil, 1x Herbal Face Cream",
+    "phone": "+919700000020",
+    "total_price": "1597 rupees"
+  },
+  "disclosure_status": null,
+  "contact_preference": "none",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:herbal-products",
+    "followup:callback",
+    "intent:purchase",
+    "outcome:no_outcome",
+    "quality:inconclusive",
+    "sentiment:positive"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

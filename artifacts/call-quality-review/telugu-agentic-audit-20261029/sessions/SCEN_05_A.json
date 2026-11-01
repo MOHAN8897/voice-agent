@@ -1,0 +1,92 @@
+{
+  "scenario_id": "SCEN_05",
+  "title": "Future Interest and Automatic Callback Scheduling",
+  "business_id": "A",
+  "agent_name": "Kavitha",
+  "category": "B_Callbacks",
+  "integration_condition": "none",
+  "caller_phone": "+919876543214",
+  "total_turns": 2,
+  "total_tokens": 5191,
+  "duration_sec": 5.64,
+  "call_ended": true,
+  "carrier_hangup_invoked": true,
+  "carrier_hangup_error": false,
+  "transcript": [
+    {
+      "turn": 1,
+      "user": "ఇప్పుడు నేను మీటింగ్‌లో ఉన్నాను, మాట్లాడలేను.",
+      "user_en": "I am in a meeting now, cannot talk.",
+      "agent": "అర్థమైంది, మీరు మీటింగ్‌లో ఉన్నారు కదా. మీకు వీలైనప్పుడు మళ్ళీ call చేయమని ఏ time లో చెప్పమంటారు?",
+      "latency_ms": 1178,
+      "tokens": 5191,
+      "should_end": false,
+      "end_call": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      },
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 2,
+      "user": "ఇప్పుడు వద్దు, రేపు ఉదయం 11 గంటలకు కాల్ చేయండి.",
+      "user_en": "Not now, call tomorrow morning at 11 AM.",
+      "agent": "క్షమించండి, మీ కాల్‌బ్యాక్ అభ్యర్థనను సేవ్ చేయలేకపోయాను. దయచేసి వ్యాపార సంస్థను నేరుగా సంప్రదించండి. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "latency_ms": 259,
+      "tokens": 0,
+      "should_end": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "farewell": "క్షమించండి, మీ కాల్‌బ్యాక్ అభ్యర్థనను సేవ్ చేయలేకపోయాను. దయచేసి వ్యాపార సంస్థను నేరుగా సంప్రదించండి. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "callback"
+      },
+      "finish_reason": "rule_close"
+    }
+  ],
+  "db_evidence": {
+    "call": {
+      "call_id": "a5bc0e05-1a11-4a94-b928-34010cc8a644",
+      "status": "active",
+      "finalization_status": "pending",
+      "disposition": null,
+      "end_reason": null,
+      "duration_sec": null,
+      "status_tags": []
+    },
+    "callbacks": [],
+    "followup_jobs": [],
+    "dnc_entries": [],
+    "leads": [],
+    "tool_executions": []
+  },
+  "evaluation": {
+    "assertions": [
+      {
+        "name": "turn_3_executed",
+        "passed": false,
+        "detail": "Turn not reached"
+      },
+      {
+        "name": "callback_recorded_in_storage",
+        "passed": false,
+        "detail": "Callbacks: 0, Jobs: 0"
+      }
+    ],
+    "all_passed": false,
+    "scores": {
+      "telugu_naturalness": 7.5,
+      "understanding_relevance": 7.0,
+      "script_adherence": 6.5,
+      "memory_corrections": 9.0,
+      "capability_honesty": 10.0,
+      "callback_dnd_outcome": 6.0,
+      "hangup_handoff": 9.5,
+      "overall": 7.75
+    }
+  },
+  "created_at": "2026-10-29T10:30:36.092215+00:00"
+}

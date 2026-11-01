@@ -1,0 +1,91 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.97,
+  "summary_te": "",
+  "summary_en": "The caller asked for the price of 100 matte visiting cards and initially had not provided their name. The agent quoted ₹350 for 100 cards and explained that 100 cards is the minimum order quantity, then asked for the caller’s name and delivery area to proceed. The caller said they had received the needed information, thanked the agent, and requested to end the call. No order was placed and no follow-up was agreed.",
+  "next_action": null,
+  "extracted_fields": {
+    "minimum_order_quantity": "100 cards",
+    "phone": "+12025550105",
+    "price": "₹350",
+    "product": "Matte visiting cards",
+    "quantity": "100 cards"
+  },
+  "objections": [],
+  "notes": "Caller was seeking pricing information only and ended the call after receiving it.",
+  "tags": [
+    "intent:pricing",
+    "intent:information",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards",
+    "custom:100-card-order"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T16:37:17.239272Z",
+  "generation_ok": true,
+  "facts": {
+    "minimum_order_quantity": "100 cards",
+    "phone": "+12025550105",
+    "price": "₹350",
+    "product": "Matte visiting cards",
+    "quantity": "100 cards"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:100-card-order",
+    "custom:matte-visiting-cards",
+    "intent:information",
+    "intent:pricing",
+    "outcome:interested",
+    "sentiment:positive"
+  ],
+  "lead": {
+    "leadId": "c839938c-d13e-4f34-af35-f750b0a0e8f1",
+    "agentId": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.97,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

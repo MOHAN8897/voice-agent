@@ -1,0 +1,14 @@
+{
+  "facts": {
+    "caller_name": "రమేష్",
+    "product": "cards",
+    "finish": "matte finish",
+    "quantity": "200",
+    "delivery_locality": "విజయవాడ",
+    "payment_method": "50% advance payment",
+    "caller_email": "ramesh.audit@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "assistant: కొంచెం నెమ్మదిగా చెప్తారా? నేను మీ two hundred matte finish cards, Vijayawada delivery, 50% advance payment details note చేసుకున్నాను.\nuser: అవును, మీరు చెప్పిన details అన్నీ అర్థమయ్యాయి. నా doubts అన్నీ clear అయ్యాయి, thank you. ఇక order process complete అయిపోయిందని అనుకుంటున్నాను, call close చేయొచ్చా?\nassistant: సరే, మీ enquiry save అయింది. మా team దీన్ని review చేస్తారు. ఇక call close చేయొచ్చా?"
+}

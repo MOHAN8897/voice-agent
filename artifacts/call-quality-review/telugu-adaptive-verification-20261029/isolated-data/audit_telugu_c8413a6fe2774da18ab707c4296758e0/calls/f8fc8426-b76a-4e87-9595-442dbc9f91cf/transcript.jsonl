@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "నమస్తే Kavitha. నాకు visiting cards కావాలి, matte finish అయితే బాగుంటుంది. అసలు minimum order quantity ఎంత ఉండాలి?", "ts": "2026-10-29T15:45:03.502347Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Matte finish visiting cards కోసం minimum order one hundred cards ఉంటుంది. మీకు ఎన్ని cards కావాలో చెప్తారా?", "ts": "2026-10-29T15:45:04.865478Z"}
+{"seq": 3, "role": "user", "text": "సరే, ప్రస్తుతానికి ఒక 200 cards order చేస్తాను. ఇంకేమైనా details కావాలా?", "ts": "2026-10-29T15:45:05.464726Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "సరే, two hundred cards order కి three hundred fifty rupees అవుతుంది. మీ పేరు చెప్తారా, quote కోసం?", "ts": "2026-10-29T15:45:07.106431Z"}
+{"seq": 5, "role": "user", "text": "నా పేరు రమేష్. ramesh.audit@example.invalid కి quote పంపించండి. ప్రస్తుతానికి నాకు ఇంతే, ధన్యవాదాలు.", "ts": "2026-10-29T15:45:07.785856Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-29T15:45:09.294558Z"}
+{"seq": 7, "role": "user", "text": "అర్థమైంది. ఇంకేమీ అవసరం లేదు, నేను ఇక్కడితో call ముగించుకుంటున్నాను. ధన్యవాదాలు.", "ts": "2026-10-29T15:45:09.981502Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-29T15:45:11.508975Z"}

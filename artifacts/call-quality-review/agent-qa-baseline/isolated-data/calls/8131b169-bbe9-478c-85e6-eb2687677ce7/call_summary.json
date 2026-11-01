@@ -1,0 +1,56 @@
+{
+  "call_id": "8131b169-bbe9-478c-85e6-eb2687677ce7",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్‌కు కాల్ చేశారు. కస్టమర్ హెయిర్ ఆయిల్ ధర మరియు డెలివరీ ఎంపికల గురించి అడిగారు, కానీ ఏజెంట్‌కు డెలివరీ వివరాల గురించి సమాచారం లేదు. కస్టమర్ తనకు ఇలాంటి కాల్స్ ఎక్కువగా వస్తున్నాయని, తన నంబర్‌ను తొలగించాలని మరియు మళ్లీ కాల్ చేయవద్దని అభ్యంతరం వ్యక్తం చేశారు. ఏజెంట్ ఆ అభ్యంతరాన్ని అంగీకరించి, ఇకపై కాల్ చేయమని హామీ ఇచ్చి కాల్ ముగించారు.",
+  "summary_language": "te-IN",
+  "summary_en": "The agent called the customer to share details about NatureVeda Herbal products. The customer inquired about the price of a 200 ml hair oil and whether home delivery was available, but the agent did not have that information. The customer objected, stating they receive too many calls and requested to be removed from the list. The agent agreed to stop calling the number, thanked the customer, and ended the call.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "company_name": "NatureVeda Herbal",
+    "phone": "+919700000001",
+    "product": "Hair Oil",
+    "product_price": "₹499",
+    "product_volume": "200 ml"
+  },
+  "facts": {
+    "company_name": "NatureVeda Herbal",
+    "phone": "+919700000001",
+    "product": "Hair Oil",
+    "product_price": "₹499",
+    "product_volume": "200 ml"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:delivery-inquiry",
+    "custom:hair-oil",
+    "intent:information",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "tags": [
+    "signal:do_not_call",
+    "sentiment:neutral",
+    "intent:information",
+    "action:required",
+    "followup:callback"
+  ],
+  "custom_tags": [
+    "custom:hair-oil",
+    "custom:delivery-inquiry"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Customer requested to be removed from the calling list due to receiving too many calls."
+  ],
+  "unanswered_questions": [
+    "Does the business offer home delivery for this product?",
+    "How can a customer place an order without home delivery?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T13:09:09.240418Z",
+  "generation_ok": true
+}

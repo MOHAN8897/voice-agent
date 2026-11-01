@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_name": "किरण"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: Consultation fee कितनी है और आप कब खुलते हो?\nassistant: Consultation fee ₹300 है, और हम Monday से Saturday, सुबह 10 AM से रात 8 PM तक खुले रहते हैं।\nuser: ठीक है, मेरी enquiry note कर लीजिए। मेरा नाम किरण है और मुझे interest है।\nassistant: ठीक है किरण जी, आपकी enquiry नोट कर ली है। आप किस समस्या के लिए अपॉइंटमेंट लेना चाहते हैं और किस दिन और समय पर आना पसंद करेंगे?\nuser: अभी के लिए बस इतना ही, thank you.\nassistant: समय देने के लिए धन्यवाद। नमस्कार।"
+}

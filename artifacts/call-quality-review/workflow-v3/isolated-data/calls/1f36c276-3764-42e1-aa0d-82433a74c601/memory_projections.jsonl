@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-29T20:42:29.908588Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T20:42:34.333184Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: matte visiting cards | quantity: 200"}
+{"turn_seq": 5, "ts": "2026-10-29T20:42:37.801501Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: matte visiting cards | quantity: 200 | caller_name: Ravi Kumar"}
+{"turn_seq": 7, "ts": "2026-10-29T20:42:38.925504Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: matte visiting cards | quantity: 200 | caller_name: Ravi Kumar"}

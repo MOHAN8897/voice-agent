@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_name": "Kiran"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: What is the course fee and is there a weekend batch?\nassistant: കോഴ്സ് ഫീ ₹8,999 ആണ്, ഇതിന് instalments ഒന്നുമില്ല. Weekend batch 10 AM മുതൽ 1 PM വരെയാണ്. ഇതിൽ താല്പര്യമുണ്ടോ?\nuser: Okay, please note my enquiry. My name is Kiran and I am interested.\nassistant: ശരി കിരൺ, നിങ്ങളുടെ ആവശ്യം ഞാൻ ഇവിടെ രേഖപ്പെടുത്തിയിട്ടുണ്ട്. കോഴ്സ് ഫീ ₹8,999 ആണ്, ഇതിന് instalments ഒന്നുമില്ല. ഏത് ബാച്ചിലാണ് താല്പര്യം എന്ന് പറയാമോ?\nuser: That's all for now, thank you.\nassistant: നിങ്ങളുടെ സമയത്തിന് നന്ദി. നമസ്കാരം."
+}

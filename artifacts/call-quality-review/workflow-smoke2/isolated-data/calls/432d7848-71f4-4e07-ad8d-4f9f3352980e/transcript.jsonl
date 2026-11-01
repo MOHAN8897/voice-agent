@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "Matte visiting cards price ఎంత?", "ts": "2026-10-29T20:06:00.702379Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Matte finish visiting cards 100 cards కి ₹350 అవుతుంది. Minimum order 100 cards ఉంటుంది. మీకు ఎన్ని cards కావాలో చెప్తారా?", "ts": "2026-10-29T20:06:04.024701Z"}
+{"seq": 3, "role": "user", "text": "Okay, నాకు కావాల్సింది అంతే. Thanks, bye.", "ts": "2026-10-29T20:06:04.024701Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-29T20:06:05.351415Z"}

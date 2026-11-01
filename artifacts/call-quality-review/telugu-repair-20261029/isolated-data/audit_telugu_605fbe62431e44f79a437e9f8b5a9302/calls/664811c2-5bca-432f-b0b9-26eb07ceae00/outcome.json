@@ -1,0 +1,97 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "The caller asked about ordering matte-finish visiting cards, specifically the minimum order quantity and price, and said they would send the design later. The agent explained that the minimum order is 100 cards and that 100 matte-finish cards cost ₹350, with a quote to be provided after receiving the design. The caller accepted the 100-card minimum and asked whether GST was included. The agent could not confirm the GST status. The caller said the information was sufficient and ended the call without requesting further action.",
+  "next_action": null,
+  "extracted_fields": {
+    "GST": "Inclusion not confirmed",
+    "design": "Caller will send the design later",
+    "finish": "matte",
+    "minimum_order_quantity": "100 cards",
+    "phone": "+12025550119",
+    "price": "₹350 for 100 cards",
+    "product": "visiting cards"
+  },
+  "objections": [],
+  "notes": "The caller was positive about the minimum order but did not place an order or request a quote immediately.",
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:matte-finish"
+  ],
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T17:43:32.940522Z",
+  "generation_ok": true,
+  "facts": {
+    "GST": "Inclusion not confirmed",
+    "design": "Caller will send the design later",
+    "finish": "matte",
+    "minimum_order_quantity": "100 cards",
+    "phone": "+12025550119",
+    "price": "₹350 for 100 cards",
+    "product": "visiting cards"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:matte-finish",
+    "custom:visiting-cards",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "e9d6c3c9-4e7e-4479-8435-45edda305e89",
+    "agentId": "4819dd22-22f0-5e71-a18d-7b2e7d3e7408",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "interested",
+    "confidence": 0.96,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "product"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

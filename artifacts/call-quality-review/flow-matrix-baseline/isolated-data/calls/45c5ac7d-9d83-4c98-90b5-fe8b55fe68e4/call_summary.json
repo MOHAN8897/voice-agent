@@ -1,0 +1,50 @@
+{
+  "call_id": "45c5ac7d-9d83-4c98-90b5-fe8b55fe68e4",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller inquired about the cost of a three-kilowatt system and whether any subsidy was available. The agent explained that the system costs ₹1,95,00{0}, the government subsidy is ₹78,000, and the caller's out-of-pocket expense would be ₹1,17,000. The caller found this pricing reasonable and agreed to proceed. The agent then requested the caller's name, location, and a preferred day for a free site survey to move forward. The caller hesitated briefly but verbally agreed to provide these details. However, the caller did not actually share their personal information or a preferred date during the call, leaving the scheduling of the site survey pending. The call ended with the agent still waiting for the caller to provide the required details.",
+  "next_action": "Awaiting the caller to provide their name, location, and preferred survey date to schedule the free site survey.",
+  "extracted_fields": {
+    "budget": "₹1,17,000",
+    "phone": "+919876500536"
+  },
+  "facts": {
+    "budget": "₹1,17,000",
+    "phone": "+919876500536"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:site-survey",
+    "custom:subsidy-inquiry",
+    "custom:three-kilowatt",
+    "followup:schedule_pending",
+    "intent:information",
+    "intent:quote",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:price_sensitive",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:quote",
+    "sentiment:positive",
+    "followup:schedule_pending",
+    "signal:price_sensitive",
+    "signal:ready_to_buy",
+    "action:required"
+  ],
+  "custom_tags": [
+    "custom:site-survey",
+    "custom:subsidy-inquiry",
+    "custom:three-kilowatt"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:44:09.236638Z",
+  "generation_ok": true
+}

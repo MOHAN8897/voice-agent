@@ -1,0 +1,140 @@
+{
+  "call_id": "8118c0c2-1660-4875-999e-6b1698a5f578",
+  "tenant_id": "b2fdee04-91e2-42d9-a2d1-bc9f82a59825",
+  "agent_id": "822d4718-6a4f-4792-89ec-a356f9b49842",
+  "session_id": "wf-11e92ba058a04a4b8b364a6acf43f276",
+  "channel": "pstn",
+  "direction": "outbound",
+  "environment": "development",
+  "tier": "medium",
+  "combination_id": "5b3ecb0dcd721b7f",
+  "compiled_brain_version": "cb_sim_afb0554d773c4978",
+  "started_at": "2026-10-30T11:22:44.734032+00:00",
+  "status": "active",
+  "storage_path": "data/calls/8118c0c2-1660-4875-999e-6b1698a5f578/",
+  "resolved_stack": {
+    "combination_id": "5b3ecb0dcd721b7f",
+    "tier": "medium",
+    "mode": "frontend",
+    "language": "hi-IN",
+    "voice_preset": "telugu_natural",
+    "stt": {
+      "provider": "sarvam",
+      "model": "saaras:v3-realtime",
+      "config": {
+        "mode": "realtime"
+      }
+    },
+    "llm": {
+      "provider": "sarvam",
+      "model": "sarvam-105b-conversations",
+      "config": {
+        "api_mode": "chat_completions_v1"
+      }
+    },
+    "tts": {
+      "provider": "sarvam",
+      "model": "bulbul:v3",
+      "config": {
+        "speaker": "shubh",
+        "api_mode": "websocket"
+      }
+    }
+  },
+  "pipeline": "composed_voice",
+  "callee_e164": "+919876500508",
+  "caller_id": "+914000000000",
+  "is_test": true,
+  "call_end_policy": {
+    "allowedReasons": [
+      "goodbye",
+      "firm_refusal",
+      "not_interested",
+      "goal_complete",
+      "abuse"
+    ],
+    "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+    "farewellSource": "default"
+  },
+  "stage_usage": {
+    "llm": {
+      "input_tokens": 10637,
+      "output_tokens": 646,
+      "cached_tokens": 7584
+    },
+    "stt": {
+      "audio_seconds": 0.0
+    }
+  },
+  "callback_request": {
+    "id": "ee09f3ca-5319-44ff-a4b9-8c4b6f9569d8",
+    "status": "requested",
+    "requestedWhen": "मुझे नहीं पता, बाद में कभी।",
+    "requestText": "मुझे नहीं पता, बाद में कभी।"
+  },
+  "callback_cancelled": false,
+  "callback_withdrawal_pending": false,
+  "contact_preference": "callback",
+  "hangup_reason": "goal_complete",
+  "hangup_initiator": "agent",
+  "hangup_outcome": "agent_ended",
+  "hangup_playback_wait_ms": 63,
+  "hangup_trail_ms": 1000,
+  "hangup_heard_playback": true,
+  "callback_close_phase": "semantic_pending",
+  "disconnected_at": "2026-10-30T11:22:49.732004+00:00",
+  "ended_at": "2026-10-30T11:22:49.732004+00:00",
+  "end_reason": "goal_complete",
+  "duration_sec": 4.0,
+  "provider_cost_result": {
+    "status": "incomplete",
+    "missing": [
+      "provider_cost_snapshot"
+    ],
+    "stages": {},
+    "totalUsd": null,
+    "totalInr": null
+  },
+  "usage": {
+    "cost_accounting_version": 3,
+    "supplier_cost_status": "incomplete",
+    "live_transcript_usd": 0.0,
+    "live_transcript_inr": 0.0,
+    "pipeline": "composed_voice",
+    "duration_sec": 4.0,
+    "telephony_provider": "telnyx",
+    "telephony_usd": 0.0010999999999999998,
+    "telephony_inr": 0.10479699999999999,
+    "model_cost_usd": null,
+    "model_cost_inr": null,
+    "telnyx_usd": 0.0010999999999999998,
+    "telnyx_inr": 0.10479699999999999,
+    "telnyx_voice_api_usd": 0.00013333333333333334,
+    "telnyx_sip_usd": 0.0006,
+    "telnyx_media_stream_usd": 0.00023333333333333333,
+    "telnyx_call_recording_usd": 0.00013333333333333334,
+    "telnyx_destination_country": "IN",
+    "telnyx_sip_usd_per_min": 0.009,
+    "telnyx_cost_is_estimate": true,
+    "vobiz_usd": 0.0,
+    "vobiz_inr": 0.0,
+    "carrier_cost_source": "tariff_estimate",
+    "cost_usd": null,
+    "cost_inr": null,
+    "cost_is_estimate": true,
+    "fx_rate_inr": 95.27,
+    "fx_source": "live_cache",
+    "fx_as_of": "2026-10-29",
+    "gst_inr": 0.0,
+    "cost_usd_per_min": null,
+    "cost_inr_per_min": null,
+    "telephony_usd_per_min": 0.016499999999999997,
+    "telephony_inr_per_min": 1.5719549999999998,
+    "model_cost_usd_per_min": null,
+    "model_cost_inr_per_min": null,
+    "telnyx_usd_per_min": 0.016499999999999997,
+    "telnyx_inr_per_min": 1.5719549999999998,
+    "vobiz_usd_per_min": 0.0,
+    "vobiz_inr_per_min": 0.0
+  }
+}

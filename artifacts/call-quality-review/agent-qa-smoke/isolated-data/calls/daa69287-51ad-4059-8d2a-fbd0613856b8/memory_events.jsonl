@@ -1,0 +1,7 @@
+{"turn_seq": 1, "ts": "2026-10-31T12:56:04.197471Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T12:56:42.538601Z", "source": "model", "operations": [{"op": "set_fact", "key": "email", "value": "mohansaiteja.99@gmail.com"}], "applied": true, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T12:57:08.239647Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T12:57:08.250430Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "assistant: హెయిర్ ఆయిల్ 200 మి. లీ కి 499 రూపాయలు, ఫేస్ క్రీమ్ 50 గ్రాములకు 599 రూపాయలు అవుతుంది.\nuser: సరేనండి, ఈ product details మరియు prices నాకు ఒకసారి email చేస్తారా? నా email address mohansaiteja.99@gmail.com.\nassistant: మీ email mohansaiteja.99@gmail. com కి details పంపించాను.\nuser: సరేనండి, ఫేస్ క్రీమ్ stock లో ఉందా? కూకట్‌పల్లికి delivery ఎప్పటికి అవుతుంది?\nassistant: ఫేస్ క్రీమ్ స్టాక్ మరియు కూకట్‌పల్లికి డెలివరీ ఎప్పటికి అవుతుంది అనే వివరాలు ప్రస్తుతం మా దగ్గర అందుబాటులో లేవు. team దీన్ని confirm చేస్తారు."}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T12:57:31.113368Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T12:57:55.857271Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-31T12:59:06.811284Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

@@ -1,0 +1,1396 @@
+[
+  {
+    "id": "en-IN/objection_twice/solar",
+    "scenario": "objection_twice",
+    "language": "en-IN",
+    "business": "solar",
+    "tenant_id": "8e7e1a05-e5dd-4a23-8130-3af430be859f",
+    "agent_id": "7e29cad0-9532-4d60-9dab-2261fcaaf966",
+    "call_id": "0db29bca-6d59-44be-9ff5-7d6cba2407ca",
+    "phone": "+919876500501",
+    "opening": "Hello, my name is Priya calling from SunPeak Solar. Am I speaking with the homeowner who recently requested a solar quote on our website?",
+    "turn_index": 5,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "It is too expensive for me.",
+        "caller_en": "It is too expensive for me.",
+        "reply": "I understand. A 3 kW rooftop system costs 1,95,000 rupees before the government subsidy of 78,000 rupees, so you would pay 1,17,000 rupees. Would you like me to book your free site survey now?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "No, it is still too expensive for us.",
+        "caller_en": "No, it is still too expensive for us.",
+        "reply": "We also have EMI available from 2,999 rupees per month for 48 months.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 3,
+        "caller": "Okay, what is the monthly EMI again?",
+        "caller_en": "Okay, what is the monthly EMI again?",
+        "reply": "The monthly EMI is 2,999 rupees per month for 48 months.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 4,
+        "caller": "Fine, book the free survey. My name is Kiran, I live in Velachery, Saturday works.",
+        "caller_en": "Fine, book the free survey. My name is Kiran, I live in Velachery, Saturday works.",
+        "reply": "Your details are noted for the team to confirm the Saturday survey.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 5,
+        "caller": "Thanks.",
+        "caller_en": "Thanks.",
+        "reply": "",
+        "farewell": "Thank you for your time. Goodbye.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "I understand. A 3 kW rooftop system costs 1,95,000 rupees before the government subsidy of 78,000 rupees, so you would pay 1,17,000 rupees. Would you like me to book your free site survey now?",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "We also have EMI available from 2,999 rupees per month for 48 months.",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "The monthly EMI is 2,999 rupees per month for 48 months.",
+        "farewell": false
+      },
+      {
+        "turn": 4,
+        "text": "Your details are noted for the team to confirm the Saturday survey.",
+        "farewell": false
+      },
+      {
+        "turn": 5,
+        "text": "Thank you for your time. Goodbye.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 5
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "site_visit_planned",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:name_known",
+        "contact:phone_known",
+        "custom:emi-financing",
+        "custom:rooftop-system",
+        "custom:saturday-survey",
+        "followup:site_visit",
+        "intent:information",
+        "outcome:site_visit_planned",
+        "sentiment:neutral",
+        "signal:objection",
+        "signal:price_sensitive"
+      ],
+      "facts": {
+        "budget": "too expensive",
+        "caller_name": "Kiran",
+        "delivery_locality": "Velachery",
+        "locality": "Velachery",
+        "name": "Kiran",
+        "phone": "+919876500501",
+        "requested_time": "Saturday",
+        "slot": "Saturday"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "0db29bca-6d59-44be-9ff5-7d6cba2407ca",
+          "tenant_id": "8e7e1a05-e5dd-4a23-8130-3af430be859f",
+          "agent_id": "7e29cad0-9532-4d60-9dab-2261fcaaf966",
+          "session_id": "wf-81bd060e3e4c4701aec5ac33744130d1",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_4804e634ca9a4898",
+          "started_at": "2026-10-30 11:31:59.624522+00:00",
+          "ended_at": "2026-10-30 11:32:16.365008+00:00",
+          "duration_sec": 16,
+          "disposition": "site_visit_planned",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/0db29bca-6d59-44be-9ff5-7d6cba2407ca/",
+          "end_reason": "goodbye",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:name_known",
+            "contact:phone_known",
+            "custom:emi-financing",
+            "custom:rooftop-system",
+            "custom:saturday-survey",
+            "followup:site_visit",
+            "intent:information",
+            "outcome:site_visit_planned",
+            "sentiment:neutral",
+            "signal:objection",
+            "signal:price_sensitive"
+          ],
+          "last_heartbeat_at": "2026-10-30 11:31:59.624522+00:00",
+          "created_at": "2026-10-30 11:31:59.626391+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "4fd7e12e-2bce-5a0d-b0de-bdb65bd35c79",
+          "tenant_id": "8e7e1a05-e5dd-4a23-8130-3af430be859f",
+          "agent_id": "7e29cad0-9532-4d60-9dab-2261fcaaf966",
+          "name": "Kiran",
+          "phone": "+919876500501",
+          "email": null,
+          "stage": "qualified",
+          "notes": "Caller enquiry — call 0db29bca-6d59-44be-9ff5-7d6cba2407ca\n{\"customer_name\": \"Kiran\", \"delivery_address\": \"Velachery\", \"request\": \"Book free site survey on Saturday\"}\n\n---\n[Call reference: 0db29bca-6d59-44be-9ff5-7d6cba2407ca]\nThe caller initiated the call expressing that the proposed 3 kW rooftop solar system was too expensive. The agent responded by breaking down the costs, explaining that the system was priced at 1,95,000 rupees before a government subsidy of 78,000 rupees, resulting in a net payment of 1,17,000 rupees, and offered a free site survey. The caller objected again, stating it was still too expensive. The agent then introduced an EMI option of 2,999 rupees per month for 48 months. The caller requested the monthly EMI figure again, which the agent repeated. After hearing the EMI details, the caller agreed to proceed and requested to book a free site survey. The caller provided their name as Kiran, mentioned they live in Velachery, and requested Saturday for the survey. The agent noted these details for the team to confirm the Saturday survey. The caller thanked the agent, and the agent concluded the call with a goodbye.\n\nNext step: Confirm the Saturday site survey for the caller named Kiran in Velachery.\n\nObjections: The cost of the 3 kW rooftop system is too high.\n\nCall outcome: site visit planned (95% confidence)",
+          "created_at": "2026-10-30 11:32:12.770804+00:00",
+          "updated_at": "2026-10-30 11:32:17.982119+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "goodbye"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "site_visit_planned"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "handled_objection_with_facts",
+        "passed": true,
+        "evidence": "A 3 kW rooftop system costs 1,95,000 rupees before the government subsidy of 78,000 rupees"
+      },
+      {
+        "id": "second_objection_not_verbatim_repeat",
+        "passed": true,
+        "evidence": "We also have EMI available from 2,999 rupees per month for 48 months."
+      },
+      {
+        "id": "offered_survey_objective",
+        "passed": true,
+        "evidence": "Would you like me to book your free site survey now?"
+      },
+      {
+        "id": "no_false_booking_confirmation",
+        "passed": true,
+        "evidence": "Your details are noted for the team to confirm the Saturday survey."
+      }
+    ],
+    "all_failures": [],
+    "passed": true
+  },
+  {
+    "id": "en-IN/refuse_no_dnd/solar",
+    "scenario": "refuse_no_dnd",
+    "language": "en-IN",
+    "business": "solar",
+    "tenant_id": "8e7e1a05-e5dd-4a23-8130-3af430be859f",
+    "agent_id": "7e29cad0-9532-4d60-9dab-2261fcaaf966",
+    "call_id": "4bfe9a01-4345-4104-bd0b-f71317640cd8",
+    "phone": "+919876500502",
+    "opening": "Hello, my name is Priya calling from SunPeak Solar. Am I speaking with the homeowner who recently requested a solar quote on our website?",
+    "turn_index": 1,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "We already have solar on our roof.",
+        "caller_en": "We already have solar on our roof.",
+        "reply": "",
+        "farewell": "Thank you for your time. Goodbye.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "Thank you for your time. Goodbye.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 1
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "not_interested",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "contact:phone_known",
+        "intent:information",
+        "outcome:not_interested",
+        "sentiment:neutral"
+      ],
+      "facts": {
+        "phone": "+919876500502"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "4bfe9a01-4345-4104-bd0b-f71317640cd8",
+          "tenant_id": "8e7e1a05-e5dd-4a23-8130-3af430be859f",
+          "agent_id": "7e29cad0-9532-4d60-9dab-2261fcaaf966",
+          "session_id": "wf-3514731ddb3f4089bc8f8d66c231f88e",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_4804e634ca9a4898",
+          "started_at": "2026-10-30 11:32:37.229213+00:00",
+          "ended_at": "2026-10-30 11:32:40.126856+00:00",
+          "duration_sec": 2,
+          "disposition": "not_interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/4bfe9a01-4345-4104-bd0b-f71317640cd8/",
+          "end_reason": "goodbye",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "contact:phone_known",
+            "intent:information",
+            "outcome:not_interested",
+            "sentiment:neutral"
+          ],
+          "last_heartbeat_at": "2026-10-30 11:32:37.229213+00:00",
+          "created_at": "2026-10-30 11:32:37.230220+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": []
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "goodbye"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "not_interested"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "respected_refusal_without_pitch",
+        "passed": true,
+        "evidence": "AGENT: (silent)"
+      }
+    ],
+    "all_failures": [],
+    "passed": true
+  },
+  {
+    "id": "hi-IN/objection_twice/solar",
+    "scenario": "objection_twice",
+    "language": "hi-IN",
+    "business": "solar",
+    "tenant_id": "58a040fb-c5c5-4ce9-91c0-af7734a196de",
+    "agent_id": "0d4d5a13-7f2d-4a82-8f45-03210063b8f6",
+    "call_id": "e92bf622-35d8-486e-8af5-16fb2249a621",
+    "phone": "+919876500503",
+    "opening": "नमस्ते, मैं प्रिया बोल रही हूँ सनपीक सोलर से। क्या मेरी बात घर के उस सदस्य से हो रही है जिन्होंने हमारी वेबसाइट पर सोलर कोट के लिए अनुरोध किया था?",
+    "turn_index": 5,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "ये मेरे लिए बहुत महँगा है।",
+        "caller_en": "It is too expensive for me.",
+        "reply": "समझ सकती हूँ, लेकिन इसमें 78,000 रुपये की सरकारी सब्सिडी शामिल है, तो आपको केवल 1,17,000 रुपये देने होंगे। इसके अलावा 48 महीनों के लिए 2,999 रुपये प्रति माह से EMI का विकल्प भी उपलब्ध है। क्या आप मुफ्त साइट सर्वे बुक करवाना चाहेंगे?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "नहीं, ये अभी भी हमारे लिए बहुत महँगा है।",
+        "caller_en": "No, it is still too expensive for us.",
+        "reply": "मैं समझ सकती हूँ। 78,000 रुपये की सरकारी सब्सिडी और 48 महीनों के लिए 2,999 रुपये महीने की EMI से काफी मदद मिल जाती है। अगर आप चाहें तो हम किस समय call back करें, वो बता दीजिए।",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 3,
+        "caller": "ठीक है, monthly EMI फिर से कितनी है?",
+        "caller_en": "Okay, what is the monthly EMI again?",
+        "reply": "48 महीनों के लिए monthly EMI 2,999 रुपये से शुरू होती है।",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 4,
+        "caller": "ठीक है, free survey book कर दो। मेरा नाम किरण है, मैं Velachery में रहता हूँ, शनिवार सही रहेगा।",
+        "caller_en": "Fine, book the free survey. My name is Kiran, I live in Velachery, Saturday works.",
+        "reply": "आपकी details team के review के लिए save कर दी गई हैं। हमारी team आपके शनिवार के visit को confirm कर लेगी।",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 5,
+        "caller": "Thanks।",
+        "caller_en": "Thanks.",
+        "reply": "",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "समझ सकती हूँ, लेकिन इसमें 78,000 रुपये की सरकारी सब्सिडी शामिल है, तो आपको केवल 1,17,000 रुपये देने होंगे। इसके अलावा 48 महीनों के लिए 2,999 रुपये प्रति माह से EMI का विकल्प भी उपलब्ध है। क्या आप मुफ्त साइट सर्वे बुक करवाना चाहेंगे?",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "मैं समझ सकती हूँ। 78,000 रुपये की सरकारी सब्सिडी और 48 महीनों के लिए 2,999 रुपये महीने की EMI से काफी मदद मिल जाती है। अगर आप चाहें तो हम किस समय call back करें, वो बता दीजिए।",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "48 महीनों के लिए monthly EMI 2,999 रुपये से शुरू होती है।",
+        "farewell": false
+      },
+      {
+        "turn": 4,
+        "text": "आपकी details team के review के लिए save कर दी गई हैं। हमारी team आपके शनिवार के visit को confirm कर लेगी।",
+        "farewell": false
+      },
+      {
+        "turn": 5,
+        "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 5
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "site_visit_planned",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:name_known",
+        "contact:phone_known",
+        "custom:site-survey",
+        "custom:velachery",
+        "followup:schedule_pending",
+        "followup:site_visit",
+        "intent:information",
+        "outcome:site_visit_planned",
+        "sentiment:neutral",
+        "signal:objection",
+        "signal:price_sensitive"
+      ],
+      "facts": {
+        "budget": "Not specified",
+        "caller_name": "किरण",
+        "delivery_locality": "Velachery",
+        "name": "Kiran",
+        "phone": "+919876500503",
+        "requested_time": "शनिवार",
+        "slot": "Saturday"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "e92bf622-35d8-486e-8af5-16fb2249a621",
+          "tenant_id": "58a040fb-c5c5-4ce9-91c0-af7734a196de",
+          "agent_id": "0d4d5a13-7f2d-4a82-8f45-03210063b8f6",
+          "session_id": "wf-aa01ba6552bf4524af93aa4a635e02ea",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_afa59b406ae74ce5",
+          "started_at": "2026-10-30 11:33:13.416282+00:00",
+          "ended_at": "2026-10-30 11:33:27.534671+00:00",
+          "duration_sec": 14,
+          "disposition": "site_visit_planned",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/e92bf622-35d8-486e-8af5-16fb2249a621/",
+          "end_reason": "goodbye",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:name_known",
+            "contact:phone_known",
+            "custom:site-survey",
+            "custom:velachery",
+            "followup:schedule_pending",
+            "followup:site_visit",
+            "intent:information",
+            "outcome:site_visit_planned",
+            "sentiment:neutral",
+            "signal:objection",
+            "signal:price_sensitive"
+          ],
+          "last_heartbeat_at": "2026-10-30 11:33:13.416282+00:00",
+          "created_at": "2026-10-30 11:33:13.416282+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "93f6d62a-986d-5b84-b8c6-1a1d42d71c4c",
+          "tenant_id": "58a040fb-c5c5-4ce9-91c0-af7734a196de",
+          "agent_id": "0d4d5a13-7f2d-4a82-8f45-03210063b8f6",
+          "name": "Kiran",
+          "phone": "+919876500503",
+          "email": null,
+          "stage": "qualified",
+          "notes": "Caller enquiry — call e92bf622-35d8-486e-8af5-16fb2249a621\n{\"request\": \"Free site survey booking requested. Customer name: Kiran, Area: Velachery, Preferred day: Saturday.\", \"customer_name\": \"Kiran\", \"delivery_address\": \"Velachery\"}\n\n---\n[Call reference: e92bf622-35d8-486e-8af5-16fb2249a621]\nThe caller, Kiran, initially objected to the price, stating it was too expensive. The agent responded by explaining a government subsidy of 78,000 rupees and an EMI option of 2,999 rupees per month for 48 months. After the caller requested the monthly EMI amount again to be repeated, the agent confirmed it was 2,999 rupees. The caller then agreed to book a free site survey, providing his name as Kiran and his location as Velachery, and requested Saturday. The agent saved the details and stated that the team would confirm the Saturday visit. The call ended with the caller saying thanks.\n\nNext step: Team to confirm the Saturday site visit with Kiran.\n\nObjections: Price too high\n\nCall outcome: site visit planned (95% confidence)",
+          "created_at": "2026-10-30 11:33:24.416026+00:00",
+          "updated_at": "2026-10-30 11:33:28.842420+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "goodbye"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "site_visit_planned"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "handled_objection_with_facts",
+        "passed": true,
+        "evidence": "समझ सकती हूँ, लेकिन इसमें 78,000 रुपये की सरकारी सब्सिडी शामिल है, तो आपको केवल 1,17,000 रुपये देने होंगे।"
+      },
+      {
+        "id": "second_objection_not_verbatim_repeat",
+        "passed": true,
+        "evidence": "मैं समझ सकती हूँ। 78,000 रुपये की सरकारी सब्सिडी और 48 महीनों के लिए 2,999 रुपये महीने की EMI से काफी मदद मिल जाती है। अगर आप चाहें तो हम किस समय call back करें, वो बता दीजिए।"
+      },
+      {
+        "id": "offered_survey_objective",
+        "passed": true,
+        "evidence": "क्या आप मुफ्त साइट सर्वे बुक करवाना चाहेंगे?"
+      },
+      {
+        "id": "no_false_booking_confirmation",
+        "passed": true,
+        "evidence": "आपकी details team के review के लिए save कर दी गई हैं। हमारी team आपके शनिवार के visit को confirm कर लेगी।"
+      }
+    ],
+    "all_failures": [],
+    "passed": true
+  },
+  {
+    "id": "hi-IN/refuse_no_dnd/solar",
+    "scenario": "refuse_no_dnd",
+    "language": "hi-IN",
+    "business": "solar",
+    "tenant_id": "58a040fb-c5c5-4ce9-91c0-af7734a196de",
+    "agent_id": "0d4d5a13-7f2d-4a82-8f45-03210063b8f6",
+    "call_id": "d1864cd8-b8d8-402b-995c-70f6172408b2",
+    "phone": "+919876500504",
+    "opening": "नमस्ते, मैं प्रिया बोल रही हूँ सनपीक सोलर से। क्या मेरी बात घर के उस सदस्य से हो रही है जिन्होंने हमारी वेबसाइट पर सोलर कोट के लिए अनुरोध किया था?",
+    "turn_index": 1,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "हमारी छत पर पहले से ही solar लगा हुआ है।",
+        "caller_en": "We already have solar on our roof.",
+        "reply": "",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 1
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "not_interested",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:phone_known",
+        "custom:existing-solar",
+        "followup:callback",
+        "intent:information",
+        "outcome:not_interested",
+        "sentiment:neutral",
+        "signal:objection"
+      ],
+      "facts": {
+        "phone": "+919876500504"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "d1864cd8-b8d8-402b-995c-70f6172408b2",
+          "tenant_id": "58a040fb-c5c5-4ce9-91c0-af7734a196de",
+          "agent_id": "0d4d5a13-7f2d-4a82-8f45-03210063b8f6",
+          "session_id": "wf-66765610154e4f9486c3843fb3536721",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_afa59b406ae74ce5",
+          "started_at": "2026-10-30 11:33:33.318056+00:00",
+          "ended_at": "2026-10-30 11:33:37.068964+00:00",
+          "duration_sec": 3,
+          "disposition": "not_interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/d1864cd8-b8d8-402b-995c-70f6172408b2/",
+          "end_reason": "not_interested",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:phone_known",
+            "custom:existing-solar",
+            "followup:callback",
+            "intent:information",
+            "outcome:not_interested",
+            "sentiment:neutral",
+            "signal:objection"
+          ],
+          "last_heartbeat_at": "2026-10-30 11:33:33.318056+00:00",
+          "created_at": "2026-10-30 11:33:33.319154+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": []
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "not_interested"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "not_interested"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "respected_refusal_without_pitch",
+        "passed": true,
+        "evidence": "(silent)"
+      }
+    ],
+    "all_failures": [],
+    "passed": true
+  },
+  {
+    "id": "ta-IN/objection_twice/solar",
+    "scenario": "objection_twice",
+    "language": "ta-IN",
+    "business": "solar",
+    "tenant_id": "7cd79964-0bde-4e04-bd5c-a332bb834a91",
+    "agent_id": "354ae699-42bc-4a27-9b85-762ff98c7d23",
+    "call_id": "83875e82-3174-47e1-b1ae-ad91fbda2dc5",
+    "phone": "+919876500507",
+    "opening": "வணக்கம், நான் சன்பீக் சோலாரிலிருந்து ப்ரியா பேசுகிறேன். எங்கள் இணையதளத்தில் சோலார் கோட் கேட்டு இருந்தீர்களே, நீங்கள் இன்னும் சோலார் அமைப்பதில் ஆர்வமாக இருக்கிறீர்களா?",
+    "turn_index": 5,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "இது எனக்கு ரொம்ப காஸ்ட்லியா இருக்கு.",
+        "caller_en": "It is too expensive for me.",
+        "reply": "புரியுது, 3 kilowatt system-க்கு total-ஆ ₹1,95,000 வரும். அதுல government subsidy ₹78,000 போக, நீங்க ₹1,17,000 மட்டும் கட்டினா போதும். சர்வே arrange பண்ண உங்க பேரும், area-வும், எந்த நாள் வசதியா இருக்கும்னு சொல்ல முடியுமா?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "இல்ல, இது இன்னும் எங்களுக்கு ரொம்ப காஸ்ட்லியா இருக்கு.",
+        "caller_en": "No, it is still too expensive for us.",
+        "reply": "புரியுது. 3 kilowatt சோலார் சிஸ்டம் விலை 1,95,000 ரூபாய். சர்வே arrange பண்ண உங்கள் பெயரும், பகுதியும், எந்த நாள் வசதியா இருக்கும்னு மட்டும் சொல்ல முடியுமா?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 3,
+        "caller": "சரி, மாச EMI எவ்ளோன்னு திரும்பவும் சொல்லுங்க?",
+        "caller_en": "Okay, what is the monthly EMI again?",
+        "reply": "கண்டிப்பா சொல்றேன். 48 மாதங்களுக்கு மாசம் ₹2,999-ல இருந்து EMI வசதி இருக்கு.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 4,
+        "caller": "சரி, ஃப்ரீ survey-அ book பண்ணுங்க. என் பேரு Kiran, நான் Velachery-ல இருக்கேன், சனிக்கிழமை ஓகே.",
+        "caller_en": "Fine, book the free survey. My name is Kiran, I live in Velachery, Saturday works.",
+        "reply": "உங்க விவரங்கள் சேவ் ஆயிடுச்சு. சனிக்கிழமை சர்வே பத்தி எங்க டீம் கன்பார்ம் பண்ணுவாங்க.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 5,
+        "caller": "தேங்க்ஸ்.",
+        "caller_en": "Thanks.",
+        "reply": "",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "புரியுது, 3 kilowatt system-க்கு total-ஆ ₹1,95,000 வரும். அதுல government subsidy ₹78,000 போக, நீங்க ₹1,17,000 மட்டும் கட்டினா போதும். சர்வே arrange பண்ண உங்க பேரும், area-வும், எந்த நாள் வசதியா இருக்கும்னு சொல்ல முடியுமா?",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "புரியுது. 3 kilowatt சோலார் சிஸ்டம் விலை 1,95,000 ரூபாய். சர்வே arrange பண்ண உங்கள் பெயரும், பகுதியும், எந்த நாள் வசதியா இருக்கும்னு மட்டும் சொல்ல முடியுமா?",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "கண்டிப்பா சொல்றேன். 48 மாதங்களுக்கு மாசம் ₹2,999-ல இருந்து EMI வசதி இருக்கு.",
+        "farewell": false
+      },
+      {
+        "turn": 4,
+        "text": "உங்க விவரங்கள் சேவ் ஆயிடுச்சு. சனிக்கிழமை சர்வே பத்தி எங்க டீம் கன்பார்ம் பண்ணுவாங்க.",
+        "farewell": false
+      },
+      {
+        "turn": 5,
+        "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 5
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "site_visit_planned",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:name_known",
+        "contact:phone_known",
+        "custom:emi-financing",
+        "custom:solar-survey",
+        "followup:site_visit",
+        "intent:information",
+        "intent:purchase",
+        "outcome:site_visit_planned",
+        "sentiment:neutral",
+        "signal:objection",
+        "signal:price_sensitive"
+      ],
+      "facts": {
+        "budget": "₹1,17,000 (after subsidy)",
+        "caller_name": "Kiran",
+        "delivery_locality": "Velachery",
+        "locality": "Velachery",
+        "phone": "+919876500507",
+        "requested_time": "சனிக்கிழமை",
+        "slot": "Saturday"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "83875e82-3174-47e1-b1ae-ad91fbda2dc5",
+          "tenant_id": "7cd79964-0bde-4e04-bd5c-a332bb834a91",
+          "agent_id": "354ae699-42bc-4a27-9b85-762ff98c7d23",
+          "session_id": "wf-8a23c011a5bf48bcacfb3f0ac942c41e",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_e2dcc20cdf644c52",
+          "started_at": "2026-10-30 11:34:44.640256+00:00",
+          "ended_at": "2026-10-30 11:34:58.825427+00:00",
+          "duration_sec": 14,
+          "disposition": "site_visit_planned",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/83875e82-3174-47e1-b1ae-ad91fbda2dc5/",
+          "end_reason": "goodbye",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:name_known",
+            "contact:phone_known",
+            "custom:emi-financing",
+            "custom:solar-survey",
+            "followup:site_visit",
+            "intent:information",
+            "intent:purchase",
+            "outcome:site_visit_planned",
+            "sentiment:neutral",
+            "signal:objection",
+            "signal:price_sensitive"
+          ],
+          "last_heartbeat_at": "2026-10-30 11:34:44.640256+00:00",
+          "created_at": "2026-10-30 11:34:44.640256+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "06fca9b1-baf4-5e64-9149-e289525a71fb",
+          "tenant_id": "7cd79964-0bde-4e04-bd5c-a332bb834a91",
+          "agent_id": "354ae699-42bc-4a27-9b85-762ff98c7d23",
+          "name": "Kiran",
+          "phone": "+919876500507",
+          "email": null,
+          "stage": "qualified",
+          "notes": "Caller enquiry — call 83875e82-3174-47e1-b1ae-ad91fbda2dc5\n{\"customer_name\": \"Kiran\", \"delivery_address\": \"Velachery\", \"request\": \"Book a free site survey for Saturday\"}\n\n---\n[Call reference: 83875e82-3174-47e1-b1ae-ad91fbda2dc5]\nThe caller initially expressed that the 3-kilowatt solar system was too costly. The agent explained the total cost of ₹1,95,000, the government subsidy of ₹78,000, and the net payment of ₹1,17,000. The caller then requested the monthly EMI details, which the agent provided as starting from ₹2,999 for 48 months. After hearing the EMI option, the caller agreed to book the free survey. The caller shared their name as Kiran, their location as Velachery, and requested the survey for Saturday. The agent confirmed that the details were saved and that the team would confirm the Saturday survey. The call ended with the caller thanking the agent.\n\nNext step: Team to confirm the Saturday site survey with Kiran.\n\nObjections: The caller initially objected that the system was too costly.\n\nCall outcome: site visit planned (95% confidence)",
+          "created_at": "2026-10-30 11:34:55.718130+00:00",
+          "updated_at": "2026-10-30 11:35:00.281472+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "goodbye"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "site_visit_planned"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "handled_objection_with_facts",
+        "passed": true,
+        "evidence": "புரியுது, 3 kilowatt system-க்கு total-ஆ ₹1,95,000 வரும். அதுல government subsidy ₹78,000 போக, நீங்க ₹1,17,000 மட்டும் கட்டினா போதும்."
+      },
+      {
+        "id": "second_objection_not_verbatim_repeat",
+        "passed": true,
+        "evidence": "புரியுது. 3 kilowatt சோலார் சிஸ்டம் விலை 1,95,000 ரூபாய். சர்வே arrange பண்ண உங்கள் பெயரும், பகுதியும், எந்த நாள் வசதியா இருக்கும்னு மட்டும் சொல்ல முடியுமா?"
+      },
+      {
+        "id": "offered_survey_objective",
+        "passed": true,
+        "evidence": "சர்வே arrange பண்ண உங்க பேரும், area-வும், எந்த நாள் வசதியா இருக்கும்னு சொல்ல முடியுமா?"
+      },
+      {
+        "id": "no_false_booking_confirmation",
+        "passed": true,
+        "evidence": "உங்க விவரங்கள் சேவ் ஆயிடுச்சு. சனிக்கிழமை சர்வே பத்தி எங்க டீம் கன்பார்ம் பண்ணுவாங்க."
+      }
+    ],
+    "all_failures": [],
+    "passed": true
+  },
+  {
+    "id": "ta-IN/refuse_no_dnd/solar",
+    "scenario": "refuse_no_dnd",
+    "language": "ta-IN",
+    "business": "solar",
+    "tenant_id": "7cd79964-0bde-4e04-bd5c-a332bb834a91",
+    "agent_id": "354ae699-42bc-4a27-9b85-762ff98c7d23",
+    "call_id": "17f226f5-4368-4aa4-a9db-6f20e8713885",
+    "phone": "+919876500508",
+    "opening": "வணக்கம், நான் சன்பீக் சோலாரிலிருந்து ப்ரியா பேசுகிறேன். எங்கள் இணையதளத்தில் சோலார் கோட் கேட்டு இருந்தீர்களே, நீங்கள் இன்னும் சோலார் அமைப்பதில் ஆர்வமாக இருக்கிறீர்களா?",
+    "turn_index": 1,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "எங்க ரூஃப்ல ஏற்கனவே சோலார் இருக்கு.",
+        "caller_en": "We already have solar on our roof.",
+        "reply": "",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 1
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "new_lead",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "contact:phone_known",
+        "intent:information",
+        "outcome:new_lead",
+        "signal:repeat_customer"
+      ],
+      "facts": {
+        "phone": "+919876500508"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "17f226f5-4368-4aa4-a9db-6f20e8713885",
+          "tenant_id": "7cd79964-0bde-4e04-bd5c-a332bb834a91",
+          "agent_id": "354ae699-42bc-4a27-9b85-762ff98c7d23",
+          "session_id": "wf-04c828e360884f958c77167ddbe38a73",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_e2dcc20cdf644c52",
+          "started_at": "2026-10-30 11:35:03.920152+00:00",
+          "ended_at": "2026-10-30 11:35:06.741217+00:00",
+          "duration_sec": 2,
+          "disposition": "new_lead",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/17f226f5-4368-4aa4-a9db-6f20e8713885/",
+          "end_reason": "not_interested",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "contact:phone_known",
+            "intent:information",
+            "outcome:new_lead",
+            "signal:repeat_customer"
+          ],
+          "last_heartbeat_at": "2026-10-30 11:35:03.920152+00:00",
+          "created_at": "2026-10-30 11:35:03.921158+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "dc95878b-c903-43f8-993d-c4f02e1bdb9a",
+          "tenant_id": "7cd79964-0bde-4e04-bd5c-a332bb834a91",
+          "agent_id": "354ae699-42bc-4a27-9b85-762ff98c7d23",
+          "name": "New lead",
+          "phone": "+919876500508",
+          "email": null,
+          "stage": "new",
+          "notes": "[Call reference: 17f226f5-4368-4aa4-a9db-6f20e8713885]\nThe caller initiated the conversation by stating that they already have solar panels installed on their roof. The agent greeted the caller and thanked them for their time. The conversation ended immediately after this exchange without any further discussion or qualification.\n\nCall outcome: new lead (95% confidence)",
+          "created_at": "2026-10-30 11:35:07.680820+00:00",
+          "updated_at": "2026-10-30 11:35:07.680820+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "not_interested"
+    },
+    "verdict": {
+      "passed": false,
+      "failures": [
+        "disposition:new_lead"
+      ],
+      "disposition": "new_lead"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "respected_refusal_without_pitch",
+        "passed": true,
+        "evidence": "(silent)"
+      }
+    ],
+    "all_failures": [
+      "disposition:new_lead"
+    ],
+    "passed": false
+  },
+  {
+    "id": "te-IN/objection_twice/solar",
+    "scenario": "objection_twice",
+    "language": "te-IN",
+    "business": "solar",
+    "tenant_id": "8ae2ecbd-79ac-4515-ba81-0b51f94be3be",
+    "agent_id": "43d604c3-3bb3-4cc5-afe1-1171b14416dc",
+    "call_id": "73baec38-0bcc-4d5a-a6bd-a99f2638f3fc",
+    "phone": "+919876500505",
+    "opening": "నమస్కారం, నా పేరు ప్రియ, సన్‌పీక్ సోలార్ నుండి మాట్లాడుతున్నాను. మీరు ఇటీవల మా వెబ్‌సైట్‌లో సోలార్ కోట్ కోసం అభ్యర్థించారు, అందుకే ఈ కాల్ చేస్తున్నాను. రూఫ్‌టాప్ సోలార్ గురించి మాట్లాడటానికి మీకు కొంచెం సమయం ఉందా?",
+    "turn_index": 5,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "ఇది నాకు చాలా expensive గా ఉంది.",
+        "caller_en": "It is too expensive for me.",
+        "reply": "అర్థమైంది. ఇందులో 78,000 రూపాయల ప్రభుత్వ సబ్సిడీ ఉంది, కాబట్టి మీ మొత్తం ఖర్చు 1,17,000 రూపాయలు అవుతుంది. అలాగే 48 నెలల పాటు నెలకు 2,999 రూపాయల నుండి EMI option కూడా ఉంది.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "లేదు, ఇది మాకు ఇంకా చాలా expensive గానే ఉంది.",
+        "caller_en": "No, it is still too expensive for us.",
+        "reply": "సరే, అర్థమైంది. ఈ 78,000 రూపాయల ప్రభుత్వ సబ్సిడీ మరియు 48 నెలల పాటు నెలకు 2,999 రూపాయల EMI option మీకు ఎలా అనిపిస్తుందో చెప్పండి.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 3,
+        "caller": "సరే, monthly EMI మళ్ళీ ఎంత చెప్పారు?",
+        "caller_en": "Okay, what is the monthly EMI again?",
+        "reply": "నెలకు 2,999 రూపాయలు, 48 నెలల పాటు.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 4,
+        "caller": "సరే, free survey book చేయండి. నా పేరు కిరణ్, నేను Velachery లో ఉంటాను, శనివారం కుదురుతుంది.",
+        "caller_en": "Fine, book the free survey. My name is Kiran, I live in Velachery, Saturday works.",
+        "reply": "మీ వివరాలు team review కోసం save అయ్యాయి. శనివారం ఉచిత సైట్ సర్వే కోసం మీ request note చేశాము, team confirm చేస్తారు.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 5,
+        "caller": "Thanks.",
+        "caller_en": "Thanks.",
+        "reply": "",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "అర్థమైంది. ఇందులో 78,000 రూపాయల ప్రభుత్వ సబ్సిడీ ఉంది, కాబట్టి మీ మొత్తం ఖర్చు 1,17,000 రూపాయలు అవుతుంది. అలాగే 48 నెలల పాటు నెలకు 2,999 రూపాయల నుండి EMI option కూడా ఉంది.",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "సరే, అర్థమైంది. ఈ 78,000 రూపాయల ప్రభుత్వ సబ్సిడీ మరియు 48 నెలల పాటు నెలకు 2,999 రూపాయల EMI option మీకు ఎలా అనిపిస్తుందో చెప్పండి.",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "నెలకు 2,999 రూపాయలు, 48 నెలల పాటు.",
+        "farewell": false
+      },
+      {
+        "turn": 4,
+        "text": "మీ వివరాలు team review కోసం save అయ్యాయి. శనివారం ఉచిత సైట్ సర్వే కోసం మీ request note చేశాము, team confirm చేస్తారు.",
+        "farewell": false
+      },
+      {
+        "turn": 5,
+        "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 5
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "callback_required",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:name_known",
+        "contact:phone_known",
+        "custom:free-survey",
+        "followup:callback",
+        "followup:schedule_pending",
+        "followup:site_visit",
+        "intent:information",
+        "outcome:callback_required",
+        "sentiment:neutral",
+        "signal:objection",
+        "signal:price_sensitive"
+      ],
+      "facts": {
+        "budget": "Not disclosed",
+        "caller_name": "Kiran",
+        "delivery_locality": "Velachery",
+        "phone": "+919876500505",
+        "requested_time": "శనివారం",
+        "slot": "Saturday"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "73baec38-0bcc-4d5a-a6bd-a99f2638f3fc",
+          "tenant_id": "8ae2ecbd-79ac-4515-ba81-0b51f94be3be",
+          "agent_id": "43d604c3-3bb3-4cc5-afe1-1171b14416dc",
+          "session_id": "wf-b22ff439489e4004b23384b489294fe8",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_8386f837d4b24d5f",
+          "started_at": "2026-10-30 11:33:59.030116+00:00",
+          "ended_at": "2026-10-30 11:34:11.217802+00:00",
+          "duration_sec": 12,
+          "disposition": "callback_required",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/73baec38-0bcc-4d5a-a6bd-a99f2638f3fc/",
+          "end_reason": "goodbye",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "action:required",
+            "contact:name_known",
+            "contact:phone_known",
+            "custom:free-survey",
+            "followup:callback",
+            "followup:schedule_pending",
+            "followup:site_visit",
+            "intent:information",
+            "outcome:callback_required",
+            "sentiment:neutral",
+            "signal:objection",
+            "signal:price_sensitive"
+          ],
+          "last_heartbeat_at": "2026-10-30 11:33:59.030116+00:00",
+          "created_at": "2026-10-30 11:33:59.030116+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "231cf716-ef8d-5680-9c7c-696b32f88077",
+          "tenant_id": "8ae2ecbd-79ac-4515-ba81-0b51f94be3be",
+          "agent_id": "43d604c3-3bb3-4cc5-afe1-1171b14416dc",
+          "name": "కిరణ్",
+          "phone": "+919876500505",
+          "email": null,
+          "stage": "contacted",
+          "notes": "Caller enquiry — call 73baec38-0bcc-4d5a-a6bd-a99f2638f3fc\n{\"customer_name\": \"కిరణ్\", \"delivery_address\": \"Velachery\", \"request\": \"Book a free site survey on Saturday\", \"product\": \"3 kW rooftop solar system\"}\n\n---\n[Call reference: 73baec38-0bcc-4d5a-a6bd-a99f2638f3fc]\nThe caller, Kiran, initiated the call expressing that the product was too expensive. The agent explained a government subsidy of 78,000 rupees, reducing the total cost to 1,17,000 rupees, and offered an EMI option of 2,999 rupees per month for 48 months. The caller initially rejected the pricing but inquired about the monthly EMI amount again. After confirming the EMI details, the caller requested a free survey to be booked. He provided his name as Kiran, mentioned he lives in Velachery, and stated that Saturday would be a suitable time. The agent acknowledged the request, saved the details for team review, and noted the request for a Saturday free site survey, promising that the team would confirm it. The caller thanked the agent, and the call ended.\n\nNext step: Team to confirm the free site survey scheduled for Saturday with Kiran in Velachery.\n\nObjections: Price too high\n\nCall outcome: callback required (85% confidence)",
+          "created_at": "2026-10-30 11:34:08.174325+00:00",
+          "updated_at": "2026-10-30 11:34:12.590353+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "goodbye"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "callback_required"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "handled_objection_with_facts",
+        "passed": true,
+        "evidence": "ఇందులో 78,000 రూపాయల ప్రభుత్వ సబ్సిడీ ఉంది, కాబట్టి మీ మొత్తం ఖర్చు 1,17,000 రూపాయలు అవుతుంది. అలాగే 48 నెలల పాటు నెలకు 2,999 రూపాయల నుండి EMI option కూడా ఉంది."
+      },
+      {
+        "id": "second_objection_not_verbatim_repeat",
+        "passed": true,
+        "evidence": "ఈ 78,000 రూపాయల ప్రభుత్వ సబ్సిడీ మరియు 48 నెలల పాటు నెలకు 2,999 రూపాయల EMI option మీకు ఎలా అనిపిస్తుందో చెప్పండి."
+      },
+      {
+        "id": "offered_survey_objective",
+        "passed": true,
+        "evidence": "సరే, free survey book చేయండి. నా పేరు కిరణ్, నేను Velachery లో ఉంటాను, శనివారం కుదురుతుంది."
+      },
+      {
+        "id": "no_false_booking_confirmation",
+        "passed": true,
+        "evidence": "మీ వివరాలు team review కోసం save అయ్యాయి. శనివారం ఉచిత సైట్ సర్వే కోసం మీ request note చేశాము, team confirm చేస్తారు."
+      }
+    ],
+    "all_failures": [],
+    "passed": true
+  },
+  {
+    "id": "te-IN/refuse_no_dnd/solar",
+    "scenario": "refuse_no_dnd",
+    "language": "te-IN",
+    "business": "solar",
+    "tenant_id": "8ae2ecbd-79ac-4515-ba81-0b51f94be3be",
+    "agent_id": "43d604c3-3bb3-4cc5-afe1-1171b14416dc",
+    "call_id": "9916bfc8-7b61-4056-a77d-6be1c81dc1dc",
+    "phone": "+919876500506",
+    "opening": "నమస్కారం, నా పేరు ప్రియ, సన్‌పీక్ సోలార్ నుండి మాట్లాడుతున్నాను. మీరు ఇటీవల మా వెబ్‌సైట్‌లో సోలార్ కోట్ కోసం అభ్యర్థించారు, అందుకే ఈ కాల్ చేస్తున్నాను. రూఫ్‌టాప్ సోలార్ గురించి మాట్లాడటానికి మీకు కొంచెం సమయం ఉందా?",
+    "turn_index": 1,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "మా roof మీద already solar ఉంది.",
+        "caller_en": "We already have solar on our roof.",
+        "reply": "",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 1
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "new_lead",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "contact:phone_known",
+        "intent:information",
+        "outcome:new_lead",
+        "sentiment:neutral"
+      ],
+      "facts": {
+        "phone": "+919876500506"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "9916bfc8-7b61-4056-a77d-6be1c81dc1dc",
+          "tenant_id": "8ae2ecbd-79ac-4515-ba81-0b51f94be3be",
+          "agent_id": "43d604c3-3bb3-4cc5-afe1-1171b14416dc",
+          "session_id": "wf-f202c622e12e44c5b708d37cf41630c8",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_8386f837d4b24d5f",
+          "started_at": "2026-10-30 11:34:19.517462+00:00",
+          "ended_at": "2026-10-30 11:34:22.002285+00:00",
+          "duration_sec": 2,
+          "disposition": "new_lead",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/9916bfc8-7b61-4056-a77d-6be1c81dc1dc/",
+          "end_reason": "not_interested",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "voice_profile_revision": null,
+          "status_tags": [
+            "contact:phone_known",
+            "intent:information",
+            "outcome:new_lead",
+            "sentiment:neutral"
+          ],
+          "last_heartbeat_at": "2026-10-30 11:34:19.517462+00:00",
+          "created_at": "2026-10-30 11:34:19.517462+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "be4d9276-6a87-4097-b8e7-269c32afab31",
+          "tenant_id": "8ae2ecbd-79ac-4515-ba81-0b51f94be3be",
+          "agent_id": "43d604c3-3bb3-4cc5-afe1-1171b14416dc",
+          "name": "New lead",
+          "phone": "+919876500506",
+          "email": null,
+          "stage": "new",
+          "notes": "[Call reference: 9916bfc8-7b61-4056-a77d-6be1c81dc1dc]\nThe caller initiated the call with an intent to inquire about solar solutions. However, they immediately disclosed that they already have an existing solar installation on their roof. The agent acknowledged this information and concluded the call. No further details were exchanged, and no next steps were agreed upon.\n\nCall outcome: new lead (90% confidence)",
+          "created_at": "2026-10-30 11:34:22.849155+00:00",
+          "updated_at": "2026-10-30 11:34:22.849155+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "not_interested"
+    },
+    "verdict": {
+      "passed": false,
+      "failures": [
+        "disposition:new_lead"
+      ],
+      "disposition": "new_lead"
+    },
+    "judge_model": "gemini:gemini-3.5-flash-lite",
+    "judge": [
+      {
+        "id": "respected_refusal_without_pitch",
+        "passed": true,
+        "evidence": "(silent)"
+      }
+    ],
+    "all_failures": [
+      "disposition:new_lead"
+    ],
+    "passed": false
+  }
+]

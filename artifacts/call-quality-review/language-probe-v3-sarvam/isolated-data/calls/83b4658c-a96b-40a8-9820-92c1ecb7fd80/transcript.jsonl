@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "കൂളിംഗ് ഇല്ലാത്ത ഫ്രിഡ്ജിന് നാളെ രാവിലെ പത്ത് മുപ്പതിന് technician വരുമോ", "ts": "2026-10-29T19:29:29.817755Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ഫ്രിഡ്ജ് inspection charge ₹250 ആണ്. പക്ഷെ repair ചെയ്യുകയാണെങ്കിൽ ആ charge waive off ആകും. നാളെ 10:30 AM-ന് visit വേണം എന്ന് പറഞ്ഞല്ലോ, Madhapur, Gachibowli, Kondapur അല്ലെങ്കിൽ Kukatpally ഇതിൽ ഏത് area-യിലാണ് വരേണ്ടത്?", "ts": "2026-10-29T19:29:30.661853Z", "brain_latency_ms": 846}

@@ -1,0 +1,14 @@
+{"seq": 1, "role": "user", "text": "नमस्ते प्रिया जी, हाँ बताइए, आप लोग क्या बेचते हैं?", "ts": "2026-10-31T14:33:58.670381Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "हमारे पास NatureVeda Herbal Hair Oil है जो ₹499 में 200 ml मिलता है, जिसमें Amla, Bhringraj, Hibiscus और Coconut Oil हैं और यह routine hair and scalp care के लिए है।", "ts": "2026-10-31T14:34:00.560637Z"}
+{"seq": 3, "role": "user", "text": "अच्छा, यह hair oil सच में natural ingredients से बना है क्या?", "ts": "2026-10-31T14:34:18.527730Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "हाँ, यह natural ingredients से ही बना है। इसमें Amla, Bhringraj, Hibiscus और Coconut Oil शामिल हैं। क्या आप इसके बारे में और जानना चाहेंगे?", "ts": "2026-10-31T14:34:20.044464Z"}
+{"seq": 5, "role": "user", "text": "ठीक है, delivery charges extra लगते हैं क्या?", "ts": "2026-10-31T14:34:34.938112Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "इसकी जानकारी मेरे पास नहीं है। आपको कौन सी details चाहिए?", "ts": "2026-10-31T14:34:36.144763Z"}
+{"seq": 7, "role": "user", "text": "अच्छा, कोई बात नहीं, मुझे ingredients बता दीजिए.", "ts": "2026-10-31T14:34:45.458266Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "ठीक है।", "ts": "2026-10-31T14:34:46.987671Z"}
+{"seq": 9, "role": "user", "text": "ठीक है, फिर आप बता दीजिए कि इसमें आमला और भृंगराज के अलावा और क्या-क्या है?", "ts": "2026-10-31T14:34:56.052838Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "इसमें Amla और Bhringraj के अलावा Hibiscus और Coconut Oil भी है। क्या आप इनमें से कोई order place करना चाहते हैं?", "ts": "2026-10-31T14:34:57.412718Z"}
+{"seq": 11, "role": "user", "text": "नहीं, अभी मुझे order नहीं करना है, बस ऐसे ही पूछ रही थी।", "ts": "2026-10-31T14:35:12.472132Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "और कुछ जानकारी चाहिए हो तो बताइए।", "ts": "2026-10-31T14:35:13.600046Z"}
+{"seq": 13, "role": "user", "text": "देखिए, मुझे ऐसे बहुत सारे calls आते हैं। आप मेरा नंबर इस लिस्ट से हटा दीजिए और दोबारा कभी कॉल मत कीजिए।", "ts": "2026-10-31T14:35:26.836369Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "ठीक है, इस नंबर पर अब दोबारा कॉल नहीं करेंगे। समय देने के लिए धन्यवाद। नमस्कार।", "ts": "2026-10-31T14:35:28.055344Z"}

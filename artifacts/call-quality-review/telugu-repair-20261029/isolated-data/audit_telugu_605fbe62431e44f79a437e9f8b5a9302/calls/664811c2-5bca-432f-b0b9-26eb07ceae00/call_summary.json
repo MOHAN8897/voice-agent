@@ -1,0 +1,52 @@
+{
+  "call_id": "664811c2-5bca-432f-b0b9-26eb07ceae00",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "The caller asked about ordering matte-finish visiting cards, specifically the minimum order quantity and price, and said they would send the design later. The agent explained that the minimum order is 100 cards and that 100 matte-finish cards cost ₹350, with a quote to be provided after receiving the design. The caller accepted the 100-card minimum and asked whether GST was included. The agent could not confirm the GST status. The caller said the information was sufficient and ended the call without requesting further action.",
+  "next_action": null,
+  "extracted_fields": {
+    "GST": "Inclusion not confirmed",
+    "design": "Caller will send the design later",
+    "finish": "matte",
+    "minimum_order_quantity": "100 cards",
+    "phone": "+12025550119",
+    "price": "₹350 for 100 cards",
+    "product": "visiting cards"
+  },
+  "facts": {
+    "GST": "Inclusion not confirmed",
+    "design": "Caller will send the design later",
+    "finish": "matte",
+    "minimum_order_quantity": "100 cards",
+    "phone": "+12025550119",
+    "price": "₹350 for 100 cards",
+    "product": "visiting cards"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "custom:matte-finish",
+    "custom:visiting-cards",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "custom_tags": [
+    "custom:visiting-cards",
+    "custom:matte-finish"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:43:32.940522Z",
+  "generation_ok": true
+}

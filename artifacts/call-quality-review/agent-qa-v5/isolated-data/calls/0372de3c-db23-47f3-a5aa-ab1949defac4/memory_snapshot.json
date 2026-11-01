@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "caller_name": "Lakshmi",
+    "product": "aloe vera juice",
+    "quantity": "500"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: ಸರಿ, 500 ml-ಗೆ ₹399 ಆಗ್ತದಾ. ಇದನ್ನ ದಿನಾ ಎಷ್ಟು ಕುಡೀಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?\nassistant: ಆ ಮಾಹಿತಿ ನನ್ನ ಬಳಿ ಇಲ್ಲ. General wellness beverage ಆಗಿ ಇದನ್ನ use ಮಾಡ್ತಾರೆ, ಆದ್ರೆ ದಿನಕ್ಕೆ ಎಷ್ಟು ಕುಡೀಬೇಕು ಅನ್ನೋದು ಖಚಿತವಾಗಿ ಹೇಳೋಕೆ ಆಗಲ್ಲ. Medical conditions ಅಥವಾ ಬೇರೆ ಏನಾದ್ರೂ concerns ಇದ್ರೆ ದಯವಿಟ್ಟು healthcare professional ಹತ್ರ ಒಮ್ಮೆ ಕೇಳಿ.\nuser: ಸರಿ, ಅರ್ಥ ಆಯ್ತು. ಈಗ ನಂಗೆ ಸ್ವಲ್ಪ ಬೇರೆ language-ಅಲ್ಲಿ ಮಾತಾಡೋಕೆ ಇಷ್ಟ ಇದೆ, ದಯವಿಟ್ಟು ಅದೇ details-ನ ಕನ್ನಡದಲ್ಲಿ continue ಮಾಡಿ.\nassistant: ಖಂಡಿತ, ನಾನು ಕನ್ನಡದಲ್ಲೇ continue ಮಾಡ್ತೀನಿ."
+}

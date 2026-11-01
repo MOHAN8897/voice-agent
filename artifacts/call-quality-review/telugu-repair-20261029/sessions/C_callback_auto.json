@@ -1,0 +1,599 @@
+{
+  "scenario": {
+    "id": "C_callback_auto",
+    "business": "C",
+    "kind": "callback",
+    "integration": "none",
+    "policy": "automatic",
+    "max_turns": 5,
+    "goal": "You are interested in the future but cannot talk now. Ask for a callback SIX HOURS from now. Answer one truly missing detail if asked, use this same dialed number, then clearly confirm the callback request and end. You are NOT rejecting the business and NOT opting out."
+  },
+  "agent": {
+    "id": "C",
+    "key": "academy",
+    "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+    "name": "Teja Data Academy",
+    "agent_name": "Madhavi",
+    "role": "counsellor",
+    "industry": "education",
+    "brief": "Agent name Madhavi, company Teja Data Academy.\nPhone counselling and course admissions in Telugu.\nWe offer practical Python with Data Analytics certification course.\nDuration: 8 weeks online live classes with hands-on projects.\nBatches: Weekday batch 8:00 PM to 9:00 PM (Mon-Fri); Weekend batch 10:00 AM to 1:00 PM (Sat-Sun).\nFee: Final fee is 8,999 rupees total. An old leaflet mentions 12000/15000 rupees, discard that old fee. Current fee 8,999 rupees only.\nNo installment discounts.\nEligibility: Any graduate (BTech, BSc, BCom) or final year college student. Basic computer knowledge needed, prior coding not required.\nPlacement policy: 100% placement assistance provided (resume building, interview preparation, job referrals); strictly NO job guarantee or salary promise.\nGoal: answer course curriculum, fees, batches and timing questions.\nIf interested in free demo session or admission counselling, collect preferred name, email, qualification and preferred batch.\nNo payment collected over the phone.\nRefund policy: No refund once classes start after the first week.\nLanguage: te-IN.",
+    "facts": {
+      "agent_name": "Madhavi",
+      "company_name": "Teja Data Academy",
+      "role": "Course counselling and demo registration",
+      "permitted_next_steps": "Collect student name, email, educational qualification and batch preference (weekday/weekend) to book a free demo class or counsellor callback.",
+      "fee_terms": "Final course fee is 8,999 rupees total. Disregard any old fees. No installment discounts.",
+      "placement_policy": "Placement assistance provided (interview prep, resume building, referrals); strictly no job guarantee.",
+      "eligibility_rules": "Any graduate or final year student; no prior coding experience required.",
+      "forbidden_actions": "Never guarantee a job, salary package or placement. Never collect fees or credit card numbers on call."
+    },
+    "user_id": "903ba6dd-ad2a-47cf-a44a-36ef191127f3",
+    "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601"
+  },
+  "call_id": "d2e49878-2173-42f6-aeb5-400208d5ba4d",
+  "session_id": "adaptive-c423b94d4c094965bc2c71ea1532d11d",
+  "phone": "+12025550109",
+  "brain_source": "published_agent",
+  "brain_version": "cb_v20261029_3f4f01b76299",
+  "turn_index": 1,
+  "turns": [
+    {
+      "turn": 1,
+      "caller": {
+        "utterance": "నమస్తే Madhavi. నేను ఇప్పుడు మాట్లాడలేను, ఒక ఆరు గంటల తర్వాత మళ్ళీ call చేయగలరా? నా number ఇదే.",
+        "intends_end": false,
+        "intent": "Request a callback in six hours and provide the contact number",
+        "elapsed_s": 0.562
+      },
+      "spoken": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 2.61,
+      "memory_before": {
+        "facts": {},
+        "preferences": {},
+        "important_context": "",
+        "summary": ""
+      },
+      "memory_after": {
+        "facts": {},
+        "preferences": {
+          "callback_time": "ఒక ఆరు గంటల తర్వాత"
+        },
+        "important_context": "",
+        "summary": ""
+      },
+      "projection_log": null,
+      "request_indexes": [
+        249,
+        250,
+        251
+      ],
+      "done": [
+        {
+          "done": true,
+          "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "response_contract": "speech_text",
+          "finish_reason": "stop",
+          "server_owned_close": true,
+          "end_call": {
+            "should_end": true,
+            "reason": "goal_complete",
+            "contact_preference": "callback",
+            "farewell": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+          },
+          "replace_speech": true
+        }
+      ],
+      "context_status": "finalizing",
+      "voice_phase": "ended",
+      "armed": true
+    }
+  ],
+  "speech": [
+    {
+      "turn": 1,
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "at": 127126.078
+    }
+  ],
+  "done_events": [
+    {
+      "done": true,
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "response_contract": "speech_text",
+      "finish_reason": "stop",
+      "server_owned_close": true,
+      "end_call": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "contact_preference": "callback",
+        "farewell": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "replace_speech": true
+    }
+  ],
+  "gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "ఒక ఆరు గంటల తర్వాత మళ్ళీ call చేయగలరా?",
+        "remaining_request": "",
+        "contact_intent": "callback",
+        "contact_evidence": "ఒక ఆరు గంటల తర్వాత మళ్ళీ call చేయగలరా?",
+        "callback_time": "ఒక ఆరు గంటల తర్వాత",
+        "contact_verified": true,
+        "close_verified": true,
+        "action_request": "none",
+        "memory_operations": [
+          {
+            "op": "set_preference",
+            "key": "callback_time",
+            "value": "ఒక ఆరు గంటల తర్వాత"
+          }
+        ],
+        "wait_for_caller": false
+      },
+      "result": {
+        "should_end": true,
+        "reason": "goal_complete",
+        "contact_preference": "callback",
+        "farewell": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "transcript": "నమస్తే Madhavi. నేను ఇప్పుడు మాట్లాడలేను, ఒక ఆరు గంటల తర్వాత మళ్ళీ call చేయగలరా? నా number ఇదే.",
+      "at": 127126.031
+    }
+  ],
+  "external_actions": [],
+  "farewell_events": [
+    {
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 1,
+      "at": 127126.078
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 127127.14,
+      "playback_active": false,
+      "pending": false,
+      "acknowledged": true
+    }
+  ],
+  "events": [],
+  "memory_commits": [
+    {
+      "turn_seq": 1,
+      "at": 127126.093
+    }
+  ],
+  "started_at": "2026-10-29T17:40:01.214901+00:00",
+  "errors": [],
+  "brain_checksum": "f7f827191e14416d57b05be8a72701fe4f9ff4f115b567e2ea0b09457adf6838",
+  "runtime_checksum": "738c222d85859bc415c8474b1c6d6b4e3f9ed1c3928f71e90829c4aee81556e4",
+  "available_tools": [
+    "SAVE_ENQUIRY"
+  ],
+  "memory_loads": [
+    {
+      "turn": 1,
+      "start_s": 127126.031,
+      "local_facts_present": false,
+      "elapsed_s": 0.0,
+      "projection_chars": 0,
+      "rolling_chars": 0
+    }
+  ],
+  "ended_by_agent": true,
+  "outcome": {
+    "disposition": "callback_required",
+    "disposition_confidence": 0.99,
+    "summary_te": "",
+    "summary_en": "The caller said they were unable to talk at that moment and asked Madhavi to call back on the same number after approximately six hours. The agent acknowledged and recorded the callback request. The call ended politely with no product or service details discussed.",
+    "next_action": "Call the caller back on the same number approximately six hours after this call.",
+    "extracted_fields": {
+      "callback_time": "Approximately six hours later",
+      "phone_number": "Same number"
+    },
+    "objections": [],
+    "notes": null,
+    "tags": [
+      "followup:callback",
+      "sentiment:neutral"
+    ],
+    "custom_tags": [],
+    "model": "gpt-5.6-luna",
+    "prompt_version": "outcome_v4",
+    "generated_at": "2026-10-29T17:40:07.112934Z",
+    "generation_ok": true,
+    "facts": {
+      "callback_time": "Approximately six hours later",
+      "phone_number": "Same number"
+    },
+    "disclosure_status": null,
+    "contact_preference": "callback",
+    "status_tags": [
+      "action:required",
+      "contact:phone_known",
+      "followup:callback",
+      "outcome:callback_required",
+      "sentiment:neutral"
+    ],
+    "lead": {
+      "leadId": "abb4888f-b3db-4a66-b1a1-b3c22fd2ae1d",
+      "agentId": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+      "stage": "contacted",
+      "action": "created"
+    },
+    "lead_assessment": {
+      "score": 35,
+      "band": "cold",
+      "disposition": "callback_required",
+      "confidence": 0.99,
+      "components": [
+        {
+          "signal": "interest",
+          "points": 0,
+          "max": 40,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "requirements",
+          "points": 0,
+          "max": 25,
+          "evidence": "not recorded"
+        },
+        {
+          "signal": "timing",
+          "points": 25,
+          "max": 25,
+          "evidence": "callback_time"
+        },
+        {
+          "signal": "contact",
+          "points": 10,
+          "max": 10,
+          "evidence": "phone_number"
+        }
+      ],
+      "version": 1,
+      "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+      "reason": "recorded_signals"
+    },
+    "integration_review_required": 0,
+    "integration_results": [],
+    "integration_dispatch_complete": true
+  },
+  "db": {
+    "call": [
+      {
+        "call_id": "d2e49878-2173-42f6-aeb5-400208d5ba4d",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+        "session_id": "adaptive-c423b94d4c094965bc2c71ea1532d11d",
+        "channel": "pstn",
+        "direction": "outbound",
+        "campaign_id": null,
+        "environment": "development",
+        "tier": "medium",
+        "combination_id": "5b3ecb0dcd721b7f",
+        "compiled_brain_version": "cb_v20261029_3f4f01b76299",
+        "started_at": "2026-10-29 17:40:01.202276+00:00",
+        "ended_at": "2026-10-29 17:40:04.342449+00:00",
+        "duration_sec": 3,
+        "disposition": "callback_required",
+        "finalization_status": "complete",
+        "storage_path": "data/calls/d2e49878-2173-42f6-aeb5-400208d5ba4d/",
+        "end_reason": "goal_complete",
+        "status": "outbound",
+        "is_test": true,
+        "applied_rate_usd_cents_per_min": null,
+        "applied_rate_usd_micros_per_min": null,
+        "applied_rate_inr_paise_per_min": null,
+        "applied_fx_rate_inr": null,
+        "rate_version": null,
+        "status_tags": [
+          "action:required",
+          "contact:phone_known",
+          "followup:callback",
+          "outcome:callback_required",
+          "sentiment:neutral"
+        ],
+        "last_heartbeat_at": "2026-10-29 17:40:01.202276+00:00",
+        "created_at": "2026-10-29 17:40:01.203284+00:00"
+      }
+    ],
+    "callbacks": [
+      {
+        "callback_id": "2fcdf1d1-cb04-4346-92e0-c1063fcd6121",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "user_id": null,
+        "original_call_id": "d2e49878-2173-42f6-aeb5-400208d5ba4d",
+        "original_attempt_id": null,
+        "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+        "to_e164": "+12025550109",
+        "from_e164": null,
+        "dial_request_id": "requested:d2e49878-2173-42f6-aeb5-400208d5ba4d",
+        "mode": "requested",
+        "status": "requested",
+        "provider": null,
+        "provider_call_control_id": null,
+        "error": null,
+        "created_at": "2026-10-29 17:40:03.227440+00:00",
+        "updated_at": "2026-10-29 17:40:03.227440+00:00"
+      }
+    ],
+    "jobs": [
+      {
+        "id": "97f2ac81-6403-4549-b77a-b0779d93ca35",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+        "origin_key": "callback:2fcdf1d1-cb04-4346-92e0-c1063fcd6121",
+        "source_id": "d2e49878-2173-42f6-aeb5-400208d5ba4d",
+        "kind": "callback",
+        "phone": "+12025550109",
+        "status": "planning",
+        "reason": "resolve_requested_time",
+        "payload": {
+          "requestText": "నమస్తే Madhavi. నేను ఇప్పుడు మాట్లాడలేను, ఒక ఆరు గంటల తర్వాత మళ్ళీ call చేయగలరా? నా number ఇదే.",
+          "requestedWhen": "ఒక ఆరు గంటల తర్వాత",
+          "recentTurns": [
+            {
+              "role": "user",
+              "text": "నమస్తే Madhavi. నేను ఇప్పుడు మాట్లాడలేను, ఒక ఆరు గంటల తర్వాత మళ్ళీ call చేయగలరా? నా number ఇదే.",
+              "at": "2026-10-29T17:40:01.790782Z"
+            }
+          ],
+          "callbackId": "2fcdf1d1-cb04-4346-92e0-c1063fcd6121",
+          "timezone": "Asia/Kolkata",
+          "llm": {
+            "provider": "openai",
+            "model": "gpt-5.6-luna",
+            "options": {},
+            "purpose": "configured_post_call_analysis"
+          },
+          "requestedAt": "2026-10-29T17:40:03.230764+00:00"
+        },
+        "due_at": "2026-10-29 17:40:03.230764+00:00",
+        "expires_at": "2026-11-05 17:40:03.230764+00:00",
+        "attempts": 0,
+        "lease_token": null,
+        "lease_until": null,
+        "control_id": null,
+        "authorized_by": "903ba6dd-ad2a-47cf-a44a-36ef191127f3",
+        "billing_tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "created_at": "2026-10-29 17:40:03.230764+00:00",
+        "updated_at": "2026-10-29 17:40:03.230764+00:00"
+      }
+    ],
+    "dnd": [],
+    "leads": [
+      {
+        "lead_id": "abb4888f-b3db-4a66-b1a1-b3c22fd2ae1d",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+        "name": "New lead",
+        "phone": "+12025550109",
+        "email": null,
+        "stage": "contacted",
+        "notes": "[Call reference: d2e49878-2173-42f6-aeb5-400208d5ba4d]\nThe caller said they were unable to talk at that moment and asked Madhavi to call back on the same number after approximately six hours. The agent acknowledged and recorded the callback request. The call ended politely with no product or service details discussed.\n\nNext step: Call the caller back on the same number approximately six hours after this call.\n\nCall outcome: callback required (99% confidence)",
+        "created_at": "2026-10-29 17:40:07.141313+00:00",
+        "updated_at": "2026-10-29 17:40:07.141313+00:00"
+      }
+    ],
+    "tools": [],
+    "assessments": [
+      {
+        "id": "f6ad6866-0517-4b82-a5c6-70caf3091846",
+        "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+        "lead_id": "abb4888f-b3db-4a66-b1a1-b3c22fd2ae1d",
+        "source_call_id": "d2e49878-2173-42f6-aeb5-400208d5ba4d",
+        "assessment": {
+          "score": 35,
+          "band": "cold",
+          "disposition": "callback_required",
+          "confidence": 0.99,
+          "components": [
+            {
+              "signal": "interest",
+              "points": 0,
+              "max": 40,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "requirements",
+              "points": 0,
+              "max": 25,
+              "evidence": "not recorded"
+            },
+            {
+              "signal": "timing",
+              "points": 25,
+              "max": 25,
+              "evidence": "callback_time"
+            },
+            {
+              "signal": "contact",
+              "points": 10,
+              "max": 10,
+              "evidence": "phone_number"
+            }
+          ],
+          "version": 1,
+          "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+          "reason": "recorded_signals"
+        },
+        "updated_at": "2026-10-29 17:40:04.342449+00:00"
+      }
+    ]
+  },
+  "metadata": {
+    "call_id": "d2e49878-2173-42f6-aeb5-400208d5ba4d",
+    "tenant_id": "db2f6685-fd28-440a-a3f6-bf1e0eb122d5",
+    "agent_id": "3ff6a9c5-e728-55c8-b875-d5b64bc1f601",
+    "session_id": "adaptive-c423b94d4c094965bc2c71ea1532d11d",
+    "channel": "pstn",
+    "direction": "outbound",
+    "environment": "development",
+    "tier": "medium",
+    "combination_id": "5b3ecb0dcd721b7f",
+    "compiled_brain_version": "cb_v20261029_3f4f01b76299",
+    "started_at": "2026-10-29T17:40:01.202276+00:00",
+    "status": "active",
+    "storage_path": "data/calls/d2e49878-2173-42f6-aeb5-400208d5ba4d/",
+    "resolved_stack": {
+      "combination_id": "5b3ecb0dcd721b7f",
+      "tier": "medium",
+      "mode": "frontend",
+      "language": "te-IN",
+      "voice_preset": "telugu_natural",
+      "stt": {
+        "provider": "sarvam",
+        "model": "saaras:v3-realtime",
+        "config": {
+          "mode": "realtime"
+        }
+      },
+      "llm": {
+        "provider": "sarvam",
+        "model": "sarvam-105b-conversations",
+        "config": {
+          "api_mode": "chat_completions_v1"
+        }
+      },
+      "tts": {
+        "provider": "sarvam",
+        "model": "bulbul:v3",
+        "config": {
+          "speaker": "shubh",
+          "api_mode": "websocket"
+        }
+      }
+    },
+    "pipeline": "composed_voice",
+    "caller_id": "+12025550100",
+    "callee_e164": "+12025550109",
+    "audit": true,
+    "is_test": true,
+    "call_end_policy": {
+      "allowedReasons": [
+        "goodbye",
+        "firm_refusal",
+        "not_interested",
+        "goal_complete",
+        "abuse"
+      ],
+      "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "farewellSource": "default"
+    },
+    "stage_usage": {
+      "llm": {
+        "input_tokens": 2011,
+        "output_tokens": 308,
+        "cached_tokens": 1664
+      }
+    },
+    "callback_request": {
+      "id": "2fcdf1d1-cb04-4346-92e0-c1063fcd6121",
+      "status": "requested",
+      "requestedWhen": "ఒక ఆరు గంటల తర్వాత",
+      "requestText": "నమస్తే Madhavi. నేను ఇప్పుడు మాట్లాడలేను, ఒక ఆరు గంటల తర్వాత మళ్ళీ call చేయగలరా? నా number ఇదే."
+    },
+    "callback_cancelled": false,
+    "callback_withdrawal_pending": false,
+    "contact_preference": "callback",
+    "hangup_reason": "goal_complete",
+    "hangup_initiator": "agent",
+    "hangup_outcome": "agent_ended",
+    "hangup_playback_wait_ms": 62,
+    "hangup_trail_ms": 1000,
+    "hangup_heard_playback": true,
+    "callback_close_phase": "semantic_pending",
+    "disconnected_at": "2026-10-29T17:40:04.342449+00:00",
+    "ended_at": "2026-10-29T17:40:04.342449+00:00",
+    "end_reason": "goal_complete",
+    "duration_sec": 3.0,
+    "provider_cost_result": {
+      "status": "incomplete",
+      "missing": [
+        "provider_cost_snapshot"
+      ],
+      "stages": {},
+      "totalUsd": null,
+      "totalInr": null
+    },
+    "usage": {
+      "cost_accounting_version": 3,
+      "supplier_cost_status": "incomplete",
+      "live_transcript_usd": 0.0,
+      "live_transcript_inr": 0.0,
+      "pipeline": "composed_voice",
+      "duration_sec": 3.0,
+      "telephony_provider": "telnyx",
+      "telephony_usd": 0.0006250000000000001,
+      "telephony_inr": 0.059543750000000006,
+      "model_cost_usd": null,
+      "model_cost_inr": null,
+      "telnyx_usd": 0.0006250000000000001,
+      "telnyx_inr": 0.059543750000000006,
+      "telnyx_voice_api_usd": 0.0001,
+      "telnyx_sip_usd": 0.00025,
+      "telnyx_media_stream_usd": 0.00017500000000000003,
+      "telnyx_call_recording_usd": 0.0001,
+      "telnyx_destination_country": "US",
+      "telnyx_sip_usd_per_min": 0.005,
+      "telnyx_cost_is_estimate": true,
+      "vobiz_usd": 0.0,
+      "vobiz_inr": 0.0,
+      "carrier_cost_source": "tariff_estimate",
+      "cost_usd": null,
+      "cost_inr": null,
+      "cost_is_estimate": true,
+      "fx_rate_inr": 95.27,
+      "fx_source": "live_cache",
+      "fx_as_of": "2026-10-29",
+      "gst_inr": 0.0,
+      "cost_usd_per_min": null,
+      "cost_inr_per_min": null,
+      "telephony_usd_per_min": 0.012500000000000002,
+      "telephony_inr_per_min": 1.1908750000000001,
+      "model_cost_usd_per_min": null,
+      "model_cost_inr_per_min": null,
+      "telnyx_usd_per_min": 0.012500000000000002,
+      "telnyx_inr_per_min": 1.1908750000000001,
+      "vobiz_usd_per_min": 0.0,
+      "vobiz_inr_per_min": 0.0,
+      "post_call_analysis_responses": {
+        "resp_07b3c3aa02419700016ae384f51d9c87d19cd6fd89261ff9c2": {
+          "input_tokens": 1032,
+          "output_tokens": 150,
+          "cached_tokens": 0,
+          "cache_write_tokens": 1029,
+          "model": "gpt-5.6-luna",
+          "cost_usd": 0.00043785000000000004
+        }
+      },
+      "post_call_analysis_usd": 0.00043785000000000004,
+      "post_call_analysis_inr": 0.0417139695
+    }
+  },
+  "ledger": [
+    {
+      "seq": 1,
+      "role": "user",
+      "text": "నమస్తే Madhavi. నేను ఇప్పుడు మాట్లాడలేను, ఒక ఆరు గంటల తర్వాత మళ్ళీ call చేయగలరా? నా number ఇదే.",
+      "ts": "2026-10-29T17:40:01.790782Z",
+      "partial": false
+    },
+    {
+      "seq": 2,
+      "role": "assistant",
+      "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "ts": "2026-10-29T17:40:03.271944Z"
+    }
+  ],
+  "wall_elapsed_s": 6.125,
+  "simulated_exchange_timeline_s": 20,
+  "request_count": 4
+}

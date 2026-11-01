@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "caller_name": "Ravi Kumar"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: என் பேரு Ravi Kumar. Vijayawada-ல இருக்குற 12 MG Road-க்கு deliver பண்ணுங்க.\nassistant: உங்க order confirm ஆயிடுச்சு. 200 matte visiting cards, Ravi Kumar பேர்ல, 12 MG Road, Vijayawada-க்கு. Artwork approve ஆனதும் 3 working days-ல delivery வந்துடும். Payment cash on delivery தான்.\nuser: ஆமா, order-அ confirm பண்ணுங்க.\nassistant: ஆமா, order confirm ஆயிடுச்சு. 200 matte visiting cards, Ravi Kumar பேர்ல, 12 MG Road, Vijayawada-க்கு. Artwork approve ஆனதும் 3 working days-ல delivery வந்துடும். Payment cash on delivery தான்.\nuser: Thanks, அவ்வளவுதான்."
+}

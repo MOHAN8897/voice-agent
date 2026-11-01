@@ -1,0 +1,16 @@
+{"seq": 1, "role": "user", "text": "నమస్తే కవిత గారు. నాకు 200 matte visiting cards కావాలి. నా పేరు రమణ, నేను విజయవాడలో ఉంటున్నాను. వీటి artwork ఎప్పుడు finalize చేయాలో చెప్పగలరా?", "ts": "2026-10-29T17:49:15.565292Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "రమణ గారు, artwork approve అయిన తర్వాత విజయవాడలో delivery కి 3 working days పడుతుంది.", "ts": "2026-10-29T17:49:18.979016Z"}
+{"seq": 3, "role": "user", "text": "సరే, 3 days అంటే బాగుంది. మరి payment ఎలా చేయాలి? online లో చేయొచ్చా?", "ts": "2026-10-29T17:49:19.609048Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ఫోన్ కాల్ ద్వారా online payment లేదా credit card processing ఉండదు. one thousand rupeesపాయల పైన ఉన్న orders కు 50% advance payment చేయాలి, అంతకంటే తక్కువ ఉంటే cash on delivery తీసుకోవచ్చు.", "ts": "2026-10-29T17:49:23.416312Z"}
+{"seq": 5, "role": "user", "text": "సరే, cash on delivery అయితే పర్వాలేదు. మరి flex banners కూడా ఏమైనా చేస్తారా? వాటి delivery కి ఎంత time పడుతుంది?", "ts": "2026-10-29T17:49:23.995438Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "విజయవాడలో flex banners delivery కి design artwork approval తర్వాత 3 working days పడుతుంది.", "ts": "2026-10-29T17:49:27.605260Z"}
+{"seq": 7, "role": "user", "text": "సరే, flex banners కి కూడా 3 days పడుతుంది కదా. ఒక్క నిమిషం, మీరు నా పేరు, product, quantity ఏమైనా note చేసుకున్నారో లేదో ఒకసారి చెప్తారా?", "ts": "2026-10-29T17:49:28.303687Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "అవును రమణ గారు, మీరు two hundred matte visiting cards కావాలని, delivery విజయవాడలో అని నేను note చేసుకున్నాను. మీకు ఇంకా ఏమైనా details కావాలా?", "ts": "2026-10-29T17:49:32.677760Z"}
+{"seq": 9, "role": "user", "text": "సరే కవిత గారు, note చేసుకున్నందుకు thanks. office hours ఎప్పుడు ఉంటాయి? నేను సాయంత్రం పూట call చేయవచ్చా?", "ts": "2026-10-29T17:49:33.341825Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "Office hours Monday to Saturday ఉదయం nine thirty నుండి రాత్రి eight వరకు ఉంటాయి, Sunday closed. సాయంత్రం పూట call చేయవచ్చా అని అడిగారు కదా, ఆ time ని note చేసుకున్నాను. మీకు ఏ time కి call చేయమంటారు?", "ts": "2026-10-29T17:49:36.633097Z"}
+{"seq": 11, "role": "user", "text": "సాయంత్రం 6 గంటలకి call చేస్తే బాగుంటుంది. మరి మీ office కి రావాలా లేక ఇక్కడి నుంచే అంతా process చేస్తారా?", "ts": "2026-10-29T17:49:37.303978Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "సాయంత్రం 6 గంటలకి call చేస్తానని note చేసుకున్నాను. మా office కి రావాల్సిన అవసరం లేదు, ఇక్కడి నుంచే process చేస్తాం.", "ts": "2026-10-29T17:49:41.054228Z"}
+{"seq": 13, "role": "user", "text": "సరే, ఇక్కడి నుంచే process చేస్తారంటే బాగుంది. మరి ఈ order status లేదా details అన్నీ నాకు ramesh.audit@example.invalid కి email చేస్తారా?", "ts": "2026-10-29T17:49:41.751648Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "క్షమించండి, నేను ఇక్కడి నుంచి email పంపలేను. మీరు అడిగిన order details అన్నీ note చేసుకున్నాను. మీకు ఇంకా ఏమైనా సమాచారం కావాలా?", "ts": "2026-10-29T17:49:45.055065Z"}
+{"seq": 15, "role": "user", "text": "అర్థమైంది కవిత గారు, email పంపలేరు కదా. ప్రస్తుతానికి నాకు ఇంకేమీ అవసరం లేదు, ఈ details అన్నీ note చేసుకున్నందుకు thanks. ఇకపై call చేయొద్దు.", "ts": "2026-10-29T17:49:45.719152Z", "partial": false}
+{"seq": 16, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-29T17:49:47.772668Z"}

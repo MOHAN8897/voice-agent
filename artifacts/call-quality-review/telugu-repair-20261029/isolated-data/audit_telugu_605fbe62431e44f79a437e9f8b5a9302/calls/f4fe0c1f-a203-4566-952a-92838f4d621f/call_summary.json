@@ -1,0 +1,30 @@
+{
+  "call_id": "f4fe0c1f-a203-4566-952a-92838f4d621f",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "The caller clearly requested that this number never be called again and stated that they do not want any calls from the business permanently. The agent acknowledged the request, thanked the caller, and ended the call. No further action was discussed.",
+  "next_action": null,
+  "extracted_fields": {
+    "phone": "+12025550115"
+  },
+  "facts": {
+    "phone": "+12025550115"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "outcome:not_interested",
+    "sentiment:negative"
+  ],
+  "tags": [
+    "signal:do_not_call",
+    "sentiment:negative"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:34:52.670173Z",
+  "generation_ok": true
+}

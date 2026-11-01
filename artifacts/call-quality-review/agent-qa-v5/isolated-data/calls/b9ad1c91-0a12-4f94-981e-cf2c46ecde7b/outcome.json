@@ -1,0 +1,121 @@
+{
+  "disposition": "callback_required",
+  "disposition_confidence": 0.9,
+  "summary_te": "एजेंट ने ग्राहक को NatureVeda उत्पादों की सूची और उनकी कीमतें बताईं। ग्राहक ने Aloe Vera Juice की डिलीवरी लागत, चल रहे ऑफर्स, और अन्य उत्पादों की सामग्री के बारे में पूछा, लेकिन एजेंट के पास इनमें से कुछ जानकारी उपलब्ध नहीं थी। ग्राहक ने तेलुगु में बात करने में अपनी सहजता व्यक्त की और कल सुबह 11 बजे कॉल बैक करने का अनुरोध किया, जिसे एजेंट ने स्वीकार कर लिया।",
+  "summary_en": "The agent called the customer to present a list of NatureVeda products and their prices. The customer inquired about the delivery charge for Aloe Vera Juice, current discounts, and ingredient details for the remaining items, but the agent stated that delivery costs, active offers, and full ingredient lists were not available. The customer requested a callback in Telugu the following morning at 11 AM because that language was more comfortable for them. The agent agreed to schedule this callback for tomorrow at 11 AM, and the call concluded with that arrangement in place. Language handoff: Caller asked to continue in Telugu; call back in Telugu with the same agent.",
+  "next_action": "Call back in Telugu with the same agent (Callback needed in another language). No callback time has been booked.",
+  "extracted_fields": {
+    "callback_time": "tomorrow at 11 AM",
+    "language": "Telugu",
+    "phone": "+919700000017",
+    "preferred_language": "te-IN",
+    "callback_requested": "true",
+    "requested_language": "te-IN",
+    "language_switch": "true"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "followup:callback",
+    "sentiment:neutral",
+    "intent:information",
+    "followup:send_info",
+    "action:required",
+    "signal:needs_approval"
+  ],
+  "custom_tags": [
+    "custom:aloe-vera-juice",
+    "custom:product-inquiry"
+  ],
+  "unanswered_questions": [
+    "What is the delivery charge for Aloe Vera Juice?",
+    "Are there any current offers or discounts on these products?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T16:56:43.501440Z",
+  "generation_ok": true,
+  "summary_language": "hi-IN",
+  "language_callback": {
+    "status": "requested",
+    "kind": "language_switch",
+    "id": "898fa097-4595-4acf-a311-5b0398b664c7",
+    "caller_language": "te-IN",
+    "configured_language": "hi-IN",
+    "summary": "Caller asked to continue in Telugu; call back in Telugu with the same agent."
+  },
+  "language_switch": {
+    "requested_language": "te-IN",
+    "original_language": "hi-IN"
+  },
+  "facts": {
+    "callback_time": "tomorrow at 11 AM",
+    "language": "Telugu",
+    "phone": "+919700000017",
+    "preferred_language": "te-IN",
+    "callback_requested": "true",
+    "requested_language": "te-IN",
+    "language_switch": "true"
+  },
+  "disclosure_status": null,
+  "contact_preference": "callback",
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "contact:preferred_language",
+    "custom:aloe-vera-juice",
+    "custom:product-inquiry",
+    "followup:callback",
+    "followup:language_switch",
+    "followup:send_info",
+    "intent:information",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:needs_approval"
+  ],
+  "lead": {
+    "leadId": "b90eecd0-b97e-4af5-ae25-182eb9635c5c",
+    "agentId": "67eb8019-5907-4da3-879c-950e4e7c515d",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 35,
+    "band": "cold",
+    "disposition": "callback_required",
+    "confidence": 0.9,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 0,
+        "max": 40,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 25,
+        "max": 25,
+        "evidence": "callback_time"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

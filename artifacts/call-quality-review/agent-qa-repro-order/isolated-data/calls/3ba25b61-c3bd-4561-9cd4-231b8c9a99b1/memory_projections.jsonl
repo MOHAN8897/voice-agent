@@ -1,0 +1,6 @@
+{"turn_seq": 1, "ts": "2026-10-31T14:44:04.126114Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-31T14:44:26.737273Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-31T14:44:44.926402Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nproduct: 2 bottles hair oil और 1 face cream | quantity: 1"}
+{"turn_seq": 7, "ts": "2026-10-31T14:45:01.562042Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: 2 bottles hair oil और 1 face cream | quantity: 1"}
+{"turn_seq": 9, "ts": "2026-10-31T14:45:15.481145Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: 2 bottles hair oil और 1 face cream | quantity: 1 | caller_name: लक्ष्मी रेड्डी | delivery_address: फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072"}
+{"turn_seq": 11, "ts": "2026-10-31T14:45:23.585773Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nproduct: 2 bottles hair oil और 1 face cream | quantity: 1 | caller_name: लक्ष्मी रेड्डी | delivery_address: फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072"}

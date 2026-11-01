@@ -1,0 +1,16 @@
+{
+  "facts": {
+    "product": "Python మరియు SQL/PowerBI courses",
+    "caller_name": "కిరణ్",
+    "caller_email": "kiran.audit@example.invalid",
+    "phone_number": "9876543210",
+    "callback_phone": "9876543210",
+    "phone": "9876543210"
+  },
+  "preferences": {
+    "batch_time": "evening లేదా weekend",
+    "requested_time": "demo session లేదా discussion"
+  },
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "user: సరే, Python course details చెప్పారు. మరి దీని fees ని instalments లో కట్టొచ్చా? అలాగే placement support గురించి కూడా చెప్పండి, job guarantee ఉంటుందా?\nassistant: Fee eight thousand nine hundred ninety nine rupees total మాత్రమే, installments లేవు. Placement support విషయానికి వస్తే, మేము one hundred% placement assistance ఇస్తాము — resume building, interview preparation, job referrals ఉంటాయి. కానీ strict గా job guarantee లేదా salary promise ఇవ్వము."
+}

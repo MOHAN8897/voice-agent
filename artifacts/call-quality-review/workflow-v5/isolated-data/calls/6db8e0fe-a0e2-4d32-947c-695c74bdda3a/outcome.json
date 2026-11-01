@@ -1,0 +1,41 @@
+{
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call by requesting to be removed from the contact list and explicitly asked not to receive any more calls on this number. The agent acknowledged the request and confirmed that no further calls would be made to this number. The call concluded after the agent's confirmation.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+919876500008"
+  },
+  "objections": [
+    "Caller requested to be removed from the contact list and stop receiving calls."
+  ],
+  "notes": null,
+  "tags": [
+    "sentiment:neutral",
+    "signal:do_not_call"
+  ],
+  "custom_tags": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-29T20:56:15.650833Z",
+  "generation_ok": true,
+  "facts": {
+    "phone": "+919876500008"
+  },
+  "disclosure_status": null,
+  "contact_preference": "do_not_call",
+  "status_tags": [
+    "contact:phone_known",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "lead": null,
+  "lead_assessment": null,
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

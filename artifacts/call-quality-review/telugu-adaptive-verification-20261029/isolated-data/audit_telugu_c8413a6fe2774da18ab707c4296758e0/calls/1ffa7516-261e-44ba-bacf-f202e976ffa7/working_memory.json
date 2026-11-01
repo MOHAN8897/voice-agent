@@ -1,0 +1,15 @@
+{
+  "facts": {
+    "product": "window AC",
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "phone_number": "+12025550149",
+    "requested_time": "10 AM",
+    "service_type": "general servicing",
+    "caller_email": "sravani.audit@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "user: క్షమించండి, నేను split AC కి general service అడుగుతున్నాను, కానీ మీరు split AC అని చెప్పారు. అలాగే ఐదు వందల తొంభై తొమ్మిది rupees అని చెప్పారు, అది window AC general servicing కి ఎంత అవుతుందో ఒకసారి confirm చేస్తారా? నా email sravani.audit@example.invalid కి ఈ 30 minutes calendar appointment details పంపించి final గా confirm చేయండి.\nassistant: కొంచెం నెమ్మదిగా చెప్తారా? క్షమించండి, నేను split AC అని చెప్పాను. Window AC general servicing కి four hundred ninety nine rupees అవుతుంది. మీ appointment already confirm అయింది, details మీ email కి పంపించాము. ఇంకేమైనా help కావాలా?"
+}

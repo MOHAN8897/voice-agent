@@ -1,0 +1,57 @@
+{
+  "call_id": "a15c9b08-4686-446f-8a83-cb0b49fbfa50",
+  "language_callback": null,
+  "disposition": "site_visit_planned",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, initiated the call expressing that the 3 kW solar system was too expensive. The agent responded by explaining the upfront cost of 1,95,000 rupees, the 78,000 rupee government subsidy, and the resulting net cost of 1,17,000 rupees, then offered to book a free site survey. The caller objected, reiterating that the price was still too high. The agent then shared that the monthly EMI starts at 2,999 rupees for a 48-month tenure. After hearing this, the caller agreed to proceed with booking the free site survey. Kiran provided his name as Kiran, mentioned he lives in Velachery, and requested Saturday for the survey. The agent confirmed that the details were saved and the free site survey request was recorded. The call concluded with mutual goodbyes.",
+  "next_action": "Agent to coordinate and schedule the site survey for Saturday in Velachery for Kiran.",
+  "extracted_fields": {
+    "caller_name": "Kiran",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "name": "Kiran",
+    "phone": "+919876500501",
+    "requested_time": "Saturday",
+    "slot": "Saturday"
+  },
+  "facts": {
+    "caller_name": "Kiran",
+    "delivery_locality": "Velachery",
+    "locality": "Velachery",
+    "name": "Kiran",
+    "phone": "+919876500501",
+    "requested_time": "Saturday",
+    "slot": "Saturday"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:site-survey",
+    "custom:solar-system",
+    "followup:site_visit",
+    "intent:information",
+    "outcome:site_visit_planned",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "followup:site_visit",
+    "intent:information",
+    "sentiment:neutral",
+    "signal:price_sensitive"
+  ],
+  "custom_tags": [
+    "custom:site-survey",
+    "custom:solar-system"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Price is too expensive"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:48:43.662983Z",
+  "generation_ok": true
+}

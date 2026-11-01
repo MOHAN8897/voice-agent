@@ -1,0 +1,34 @@
+{
+  "call_id": "6ee7d1bd-fa5e-431a-a4b7-8d051fc22337",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 1.0,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to demand that the company cease contacting them and remove their phone number from all lists. The agent acknowledged the request and confirmed that the number would not be called again before ending the conversation. No further discussion took place.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "phone": "+919876500035"
+  },
+  "facts": {
+    "phone": "+919876500035"
+  },
+  "status_tags": [
+    "contact:phone_known",
+    "outcome:not_interested",
+    "sentiment:negative",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "tags": [
+    "signal:do_not_call",
+    "sentiment:negative"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [
+    "Do not call this number again"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:36:34.509999Z",
+  "generation_ok": true
+}

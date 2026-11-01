@@ -1,0 +1,62 @@
+{
+  "call_id": "24018190-f88f-48c1-9c43-3e68ccb793b2",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "Shravani, located in Madhapur, requested general servicing for her split AC and asked for a technician at 10:00 AM the following morning. She provided her email address. The agent stated that the appointment was confirmed and created in the system/calendar, but said a calendar invite could not be sent by email. The quoted service price was ₹599. Shravani then asked the agent to verify that the appointment was genuinely confirmed and recorded; the agent reaffirmed that it was confirmed and that the calendar event had been created. She expressed satisfaction, said she needed nothing else, and ended the call.\n\nServer check: no confirmed order was recorded for this call, so it was not marked as converted.",
+  "next_action": null,
+  "extracted_fields": {
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "location": "Madhapur",
+    "phone": "+12025550103",
+    "price": "₹599",
+    "requested_slot": "10:00 AM tomorrow",
+    "requested_time": "రేపు ఉదయం 10 AM",
+    "service": "Split AC general service"
+  },
+  "facts": {
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "Shravani",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "location": "Madhapur",
+    "phone": "+12025550103",
+    "price": "₹599",
+    "requested_slot": "10:00 AM tomorrow",
+    "requested_time": "రేపు ఉదయం 10 AM",
+    "service": "Split AC general service"
+  },
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:madhapur",
+    "custom:morning-slot",
+    "custom:split-ac-service",
+    "intent:booking",
+    "intent:support",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:booking",
+    "intent:support",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "custom_tags": [
+    "custom:split-ac-service",
+    "custom:madhapur",
+    "custom:morning-slot"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T16:48:51.592361Z",
+  "generation_ok": true
+}

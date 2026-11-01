@@ -1,0 +1,18 @@
+{"turn_seq": 1, "ts": "2026-10-31T16:57:00.396156Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-31T16:57:17.317096Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-31T16:57:33.442180Z", "include_summary": true, "projection": ""}
+{"turn_seq": 7, "ts": "2026-10-31T16:57:53.958724Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 2"}
+{"turn_seq": 9, "ts": "2026-10-31T16:58:07.089171Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 2"}
+{"turn_seq": 11, "ts": "2026-10-31T16:58:15.351184Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 2"}
+{"turn_seq": 13, "ts": "2026-10-31T16:58:31.092924Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 2"}
+{"turn_seq": 15, "ts": "2026-10-31T16:58:47.145143Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 2"}
+{"turn_seq": 17, "ts": "2026-10-31T16:59:00.508754Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 2"}
+{"turn_seq": 19, "ts": "2026-10-31T16:59:11.153739Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 2"}
+{"turn_seq": 21, "ts": "2026-10-31T16:59:22.111168Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 2 | caller_name: लक्ष्मी रेड्डी"}
+{"turn_seq": 23, "ts": "2026-10-31T16:59:41.068958Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 2 | caller_name: लक्ष्मी रेड्डी | delivery_address: Flat 302, Sai Residency, Kukatpally, Hyderabad 500072"}
+{"turn_seq": 25, "ts": "2026-10-31T16:59:51.667007Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 2 | caller_name: लक्ष्मी रेड्डी | delivery_address: Flat 302, Sai Residency, Kukatpally, Hyderabad 500072"}
+{"turn_seq": 27, "ts": "2026-10-31T17:00:00.086198Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 2 | caller_name: लक्ष्मी रेड्डी | delivery_address: Flat 302, Sai Residency, Kukatpally, Hyderabad 500072"}
+{"turn_seq": 29, "ts": "2026-10-31T17:00:12.365328Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 2 | caller_name: लक्ष्मी रेड्डी | delivery_address: Flat 302, Sai Residency, Kukatpally, Hyderabad 500072 | email: mohansaiteja.99@gmail.com"}
+{"turn_seq": 31, "ts": "2026-10-31T17:00:23.319719Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 2 | caller_name: लक्ष्मी रेड्डी | delivery_address: Flat 302, Sai Residency, Kukatpally, Hyderabad 500072 | email: mohansaiteja.99@gmail.com | phone: 9876543210"}
+{"turn_seq": 33, "ts": "2026-10-31T17:00:40.708330Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 2 | caller_name: लक्ष्मी रेड्डी | delivery_address: Flat 302, Sai Residency, Kukatpally, Hyderabad 500072 | email: mohansaiteja.99@gmail.com | phone: 9876543210"}
+{"turn_seq": 35, "ts": "2026-10-31T17:00:50.721603Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nquantity: 2 | caller_name: लक्ष्मी रेड्डी | delivery_address: Flat 302, Sai Residency, Kukatpally, Hyderabad 500072 | email: mohansaiteja.99@gmail.com | phone: 9876543210"}

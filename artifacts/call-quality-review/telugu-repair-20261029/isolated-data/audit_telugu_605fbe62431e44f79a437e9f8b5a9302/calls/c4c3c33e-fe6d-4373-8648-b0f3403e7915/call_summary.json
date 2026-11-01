@@ -1,0 +1,63 @@
+{
+  "call_id": "c4c3c33e-fe6d-4373-8648-b0f3403e7915",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.98,
+  "summary_te": "",
+  "summary_en": "Raman asked about ordering 200 matte visiting cards and requested pricing and delivery details. The agent quoted ₹700 total based on ₹350 per 100 cards, with delivery in Vijayawada taking 3 working days after design artwork approval; urgent 24-hour delivery would cost an additional ₹150. Raman clarified that he only wanted information about wedding card pricing and was not ordering wedding cards. The agent explained that wedding invitation card pricing is customized according to design, paper sample, and quantity, and confirmed the current requirement was visiting cards. Raman asked what details had been noted, and the agent accurately repeated his name, product, and quantity, asking for the delivery locality to prepare a quote. Raman ended the call politely without providing the locality or confirming an order.",
+  "next_action": "Obtain the delivery locality and provide or finalize the quote if Raman wishes to proceed.",
+  "extracted_fields": {
+    "caller_name": "రమణ",
+    "delivery_locality": "Not provided",
+    "name": "Raman",
+    "phone": "+12025550122",
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "quoted_total": "₹700",
+    "standard_delivery": "3 working days after artwork approval in Vijayawada",
+    "urgent_delivery": "24 hours for an additional ₹150"
+  },
+  "facts": {
+    "caller_name": "రమణ",
+    "delivery_locality": "Not provided",
+    "name": "Raman",
+    "phone": "+12025550122",
+    "product": "matte visiting cards",
+    "quantity": "200",
+    "quoted_total": "₹700",
+    "standard_delivery": "3 working days after artwork approval in Vijayawada",
+    "urgent_delivery": "24 hours for an additional ₹150"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:matte-visiting-cards",
+    "custom:vijayawada",
+    "custom:wedding-card-inquiry",
+    "followup:send_quote",
+    "intent:pricing",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:pricing",
+    "intent:purchase",
+    "sentiment:positive",
+    "followup:send_quote"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards",
+    "custom:wedding-card-inquiry",
+    "custom:vijayawada"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Raman clarified that he was not ordering wedding cards and was only asking about their pricing."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T17:48:24.891579Z",
+  "generation_ok": true
+}

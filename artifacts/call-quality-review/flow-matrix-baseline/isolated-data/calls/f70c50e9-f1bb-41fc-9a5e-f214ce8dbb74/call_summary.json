@@ -1,0 +1,37 @@
+{
+  "call_id": "f70c50e9-f1bb-41fc-9a5e-f214ce8dbb74",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.85,
+  "summary_te": "",
+  "summary_en": "The caller initiated the call to report that the milk packet in their order arrived damaged and to inquire about receiving a refund. The agent explained that refunds for damaged items are processed within five working days after the damage is reported, and offered to record the caller's order ID and name for the support team to check the order status. The caller declined further assistance by stating 'Okay, that's all,' after which the agent concluded the call.",
+  "next_action": "No further action.",
+  "extracted_fields": {
+    "phone": "+919876500509"
+  },
+  "facts": {
+    "phone": "+919876500509"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "followup:send_info",
+    "intent:complaint",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:complaint",
+    "sentiment:neutral",
+    "action:required",
+    "followup:send_info",
+    "signal:objection"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T10:35:37.905160Z",
+  "generation_ok": true
+}

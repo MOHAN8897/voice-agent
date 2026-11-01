@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "मेरे फ्रिज के नए कम्प्रेसर का exact प्राइस कितना है", "ts": "2026-10-29T19:28:02.340725Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Fridge के spare parts की exact price phone पर बताना possible नहीं है, क्योंकि technician inspection के बाद actual MRP quote करता है। Inspection charge ₹250 है, पर अगर आप repair करवाते हैं तो वो charge waive हो जाएगा। और कोई जानकारी चाहिए आपको?", "ts": "2026-10-29T19:28:03.043169Z", "brain_latency_ms": 694}

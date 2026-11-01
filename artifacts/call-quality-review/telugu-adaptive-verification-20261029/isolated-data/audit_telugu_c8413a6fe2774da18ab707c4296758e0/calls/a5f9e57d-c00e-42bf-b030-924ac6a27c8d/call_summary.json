@@ -1,0 +1,73 @@
+{
+  "call_id": "a5f9e57d-c00e-42bf-b030-924ac6a27c8d",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "The caller requested general servicing for a split AC and asked whether a technician could come tomorrow at 10:00 AM. The agent stated the service price was ₹599 and that the available visit window was tomorrow from 10:00 AM to 6:00 PM, asking which time to confirm. The caller objected to the price, expressed repeated frustration about the process, and requested confirmation for 10:00 AM. The caller provided the name Shravani, locality Madhapur, and email sravani.audit@example.invalid. The agent stated that the details could be remembered but could not be sent to the team or followed up on, and did not confirm that an appointment or email had been arranged. The caller repeatedly requested a confirmation email and ultimately asked that it at least be noted that the technician would come tomorrow at 10:00 AM. The call ended with the agent thanking the caller; no confirmed appointment, email, or completed follow-up was established.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "available_window": "Tomorrow 10:00 AM to 6:00 PM",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "locality": "Madhapur",
+    "name": "Shravani",
+    "phone": "+12025550124",
+    "price": "₹599",
+    "product": "split AC",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు 10 గంటలకి",
+    "service": "Split AC general servicing"
+  },
+  "facts": {
+    "available_window": "Tomorrow 10:00 AM to 6:00 PM",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "email": "sravani.audit@example.invalid",
+    "locality": "Madhapur",
+    "name": "Shravani",
+    "phone": "+12025550124",
+    "price": "₹599",
+    "product": "split AC",
+    "requested_slot": "Tomorrow at 10:00 AM",
+    "requested_time": "రేపు 10 గంటలకి",
+    "service": "Split AC general servicing"
+  },
+  "status_tags": [
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:split-ac-service",
+    "intent:booking",
+    "intent:pricing",
+    "outcome:not_interested",
+    "sentiment:frustrated",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:booking",
+    "intent:pricing",
+    "followup:callback",
+    "action:required",
+    "signal:objection",
+    "sentiment:frustrated"
+  ],
+  "custom_tags": [
+    "custom:split-ac-service",
+    "custom:morning-technician-visit",
+    "custom:email-confirmation"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Caller objected to the ₹599 service charge.",
+    "Caller was frustrated by repeated requests for details.",
+    "Caller objected that a confirmation email could not be arranged."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T15:45:02.706502Z",
+  "generation_ok": true
+}

@@ -1,0 +1,58 @@
+{
+  "call_id": "210cb479-6fda-4838-b272-3ebd9f45151b",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.92,
+  "summary_te": "",
+  "summary_language": "en-IN",
+  "summary_en": "The agent called the customer to discuss Ashwagandha capsules for stress and sleep. The customer inquired about the price, which the agent stated was 699 rupees for 60 capsules. The customer raised safety concerns due to existing blood pressure medication and asked for a guarantee of curing stress and any available discounts. The agent advised consulting a healthcare professional and confirmed no discounts were available. The customer said they would think about it and speak to their doctor first, and the call ended with no immediate order placed.",
+  "next_action": "No immediate next step was agreed upon beyond the customer considering the purchase.",
+  "extracted_fields": {
+    "phone": "+919700000008",
+    "price": "699 rupees",
+    "product": "Ashwagandha capsules",
+    "quantity": "60 capsules"
+  },
+  "facts": {
+    "phone": "+919700000008",
+    "price": "699 rupees",
+    "product": "Ashwagandha capsules",
+    "quantity": "60 capsules"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:blood-pressure",
+    "custom:stress-sleep",
+    "followup:send_quote",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "signal:price_sensitive",
+    "signal:objection",
+    "followup:send_quote"
+  ],
+  "custom_tags": [
+    "custom:stress-sleep",
+    "custom:blood-pressure"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Safety concerns due to existing blood pressure medication.",
+    "Lack of a complete cure guarantee.",
+    "No discount available."
+  ],
+  "unanswered_questions": [
+    "Is it guaranteed to cure stress completely?",
+    "Are there any side effects?"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-31T16:21:02.689539Z",
+  "generation_ok": true
+}

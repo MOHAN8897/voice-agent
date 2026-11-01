@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "Book it for tomorrow 11 AM and confirm the booking right now.", "ts": "2026-10-29T20:21:06.176202Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I can help you book a visit, but I need a few details first. To confirm the booking right now, please tell me your name, which appliance needs servicing, the issue, your locality, and I have noted tomorrow at 11 AM.", "ts": "2026-10-29T20:21:09.964006Z"}
+{"seq": 3, "role": "user", "text": "Is it confirmed? Give me the booking number.", "ts": "2026-10-29T20:21:09.964510Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "No, it is not confirmed yet. I still need your name, the appliance, the issue, and your locality to confirm the booking. I have noted your preferred slot as tomorrow at 11 AM. What is your name?", "ts": "2026-10-29T20:21:13.064713Z"}
+{"seq": 5, "role": "user", "text": "Okay, thanks.", "ts": "2026-10-29T20:21:13.076519Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "No, it is not confirmed yet. I still need your name, the appliance, the issue, and your locality to confirm the booking. I have noted your preferred slot as tomorrow at 11 AM. What is your name?", "ts": "2026-10-29T20:21:15.894976Z"}

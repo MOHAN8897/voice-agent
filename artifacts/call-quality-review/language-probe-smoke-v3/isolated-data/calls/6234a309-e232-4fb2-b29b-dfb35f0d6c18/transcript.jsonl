@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "भैया, कल सुबह Kondapur में technician आ सकता है क्या? Split AC की cooling बंद है।", "ts": "2026-10-29T19:21:14.492538Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Kondapur ನಮ್ಮ service area ಒಳಗೆ ಬರುತ್ತದೆ, ಆದರೆ same-day visits guarantee ಇಲ್ಲ. ನಾವು next-day slots ಮಾತ್ರ ಕೊಡುತ್ತೇವೆ, ಬೆಳಿಗ್ಗೆ 10 AM ಇಂದ ಸಂಜೆ 6 PM ವರೆಗೆ. ನಿಮ್ಮ visit book ಮಾಡಲು, ನಿಮ್ಮ ಹೆಸರು ಹೇಳಬಹುದಾ?", "ts": "2026-10-29T19:21:16.872788Z", "brain_latency_ms": 2432}

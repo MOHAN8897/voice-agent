@@ -1,0 +1,75 @@
+{
+  "call_id": "79e41ba7-c957-4ccc-bb3b-528d4d4bbe95",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.99,
+  "summary_te": "",
+  "summary_en": "Kiran, a working professional and BSc graduate, called to ask about Python and SQL/PowerBI courses, preferring evening or weekend classes. The agent explained that only a Python with Data Analytics course was available, with weekday classes from 8–9 PM, weekend classes from 10 AM–1 PM, an 8-week duration, and a fee of ₹8,999 with no instalment option. Placement assistance was offered, but no job guarantee or salary promise. The agent stated that basic computer knowledge was sufficient, graduation or final-year student status was required, and prior coding experience was not necessary. Kiran then asked for course topics, study material, certification, extra charges, and a comparison with SQL/PowerBI, but the agent could not provide those details. Kiran requested confirmation that the enquiry was saved and asked about arranging a demo or discussion. The agent repeatedly confirmed that the enquiry was saved but did not provide a confirmation email or reference number and repeatedly asked for details that Kiran said had already been provided. The agent also suggested looking at another institute because the requested information was unavailable. Kiran became frustrated, stated that the missing details made it difficult to decide, and finally said they would look at another institute and did not want further enquiries saved. The call ended with a brief thanks and goodbye from the agent.",
+  "next_action": "Do not contact this number. The caller opted out.",
+  "extracted_fields": {
+    "caller_name": "Kiran",
+    "course_duration": "8 weeks",
+    "course_interest": "Python with Data Analytics; initially also asked about SQL/PowerBI",
+    "eligibility": "Graduate or final-year student; basic computer knowledge; prior coding experience not required",
+    "fee": "₹8,999",
+    "installments": "Not available",
+    "occupation": "Working professional",
+    "phone": "+12025550105",
+    "placement_support": "100% placement assistance stated; no job guarantee or salary promise",
+    "preferred_schedule": "Evenings or weekends",
+    "qualification": "BSc graduate",
+    "weekday_batch": "8:00 PM–9:00 PM",
+    "weekend_batch": "10:00 AM–1:00 PM"
+  },
+  "facts": {
+    "caller_name": "Kiran",
+    "course_duration": "8 weeks",
+    "course_interest": "Python with Data Analytics; initially also asked about SQL/PowerBI",
+    "eligibility": "Graduate or final-year student; basic computer knowledge; prior coding experience not required",
+    "fee": "₹8,999",
+    "installments": "Not available",
+    "occupation": "Working professional",
+    "phone": "+12025550105",
+    "placement_support": "100% placement assistance stated; no job guarantee or salary promise",
+    "preferred_schedule": "Evenings or weekends",
+    "qualification": "BSc graduate",
+    "weekday_batch": "8:00 PM–9:00 PM",
+    "weekend_batch": "10:00 AM–1:00 PM"
+  },
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:course-information",
+    "custom:python-data-analytics",
+    "custom:sql-powerbi",
+    "intent:demo",
+    "intent:information",
+    "outcome:not_interested",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:demo",
+    "sentiment:frustrated",
+    "sentiment:negative",
+    "signal:do_not_call",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:python-data-analytics",
+    "custom:sql-powerbi",
+    "custom:course-information"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Course topics were unavailable",
+    "Study material, certification, and extra-charge information was unavailable",
+    "SQL/PowerBI course details and comparison were unavailable",
+    "No confirmation email or reference number was provided",
+    "Repeated requests for details despite the caller saying they had already provided them"
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T16:48:20.344666Z",
+  "generation_ok": true
+}

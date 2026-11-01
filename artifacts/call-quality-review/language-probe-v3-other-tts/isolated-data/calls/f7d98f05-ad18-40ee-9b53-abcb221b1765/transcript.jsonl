@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Split AC servicingનો charge કેટલો આવે?", "ts": "2026-10-29T19:32:55.640567Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Split AC servicingનો charge ₹599 છે. બીજું કંઈ જાણવું છે તમારે?", "ts": "2026-10-29T19:32:56.206804Z", "brain_latency_ms": 564}

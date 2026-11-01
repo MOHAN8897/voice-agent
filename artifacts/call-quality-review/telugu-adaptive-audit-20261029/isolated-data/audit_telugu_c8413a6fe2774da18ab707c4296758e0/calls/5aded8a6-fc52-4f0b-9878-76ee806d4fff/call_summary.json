@@ -1,0 +1,70 @@
+{
+  "call_id": "5aded8a6-fc52-4f0b-9878-76ee806d4fff",
+  "language_callback": null,
+  "disposition": "callback_required",
+  "disposition_confidence": 0.88,
+  "summary_te": "",
+  "summary_en": "The caller, Kiran, enquired about Python with Data Analytics training as a working professional, asking for the fee and a weekend-only schedule. The agent quoted a fee of ₹8,999 and explained that the weekend batch runs on Saturdays and Sundays from 10:00 AM to 1:00 PM. Kiran accepted the fee as okay and provided the name Kiran, email kiran.audit@example.invalid, qualification B.Com, and weekend preference, requesting that the contact be created and the details saved and verified. The agent clarified multiple times that the system could not directly save or check the record, and offered to send the details for team review and asked about a callback. Kiran declined a callback but repeated the request to note the enquiry and confirm whether it was saved. The agent did not confirm any save or review action, and the caller ended the conversation stating it was the last enquiry.",
+  "next_action": "Route Kiran's enquiry and contact details to the appropriate team for manual review or CRM entry, then follow up only if permitted, since the caller declined a callback.",
+  "extracted_fields": {
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "course": "Python with Data Analytics",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550147",
+    "preferred_schedule": "Saturday and Sunday, 10:00 AM to 1:00 PM",
+    "preferred_time": "weekend",
+    "product": "Python/data training",
+    "qualification": "B.Com"
+  },
+  "facts": {
+    "caller_email": "kiran.audit@example.invalid",
+    "caller_name": "కిరణ్",
+    "course": "Python with Data Analytics",
+    "email": "kiran.audit@example.invalid",
+    "fee": "₹8,999",
+    "name": "Kiran",
+    "phone": "+12025550147",
+    "preferred_schedule": "Saturday and Sunday, 10:00 AM to 1:00 PM",
+    "preferred_time": "weekend",
+    "product": "Python/data training",
+    "qualification": "B.Com"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:email_known",
+    "contact:name_known",
+    "contact:phone_known",
+    "followup:callback",
+    "followup:send_info",
+    "intent:information",
+    "intent:purchase",
+    "outcome:callback_required",
+    "sentiment:neutral",
+    "signal:objection",
+    "signal:price_sensitive"
+  ],
+  "tags": [
+    "intent:information",
+    "intent:purchase",
+    "signal:price_sensitive",
+    "action:required",
+    "followup:send_info",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [
+    "custom:python-data-training",
+    "custom:weekend-batch",
+    "custom:crm-entry"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "The caller requested direct system saving and verification, but the agent could not perform or confirm that action.",
+    "The caller declined a callback."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T11:29:37.932612Z",
+  "generation_ok": true
+}

@@ -1,0 +1,34 @@
+{
+  "call_id": "eb4c78f2-942f-454f-8d2e-db71e7b05aff",
+  "language_callback": null,
+  "disposition": "new_lead",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller inquired about the consultation fee and the business's operating hours. The agent did not provide a response during the call, and the conversation ended without any further discussion or agreed next steps.",
+  "next_action": "callback_required",
+  "extracted_fields": {
+    "phone": "+919876500517"
+  },
+  "facts": {
+    "phone": "+919876500517"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "followup:callback",
+    "intent:information",
+    "outcome:new_lead",
+    "sentiment:neutral"
+  ],
+  "tags": [
+    "intent:information",
+    "followup:callback",
+    "sentiment:neutral"
+  ],
+  "custom_tags": [],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-30T11:20:37.326655Z",
+  "generation_ok": true
+}

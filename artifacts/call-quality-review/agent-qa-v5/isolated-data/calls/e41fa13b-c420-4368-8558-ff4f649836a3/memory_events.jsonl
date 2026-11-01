@@ -1,0 +1,8 @@
+{"turn_seq": 1, "ts": "2026-10-31T16:29:44.651334Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-31T16:30:03.326614Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T16:30:23.578652Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-31T16:30:23.591521Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: ಆ hair oil price ಎಷ್ಟಿದೆ ಅಂತ ಹೇಳ್ತೀರಾ?\nassistant: NatureVeda Herbal Hair Oil price ₹499 ಇದೆ, 200 ml bottle ಗೆ. ಇದರಲ್ಲಿ Amla, Bhringraj, Hibiscus, ಮತ್ತೆ Coconut Oil ಇರುತ್ತೆ, routine hair ಮತ್ತೆ scalp care ಗೆ ಒಳ್ಳೇದು. ಇದರ ಬಗ್ಗೆ ಇನ್ನು ಏನಾದ್ರೂ ತಿಳ್ಕೊಬೇಕಾ?\nuser: ₹499 ಅಂದ್ರೆ ಸ್ವಲ್ಪ ಜಾಸ್ತಿ ಆಯ್ತು. ಆ ಮುಖದ ಕ್ರೀಮ್ ಬಗ್ಗೆ ಏನು ಹೇಳ್ತೀರಾ?\nassistant: ಖಂಡಿತ, ಅರ್ಥ ಆಗುತ್ತೆ. NatureVeda Herbal Face Cream ಬೆಲೆ ₹599 ಇದೆ, 50 g ಗೆ. ಇದರ ಬಗ್ಗೆ ಇನ್ನು details ಬೇಕಾ?"}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-31T16:30:39.816427Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 9, "ts": "2026-10-31T16:30:57.378684Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 11, "ts": "2026-10-31T16:31:07.557338Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 13, "ts": "2026-10-31T16:31:24.179302Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

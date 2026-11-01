@@ -1,0 +1,213 @@
+[
+  {
+    "name": "scoped_product",
+    "caller": "Visiting cards నే కావాలి. Wedding cards ధరలు ఎలా ఉంటాయో కేవలం తెలుసుకోవడానికి అడుగుతున్నాను. Wedding cards ఆర్డర్ చేయడం లేదు.",
+    "result": {
+      "decision": "continue",
+      "contact_intent": "none",
+      "contact_evidence": "",
+      "callback_time": "",
+      "remaining_request": "Wedding cards ధరలు ఎలా ఉంటాయో కేవలం తెలుసుకోవడానికి అడుగుతున్నాను.",
+      "memory_operations": [
+        {
+          "op": "set_fact",
+          "key": "product",
+          "value": "Visiting cards"
+        }
+      ],
+      "wait_for_caller": false
+    },
+    "passed": true
+  },
+  {
+    "name": "future_permission",
+    "caller": "నేను కిరణ్. Python course నాకు ఆసక్తి ఉంది. రేపు నేనే మీకు call చేస్తాను. ఇది callback అడగడం కాదు. భవిష్యత్తులో మీ కొత్త offers గురించి నాకు calls చేయవచ్చు, నా number block చేయకండి. ప్రస్తుతం ఇంతే, ధన్యవాదాలు.",
+    "result": {
+      "decision": "close",
+      "reason": "goal_complete",
+      "evidence": "ప్రస్తుతం ఇంతే, ధన్యవాదాలు.",
+      "remaining_request": "",
+      "contact_intent": "self_callback",
+      "contact_evidence": "రేపు నేనే మీకు call చేస్తాను. ఇది callback అడగడం కాదు.",
+      "callback_time": "",
+      "contact_verified": true,
+      "close_verified": true,
+      "memory_operations": [
+        {
+          "op": "set_fact",
+          "key": "caller_name",
+          "value": "కిరణ్"
+        },
+        {
+          "op": "set_preference",
+          "key": "product",
+          "value": "Python course"
+        }
+      ],
+      "wait_for_caller": false
+    },
+    "passed": true
+  },
+  {
+    "name": "ordinary_goodbye",
+    "caller": "అంతే, కావాల్సిన వివరాలు తెలిసాయి. ధన్యవాదాలు, కాల్ ముగించండి.",
+    "result": {
+      "decision": "close",
+      "reason": "goodbye",
+      "evidence": "అంతే, కావాల్సిన వివరాలు తెలిసాయి. ధన్యవాదాలు, కాల్ ముగించండి.",
+      "remaining_request": "",
+      "contact_intent": "end_this_call",
+      "contact_evidence": "",
+      "callback_time": "",
+      "contact_verified": true,
+      "close_verified": true,
+      "memory_operations": [],
+      "wait_for_caller": false
+    },
+    "passed": true
+  },
+  {
+    "name": "optout_question",
+    "caller": "ఈ నంబర్‌కు ఇకపై ఎప్పటికీ కాల్ చేయకండి. కానీ ఇప్పుడు వంద విజిటింగ్ కార్డుల ధర ఎంత?",
+    "result": {
+      "decision": "continue",
+      "reason": "firm_refusal",
+      "evidence": "",
+      "remaining_request": "ఇప్పుడు వంద విజిటింగ్ కార్డుల ధర ఎంత?",
+      "contact_intent": "do_not_call",
+      "contact_evidence": "ఈ నంబర్‌కు ఇకపై ఎప్పటికీ కాల్ చేయకండి.",
+      "callback_time": "",
+      "contact_verified": true,
+      "close_verified": false,
+      "memory_operations": [
+        {
+          "op": "set_fact",
+          "key": "product",
+          "value": "విజిటింగ్ కార్డులు"
+        }
+      ],
+      "wait_for_caller": false
+    },
+    "passed": true
+  },
+  {
+    "name": "email_confirmation",
+    "caller": "రేపు ఉదయం 10 గంటలకి slot fix చేయండి సురేష్. ఈ servicing లో ఏమేమి parts replace అవ్వొచ్చో మీకు ముందే ఏమైనా idea ఉంటుందా? అలాగే నా email sravani.audit@example.invalid కి confirmation message పంపించగలరా?",
+    "result": {
+      "decision": "continue",
+      "reason": "goal_complete",
+      "evidence": "",
+      "remaining_request": "ఏమేమి parts replace అవ్వొచ్చో మీకు ముందే ఏమైనా idea ఉంటుందా?",
+      "contact_intent": "none",
+      "contact_evidence": "",
+      "callback_time": "",
+      "contact_verified": true,
+      "close_verified": false,
+      "memory_operations": [
+        {
+          "op": "set_fact",
+          "key": "requested_time",
+          "value": "రేపు ఉదయం 10 గంటలకి"
+        },
+        {
+          "op": "set_fact",
+          "key": "email",
+          "value": "sravani.audit@example.invalid"
+        }
+      ],
+      "wait_for_caller": false
+    },
+    "passed": true
+  },
+  {
+    "name": "pure_callback",
+    "caller": "నేను ఇప్పుడు మాట్లాడలేను. ఆరు గంటల తర్వాత ఇదే నంబర్‌కు నాకు కాల్ చేయండి.",
+    "result": {
+      "decision": "close",
+      "reason": "goal_complete",
+      "evidence": "ఆరు గంటల తర్వాత ఇదే నంబర్‌కు నాకు కాల్ చేయండి",
+      "remaining_request": "",
+      "contact_intent": "callback",
+      "contact_evidence": "ఆరు గంటల తర్వాత ఇదే నంబర్‌కు నాకు కాల్ చేయండి",
+      "callback_time": "ఆరు గంటల తర్వాత",
+      "contact_verified": true,
+      "close_verified": true,
+      "memory_operations": [],
+      "wait_for_caller": false
+    },
+    "passed": true
+  },
+  {
+    "name": "decline_callback",
+    "caller": "లేదు, callback వద్దు. మీరు నా calendar లో appointment create చేసి confirm అయిందో చెప్పండి.",
+    "result": {
+      "decision": "continue",
+      "reason": "goodbye",
+      "evidence": "",
+      "remaining_request": "మీరు నా calendar లో appointment create చేసి confirm అయిందో చెప్పండి.",
+      "contact_intent": "decline_callback",
+      "contact_evidence": "లేదు, callback వద్దు.",
+      "callback_time": "",
+      "contact_verified": true,
+      "close_verified": false,
+      "memory_operations": [],
+      "wait_for_caller": false
+    },
+    "passed": true
+  },
+  {
+    "name": "name_not_supplied",
+    "caller": "నమస్తే కవిత గారు. వంద మ్యాట్ విజిటింగ్ కార్డులకు ధర ఎంత? నా పేరు ఇంకా చెప్పలేదు.",
+    "result": {
+      "decision": "continue",
+      "contact_intent": "none",
+      "contact_evidence": "",
+      "callback_time": "",
+      "remaining_request": "వంద మ్యాట్ విజిటింగ్ కార్డులకు ధర",
+      "memory_operations": [
+        {
+          "op": "set_fact",
+          "key": "product",
+          "value": "విజిటింగ్ కార్డులు"
+        },
+        {
+          "op": "set_fact",
+          "key": "caller_name",
+          "value": "ఇంకా చెప్పలేదు"
+        }
+      ],
+      "wait_for_caller": false
+    },
+    "passed": false
+  },
+  {
+    "name": "positive_name",
+    "caller": "నా పేరు రమణ. నాకు 200 matte visiting cards కావాలి. ధర, delivery వివరాలు చెప్పండి.",
+    "result": {
+      "decision": "continue",
+      "contact_intent": "none",
+      "contact_evidence": "",
+      "callback_time": "",
+      "remaining_request": "price and delivery details",
+      "memory_operations": [
+        {
+          "op": "set_fact",
+          "key": "caller_name",
+          "value": "రమణ"
+        },
+        {
+          "op": "set_fact",
+          "key": "product",
+          "value": "matte visiting cards"
+        },
+        {
+          "op": "set_fact",
+          "key": "quantity",
+          "value": "200"
+        }
+      ],
+      "wait_for_caller": false
+    },
+    "passed": true
+  }
+]

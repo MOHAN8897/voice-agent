@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "quantity": "1",
+    "caller_name": "Lakshmi Reddy",
+    "delivery_address": "Flat 302, Sai Residency, Kukatpally, Hyderabad 500072",
+    "email": "mohansaiteja.99@gmail.com"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: Okay, email noted. So my order is confirmed now, correct?\nassistant: Yes, your order is confirmed. It is for 2 bottles of Herbal Hair Oil and 1 Herbal Face Cream for Lakshmi Reddy, delivered to Flat 302, Sai Residency, Kukatpally, Hyderabad 500072.\nuser: Okay, so it is confirmed. What happens now? Do I need to pay now itself?\nassistant: The payment timing is currently unavailable. Would you like to place the order today?"
+}

@@ -1,0 +1,12 @@
+{
+  "facts": {
+    "caller_name": "రమణ",
+    "product": "visiting cards",
+    "quantity": "200"
+  },
+  "preferences": {
+    "product_interest": "wedding cards"
+  },
+  "important_context": "Caller provided contact details in this call.",
+  "summary": "assistant: Wedding invitation cards అన్నీ customized కాబట్టి, design, paper sample, ఇంకా quantity బట్టి price మారుతుంది. ఫోన్లో fixed price చెప్పలేము. మీకు ఇంకా వేరే ఏమైనా details కావాలా?\nuser: ఇప్పటివరకు నా పేరు, నాకు కావాల్సిన product, quantity ఏం గుర్తు పెట్టుకున్నారు?\nassistant: సరే రమణ గారు, మీ పేరు, two hundred matte visiting cards detail నేను note చేసుకున్నాను. Vijayawada లో delivery artwork approval తర్వాత three working days లో అవుతుంది. మీకు urgent గా కావాలంటే 24 hours delivery కి extra one hundred fifty rupees అవుతుంది."
+}

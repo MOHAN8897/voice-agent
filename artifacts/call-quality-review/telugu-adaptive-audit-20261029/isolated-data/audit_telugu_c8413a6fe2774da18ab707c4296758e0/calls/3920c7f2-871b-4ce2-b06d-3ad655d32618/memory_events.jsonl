@@ -1,0 +1,2 @@
+{"turn_seq": 1, "ts": "2026-10-29T11:28:42.153701Z", "source": "model", "operations": [{"op": "set_fact", "key": "product", "value": "Python training"}], "applied": true, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-29T11:28:42.896683Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

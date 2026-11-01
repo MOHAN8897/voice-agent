@@ -1,0 +1,10 @@
+{"seq": 1, "role": "user", "text": "నమస్తేండి, చెప్పండి, ఈ కాల్ ఏ విషయంలో?", "ts": "2026-10-31T15:10:33.349761Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ఈ call మా NatureVeda Herbals products గురించి తెలుసుకోవడానికి చేస్తున్నాం. మా దగ్గర Herbal Hair Oil, Aloe Vera Juice, Face Cream, ఇంకా Ashwagandha Capsules ఉన్నాయి. మీకు ఏ product గురించి details కావాలో చెప్తారా?", "ts": "2026-10-31T15:10:34.912161Z"}
+{"seq": 3, "role": "user", "text": "అదేండి, మీ Ashwagandha capsules గురించి చెప్తున్నారా? అసలు అవి ఏ దానికి వాడతారు మరియు దాని price ఎంత?", "ts": "2026-10-31T15:10:57.068919Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "అవును, Ashwagandha Capsules ఒక herbal wellness supplement. ఇవి 60 capsules కి ₹699 ఉంటాయి. ఇవి label-supported uses కి మాత్రమే వాడతారు, అలాగే precautions కూడా follow అవ్వాలి.", "ts": "2026-10-31T15:10:58.748040Z"}
+{"seq": 5, "role": "user", "text": "అది సరేండి, నేను రోజు బీపీ టాబ్లెట్స్ వాడుతుంటాను. ఈ Ashwagandha capsules తీసుకోవడం నా health కి సేఫ్ అవుతుందా?", "ts": "2026-10-31T15:11:19.020698Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "మీరు ఇప్పటికే బీపీ టాబ్లెట్స్ వాడుతున్నారు కాబట్టి, ముందుగా మీ doctor ని అడిగి తెలుసుకోవడం మంచిది. మా herbal products దేనినీ cure చేయవు లేదా side effects ఉండవని మేము guarantee ఇవ్వలేము. ఈ విషయంలో మీ doctor సలహా తీసుకోవడం safe అవుతుంది.", "ts": "2026-10-31T15:11:21.010227Z"}
+{"seq": 7, "role": "user", "text": "అవునండి, డాక్టర్ తో మాట్లాడితేనే మంచిది. నేను ఆలోచించి చెప్తానులేండి.", "ts": "2026-10-31T15:11:40.421087Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "సరే, మీరు doctor తో మాట్లాడి నిర్ణయం తీసుకోండి. మీకు కావాలంటే మీ వివరాలు note చేసుకుంటాను, లేదా తర్వాత call చేయమని చెప్పండి. ఏది చేద్దాం అంటారు?", "ts": "2026-10-31T15:11:41.827890Z"}
+{"seq": 9, "role": "user", "text": "సరేండి, డాక్టర్ ని అడిగి కన్ఫర్మ్ చేసుకున్నాక నేనే మీకు కాల్ చేస్తానులేండి, థాంక్స్.", "ts": "2026-10-31T15:11:58.293324Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-31T15:11:59.357641Z"}

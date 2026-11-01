@@ -1,0 +1,16 @@
+{"seq": 1, "role": "user", "text": "હા, બોલો ને. હું Lakshmi બોલું છું.", "ts": "2026-10-31T16:41:41.230412Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "આભાર Lakshmi. આજે તમે કયો herbal product જોવા માંગો છો? અમારી પાસે Hair Oil, Aloe Vera Juice, Face Cream અને Ashwagandha Capsules ઉપલબ્ધ છે.", "ts": "2026-10-31T16:41:42.997558Z"}
+{"seq": 3, "role": "user", "text": "મને hair oil અને face cream માં interest છે. આ face cream માં કયા ingredients છે? અને એને કેવી રીતે use કરવાનું છે?", "ts": "2026-10-31T16:42:02.459362Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Face cream માં Neem, Turmeric અને Aloe Vera છે, અને એ moisturizing અને routine skin care માટે છે. એને કેવી રીતે use કરવાનું છે, એ માહિતી મારી પાસે નથી.", "ts": "2026-10-31T16:42:04.180904Z"}
+{"seq": 5, "role": "user", "text": "સારું, કોઈ વાંધો નહીં. તો હું 2 bottles hair oil અને 1 face cream નો order કરું છું. આનો total price કેટલો થશે?", "ts": "2026-10-31T16:42:42.434777Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "Hair oil ની એક bottle ₹499 ની છે અને face cream ₹599 ની છે. એટલે 2 bottles અને 1 face cream નો total ₹1,597 થશે. Order place કરવો છે તમારે?", "ts": "2026-10-31T16:42:44.635550Z"}
+{"seq": 7, "role": "user", "text": "હા, order place કરી દઉં છું. પણ આમાં કોઈ discount જેવી સુવિધા છે ખરી?", "ts": "2026-10-31T16:43:00.702023Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "માફ કરશો, અત્યારે અમારી પાસે કોઈ discount ની માહિતી ઉપલબ્ધ નથી. તો શું આપણે આ order આગળ વધારીએ?", "ts": "2026-10-31T16:43:03.127093Z"}
+{"seq": 9, "role": "user", "text": "ઠીક છે, discount નથી તો ચાલશે. તો મારો order confirm કરી દો ને.", "ts": "2026-10-31T16:43:16.699302Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "સારું, હું order confirm કરી દઉં છું. બસ તમારું પૂરું delivery address કહી દો ને, એટલે હું બધું record કરી લઉં.", "ts": "2026-10-31T16:43:19.339070Z"}
+{"seq": 11, "role": "user", "text": "સારું, address છે Flat 302, Sai Residency, Kukatpally, Hyderabad 500072.", "ts": "2026-10-31T16:43:31.946681Z", "partial": false}
+{"seq": 12, "role": "assistant", "text": "મેં address note કરી લીધું છે. તો એકવાર confirm કરી દઉં, 2 x Hair Oil અને 1 x Face Cream, total ₹1,597, delivery address Flat 302, Sai Residency, Kukatpally, Hyderabad 500072 સાથે. આ બરાબર છે ને?", "ts": "2026-10-31T16:43:34.104304Z"}
+{"seq": 13, "role": "user", "text": "હા, બરાબર છે. આ delivery માં કેટલો time લાગશે?", "ts": "2026-10-31T16:43:51.998755Z", "partial": false}
+{"seq": 14, "role": "assistant", "text": "આ delivery માં કેટલો સમય લાગશે, એની માહિતી મારી પાસે અત્યારે ઉપલબ્ધ નથી. Order place કરવો છે તો હું આગળ વધારી શકું છું.", "ts": "2026-10-31T16:43:53.882975Z"}
+{"seq": 15, "role": "user", "text": "Delivery નો time ખબર નથી? તો ચાલશે, order place કરી દો. હવે આગળ શું કરવાનું છે એ મને જણાવો.", "ts": "2026-10-31T16:44:10.613227Z", "partial": false}
+{"seq": 16, "role": "assistant", "text": "તમારો order confirm થઈ ગયો છે. હવે અમારી team તરફથી તમને આગળની details મળી જશે.", "ts": "2026-10-31T16:44:12.490495Z"}

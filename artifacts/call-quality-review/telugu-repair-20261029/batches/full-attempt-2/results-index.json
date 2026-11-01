@@ -1,0 +1,44 @@
+[
+  {
+    "id": "A_enquiry_none",
+    "turns": 7,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 69.094
+  },
+  {
+    "id": "A_enquiry_success",
+    "turns": 8,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 54.797
+  },
+  {
+    "id": "A_enquiry_failure",
+    "turns": 4,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 44.328
+  },
+  {
+    "id": "A_callback_auto",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 6.563
+  },
+  {
+    "id": "A_dnd",
+    "turns": 2,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 10.359
+  },
+  {
+    "id": "A_refusal",
+    "turns": 1,
+    "errors": [],
+    "agent_closed": true,
+    "elapsed_s": 5.453
+  }
+]

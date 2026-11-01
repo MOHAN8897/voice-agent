@@ -1,0 +1,68 @@
+{
+  "call_id": "51d111c6-36bc-4293-b05d-051fcbf12fc8",
+  "language_callback": null,
+  "disposition": "interested",
+  "disposition_confidence": 0.96,
+  "summary_te": "",
+  "summary_en": "Ramesh initially asked about 100 standard visiting cards from Vijayawada. The agent quoted ₹200 for 100 standard cards, and the caller selected matte finish. The agent quoted ₹350 for 100 matte cards, explained that delivery in Vijayawada takes 3 working days after artwork approval, and offered a 24-hour urgent option for an additional ₹150. The caller clarified that his name is Raman and requested 200 matte visiting cards, accepted the 3-working-day delivery timeline, and said he would send the designs later. The agent also shared that the business offers visiting cards, wedding invitations, and banners, and explained that the minimum visiting-card order is 100 cards. Raman then explicitly requested that the 200-card order be proceeded with, provided Vijayawada as the address, and asked for the internal order request to be processed; payment would be handled later. The agent confirmed that the enquiry was saved and said payment would be discussed after the designs were received. Raman had no further questions and ended the call politely. The transcript does not explicitly confirm that the internal order request was processed or that payment was made.\n\nServer check: no confirmed order was recorded for this call, so it was not marked as converted.",
+  "next_action": "Await Raman's designs, then confirm artwork, finalize payment, and process or confirm the internal order.",
+  "extracted_fields": {
+    "caller_name": "Raman",
+    "delivery_locality": "విజయవాడ",
+    "delivery_time": "3 working days after artwork approval",
+    "designs": "Caller will send designs later",
+    "location_and_address": "Vijayawada",
+    "payment": "To be handled later",
+    "payment_method": "తర్వాత చూసుకుంటాను",
+    "phone": "+12025550121",
+    "price_reference": "₹350 per 100 matte cards; total for 200 cards not explicitly quoted",
+    "product": "Matte visiting cards",
+    "quantity": "200 cards",
+    "urgent_delivery_option": "24 hours for an additional ₹150"
+  },
+  "facts": {
+    "caller_name": "Raman",
+    "delivery_locality": "విజయవాడ",
+    "delivery_time": "3 working days after artwork approval",
+    "designs": "Caller will send designs later",
+    "location_and_address": "Vijayawada",
+    "payment": "To be handled later",
+    "payment_method": "తర్వాత చూసుకుంటాను",
+    "phone": "+12025550121",
+    "price_reference": "₹350 per 100 matte cards; total for 200 cards not explicitly quoted",
+    "product": "Matte visiting cards",
+    "quantity": "200 cards",
+    "urgent_delivery_option": "24 hours for an additional ₹150"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:200-card-order",
+    "custom:artwork-approval",
+    "custom:matte-visiting-cards",
+    "followup:send_info",
+    "intent:information",
+    "intent:purchase",
+    "outcome:interested",
+    "sentiment:positive",
+    "signal:ready_to_buy"
+  ],
+  "tags": [
+    "intent:purchase",
+    "intent:information",
+    "followup:send_info",
+    "signal:ready_to_buy",
+    "sentiment:positive"
+  ],
+  "custom_tags": [
+    "custom:matte-visiting-cards",
+    "custom:200-card-order",
+    "custom:artwork-approval"
+  ],
+  "disclosure_status": null,
+  "objections": [],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T11:09:30.203721Z",
+  "generation_ok": true
+}

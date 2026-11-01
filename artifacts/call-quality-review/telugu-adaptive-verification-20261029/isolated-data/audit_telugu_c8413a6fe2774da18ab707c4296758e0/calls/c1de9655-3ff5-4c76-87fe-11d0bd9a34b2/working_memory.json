@@ -1,0 +1,15 @@
+{
+  "facts": {
+    "product": "split AC",
+    "delivery_locality": "మాదాపూర్",
+    "caller_name": "శ్రావణి",
+    "email": "sravani.audit@example.invalid",
+    "caller_email": "sravani.audit@example.invalid",
+    "warranty": "separate warranty ఉండదు"
+  },
+  "preferences": {
+    "requested_time": "రేపు ఉదయం 10 గంటలకి"
+  },
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "user: సరే, separate warranty ఉండదు అన్నారు కదా. మరి servicing తర్వాత ఏమైనా problems వస్తే మళ్ళీ call చేయవచ్చా, లేక వేరే charges పడతాయా? ఇంకో విషయం, ఈ five hundred ninety nine rupees లో ఏమేమి cover అవుతాయో కొంచెం వివరంగా చెప్పగలరా?\nassistant: ఈ five hundred ninety nine rupees లో basic servicing మాత్రమే cover అవుతుంది. ఏవైనా problems వస్తే మళ్ళీ call చేయొచ్చు, కానీ servicing తర్వాత వచ్చే కొత్త issues కి వేరే charges పడతాయి. మరి appointment confirm అయింది కదా, ఇంకేమైనా help కావాలా?"
+}

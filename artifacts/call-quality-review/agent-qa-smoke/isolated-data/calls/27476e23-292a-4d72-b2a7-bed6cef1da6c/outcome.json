@@ -1,0 +1,100 @@
+{
+  "disposition": "interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "వ్యాపార ప్రతినిధి కస్టమర్‌కు కాల్ చేశారు. కస్టమర్ అలోవెరా జ్యూస్ ధర, సైజు, డోసేజ్, హెయిర్ ఆయిల్ పదార్థాలు మరియు కలిపిన ఆర్డర్ ధర గురించి అడిగారు. ఏజెంట్ ధరలను (అలోవెరా జ్యూస్‌కు ₹399 మరియు హెయిర్ ఆయిల్‌కు ₹499) పంచుకున్నారు, కానీ డోసేజ్ సమాచారం లేదని తెలిపారు. కస్టమర్ సమాచారాన్ని స్వీకరించి, ఈ రోజుకు తనకు ఇంకేమీ అవసరం లేదని చెప్పి కాల్ ముగించారు.",
+  "summary_en": "The agent called the customer to provide product information. The customer asked about the price, size, dosage, and ingredients of the aloe vera juice and hair oil, and inquired about a combined order total. The agent shared the pricing details, but explained that dosage guidance was unavailable. The customer accepted the information and concluded the call without placing an order.",
+  "next_action": null,
+  "extracted_fields": {
+    "combined_total": "₹898",
+    "phone": "+919700000001",
+    "price_product_1": "₹399",
+    "price_product_2": "₹499",
+    "product_1": "aloe vera juice",
+    "product_2": "herbal hair oil",
+    "size_product_1": "500 ml"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:information",
+    "sentiment:neutral",
+    "followup:send_quote"
+  ],
+  "custom_tags": [
+    "custom:aloe-vera",
+    "custom:hair-oil"
+  ],
+  "unanswered_questions": [
+    "What is the daily dosage for the aloe vera juice?"
+  ],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T12:55:15.698668Z",
+  "generation_ok": true,
+  "summary_language": "te-IN",
+  "facts": {
+    "combined_total": "₹898",
+    "phone": "+919700000001",
+    "price_product_1": "₹399",
+    "price_product_2": "₹499",
+    "product_1": "aloe vera juice",
+    "product_2": "herbal hair oil",
+    "size_product_1": "500 ml"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:phone_known",
+    "custom:aloe-vera",
+    "custom:hair-oil",
+    "followup:send_quote",
+    "intent:information",
+    "outcome:interested",
+    "sentiment:neutral"
+  ],
+  "lead": {
+    "leadId": "63eb8332-13d2-4477-b6a4-d4980836708c",
+    "agentId": "06c8aaa5-31d0-5af7-b146-80b4313329c2",
+    "stage": "contacted",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 50,
+    "band": "warm",
+    "disposition": "interested",
+    "confidence": 0.95,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "interested"
+      },
+      {
+        "signal": "requirements",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_name": "किरण"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: Consultation fee कितनी है और आप कब खुलते हो?\nassistant: Consultation fee ₹300 है। Clinic सोमवार से शनिवार, सुबह 10 AM से शाम 8 PM तक खुला रहता है।\nuser: ठीक है, मेरी enquiry note कर लीजिए। मेरा नाम किरण है और मुझे interest है।\nassistant: ठीक है, किरण जी। आपकी enquiry note कर ली है। क्या आप appointment लेना चाहते हैं, या किसी और treatment की जानकारी चाहिए?\nuser: अभी के लिए बस इतना ही, thank you.\nassistant: समय देने के लिए धन्यवाद। नमस्कार।"
+}

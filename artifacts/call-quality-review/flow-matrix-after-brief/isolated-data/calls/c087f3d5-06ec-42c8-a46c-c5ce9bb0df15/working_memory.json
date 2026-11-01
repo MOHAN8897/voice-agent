@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "caller_name": "కిరణ్",
+    "delivery_locality": "Velachery",
+    "requested_time": "శనివారం"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: ఇది నాకు చాలా expensive గా ఉంది.\nassistant: అర్థమైంది. Government subsidy ₹78,000 తర్వాత, 3 kW system కి మీరు ₹1,17,000 pay చేయాలి. దీని గురించి ఇంకా తెలుసుకోవాలనుకుంటున్నారా?\nuser: లేదు, ఇది మాకు ఇంకా చాలా expensive గానే ఉంది.\nassistant: మీరు చెప్పింది అర్థమైంది, ఇది ఇంకా ఖరీదైనదే. కానీ నెలకు ₹2,999 EMI లో 48 నెలల వరకు కట్టుకోవచ్చు.\nuser: సరే, monthly EMI మళ్ళీ ఎంత చెప్పారు?\nassistant: నెలకు ₹2,999 పడుతుంది, 48 నెలల వరకు.\nuser: సరే, free survey book చేయండి. నా పేరు కిరణ్, నేను Velachery లో ఉంటాను, శనివారం కుదురుతుంది."
+}

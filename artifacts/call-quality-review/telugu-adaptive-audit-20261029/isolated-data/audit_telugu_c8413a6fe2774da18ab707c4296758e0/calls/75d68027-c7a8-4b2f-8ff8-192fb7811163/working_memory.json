@@ -1,0 +1,13 @@
+{
+  "facts": {
+    "requested_time": "రేపు ఉదయం 10 గంటలకి",
+    "email": "sravani.audit@example.invalid",
+    "caller_email": "sravani.audit@example.invalid",
+    "caller_name": "శ్రావణి",
+    "delivery_locality": "మాదాపూర్",
+    "product": "split AC"
+  },
+  "preferences": {},
+  "important_context": "Caller provided contact details in this call. Caller provided contact details in this call. Caller provided contact details in this call.",
+  "summary": "assistant: మీ అభ్యర్థన నిర్ధారణ అయిందో లేదో నాకు తెలియదు. దయచేసి దాన్ని పూర్తయినట్టు భావించకండి.\nuser: నా పేరు శ్రావణి, email sravani.audit@example.invalid. మీరు చెప్పినట్టు system issue వల్ల రేపు 10 గంటలకి confirmed కాదని అర్థమైంది. సరే, మరి మాదాపూర్ కి technician visit ఎప్పుడు schedule చేయొచ్చో ఒకసారి చెప్తారా?\nassistant: మీ అభ్యర్థన నిర్ధారణ అయిందో లేదో నాకు తెలియదు. దయచేసి దాన్ని పూర్తయినట్టు భావించకండి."
+}

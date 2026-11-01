@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "నమస్తే Kavitha, నాకు visiting cards కావాలి. Matte finish అయితే బాగుంటుంది. ముందుగా minimum order ఎంత ఉంటుందో చెప్పగలరా?", "ts": "2026-10-29T11:10:30.337092Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Matte finish cards కోసం minimum order one hundred cards ఉంటుంది. one hundred cards కి three hundred fifty rupees అవుతుంది. మీకు ఎన్ని cards కావాలో చెప్తారా?", "ts": "2026-10-29T11:10:31.638426Z", "brain_latency_ms": 1050}
+{"seq": 3, "role": "user", "text": "ప్రస్తుతం నాకు 250 cards కావాలి. దీనికి ఏమైనా extra charges ఉంటాయా?", "ts": "2026-10-29T11:10:32.230667Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Extra charges గురించి నాకు సమాచారం లేదు. మీరు proceed అవ్వాలనుకుంటే, మీ పేరు చెప్తారా?", "ts": "2026-10-29T11:10:33.505315Z", "brain_latency_ms": 1022}
+{"seq": 5, "role": "user", "text": "సరే, నా పేరు రమేష్. నేను నా email ID ramesh.audit@example.invalid ద్వారా designs తర్వాత పంపిస్తాను, ప్రస్తుతానికి ఇంతే చాలు, goodbye.", "ts": "2026-10-29T11:10:34.197585Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-29T11:10:34.221717Z", "brain_latency_ms": 3}

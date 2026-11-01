@@ -1,0 +1,99 @@
+{
+  "disposition": "qualified",
+  "disposition_confidence": 0.85,
+  "summary_te": "एजेंट ने ग्राहक को फेस क्रीम और हेयर ऑयल की कीमत और विवरण बताया। ग्राहक ने 2 हेयर ऑयल और 1 फेस क्रीम खरीदने की इच्छा जताई और अपना नाम लक्ष्मी रेड्डी तथा डिलीवरी पता कुकटपल्ली, हैदराबाद दिया। एजेंट ने ऑर्डर कन्फर्म करने के लिए ये विवरण दोहराए और ग्राहक सहमत हो गई, जिसके बाद कॉल समाप्त हो गई।",
+  "summary_en": "The agent called the customer to offer NatureVeda Herbal Face Cream and hair oil. The customer requested 2 bottles of hair oil and 1 face cream, and shared her name, Lakshmi Reddy, and delivery address in Kukatpally, Hyderabad. After the agent repeated the details for confirmation, the customer agreed to proceed. The call concluded with the customer thanking the agent after confirming the order.",
+  "next_action": "",
+  "extracted_fields": {
+    "caller_name": "लक्ष्मी रेड्डी",
+    "delivery_address": "फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072",
+    "phone": "+919700000001",
+    "products": "2 hair oil, 1 face cream",
+    "quantity": "1",
+    "total_price": "₹1597"
+  },
+  "objections": [],
+  "notes": "",
+  "tags": [
+    "intent:purchase",
+    "signal:ready_to_buy",
+    "followup:send_quote"
+  ],
+  "custom_tags": [
+    "custom:face-cream",
+    "custom:hair-oil",
+    "custom:delivery-address"
+  ],
+  "unanswered_questions": [],
+  "outcome_provider": "sarvam",
+  "model": "gpt-5.6-luna",
+  "prompt_version": "outcome_v4",
+  "generated_at": "2026-10-31T14:48:30.756186Z",
+  "generation_ok": true,
+  "summary_language": "hi-IN",
+  "facts": {
+    "caller_name": "लक्ष्मी रेड्डी",
+    "delivery_address": "फ्लैट 302, साई रेसिडेंसी, कुकटपल्ली, हैदराबाद 500072",
+    "phone": "+919700000001",
+    "products": "2 hair oil, 1 face cream",
+    "quantity": "1",
+    "total_price": "₹1597"
+  },
+  "disclosure_status": null,
+  "contact_preference": "end_call",
+  "status_tags": [
+    "contact:name_known",
+    "contact:phone_known",
+    "custom:delivery-address",
+    "custom:face-cream",
+    "custom:hair-oil",
+    "followup:send_quote",
+    "intent:purchase",
+    "outcome:qualified",
+    "signal:ready_to_buy"
+  ],
+  "lead": {
+    "leadId": "9b53d11c-d969-4426-a6a1-6b214d272966",
+    "agentId": "9af1b502-37bb-58e0-ad0d-1838de40d6ba",
+    "stage": "qualified",
+    "action": "created"
+  },
+  "lead_assessment": {
+    "score": 75,
+    "band": "hot",
+    "disposition": "qualified",
+    "confidence": 0.85,
+    "components": [
+      {
+        "signal": "interest",
+        "points": 40,
+        "max": 40,
+        "evidence": "qualified"
+      },
+      {
+        "signal": "requirements",
+        "points": 25,
+        "max": 25,
+        "evidence": "quantity"
+      },
+      {
+        "signal": "timing",
+        "points": 0,
+        "max": 25,
+        "evidence": "not recorded"
+      },
+      {
+        "signal": "contact",
+        "points": 10,
+        "max": 10,
+        "evidence": "phone"
+      }
+    ],
+    "version": 1,
+    "note": "Priority score uses recorded business signals; it is not a conversion probability or contact consent.",
+    "reason": "recorded_signals"
+  },
+  "integration_review_required": 0,
+  "integration_results": [],
+  "integration_dispatch_complete": true
+}

@@ -1,0 +1,44 @@
+{
+  "call_id": "36dd2d38-d8ef-4fa8-911b-a2e483995d10",
+  "language_callback": null,
+  "disposition": "not_interested",
+  "disposition_confidence": 0.95,
+  "summary_te": "",
+  "summary_en": "The caller requested to book a service for tomorrow at 11 AM and immediately asked for a booking confirmation and number. The agent explained that the booking could not be confirmed yet because essential details such as the specific appliance requiring service and the service area had not been provided. The caller then asked again if the booking was confirmed and for the booking number. The agent reiterated that no booking or number was available yet and requested the missing details again. The caller accepted this and ended the call.",
+  "next_action": "No further action required.",
+  "extracted_fields": {
+    "phone": "+919876500055",
+    "requested_time": "tomorrow 11 AM"
+  },
+  "facts": {
+    "phone": "+919876500055",
+    "requested_time": "tomorrow 11 AM"
+  },
+  "status_tags": [
+    "action:required",
+    "contact:phone_known",
+    "custom:service-booking",
+    "followup:schedule_pending",
+    "intent:booking",
+    "outcome:not_interested",
+    "sentiment:neutral",
+    "signal:objection"
+  ],
+  "tags": [
+    "sentiment:neutral",
+    "intent:booking",
+    "action:required",
+    "followup:schedule_pending",
+    "signal:objection"
+  ],
+  "custom_tags": [
+    "custom:service-booking"
+  ],
+  "disclosure_status": null,
+  "objections": [
+    "Booking was requested without providing appliance details or service area."
+  ],
+  "model": "gpt-5.6-luna",
+  "generated_at": "2026-10-29T20:23:17.630632Z",
+  "generation_ok": true
+}

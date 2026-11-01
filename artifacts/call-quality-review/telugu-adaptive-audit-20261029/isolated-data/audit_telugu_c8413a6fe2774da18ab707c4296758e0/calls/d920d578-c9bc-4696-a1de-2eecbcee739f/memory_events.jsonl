@@ -1,0 +1,3 @@
+{"turn_seq": 2, "ts": "2026-10-29T11:18:00.583432Z", "source": "model", "operations": [{"op": "set_fact", "key": "product", "value": "window AC service"}], "applied": true, "validation_errors": []}
+{"turn_seq": 4, "ts": "2026-10-29T11:18:02.216964Z", "source": "model", "operations": [{"op": "set_preference", "key": "service_timing", "value": "ఇప్పుడు"}], "applied": true, "validation_errors": []}
+{"turn_seq": 6, "ts": "2026-10-29T11:18:03.558689Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

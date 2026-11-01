@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "email": "mohansaiteja.99@gmail.com",
+    "product": "face cream",
+    "delivery_locality": "Kukatpally",
+    "requested_time": "कल सुबह 11 बजे"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: ठीक है, team से बात हो जाएगी। एक काम कीजिए, कल सुबह 11 बजे के लिए एक short call book कर दीजिए order place करने के लिए। क्या ये time book हो गया?\nassistant: आपकी request save हो गई है। कल सुबह 11 बजे की callback request भी मैंने team के लिए note कर ली है, वो आपसे संपर्क करके details confirm कर लेंगे।\nuser: ठीक है, तो कल 11 बजे का call book हो गया है, है ना?\nassistant: हाँ, कल सुबह 11 बजे की callback request मैंने note कर ली है। Team आपसे संपर्क करके order details confirm कर लेगी।\nuser: ठीक है, तो कल 11 बजे का call confirm हो गया है।\nassistant: क्या आप अभी कोई order place करना चाहते हैं?"
+}

@@ -1,0 +1,6 @@
+{"turn_seq": 1, "ts": "2026-10-29T17:41:17.209041Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-29T17:41:21.571311Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-29T17:41:26.443273Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nrequested_time: రేపు 10 గంటలకి"}
+{"turn_seq": 7, "ts": "2026-10-29T17:41:32.028417Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nrequested_time: రేపు 10 గంటలకి | caller_name: శ్రావణి | product: split AC | issue: general service"}
+{"turn_seq": 9, "ts": "2026-10-29T17:41:37.603483Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nrequested_time: రేపు 10 గంటలకి | caller_name: శ్రావణి | product: split AC | issue: general service"}
+{"turn_seq": 11, "ts": "2026-10-29T17:41:40.841737Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nrequested_time: రేపు 10 గంటలకి | caller_name: శ్రావణి | product: split AC | issue: general service"}
