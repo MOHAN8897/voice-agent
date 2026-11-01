@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LazyDialtactScene } from '../three/LazyDialtactScene';
 import { voiceAgent } from '../services/voiceAgent';
+import { renderMode } from '../lib/renderSupport';
+import { VideoMascot } from './VideoMascot';
 
 /**
  * Fixed canvas size. Size changes are a CSS scale, so WebGL never resizes mid-scroll;
@@ -69,37 +71,20 @@ export function BotAnchor({ className = '', style }) {
   return <div className={`mk-bot-anchor ${className}`} style={style} aria-hidden="true" />;
 }
 
-/**
- * Shown instead of the 3D mascot while it boots, and if WebGL is unavailable: a
- * projector with rings and a scan line, never a flat picture pasted on the page.
- */
-function HoloFallback({ message, onRetry, loading }) {
-  return (
-    <div className={`mk-holo${loading ? ' is-loading' : ''}`} data-mascot-state="preview">
-      {!loading && (
-        <img className="mk-holo-figure" src="/images/Dialtact_call_assistant_fallback.png" alt="" width="320" height="320" decoding="async" />
-      )}
-      <div className="mk-holo-scan" aria-hidden="true" />
-      <p className="mk-holo-label" role="status">
-        {loading ? 'Loading Dialtact…' : message || 'Dialtact'}
-      </p>
-      {onRetry && (
-        <button type="button" className="mk-holo-retry" onClick={(event) => { event.stopPropagation(); onRetry(); }}>
-          Retry 3D
-        </button>
-      )}
-    </div>
-  );
-}
+/** LazyDialtactScene's own loading and error states: the video mascot covers them. */
+const renderNothing = () => null;
 
-const renderHolo = (props) => <HoloFallback {...props} />;
+/** The float the live mascot does in 3D, added by the page while the video one shows. */
+const BOB_PX = 11;
 
 function visibleBox(rect, vw, vh) {
   return rect.width > 4 && rect.height > 4 && rect.bottom > 60 && rect.top < vh - 60 && rect.right > 0 && rect.left < vw;
 }
 
 /**
- * The 3D Dialtact mascot, mounted once and flown between sections as the page scrolls.
+ * The Dialtact mascot, mounted once and flown between sections as the page scrolls. It
+ * starts as video (VideoMascot: the same mascot, recorded) and, on a device that handles
+ * WebGL well (lib/renderSupport), hands over to the live 3D one once that has loaded.
  *
  * Each `<section data-bot-say>` declares what happens there: `data-bot-gesture` (a
  * one-shot clip, e.g. REACH_RIGHT to touch the cards beside the slot), `data-bot-state`
@@ -136,7 +121,11 @@ export function ScrollBot({ controllerRef, hidden = false }) {
   const hold = useRef(null);
   const timers = useRef([]);
   const clickIndex = useRef(0);
+  const [render] = useState(renderMode);
   const [mountScene, setMountScene] = useState(false);
+  const [liveReady, setLiveReady] = useState(false);
+  const videoShowing = useRef(true);
+  videoShowing.current = !liveReady;
   const [bubble, setBubble] = useState(null);
   const [isDocked, setIsDocked] = useState(true);
   const bubbleTimer = useRef(0);
@@ -174,11 +163,12 @@ export function ScrollBot({ controllerRef, hidden = false }) {
     perform([section.dataset.botGesture], section.dataset.botState || 'IDLE');
   }, [perform]);
 
-  // Start the 3D bundle and model download right away: the placeholder is only a stopgap.
+  // Where it runs live, start the 3D bundle and model download right away.
   useEffect(() => {
+    if (render !== 'live') return undefined;
     const id = window.requestAnimationFrame(() => setMountScene(true));
     return () => window.cancelAnimationFrame(id);
-  }, []);
+  }, [render]);
 
   useEffect(() => () => timers.current.forEach(window.clearTimeout), []);
 
@@ -371,7 +361,8 @@ export function ScrollBot({ controllerRef, hidden = false }) {
       if (tiltRef.current) {
         const sy2 = 1 + p.sq;
         const sx2 = 1 - p.sq * 0.55; // keep the volume: taller is thinner
-        tiltRef.current.style.transform = `translate3d(0, ${p.hop.toFixed(1)}px, 0) rotate(${p.tilt.toFixed(2)}deg) scale(${sx2.toFixed(4)}, ${sy2.toFixed(4)})`;
+        const bob = videoShowing.current && !reduce ? Math.sin((now / 1000) * 2.4) * BOB_PX : 0;
+        tiltRef.current.style.transform = `translate3d(0, ${(p.hop + bob).toFixed(1)}px, 0) rotate(${p.tilt.toFixed(2)}deg) scale(${sx2.toFixed(4)}, ${sy2.toFixed(4)})`;
         tiltRef.current.style.opacity = p.fade < 1 ? p.fade.toFixed(3) : '';
       }
       if (bubbleRef.current) {
@@ -411,13 +402,21 @@ export function ScrollBot({ controllerRef, hidden = false }) {
   }, [perform]);
 
   // Once per controller: a re-render (a new speech bubble, a tap) must not replay the
-  // section's gesture over whatever the mascot is doing.
+  // section's gesture over whatever the mascot is doing. When the live mascot takes over
+  // from the video one, it picks up the mood rather than repeating the gesture.
   const handleControllerReady = useCallback((ctrl) => {
     if (controllerRef.current === ctrl) return;
+    const handover = Boolean(controllerRef.current);
     controllerRef.current = ctrl;
     if (hold.current) ctrl.setState(hold.current.state || 'TALKING');
+    else if (handover) ctrl.setState(active.current?.dataset.botState || 'IDLE');
     else if (!pending.current) enterSection(active.current);
   }, [controllerRef, enterSection]);
+
+  const handleLiveReady = useCallback((ctrl) => {
+    handleControllerReady(ctrl);
+    setLiveReady(true);
+  }, [handleControllerReady]);
 
   /** A few dots spray out where the mascot was tapped. */
   const burst = useCallback((x, y) => {
@@ -470,6 +469,7 @@ export function ScrollBot({ controllerRef, hidden = false }) {
         style={{ opacity: hidden ? 0 : 1, transition: 'opacity .3s' }}
         data-testid="scroll-bot"
         data-docked={isDocked ? 'true' : 'false'}
+        data-render={liveReady ? 'live' : 'video'}
       >
         <div ref={tiltRef} className="mk-bot-tilt">
           <button
@@ -483,24 +483,23 @@ export function ScrollBot({ controllerRef, hidden = false }) {
             onPointerLeave={pressUp}
             onPointerCancel={pressUp}
           />
-          <div className="mk-bot-canvas">
-            {mountScene ? (
+          {!liveReady && <VideoMascot onReady={handleControllerReady} />}
+          {mountScene && (
+            <div className="mk-bot-canvas">
               <LazyDialtactScene
                 state="IDLE"
                 tone="dark"
                 ambient={false}
                 pointerRef={pointerRef}
                 audioAnalyser={voiceAgent.getAnalyser()}
-                renderFallback={renderHolo}
+                renderFallback={renderNothing}
                 ignoreDataSaver
                 variant="mono"
                 centered
-                onControllerReady={handleControllerReady}
+                onControllerReady={handleLiveReady}
               />
-            ) : (
-              <HoloFallback loading />
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
       {bursts.map((item) => (

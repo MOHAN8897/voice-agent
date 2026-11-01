@@ -1,0 +1,227 @@
+{
+  "fps": 30,
+  "width": 950,
+  "height": 706,
+  "clips": {
+    "IDLE": {
+      "loop": true,
+      "frames": 121,
+      "box": [
+        183,
+        71,
+        576,
+        432
+      ]
+    },
+    "NOD": {
+      "loop": false,
+      "frames": 45,
+      "box": [
+        237,
+        68,
+        480,
+        416
+      ]
+    },
+    "HAPPY": {
+      "loop": true,
+      "frames": 121,
+      "box": [
+        237,
+        71,
+        480,
+        416
+      ]
+    },
+    "CONFIDENT": {
+      "loop": true,
+      "frames": 121,
+      "box": [
+        237,
+        71,
+        480,
+        416
+      ]
+    },
+    "LISTENING": {
+      "loop": true,
+      "frames": 121,
+      "box": [
+        237,
+        70,
+        480,
+        416
+      ]
+    },
+    "CURIOUS": {
+      "loop": true,
+      "frames": 121,
+      "box": [
+        237,
+        71,
+        480,
+        416
+      ]
+    },
+    "THINKING": {
+      "loop": true,
+      "frames": 91,
+      "box": [
+        183,
+        71,
+        544,
+        416
+      ]
+    },
+    "EXCITED": {
+      "loop": true,
+      "frames": 121,
+      "box": [
+        237,
+        71,
+        480,
+        416
+      ]
+    },
+    "SURPRISED": {
+      "loop": true,
+      "frames": 121,
+      "box": [
+        237,
+        71,
+        480,
+        416
+      ]
+    },
+    "TALKING": {
+      "loop": true,
+      "frames": 121,
+      "box": [
+        231,
+        70,
+        496,
+        416
+      ]
+    },
+    "RIGHT_HAND_WAVE": {
+      "loop": false,
+      "frames": 108,
+      "box": [
+        170,
+        71,
+        560,
+        416
+      ]
+    },
+    "LEFT_HAND_WAVE": {
+      "loop": false,
+      "frames": 108,
+      "box": [
+        237,
+        71,
+        544,
+        416
+      ]
+    },
+    "DOUBLE_WAVE": {
+      "loop": false,
+      "frames": 95,
+      "box": [
+        170,
+        71,
+        624,
+        416
+      ]
+    },
+    "CELEBRATE": {
+      "loop": false,
+      "frames": 95,
+      "box": [
+        170,
+        71,
+        624,
+        416
+      ]
+    },
+    "STRETCH": {
+      "loop": false,
+      "frames": 73,
+      "box": [
+        152,
+        36,
+        656,
+        448
+      ]
+    },
+    "EXPLAIN": {
+      "loop": false,
+      "frames": 76,
+      "box": [
+        149,
+        69,
+        656,
+        416
+      ]
+    },
+    "SCAN": {
+      "loop": false,
+      "frames": 93,
+      "box": [
+        236,
+        68,
+        480,
+        416
+      ]
+    },
+    "HOP": {
+      "loop": false,
+      "frames": 51,
+      "box": [
+        136,
+        0,
+        688,
+        496
+      ]
+    },
+    "PRESENT": {
+      "loop": false,
+      "frames": 66,
+      "box": [
+        146,
+        64,
+        672,
+        416
+      ]
+    },
+    "PRESENT_RIGHT": {
+      "loop": false,
+      "frames": 68,
+      "box": [
+        187,
+        70,
+        624,
+        432
+      ]
+    },
+    "REACH_LEFT": {
+      "loop": false,
+      "frames": 86,
+      "box": [
+        94,
+        71,
+        656,
+        432
+      ]
+    },
+    "REACH_RIGHT": {
+      "loop": false,
+      "frames": 86,
+      "box": [
+        200,
+        71,
+        656,
+        432
+      ]
+    }
+  }
+}

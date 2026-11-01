@@ -15,6 +15,8 @@ test.describe('auth modal visual check', () => {
       }
     });
 
+    // The live effects (the test browser's software WebGL would get the recorded ones).
+    await page.addInitScript(() => localStorage.setItem('dialtact:render', 'live'));
     // Signed out, the console sends you to the /signin page (it replaced the dialog).
     await page.goto('/#dashboard/overview');
     await expect(page).toHaveURL(/\/signin$/);

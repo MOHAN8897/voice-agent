@@ -25,11 +25,22 @@
 }
 .signin-card { position: relative; border-radius: 28px; background: #fff; color: #000; overflow: hidden; }
 
+/* The recorded versions (lib/renderSupport): the fibers fill the background; the beam
+   video (its edge fades recorded in) is pinned so the spot it lands on (560px in, 240px
+   down) meets the card's top-right corner, at any card size. */
+.signin-bg-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.signin-laser-video {
+  position: absolute; top: calc(9rem - 240px); right: -192px; width: 752px; height: 816px; max-width: none;
+  pointer-events: none; mix-blend-mode: screen;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 25%); mask-image: linear-gradient(90deg, transparent, #000 25%); /* taste-skill-ignore: a soft edge mask, not a fill */
+}
+
 @media (max-width: 1023px) {
   .signin-grid { grid-template-columns: 1fr; }
   .signin-next { display: none; }
   .signin-stage { padding-top: 5rem; }
   .signin-laser { top: 0; } /* start below the copy, never over it */
+  .signin-laser-video { top: calc(5rem - 240px); }
   /* The stage is short here, so the beam fades in over a shorter run. */
   .signin-laser {
     -webkit-mask-image: linear-gradient(90deg, transparent, #000 30%, #000 88%, transparent), linear-gradient(180deg, transparent, #000 9%); /* taste-skill-ignore: a soft edge mask, not a fill */

@@ -1,24 +1,16 @@
-/* The mascot's own pieces: the banking wrapper and the placeholder shown while it loads. */
+/* The mascot's own pieces: the banking wrapper, the recorded mascot and the tap burst. */
 
 /* Banking: the mascot leans into horizontal travel. */
 .mk-bot-tilt { position: absolute; inset: 0; transform-origin: 50% 85%; will-change: transform; }
+/* The recorded mascot: two layers, the next clip fading in over the last. Safari's MP4
+   is on black, which `screen` drops into the black page. */
+.mk-bot-video { position: absolute; inset: 0; pointer-events: none; }
+.mk-bot-video video { position: absolute; display: block; object-fit: fill; opacity: 0; transition: opacity 0.14s linear; }
+.mk-bot-video[data-format='mp4'] video { mix-blend-mode: screen; }
+/* While the live mascot loads it stays hidden under the video, loader and all. */
+.mk-bot[data-render='video'] .mk-bot-canvas { opacity: 0; }
+
 /* Tapping the mascot sprays a few dots from the spot that was tapped. */
 .mk-bot-burst { position: fixed; left: 0; top: 0; z-index: 42; width: 0; height: 0; pointer-events: none; }
 .mk-bot-burst i { position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: #fff; transform: rotate(var(--a)) translateX(6px); animation: mk-burst 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) forwards; }
 @keyframes mk-burst { to { transform: rotate(var(--a)) translateX(52px) scale(0.2); opacity: 0; } }
-
-/* Placeholder while the 3D mascot boots, or if 3D cannot run: a soft white figure, never
-   a flat picture pasted on the page. */
-.mk-holo { position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden; }
-.mk-holo-rings { display: none; }
-.mk-holo-figure {
-  position: relative; max-height: 72%; width: auto; opacity: 0.7;
-  filter: grayscale(1) brightness(1.2) contrast(1.1);
-  animation: mk-holo-breathe 3s ease-in-out infinite;
-}
-@keyframes mk-holo-breathe { 50% { opacity: 0.5; transform: translateY(-6px); } }
-.mk-holo-scan { position: absolute; left: 30%; right: 30%; top: 48%; height: 2px; border-radius: 2px; background: #fff; opacity: 0.6; animation: mk-holo-load 1.4s ease-in-out infinite; }
-@keyframes mk-holo-load { 0% { transform: scaleX(0.1); } 50% { transform: scaleX(1); } 100% { transform: scaleX(0.1); } }
-.mk-holo:not(.is-loading) .mk-holo-scan { display: none; }
-.mk-holo-label { position: absolute; bottom: 18%; font-size: 0.9375rem; font-weight: 500; color: #fff; }
-.mk-holo-retry { position: absolute; bottom: 8%; padding: 0.5rem 1.1rem; border-radius: 999px; background: #fff; color: #000; font-size: 0.875rem; font-weight: 600; }

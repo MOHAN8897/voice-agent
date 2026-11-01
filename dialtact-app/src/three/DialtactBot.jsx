@@ -7,7 +7,7 @@ import { createDialtactController } from './BotController';
 
 // v5: the Blender-authored scroll gestures (see BotController SCROLL_GESTURES), with
 // geometry quantized for low-end devices (scripts/blender/optimize_model.mjs).
-const GLB_URL = '/models/DialtactBot_AIEmployee_Interactive_v6.glb?rig=6.0';
+export const GLB_URL = '/models/DialtactBot_AIEmployee_Interactive_v6.glb?rig=6.0';
 
 /**
  * The home page's black-and-white mascot: every coloured light turns white, the shells

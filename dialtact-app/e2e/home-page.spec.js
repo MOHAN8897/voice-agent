@@ -16,9 +16,12 @@ const CATALOG = {
   ],
 };
 
-async function openHome(page, path = '/', { motion = false } = {}) {
+async function openHome(page, path = '/', { motion = false, render = 'live' } = {}) {
   // Reduced motion by default: no smooth-scroll inertia or pinning, so positions are exact.
   await page.emulateMedia({ reducedMotion: motion ? 'no-preference' : 'reduce' });
+  // The test browser renders WebGL in software, which the page would answer with the
+  // recorded mascot; most tests are about the live one. `render: null` lets the page decide.
+  if (render) await page.addInitScript((mode) => localStorage.setItem('dialtact:render', mode), render);
   await page.route('**/api/**', async (route) => {
     const url = new URL(route.request().url()).pathname;
     const body = url === '/api/auth/session' ? { authenticated: false, saas_auth_enabled: true }
@@ -181,9 +184,11 @@ test('the 3D mascot loads (no flat picture) and performs its Blender gestures as
   await page.setViewportSize({ width: 1440, height: 900 });
   await openHome(page, '/', { motion: true });
   const bot = page.getByTestId('scroll-bot');
-  // While it boots, the placeholder is the holographic projector, never the PNG.
-  await expect(bot.locator('img[src*="call_assistant_fallback"]:not(.mk-holo-figure)')).toHaveCount(0);
+  // While it boots, the recorded mascot stands in, never the flat PNG; then the live one takes over.
+  await expect(bot.locator('img[src*="call_assistant_fallback"]')).toHaveCount(0);
   await expect(bot.locator('[data-mascot-state="active"] canvas')).toBeVisible({ timeout: 20000 });
+  await expect(bot).toHaveAttribute('data-render', 'live');
+  await expect(bot.locator('.mk-bot-video')).toHaveCount(0);
 
   // Land in "How it works": glide over, reach out to the steps on its right, then listen.
   const moves = [];
@@ -441,4 +446,58 @@ test('the nav has one account button: Log in, then the console', async ({ page }
   await form.getByLabel('Password', { exact: true }).fill('test-only-password');
   await form.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page).toHaveURL(/\/#dashboard\//);
+});
+
+/** A browser with no WebGL at all, as on some old or locked-down machines. */
+const NO_WEBGL = () => {
+  const getContext = HTMLCanvasElement.prototype.getContext;
+  HTMLCanvasElement.prototype.getContext = function (type, ...args) {
+    return /webgl/.test(type) ? null : getContext.call(this, type, ...args);
+  };
+};
+
+test('without WebGL the recorded mascot plays and follows the page', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.addInitScript(NO_WEBGL);
+  const models = [];
+  page.on('request', (request) => { if (request.url().includes('.glb')) models.push(request.url()); });
+  await openHome(page, '/', { render: null });
+  const bot = page.getByTestId('scroll-bot');
+  await expect(bot).toHaveAttribute('data-render', 'video');
+  const video = bot.locator('.mk-bot-video');
+  // The hero's wave plays as video, really playing, with no 3D anywhere.
+  await expect(video).toHaveAttribute('data-clip', 'RIGHT_HAND_WAVE', { timeout: 15000 });
+  await expect.poll(() => video.locator('video').evaluateAll((list) => list.some((v) => !v.paused && v.readyState >= 2))).toBe(true);
+  await expect(bot.locator('canvas')).toHaveCount(0);
+  await expect(page.getByText(/3D could not load|Restoring 3D/)).toHaveCount(0);
+
+  // "How it works": it reaches out to the steps, then listens, as the live one does.
+  const clips = [];
+  await page.exposeFunction('__recordClip', (clip) => clips.push(clip));
+  await video.evaluate((el) => new MutationObserver(() => window.__recordClip(el.dataset.clip))
+    .observe(el, { attributes: true, attributeFilter: ['data-clip'] }));
+  await scrollToTop(page, '#how-it-works');
+  await expect.poll(() => clips.join(','), { timeout: 10000 }).toContain('REACH_RIGHT,LISTENING');
+  // Tapping it still gets a reaction.
+  await bot.locator('.mk-bot-hit').click({ position: { x: 120, y: 30 } });
+  await expect(bot).toHaveAttribute('data-bot-tap', 'Hey, that tickles.');
+  await expect(video).toHaveAttribute('data-clip', 'NOD');
+  expect(models).toEqual([]);
+});
+
+test('without WebGL the sign-in page plays its recorded effects', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.addInitScript(NO_WEBGL);
+  await openHome(page, '/signin', { render: null });
+  const signin = page.getByTestId('signin-page');
+  await expect(signin.locator('canvas')).toHaveCount(0);
+  const playing = (selector) => signin.locator(selector).evaluate((v) => !v.paused && v.readyState >= 2);
+  await expect.poll(() => playing('.signin-bg-video')).toBe(true);
+  await expect.poll(() => playing('.signin-laser-video')).toBe(true);
+  // The recorded beam lands on the card's top-right corner: 560px in and 240px down.
+  const card = await signin.locator('.signin-card').boundingBox();
+  const beam = await signin.locator('.signin-laser-video').boundingBox();
+  expect(Math.abs(beam.x + 560 - (card.x + card.width))).toBeLessThan(2);
+  expect(Math.abs(beam.y + 240 - card.y)).toBeLessThan(2);
+  await expect(page.getByTestId('auth-modal')).toBeVisible();
 });

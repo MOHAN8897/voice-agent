@@ -304,7 +304,6 @@ html.lenis, html.lenis body { height: auto; }
 /* Tap and hover land on the mascot's body only, never on the empty canvas around it. */
 .mk-bot-hit { position: absolute; left: 36%; right: 36%; top: 12%; bottom: 8%; z-index: 2; pointer-events: auto; cursor: pointer; border-radius: 40%; background: transparent; }
 .mk-bot-hit:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
-.mk-holo-retry { pointer-events: auto; }
 .mk-bot-bubble { position: fixed; left: 0; top: 0; z-index: 41; max-width: 17rem; padding: 0.85rem 1rem; border-radius: 18px; background: #fff; color: #000; font-size: 0.9375rem; line-height: 1.45; font-weight: 500; box-shadow: 0 24px 48px -24px rgba(0, 0, 0, 0.9); /* taste-skill-ignore: the speech bubble floats above the page */ }
 .mk-bot-bubble b { display: none; }
 
