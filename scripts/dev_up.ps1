@@ -37,6 +37,7 @@ $env:Path = $env:Path + ";" + [System.Environment]::GetEnvironmentVariable("Path
 
 $WebUrl = "http://127.0.0.1:3000"
 $DialtactUrl = "http://127.0.0.1:5173"
+$DialtactPublicUrl = "http://127.0.0.1:4173"
 $ApiUrl = "http://127.0.0.1:8000"
 $DialtactRoot = Join-Path $RepoRoot "dialtact-app"
 $DevLoginUrl = "$WebUrl/dev/login"
@@ -237,6 +238,21 @@ if (-not $ApiOnly -and (Test-Path $DialtactRoot) -and $apiOk) {
         -Command "& '$npm' run dev" `
         -LogFile (Join-Path $LogDir "dialtact.log")
     $dialtactOk = Wait-ForService -Label "Dialtact" -Url $DialtactUrl -MaxAttempts 60
+
+    # The public hostnames (dialtact.com, www, app) tunnel to this production build, not
+    # to the dev server: over the tunnel, unbundled dev modules took ~30 s to show the hero.
+    Write-Host "Building Dialtact for the public site..."
+    Push-Location $DialtactRoot
+    try {
+        & $npm run build
+        if ($LASTEXITCODE -ne 0) { throw "Dialtact production build failed. Fix the build error above and retry." }
+    } finally { Pop-Location }
+    Start-DevWindow -Title "Dialtact public build" -WorkingDir $DialtactRoot `
+        -Command "& '$npm' run preview" `
+        -LogFile (Join-Path $LogDir "dialtact-preview.log")
+    if (-not (Wait-ForService -Label "Dialtact public build" -Url $DialtactPublicUrl -MaxAttempts 30)) {
+        Write-Warning "Dialtact public build is not answering on $DialtactPublicUrl; dialtact.com will return 502."
+    }
 }
 
 if (-not $QuietBanner) {

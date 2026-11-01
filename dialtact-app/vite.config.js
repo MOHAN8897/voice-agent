@@ -79,9 +79,7 @@ function requestHostsAreLocal(req) {
 
 /** Refuse /dev and /api/dev on the public tunnel so share links never expose ops. */
 function localOnlyDevPortalPlugin() {
-  return {
-    name: 'local-only-dev-portal',
-    configureServer(server) {
+  const guard = (server) => {
       server.middlewares.use((req, res, next) => {
         const url = req.url || '';
         const path = url.split('?')[0] || '';
@@ -100,6 +98,25 @@ function localOnlyDevPortalPlugin() {
         res.end(
           'Dev admin is available on localhost only.\nOpen http://localhost:3000/dev — not the public tunnel link.\n',
         );
+      });
+  };
+  // `vite preview` inherits server.proxy, so the public build needs the same guard.
+  return { name: 'local-only-dev-portal', configureServer: guard, configurePreviewServer: guard };
+}
+
+/** Hashed build assets never change, so the public build lets browsers and Cloudflare keep them. */
+function previewCachePlugin() {
+  return {
+    name: 'preview-cache',
+    configurePreviewServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const path = (req.url || '').split('?')[0];
+        if (path.startsWith('/assets/')) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        } else if (path.startsWith('/models/') || path.startsWith('/images/') || path.startsWith('/audio/')) {
+          res.setHeader('Cache-Control', 'public, max-age=86400');
+        }
+        next();
       });
     },
   };
@@ -144,6 +161,7 @@ export default defineConfig({
       : []),
     react(),
     localOnlyDevPortalPlugin(),
+    previewCachePlugin(),
   ],
   assetsInclude: ['**/*.glb', '**/*.gltf'],
   server: {
@@ -167,6 +185,8 @@ export default defineConfig({
   },
   preview: {
     port: Number(process.env.PORT) || 4173,
+    // The tunnel expects 4173; a silent move to 4174 would 502 the public site.
+    strictPort: true,
     host: true,
     allowedHosts,
   },
