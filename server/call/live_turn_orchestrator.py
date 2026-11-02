@@ -214,6 +214,47 @@ def _avoid_verbatim_repeat(text: str, ctx: Any, *, caller: str = "") -> str:
     return _REPEAT_ACK.get(language, _REPEAT_ACK["en"])
 
 
+def plain_control_turn(control: Any) -> bool:
+    """A decided turn with nothing for the server to do, so a drafted speech-only reply fits it.
+
+    Any action, business lookup, contact change, close or wait needs the decision in
+    the prompt (or tools), so those turns always take the normal reply path.
+    """
+    if not isinstance(control, dict):
+        return False
+    return (
+        str(control.get("decision") or "") == "continue"
+        and not control.get("close_verified")
+        and str(control.get("contact_intent") or "none") in {"none", ""}
+        and not control.get("remaining_request")
+        and control.get("action_request") == "none"
+        and not control.get("wait_for_caller")
+    )
+
+
+async def _collect_stream(stream: AsyncIterator[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [chunk async for chunk in stream]
+
+
+async def _usable_speculative_reply(task: asyncio.Task) -> list[dict[str, Any]] | None:
+    """The drafted reply's chunks, or None when it failed or said nothing (normal path then)."""
+    try:
+        chunks = await task
+    except Exception as exc:  # noqa: BLE001 -- a failed draft only costs the normal path.
+        log_pstn("reply.speculative_failed", error_type=type(exc).__name__)
+        return None
+    done = next((chunk for chunk in reversed(chunks) if chunk.get("done")), None)
+    if (done is None or done.get("cancelled") or done.get("empty_provider_response")
+            or not str(done.get("text") or "").strip()):
+        return None
+    return chunks
+
+
+async def _replay_stream(chunks: list[dict[str, Any]]) -> AsyncIterator[dict[str, Any]]:
+    for chunk in chunks:
+        yield chunk
+
+
 def correction_memory_operation(user_text: str) -> dict[str, str] | None:
     """Persist explicit caller corrections under one latest-wins canonical key."""
     text = " ".join((user_text or "").split()).strip()
@@ -629,6 +670,8 @@ class LiveTurnOrchestrator:
         user_seq = 0
         ledger_task: asyncio.Task | None = None
         close_task: asyncio.Task | None = None
+        business_task: asyncio.Task | None = None
+        speculative_task: asyncio.Task | None = None
         try:
             if ctx is not None and getattr(ctx, "pipeline", None) == "composed_voice" and not getattr(ctx, "timezone", None):
                 from uuid import UUID
@@ -738,43 +781,15 @@ class LiveTurnOrchestrator:
                 ctx.turn_action_results = []
                 ctx.turn_control = None
                 ctx.contact_control_applied = False
-            if close_task is not None:
-                from server.call.close_classifier import CLASSIFIER_TIMEOUT_SEC, CLASSIFIER_MERGE_TIMEOUT_SEC
-                yield {"status": "reply_buffered"}
-                await asyncio.wait({close_task}, timeout=CLASSIFIER_TIMEOUT_SEC + CLASSIFIER_MERGE_TIMEOUT_SEC)
-                classified = close_task.done() and not close_task.cancelled() and close_task.result() is not None
-                ctx.unclassified_caller_turns = [] if classified else \
-                    [*(getattr(ctx, "unclassified_caller_turns", None) or []), transcript][-2:]
-                if close_task.done() and not close_task.cancelled():
-                    ctx.turn_control = close_task.result()
-                    if (ctx.turn_control or {}).get("contact_intent") == "do_not_call" and (ctx.turn_control or {}).get("contact_verified") is True:
-                        from server.call.contact_preference import record_contact_preference
-                        await record_contact_preference(call_id, "do_not_call")
-                    elif (ctx.turn_control or {}).get("contact_intent") in {"decline_callback", "self_callback"} and (ctx.turn_control or {}).get("contact_verified") is True:
-                        from server.services.saas.callback_request_service import withdraw_callback_request
-                        await withdraw_callback_request(ctx)
-                        ctx.contact_control_applied = True
-            if language_task is not None:
-                from server.call.language_switch import LANGUAGE_ID_TIMEOUT_SEC, model_language_switch_turn
-
-                await asyncio.wait({language_task}, timeout=LANGUAGE_ID_TIMEOUT_SEC + 0.5)
-                spoken = language_task.result() if language_task.done() and not language_task.cancelled() else None
-                if not language_task.done():
-                    language_task.cancel()
-                switch = await model_language_switch_turn(ctx, transcript, language_code, spoken)
-                if switch:
-                    if close_task is not None and not close_task.done():
-                        close_task.cancel()
-                    yield {"done": True, "text": switch["text"], "replace_speech": True, "end_call": switch["end_call"],
-                           "finish_reason": "language_switch", "response_contract": "speech_text"}
-                    await self._archive_server_turn(call_id, session_id, transcript, switch, ledger_task, stt_latency_ms)
-                    return
-            if ctx is not None:
                 ctx.business_answers = []
-                control = getattr(ctx, "turn_control", None) or {}
-                if isinstance(control, dict) and control.get("remaining_request") and not control.get("close_verified"):
-                    from server.call.business_answer_plan import resolve_business_answers
-                    ctx.business_answers = await resolve_business_answers(ctx, transcript)
+            if ctx is not None and close_task is not None and getattr(ctx, "compiled_brain_text", ""):
+                from server.call.business_answer_plan import resolve_business_answers
+
+                # Looked up alongside the classifier, which decides whether the caller asked a
+                # business question: waiting for it first added a whole model round (~0.6-1 s)
+                # to every such turn. Unneeded lookups are cancelled below.
+                business_task = asyncio.create_task(resolve_business_answers(ctx, transcript))
+            # Nothing below depends on the control decision; prepare it while it runs.
             slow_down_hint = self._maybe_slow_down_hint(
                 transcript, language_code=language_code, call_id=call_id, ctx=ctx,
             )
@@ -820,6 +835,92 @@ class LiveTurnOrchestrator:
                     settings.working_memory_enabled
                     or getattr(ctx, "pipeline", None) == "composed_voice"
                 )
+            reply_kwargs = dict(
+                transcript=transcript,
+                language_code=language_code,
+                session_id=session_id,
+                call_id=call_id,
+                user_instructions=user_instructions,
+                business_instructions=business_instructions,
+                response_style=response_style,
+                brain_prompt=brain_prompt,
+                openai_model=openai_model,
+                temperature=temperature,
+                reasoning_effort=reasoning_effort,
+                max_output_tokens=max_output_tokens,
+                memory_projection=projection,
+                rolling_summary=rolling,
+                structured_live_turn=structured,
+                composed_retry_allowed=not retry_attempt,
+                ctx=ctx,
+            )
+            if close_task is not None and not realtime and not retry_attempt and structured:
+                # The reply used to start only after the control decision (~1 s on Sarvam).
+                # A speech-only reply is drafted alongside it and used when the decision is a
+                # plain turn (no action, business lookup, contact change, close or wait);
+                # any other turn discards it and takes the normal path below.
+                speculative_task = asyncio.create_task(_collect_stream(self._stream_llm(
+                    **reply_kwargs, speculative_speech_only=True,
+                    input_messages=self._maybe_build_live_input(
+                        ctx=ctx, transcript=transcript, session_id=session_id,
+                        openai_model=openai_model, projection=projection, rolling=rolling,
+                    ),
+                )))
+            if close_task is not None:
+                from server.call.close_classifier import CLASSIFIER_TIMEOUT_SEC, CLASSIFIER_MERGE_TIMEOUT_SEC
+                yield {"status": "reply_buffered"}
+                await asyncio.wait({close_task}, timeout=CLASSIFIER_TIMEOUT_SEC + CLASSIFIER_MERGE_TIMEOUT_SEC)
+                classified = close_task.done() and not close_task.cancelled() and close_task.result() is not None
+                ctx.unclassified_caller_turns = [] if classified else \
+                    [*(getattr(ctx, "unclassified_caller_turns", None) or []), transcript][-2:]
+                if close_task.done() and not close_task.cancelled():
+                    ctx.turn_control = close_task.result()
+                    if (ctx.turn_control or {}).get("contact_intent") == "do_not_call" and (ctx.turn_control or {}).get("contact_verified") is True:
+                        from server.call.contact_preference import record_contact_preference
+                        await record_contact_preference(call_id, "do_not_call")
+                    elif (ctx.turn_control or {}).get("contact_intent") in {"decline_callback", "self_callback"} and (ctx.turn_control or {}).get("contact_verified") is True:
+                        from server.services.saas.callback_request_service import withdraw_callback_request
+                        await withdraw_callback_request(ctx)
+                        ctx.contact_control_applied = True
+            if language_task is not None:
+                from server.call.language_switch import LANGUAGE_ID_TIMEOUT_SEC, model_language_switch_turn
+
+                await asyncio.wait({language_task}, timeout=LANGUAGE_ID_TIMEOUT_SEC + 0.5)
+                spoken = language_task.result() if language_task.done() and not language_task.cancelled() else None
+                if not language_task.done():
+                    language_task.cancel()
+                switch = await model_language_switch_turn(ctx, transcript, language_code, spoken)
+                if switch:
+                    if close_task is not None and not close_task.done():
+                        close_task.cancel()
+                    yield {"done": True, "text": switch["text"], "replace_speech": True, "end_call": switch["end_call"],
+                           "finish_reason": "language_switch", "response_contract": "speech_text"}
+                    await self._archive_server_turn(call_id, session_id, transcript, switch, ledger_task, stt_latency_ms)
+                    return
+            if ctx is not None:
+                ctx.business_answers = []
+                control = getattr(ctx, "turn_control", None) or {}
+                if isinstance(control, dict) and control.get("remaining_request") and not control.get("close_verified"):
+                    from server.call.business_answer_plan import resolve_business_answers
+                    if business_task is not None:
+                        ctx.business_answers = await business_task
+                        business_task = None
+                    else:
+                        ctx.business_answers = await resolve_business_answers(ctx, transcript)
+            if business_task is not None:
+                business_task.cancel()
+                business_task = None
+            speculative_chunks: list[dict[str, Any]] | None = None
+            if speculative_task is not None:
+                if plain_control_turn(getattr(ctx, "turn_control", None)):
+                    speculative_chunks = await _usable_speculative_reply(speculative_task)
+                    log_pstn("reply.speculative", call_id=call_id, used=speculative_chunks is not None)
+                else:
+                    speculative_task.cancel()
+                speculative_task = None
+            if not realtime:
+                # Built after the control decision: the prompt carries its result
+                # (caller assertions, tool permission, business answers).
                 input_messages = self._maybe_build_live_input(
                     ctx=ctx,
                     transcript=transcript,
@@ -857,26 +958,11 @@ class LiveTurnOrchestrator:
             turn_proofs: set[str] = set()
             order_proof_on_file = has_order_proof(call_id) if call_id else False
             try:
-                async for chunk in self._stream_llm(
-                    transcript=transcript,
-                    language_code=language_code,
-                    session_id=session_id,
-                    call_id=call_id,
-                    user_instructions=user_instructions,
-                    business_instructions=business_instructions,
-                    response_style=response_style,
-                    brain_prompt=brain_prompt,
-                    openai_model=openai_model,
-                    temperature=temperature,
-                    reasoning_effort=reasoning_effort,
-                    max_output_tokens=max_output_tokens,
-                    memory_projection=projection,
-                    rolling_summary=rolling,
-                    structured_live_turn=structured,
-                    input_messages=input_messages,
-                    composed_retry_allowed=not retry_attempt,
-                    ctx=ctx,
-                ):
+                reply_stream = (
+                    _replay_stream(speculative_chunks) if speculative_chunks is not None
+                    else self._stream_llm(**reply_kwargs, input_messages=input_messages)
+                )
+                async for chunk in reply_stream:
                     if chunk.get("delta") and brain_latency_ms is None:
                         brain_latency_ms = int((time.perf_counter() - t0) * 1000)
                     if chunk.get("done"):
@@ -1284,6 +1370,11 @@ class LiveTurnOrchestrator:
                 if not close_task.done():
                     close_task.cancel()
                 await asyncio.gather(close_task, return_exceptions=True)
+            for task in (business_task, speculative_task):
+                if task is not None:
+                    if not task.done():
+                        task.cancel()
+                    await asyncio.gather(task, return_exceptions=True)
             if turn_lock and turn_lock.locked():
                 turn_lock.release()
 
@@ -1456,6 +1547,9 @@ class LiveTurnOrchestrator:
         # re-ask is the turn's single recovery, so the composed transport must
         # not spend a second one on the same words.
         composed_retry_allowed = kwargs.pop("composed_retry_allowed", True) is not False
+        # A speculative reply runs while the turn's control decision is still being
+        # made: it must never read that decision mid-way or select an action.
+        speech_only = kwargs.pop("speculative_speech_only", False) is True
         from server.call.end_call_validate import (
             callback_ready_to_close,
             caller_firm_refusal,
@@ -1466,7 +1560,7 @@ class LiveTurnOrchestrator:
 
         transcript = str(kwargs.get("transcript") or "")
         language = str(kwargs.get("language_code") or "te-IN")
-        control = getattr(ctx, "turn_control", None) or {}
+        control = {} if speech_only else (getattr(ctx, "turn_control", None) or {})
         if isinstance(control, dict) and control.get("close_verified") is True and not control.get("remaining_request"):
             from server.call.semantic_call_control import close_rejection
             # Skip the reply only when the gate will really close; otherwise the caller hears nothing.
@@ -1640,6 +1734,7 @@ class LiveTurnOrchestrator:
                     call_id=call_id,
                     record_request_usage=record_request_usage,
                     allow_retry=composed_retry_allowed,
+                    speech_only=speech_only,
                 ):
                     yield chunk
                 return
@@ -2069,6 +2164,7 @@ class LiveTurnOrchestrator:
         call_id: str | None,
         record_request_usage,
         allow_retry: bool,
+        speech_only: bool = False,
     ) -> AsyncIterator[dict[str, Any]]:
         """Native action selection, authorized execution, then validated speech.
 
@@ -2077,7 +2173,22 @@ class LiveTurnOrchestrator:
         and no schema and its text is discarded. Gemini returns both together,
         so it keeps the single request. Either way the caller hears only the
         validated speech phase, after the server knows each result.
+
+        ``speech_only`` (a speculative reply started before the turn's control
+        decision): the speech pass alone. No selection, no reselect on an empty
+        reply, so no action can run; an empty reply is discarded by the caller.
         """
+        if speech_only:
+            async for chunk in self._stream_composed_speech(
+                adapter=adapter, available_tools=tool_schemas, messages=messages,
+                schema=LIVE_TURN_JSON_SCHEMA, stream_kwargs=stream_kwargs, call_id=call_id,
+                provider=llm_sel.provider, model=llm_sel.model, allow_retry=allow_retry,
+            ):
+                record_request_usage(chunk)
+                chunk.setdefault("action_proofs", [])
+                chunk.setdefault("order_proof", False)
+                yield chunk
+            return
         if getattr(adapter, "selects_tools_without_schema", False):
             selection_kwargs = dict(stream_kwargs)
             selection_kwargs["tools"] = tool_schemas
