@@ -590,6 +590,7 @@ export function IntegrationsModule() {
                   <SolidCard
                     key={app.id}
                     padding="p-4"
+                    spotlight
                     className={`flex min-w-0 flex-col justify-between transition-[border-color,box-shadow] hover:shadow-craft-sm ${
                       isConnected ? '!border-success-line' : needsReauth ? '!border-danger-line' : 'hover:!border-line-strong'
                     }`}

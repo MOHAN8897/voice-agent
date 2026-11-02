@@ -157,7 +157,7 @@ export function EmployeesModule({
       </Toolbar>
 
       {!isLoading && filteredAgents.length === 0 && (
-        <SolidCard padding="p-0">
+        <SolidCard padding="p-0" beam={agents.length === 0}>
           <EmptyState
             icon={Users}
             title={agents.length === 0 ? 'No AI employees yet' : 'No employees match these filters'}
@@ -177,7 +177,7 @@ export function EmployeesModule({
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {filteredAgents.map((agent) => (
-          <SolidCard key={agent.id} data-testid="agent-card" padding="p-5" className="flex min-w-0 flex-col justify-between transition-shadow hover:shadow-craft-sm">
+          <SolidCard key={agent.id} data-testid="agent-card" padding="p-5" spotlight className="flex min-w-0 flex-col justify-between transition-shadow hover:shadow-craft-sm">
             <div className="space-y-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">

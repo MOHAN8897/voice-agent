@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, AudioLines, Menu, X } from 'lucide-react';
-import { NAV_LINKS } from '../data/siteContent';
+import { MARKETING_NAV_LINKS as NAV_LINKS } from '../data/siteContent';
 import { useAuth } from '../context/AuthContext';
 import { DEFAULT_CONSOLE_TAB } from '../lib/consoleEntry';
 

@@ -3,6 +3,7 @@ export { TactileButton, Button } from './TactileButton';
 export { SolidCard, Card, Section } from './SolidCard';
 export { Badge, StatusBadge, StatusPill, TONE_STYLES } from './StatusBadge';
 export { MetricCard } from './MetricCard';
+export { TickerValue } from './TickerValue';
 export { PageHeader } from './PageHeader';
 export { EmptyState } from './EmptyState';
 export { Tabs } from './Tabs';

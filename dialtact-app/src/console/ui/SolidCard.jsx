@@ -1,8 +1,17 @@
 import React from 'react';
+import { useReducedMotion } from 'framer-motion';
+import SpotlightCard from '@/components/reactbits/SpotlightCard';
+import { BorderBeam } from '@/components/ui/border-beam';
 
 /**
  * SolidCard / Card — the one surface for grouped content. White, hairline border,
- * card radius (16px). `variant`: default | subtle | dark. Props unchanged.
+ * card radius (16px). `variant`: default | subtle | dark.
+ *
+ * `spotlight` (default variant only): a faint accent light follows the pointer and
+ * catches the card's edge (React Bits Spotlight Card) — for cards people pick between,
+ * like AI employees and integrations. `beam`: a slow accent light runs around the edge
+ * (Magic UI Border Beam) — for the one first-run call to action on a screen. Both are
+ * off under reduced motion (DESIGN.md → Motion).
  */
 export function SolidCard({
   children,
@@ -12,8 +21,11 @@ export function SolidCard({
   variant = 'default',
   onClick,
   as: Tag = 'div',
+  spotlight = false,
+  beam = false,
   ...props
 }) {
+  const reduce = useReducedMotion();
   const variantStyles = {
     default: 'bg-surface border border-line text-ink shadow-craft-xs',
     subtle: 'bg-surface-subtle border border-line text-ink',
@@ -26,13 +38,37 @@ export function SolidCard({
       : 'hover:border-line-strong hover:shadow-craft-sm transition-[border-color,box-shadow] cursor-pointer'
     : '';
 
+  const classes = `${variantStyles[variant] || variantStyles.default} rounded-card ${padding} ${hoverStyles} ${className}`;
+
+  if (spotlight && variant === 'default' && !reduce) {
+    return (
+      <SpotlightCard
+        theme="light"
+        spotlightColor="#6344E7"
+        intensity={0.06}
+        spotlightSize={280}
+        borderGlow={0.5}
+        proximity={60}
+        flare={false}
+        onClick={onClick}
+        className={classes}
+        // The card keeps its own hairline and shadow; the spotlight only adds light.
+        style={{ '--spotlight-card-surface': 'var(--surface, #ffffff)', '--spotlight-card-border': 'transparent', '--spotlight-card-shadow': 'none' }}
+        {...props}
+      >
+        {children}
+      </SpotlightCard>
+    );
+  }
+
   return (
     <Tag
       onClick={onClick}
-      className={`${variantStyles[variant] || variantStyles.default} rounded-card ${padding} ${hoverStyles} ${className}`}
+      className={`${classes}${beam && !reduce ? ' relative overflow-hidden' : ''}`}
       {...props}
     >
       {children}
+      {beam && !reduce && <BorderBeam size={90} duration={9} colorFrom="#6344E7" colorTo="#C9BCFF" borderWidth={1.5} />}
     </Tag>
   );
 }

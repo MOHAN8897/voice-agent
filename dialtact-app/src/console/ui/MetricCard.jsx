@@ -1,5 +1,6 @@
 import React from 'react';
 import { Badge } from './StatusBadge';
+import { TickerValue } from './TickerValue';
 
 /**
  * MetricCard — one number with a sentence-case label.
@@ -40,7 +41,7 @@ export function MetricCard({
 
       <div className="flex flex-wrap items-baseline gap-2">
         <span className={`${compact ? 'text-heading' : 'text-display sm:text-[28px]'} font-bold font-mono tabular-nums text-ink`}>
-          {value}
+          <TickerValue value={value} />
         </span>
         {trend && (
           <Badge tone={isPositive ? 'success' : 'neutral'} size="xs">

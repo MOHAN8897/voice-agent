@@ -28,6 +28,19 @@ export const NAV_LINKS = [
   { name: 'FAQ', href: '/#faq' },
 ];
 
+/**
+ * The home page's navigation, in the order its sections appear, so moving along the
+ * bar always scrolls the same way (NAV_LINKS above keeps the previous page's order).
+ */
+export const MARKETING_NAV_LINKS = [
+  { name: 'How it works', href: '/#how-it-works' },
+  { name: 'Product', href: '/#capabilities' },
+  { name: 'Use cases', href: '/#industries' },
+  { name: 'Integrations', href: '/#integrations' },
+  { name: 'Pricing', href: '/#pricing' },
+  { name: 'FAQ', href: '/#faq' },
+];
+
 export const HERO_CONTENT = {
   eyebrow: "AI VOICE EMPLOYEES",
   titleLine1: "Your AI employee for",

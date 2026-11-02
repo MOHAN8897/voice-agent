@@ -131,6 +131,13 @@ Touch targets are 44px tall on phones automatically.
 ### `Card` / `SolidCard`, `Section` (`ui/SolidCard.jsx`)
 `Card` is the surface (`variant`: default | subtle | dark, `hover`, `padding`, `as`).
 `Section` is a card with `title`, `description`, `actions`, `headingLevel`.
+Two opt-in effects, both off under reduced motion:
+- `spotlight` (default variant only): a faint accent light follows the pointer and
+  catches the edge (React Bits Spotlight Card, `components/reactbits/SpotlightCard.jsx`).
+  For grids of cards people choose between: AI employees, integrations.
+- `beam`: a slow accent light runs around the edge (Magic UI Border Beam,
+  `components/ui/border-beam.jsx`). Only for the one first-run call to action on a
+  screen, such as "no AI employees yet". Never on more than one card.
 
 ### `Badge`, `StatusBadge` / `StatusPill` (`ui/StatusBadge.jsx`)
 `<Badge tone="warning" dot>Needs review</Badge>`. `<StatusBadge status="needs_review" />`
@@ -140,6 +147,10 @@ danger, info, neutral, accent, live (pulsing green dot).
 ### `MetricCard` (`ui/MetricCard.jsx`)
 `title` (sentence case), `value`, optional `trend` ("+12%"), `trendLabel` (plain
 sentence, never a source/system name), `icon`, `compact`, `onClick` (makes it a button).
+The value goes through `TickerValue` (`ui/TickerValue.jsx`, Magic UI Number Ticker): a
+single number with an optional prefix or suffix ("₹1,24,500", "42", "3.5%") counts up
+once when it first comes into view; later refreshes show the new value at once. Text
+values and "—" render as they are.
 
 ### `PageHeader` (`ui/PageHeader.jsx`)
 `title`, `description` (one sentence), optional `eyebrow` (sentence case), `actions`.
@@ -180,7 +191,9 @@ Unchanged API. Titles sentence case; destructive confirms use `variant="danger"`
 
 Short and purposeful: 150–220ms, ease-out. New feed items fade/rise 4px
 (`.feed-item-enter`); live avatars pulse (`.avatar-live-ring`). Both are disabled under
-`prefers-reduced-motion`. No motion on numbers that update every second.
+`prefers-reduced-motion`. No motion on numbers that update every second: a metric's
+count-up runs once, on its first value. Card `spotlight` and `beam` (§6) are the only
+other ambient effects in the console.
 
 ## 8. Layout and responsiveness
 

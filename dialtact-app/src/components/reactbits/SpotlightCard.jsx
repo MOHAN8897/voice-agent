@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { cn } from '@/lib/utils';
 
 const THEMES = {
   dark: {
@@ -268,7 +269,7 @@ const SpotlightCard = ({
   return (
     <div
       ref={rootRef}
-      className={`${CARD}${className ? ` ${className}` : ''}`}
+      className={cn(CARD, className)}
       style={{
         '--spotlight-card-surface': palette.surface,
         '--spotlight-card-border': palette.border,
