@@ -3,6 +3,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
+import threading
+import time
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -13,6 +17,8 @@ from server.utils.logger import logger
 _locks: dict[str, asyncio.Lock] = {}
 _seq: dict[str, int] = {}
 _sealed: set[str] = set()
+# meta.json is written from the event loop and from worker threads.
+_meta_write_lock = threading.Lock()
 
 
 def _lock(call_id: str) -> asyncio.Lock:
@@ -127,7 +133,7 @@ class CallLedger:
     async def init(self, call_id: str, meta: dict[str, Any]) -> None:
         directory = call_dir(call_id)
         directory.mkdir(parents=True, exist_ok=True)
-        self.meta_path(call_id).write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+        self.write_meta(call_id, meta)
         self.transcript_path(call_id).write_text("", encoding="utf-8")
         self.trace_path(call_id).write_text(
             json.dumps(
@@ -265,10 +271,38 @@ class CallLedger:
         path = self.meta_path(call_id)
         if not path.exists():
             return {}
-        return json.loads(path.read_text(encoding="utf-8"))
+        text = path.read_text(encoding="utf-8")
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            # Files written before writes were atomic can hold two overlapping
+            # copies. Keep the first complete one; one bad call must never take
+            # down call history.
+            try:
+                meta, _ = json.JSONDecoder().raw_decode(text.lstrip())
+            except json.JSONDecodeError:
+                meta = None
+            logger.warning("[CALL] corrupt meta.json", extra={"call_id": call_id, "recovered": isinstance(meta, dict)})
+            return meta if isinstance(meta, dict) else {}
 
     def write_meta(self, call_id: str, meta: dict[str, Any]) -> None:
-        self.meta_path(call_id).write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+        # Write a sibling file and swap it in, so a reader or a concurrent writer
+        # never sees (or leaves behind) a half-written or interleaved file.
+        path = self.meta_path(call_id)
+        data = json.dumps(meta, ensure_ascii=False, indent=2)
+        with _meta_write_lock:
+            tmp = path.with_name(f".meta.{uuid.uuid4().hex}.tmp")
+            tmp.write_text(data, encoding="utf-8")
+            for attempt in range(20):
+                try:
+                    os.replace(tmp, path)
+                    return
+                except PermissionError:
+                    # Windows refuses to replace a file another reader has open.
+                    if attempt == 19:
+                        tmp.unlink(missing_ok=True)
+                        raise
+                    time.sleep(0.01)
 
     def review_fields(self, call_id: str) -> dict[str, Any]:
         """Cost, pipeline, and identity from meta.json for history/detail APIs."""
