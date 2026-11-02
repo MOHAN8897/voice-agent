@@ -226,6 +226,9 @@ done. A tool action is complete only after tool success. Include concise handlin
 price, trust, later, not interested, refund, already-have-it and send-details as relevant.
 Write objection_handling as separate lines, one 'If the caller ...: ...' branch per
 objection, so the agent applies only the branch the caller raised.
+The facts are printed once, in COMPANY & OFFER, beside this script. The call flow,
+call to action and objection branches refer to them ('give the price', 'explain
+delivery') instead of repeating their values.
 Unknown details: say unavailable, no invented callback, payment, booking or message.
 Respect opt-out and wrong numbers; busy/hesitation follows platform call-end policy,
 never invent a separate hangup rule. Honest brief AI disclosure if asked. No markdown,

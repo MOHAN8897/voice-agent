@@ -40,7 +40,8 @@ def test_only_a_turn_with_nothing_to_do_is_plain(change, plain):
     assert plain_control_turn(None) is False
 
 
-async def _turn(monkeypatch, decision, *, draft_text="Draft reply about the cards.", normal_text="Normal reply.", lookup=None):
+async def _turn(monkeypatch, decision, *, draft_text="Draft reply about the cards.", normal_text="Normal reply.", lookup=None,
+                transcript="okay, sounds good"):
     from server.call import call_context
     from server.config.env import get_settings
     from server.providers.base import StageSelection
@@ -85,7 +86,7 @@ async def _turn(monkeypatch, decision, *, draft_text="Draft reply about the card
     started = time.perf_counter()
     try:
         chunks = [chunk async for chunk in live_turn_orchestrator.handle_user_turn_stream(
-            transcript="okay, sounds good", call_id=cid, session_id=cid, language_code="en-IN")]
+            transcript=transcript, call_id=cid, session_id=cid, language_code="en-IN")]
     finally:
         get_settings.cache_clear()
     elapsed = time.perf_counter() - started
@@ -134,7 +135,8 @@ async def test_business_lookup_runs_alongside_the_classifier(monkeypatch):
         return [{"question": "price", "status": "stated"}]
 
     began = time.perf_counter()
-    done, _, _, elapsed = await _turn(monkeypatch, {**PLAIN, "remaining_request": "what is the price"}, lookup=lookup)
+    done, _, _, elapsed = await _turn(monkeypatch, {**PLAIN, "remaining_request": "what is the price"}, lookup=lookup,
+                                      transcript="what is the price of the cards?")
     assert done["text"] == "Normal reply."
     assert lookup_started and lookup_started[0] - began < DELAY / 2, "lookup waited for the classifier"
     # classifier ∥ lookup, then the reply: two rounds, not three.

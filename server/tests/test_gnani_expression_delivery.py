@@ -32,7 +32,8 @@ async def test_final_native_speech_contract_matches_admitted_tts(monkeypatch, mo
         schema=None, stream_kwargs={}, call_id="expression-test", provider="sarvam", model="test")]
     contract = observed["input_messages"][-1]["content"]
     assert ("inline audio tags from the selected" in contract) is expressive
-    assert ("without inline audio tags" in contract) is not expressive
+    # Without tag support the "no tags" rule is the voice's own [Selected speech delivery] text.
+    assert ("inline audio tags" in contract) is expressive
     assert events[-1]["response_contract"] == "speech_text"
 
 

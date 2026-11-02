@@ -249,11 +249,13 @@ def test_spoken_reply_still_strips_phone_numbers(text):
 
 
 def test_speech_contract_asks_callback_time_once_and_never_announces_hangup():
-    import inspect
-    from server.call import live_turn_orchestrator
-    source = inspect.getsource(live_turn_orchestrator)
-    assert "ask once for a convenient day or" in source
-    assert "Never announce that you are ending, closing or hanging up the call" in source
+    # Callback rules live once, in CALL CAPABILITIES; the hangup rule in the speech contract.
+    from server.brain.capabilities import apply_available_tools
+    from server.services.composed_voice_session import SPEECH_TURN_CONTRACT
+    caps = apply_available_tools("--- CALL CAPABILITIES ---\n", [])
+    assert "Without a day or time, ask once when to call" in caps
+    assert "If they will call back themselves, accept it warmly and do not ask for a time" in caps
+    assert "announce that you are ending the call" in SPEECH_TURN_CONTRACT
 
 
 def test_forbidden_actions_render_as_prohibitions():

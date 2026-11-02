@@ -2045,7 +2045,9 @@ class PstnVoiceLoop:
         if self.stack_override.get("pipeline") == "composed_voice":
             from server.agent.conversation_manager import conversation_manager
 
-            conversation_manager.add_turn(self.session_id, "", spoken_note)
+            # The composed prompt already says the opening was played and not to repeat it
+            # (CANONICAL OPENING, [Selected session language]); the history keeps only what was said.
+            conversation_manager.add_turn(self.session_id, "", greeting.strip())
             return
         last_err = ""
         for attempt in range(5):

@@ -104,7 +104,8 @@ async def _run(monkeypatch, adapter, execute=None, tools=None):
             ctx=_ctx(),
             call_id="call",
             transcript="Please save my enquiry",
-            input_messages=[{"role": "user", "content": "Please save my enquiry"}],
+            input_messages=[{"role": "developer", "content": "--- COMPANY & OFFER ---\nThe service costs 499 rupees."},
+                            {"role": "user", "content": "Please save my enquiry"}],
         )
     ]
     return events
@@ -178,7 +179,8 @@ async def test_native_speech_preserves_selected_model_and_post_tool_proof(monkey
     assert speech["buffer_response"] is True
     assert any("Speech delivery contract" in str(m.get("content")) for m in speech["input_messages"])
     if not connected:
-        assert any("No external action tools are connected" in str(m.get("content")) for m in speech["input_messages"])
+        # Stated once, in the call's CALL CAPABILITIES (appended when the brain has none).
+        assert any("No external app is connected" in str(m.get("content")) for m in speech["input_messages"])
     done = next(event for event in events if event.get("done"))
     assert done["text"] == "The service costs 499 rupees."
     assert done.get("action_proofs", []) == (["enquiry_saved"] if connected else [])

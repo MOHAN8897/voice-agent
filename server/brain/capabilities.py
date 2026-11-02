@@ -114,6 +114,8 @@ _ROLE_TAG = re.compile(r"(?m)^@role:\s*([a-z_]+)\s*$")
 
 # Integrations whose only use is booking or scheduling time with the caller.
 SCHEDULING_APPS = frozenset({"GOOGLECALENDAR", "CALENDLY", "CALCOM", "OUTLOOKCALENDAR", "ZOOM"})
+# Actions the platform records itself, with no external app behind them.
+PLATFORM_ACTIONS = frozenset({"CONFIRM_ORDER", "SAVE_ENQUIRY", "REQUEST_HUMAN_HANDOFF"})
 _SCHEDULING_ROLES = frozenset({"appointment", "follow_up", "scheduling", "booking"})
 # Evidence that the business's own workflow books, schedules or meets. Native
 # loanwords are listed for every supported script; a match only keeps a tool.
@@ -186,23 +188,44 @@ def render_capabilities_section(compiled_text: str | None) -> str:
 def apply_available_tools(text: str, tools: list[dict], *, followup_config: dict | None = None,
                           call_integration_rows: list[str] | None = None) -> str:
     """Replace platform permissions with this agent/session's executable actions."""
+    from server.services.tool_schema_registry import tool_definition
+
     names = {str(tool.get("name") or "").upper() for tool in tools}
+    apps = {(tool_definition(name) or ("",))[0] for name in names}
+    external = names - PLATFORM_ACTIONS
     rows = [CAPABILITIES_HEADER, "capabilities_source: runtime_tools_v1",
             f"order_confirmation: {'allowed' if 'CONFIRM_ORDER' in names else 'not_allowed'}",
             "Business workflow steps are conditional on these actions. Collecting details is not completion; success requires a successful server result.",
             "CONFIRM_ORDER, when listed, records the order in this call's platform ledger; it does not prove payment, external fulfilment or an email was sent.",
-            "A caller-requested callback can be saved by the platform after required details and timing are collected. It does not guarantee an automatically scheduled call.",
             "Record explicit requests to stop future calls as do_not_call, separately from ending this call. Ordinary refusal, abuse, questions or a goodbye do not by themselves opt out of future contact."]
     enabled = bool((followup_config or {}).get("enabled"))
     mode = str((followup_config or {}).get("callbackMode") or "review") if enabled else "manual_only"
+    # Every callback rule lives here, once (the speech rules and guardrails used to repeat them).
     rows.extend([f"callback_dispatch: {mode}",
                  f"missed_call_dispatch: {(followup_config or {}).get('missedMode', 'off') if enabled else 'off'}",
-                 "Collect the caller's desired callback time, including short answers to your timing question. Never turn a future-interest request into a rejection or permanent opt-out.",
-                 "When the caller asks to be called back, acknowledge naturally that you are noting their callback request and time; the platform saves it as the call closes. Never say you cannot note or arrange a callback."])
+                 "Callbacks: when the caller asks to be called back, say a short okay and that you are noting their requested time; "
+                 "the platform saves it as the call closes. Never say you cannot note or arrange a callback. "
+                 "Without a day or time, ask once when to call; if they stay vague, accept that without asking again. "
+                 "If they will call back themselves, accept it warmly and do not ask for a time. Never ask them to call you "
+                 "or tell you when they are free, and never volunteer a callback they did not ask for. "
+                 "A future-interest request is never a rejection or permanent opt-out."])
     if mode == "automatic":
         rows.append("The tenant permits automatic callbacks after the server resolves timing and passes calling-window, DND and account checks. A saved request is not a confirmed call time; do not promise an exact dial or claim a schedule succeeded without a server result.")
     else:
         rows.append("The team must review callback requests. Do not promise that an automatic callback or exact appointment has been scheduled.")
+    # Rules that only make sense for the tools this call really has.
+    if apps & SCHEDULING_APPS:
+        rows.append("Appointments: when the caller requests one and supplies the required details, use the booking action. "
+                    "An availability read is not a booking. After a slot is chosen, create the event; do not re-read the same "
+                    "slots or ask again for supplied details.")
+    else:
+        rows.append("No calendar is connected: offer to note the caller's preferred time for the team to confirm. Never say a "
+                    "time is free, possible, available or confirmed, and never offer to book a slot.")
+    if any({"lastname", "last_name", "company"} & set((tool.get("parameters") or {}).get("properties") or {}) for tool in tools):
+        rows.append("Contact records: use only explicitly provided personal fields; leave optional surname or company empty when "
+                    "unknown. Never put an email into the lastname field or an academic qualification into the company field.")
+    if not external and not call_integration_rows:
+        rows.append("No external app is connected: you cannot send email or messages or submit anything to another system.")
     if "CONFIRM_ORDER" in names:
         # Without this the model collected name and address, then said "I'll pass it to the team"
         # and recorded nothing.

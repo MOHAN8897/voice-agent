@@ -49,6 +49,39 @@ def build_live_prompt_for_call(
     ]
 
     pipe = (pipeline or "realtime_text").strip().lower()
+    if pipe == "composed_voice" and brain:
+        # Composed calls send the per-turn speech prompt, not the realtime session rules.
+        from types import SimpleNamespace
+
+        from server.providers.base import StageSelection
+        from server.services.composed_voice_session import composed_turn_prompt
+
+        stack = dict(stack_override or {})
+
+        def stage(name: str) -> StageSelection | None:
+            raw = stack.get(name)
+            if not isinstance(raw, dict) or not raw.get("provider"):
+                return None
+            return StageSelection(provider=str(raw["provider"]), model=str(raw.get("model") or ""),
+                                  config=dict(raw.get("config") or {}))
+
+        ctx = SimpleNamespace(
+            compiled_brain_text=brain, compiled_brain_version="preview", selected_language=language,
+            language=language, tier=stack.get("tier"),
+            resolved_stack=SimpleNamespace(language=stack.get("language") or language, llm=stage("llm"),
+                                           tts=stage("tts"), tier=stack.get("tier"),
+                                           combination_id=stack.get("combination_id")),
+        )
+        live = composed_turn_prompt(ctx)
+        layers.append({
+            "layer": "composed_turn_prompt",
+            "precedence": 2,
+            "description": "Per-turn speech prompt (language pack, speech contract, voice delivery rules)",
+            "char_count": len(live),
+            "token_estimate": estimate_tokens(live),
+        })
+        llm = stage("llm")
+        return live, (llm.provider if llm else "composed"), layers
     if pipe == "realtime_voice":
         from server.realtime.voice_instructions import build_realtime_voice_instructions
 

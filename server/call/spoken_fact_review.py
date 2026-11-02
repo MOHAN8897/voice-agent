@@ -120,6 +120,12 @@ def correct_stated_total(text: str, source: str) -> str:
     qtys = [value for _pos, value in sorted(found)]
     if len(totals) != 1 or not prices or len(qtys) != len(prices):
         return text
+    # A count above the small-int range ("200 visiting cards") is invisible to the
+    # pairing, which then paired an address number ("12 MG Road") with the price and
+    # rewrote a correct ₹5,000 to ₹300. With such a count present the text is ambiguous.
+    if any(int(m.group(0)) > 20 for m in re.finditer(r"(?<![\d₹,.])\d+(?![\d,.])", text)
+           if not any(a <= m.start() < b for a, b in money_spans) and not _UNIT_AFTER.match(text[m.end():])):
+        return text
     expected = sum(q * int(p) for q, (_pos, p) in zip(qtys, prices))
     value, raw = totals[0]
     if not value.isdigit() or int(value) == expected or int(value) <= max(int(p) for _pos, p in prices):
