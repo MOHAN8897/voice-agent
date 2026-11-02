@@ -17,8 +17,11 @@ def test_connected_call_contact_fields_survive_timeline_enrichment(monkeypatch, 
     })
     result = calls._enrich_timeline_item({"call_id": "fixture-call", "connected": True,
         "tenant_id": "own-tenant", "direction": direction})
-    assert result["caller_phone"] == "+12025550101"
-    assert result["called_phone"] == "+12025550102"
+    # caller_phone is the other party: on an outbound call the ledger's caller_id is
+    # our own line and the callee is the customer (seen 2 Nov 2026: our number shown).
+    other_party, own_line = ("+12025550102", "+12025550101") if direction == "outbound" else ("+12025550101", "+12025550102")
+    assert result["caller_phone"] == other_party
+    assert result["called_phone"] == own_line
     assert "internal_secret" not in result
 
 

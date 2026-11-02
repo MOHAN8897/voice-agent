@@ -490,8 +490,12 @@ def _enrich_timeline_item(item: dict) -> dict:
     # Only copy contact fields from a ledger belonging to the indexed tenant.
     # Attempts already carry their numbers; connected rows previously lost both.
     if ledger_tenant == str(item.get("tenant_id") or "") and item.get("tenant_id"):
-        out["caller_phone"] = caller or out.get("caller_phone")
-        out["called_phone"] = callee or out.get("called_phone")
+        # ``caller_phone`` is the other party, as on attempt rows. On an outbound
+        # call the ledger's caller_id is our own line and the callee is the customer.
+        outbound = str(item.get("direction") or "").lower() == "outbound"
+        remote, local = (callee, caller) if outbound else (caller, callee)
+        out["caller_phone"] = remote or out.get("caller_phone")
+        out["called_phone"] = local or out.get("called_phone")
     for key in ("summary", "customer", "pipeline", "has_recording"):
         if key in enriched:
             out[key] = enriched[key]
@@ -896,13 +900,15 @@ def _compute_call_analytics_payload(call_id: str, stored: dict) -> dict[str, Any
     first_name = name_parts[0] if name_parts else "Caller"
     last_name = name_parts[1] if len(name_parts) > 1 else ""
 
+    # The customer's number: the dialled number on an outbound call, never our own line.
+    outbound = str(meta.get("direction") or stored.get("direction") or "").lower() == "outbound"
     phone = str(
         facts.get("phone")
         or facts.get("mobile")
         or facts.get("callback_phone")
         or facts.get("contact")
-        or stored.get("caller_id")
-        or meta.get("caller_id")
+        or (meta.get("callee_e164") or meta.get("to_number") if outbound else None)
+        or (None if outbound else stored.get("caller_id") or meta.get("caller_id"))
         or ""
     ).strip()
     email = str(facts.get("email") or facts.get("mail") or "").strip()
