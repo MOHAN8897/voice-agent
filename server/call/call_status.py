@@ -175,7 +175,11 @@ def status_for_record(record: dict[str, Any]) -> str:
     """Classify a call/attempt dict, preferring an already-materialised status."""
     stored = record.get("status")
     if is_valid_call_status(stored):
-        return str(stored).strip().lower()
+        stored = str(stored).strip().lower()
+        # A row whose finalisation never replaced its live status must not show an
+        # ended call as ongoing forever.
+        if not (stored == "in_progress" and record.get("ended_at")):
+            return stored
     return classify_call_status(
         direction=record.get("direction"),
         duration_sec=record.get("duration_sec"),

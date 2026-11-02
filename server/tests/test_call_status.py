@@ -149,3 +149,11 @@ def test_normalize_call_statuses(raw, expected):
 def test_bad_duration_does_not_raise():
     assert classify_call_status(direction="inbound", duration_sec=None) == STATUS_MISSED
     assert classify_call_status(direction="inbound", duration_sec="oops") == STATUS_MISSED
+
+
+def test_ended_call_never_shows_as_in_progress():
+    # A row whose finalisation never replaced its live status (seen 2 Nov 2026).
+    stale = {"status": STATUS_IN_PROGRESS, "direction": "outbound", "duration_sec": 194,
+             "end_reason": "goodbye", "ended_at": "2026-11-02T08:55:31Z"}
+    assert status_for_record(stale) != STATUS_IN_PROGRESS
+    assert status_for_record({"status": STATUS_IN_PROGRESS, "ended_at": None}) == STATUS_IN_PROGRESS
