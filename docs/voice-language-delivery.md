@@ -16,7 +16,7 @@ These are implementation choices informed by provider guidance. Native-speaker l
 
 ## Delivery by model
 
-- **Gnani Timbre v3.0:** optional documented angle-bracket cues. Ordinary business speech stays mostly plain. The prompt suggests at most one useful cue per turn (`<pauses>`, `<slow>` or `<excited>`), before the phrase it modifies, in the selected locale. It discourages performative laughter, bodily noises and invented positive announcements. A cue has no closing tag and its effect ends at the next cue or the end of that synthesis input.
+- **Gnani Timbre v3.0:** optional documented angle-bracket cues from the full v3 catalog (`<laugh>`, `<giggle>`, `<sigh>`, `<excited>`, `<slow>`, `<pauses>` and the rest in `server/prompts/tts_delivery_rules.py`). Ordinary business speech stays plain. The prompt allows at most one cue per reply, before the phrase it modifies: `<laugh>`/`<giggle>` when the caller jokes, `<sigh>` before an empathetic line, `<excited>` for genuine good news, `<slow>` for a requested explanation. It never laughs at anger, distress, money loss, a refusal or a complaint, and forbids invented positive announcements. A cue has no closing tag and its effect ends at the next cue or the end of that synthesis input.
 - **Gnani Timbre v2.5:** plain punctuated text. v3 audio cues are removed. Its selected voices use the v2.5 catalog instead of being remapped through the v3 catalog.
 - **Sarvam Bulbul v3:** plain text with native-script mixing and punctuation; pace/temperature use API configuration.
 - **Sarvam Bulbul v4 Flash:** plain text with native-script mixing and punctuation; pace/pitch/loudness use API configuration.
