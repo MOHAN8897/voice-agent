@@ -72,6 +72,25 @@ def test_caller_goodbye_or_thanks_does_not_revoke(text):
     assert _loop()._close_revocable_text(text) is False
 
 
+@pytest.mark.parametrize("text", [
+    # Call d8236122 (2 Nov 2026): "అవును సార్" during the goodbye reopened the call.
+    "అవును సార్.",
+    "సరే అండి.",
+    "సరేనండి ఓకే",
+    "ఓకే సార్",
+    "ok sir",
+    "yes madam",
+    "Okay thank you sir",
+])
+def test_polite_acknowledgement_with_an_honorific_does_not_revoke(text):
+    assert _loop()._close_revocable_text(text) is False
+
+
+@pytest.mark.parametrize("text", ["ఒక్క నిమిషం సార్", "one minute please", "एक मिनट"])
+def test_one_minute_still_holds_the_line(text):
+    assert _loop()._close_revocable_text(text) is True
+
+
 def test_backchannel_acknowledges_the_goodbye_unless_a_question_is_open():
     loop = _loop()
     assert loop._agent_expects_answer() is False
@@ -217,3 +236,44 @@ async def test_executor_reports_cancellation_without_touching_the_provider(monke
     assert result.background_task is None
     provider.assert_not_awaited()
     ended.assert_not_awaited()
+
+
+async def _empty_or_text_turn(monkeypatch, *, farewell_spoken: bool, reply: str):
+    from server.tests.test_call_reliability_plan import _TurnTts
+
+    loop = core.PstnVoiceLoop(session_id="after-goodbye", call_id="c-after-goodbye", on_agent_wire=AsyncMock(),
+                              stack_override={"pipeline": "composed_voice", "language": "te-IN"})
+    loop._farewell_spoken = farewell_spoken
+
+    async def stream(**_kwargs):
+        yield {"done": True, "text": reply}
+
+    monkeypatch.setattr("server.services.pstn_turn_tts.PstnTurnTtsSession", lambda _voice: _TurnTts(loop))
+    monkeypatch.setattr("server.call.live_turn_orchestrator.live_turn_orchestrator.handle_user_turn_stream", stream)
+    monkeypatch.setattr("server.services.pstn_voice_core.pstn_turn_runtime", lambda *_a, **_k: {})
+    monkeypatch.setattr("server.call.call_ledger.call_ledger.append_assistant_turn", AsyncMock())
+    monkeypatch.setattr(loop, "_finish_agent_hangup", AsyncMock())
+    await loop._run_turn("సరేనండి ఓకే")
+    await loop.close()
+    return loop
+
+
+@pytest.mark.asyncio
+async def test_nothing_to_add_after_the_goodbye_ends_the_call(monkeypatch):
+    # Call d8236122: after the goodbye the model returned no text for "సరేనండి ఓకే"
+    # and the line went silent until the caller said "hello?".
+    loop = await _empty_or_text_turn(monkeypatch, farewell_spoken=True, reply="")
+    loop._finish_agent_hangup.assert_awaited_once_with(reason="goodbye", spoke_farewell=False)
+
+
+@pytest.mark.asyncio
+async def test_an_empty_reply_before_any_goodbye_does_not_hang_up(monkeypatch):
+    loop = await _empty_or_text_turn(monkeypatch, farewell_spoken=False, reply="")
+    loop._finish_agent_hangup.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_a_real_reply_after_a_revoked_goodbye_keeps_the_call_open(monkeypatch):
+    loop = await _empty_or_text_turn(monkeypatch, farewell_spoken=True, reply="సరే, ఇంకా ఏం కావాలో చెప్పండి.")
+    loop._finish_agent_hangup.assert_not_awaited()
+    assert loop._farewell_spoken is False

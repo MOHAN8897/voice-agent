@@ -32,11 +32,11 @@ WEAK_NEGATION_MAP: dict[str, list[str]] = {
 
 BACKCHANNEL_NOD_MAP: dict[str, list[str]] = {
     "en": ["yes", "yeah", "yep", "yup", "ok", "okay", "sure", "hmm", "mm", "mhm", "uh huh", "right", "correct", "got it", "i see", "alright", "all right", "no problem", "no worries", "actually that's fine"],
-    "te": ["అవును", "అవునండి", "అవునండీ", "సరే", "సరేనండి", "అలాగే", "అలాగేనండి", "బాగుంది", "avunu", "avunandi", "sare", "sarenandi", "alage", "bagundi"],
-    "hi": ["हाँ", "हां", "हाँजी", "हाँ जी", "जी", "जी हाँ", "जी हां", "ठीक", "ठीक है", "अच्छा", "अच्छा जी", "haan", "haanji", "ha", "han", "theek", "theek hai", "achha", "theek na", "hai na", "theek hai na", "ठीक है ना"],
-    "ta": ["ஆம்", "ஆமாம்", "ஆமாங்க", "ஆமா", "சரி", "சரிங்க", "aam", "aamaam", "aamanga", "sari", "saringa"],
-    "kn": ["ಹೌದು", "ಹೌದೌದು", "ಹೌದುರೀ", "ಸರಿ", "ಸರೀ", "ಆಯಿತು", "ಆಯ್ತು", "ಚೆನ್ನಾಗಿದೆ", "haudu", "sari", "aayithu", "chennagide"],
-    "ml": ["അതെ", "അതെ അതെ", "ശരി", "ശരിയാണ്", "ശരിയായി", "കൊള്ളാം", "athe", "shari", "kollam"],
+    "te": ["అవును", "అవునండి", "అవునండీ", "సరే", "సరేనండి", "అలాగే", "అలాగేనండి", "బాగుంది", "ఓకే", "ఒకే", "ఓకేనండి", "avunu", "avunandi", "sare", "sarenandi", "alage", "bagundi"],
+    "hi": ["हाँ", "हां", "हाँजी", "ओके", "हाँ जी", "जी", "जी हाँ", "जी हां", "ठीक", "ठीक है", "अच्छा", "अच्छा जी", "haan", "haanji", "ha", "han", "theek", "theek hai", "achha", "theek na", "hai na", "theek hai na", "ठीक है ना"],
+    "ta": ["ஆம்", "ஆமாம்", "ஓகே", "ஆமாங்க", "ஆமா", "சரி", "சரிங்க", "aam", "aamaam", "aamanga", "sari", "saringa"],
+    "kn": ["ಹೌದು", "ಹೌದೌದು", "ಓಕೆ", "ಹೌದುರೀ", "ಸರಿ", "ಸರೀ", "ಆಯಿತು", "ಆಯ್ತು", "ಚೆನ್ನಾಗಿದೆ", "haudu", "sari", "aayithu", "chennagide"],
+    "ml": ["അതെ", "അതെ അതെ", "ഓക്കേ", "ശരി", "ശരിയാണ്", "ശരിയായി", "കൊള്ളാം", "athe", "shari", "kollam"],
     "mr": ["हो", "होय", "हो ना", "बरे", "बरं", "ठीक", "ठीक आहे", "छान", "समजले", "ho", "bare", "theek"],
     "bn": ["হ্যাঁ", "হাঁ", "হ্যাঁ হ্যাঁ", "ঠিক", "ঠিক আছে", "বেশ", "বুঝেছি", "haan", "theek", "besh", "bujhechi"],
     "gu": ["હા", "હાજી", "હા હા", "બરાબર", "બરાબર છે", "સારું", "ઠીક", "સમજાયું", "haa", "haaji", "barabar", "saaru"],
@@ -87,6 +87,20 @@ _TURN_CLAIM_RE = compile_lexicon_regex({
     "mr": ["सांगा", "बोला"], "bn": ["বলুন", "কথা বলুন"],
     "gu": ["કહો", "બોલો"], "pa": ["ਦੱਸੋ", "ਬੋਲੋ"],
 })
+
+# Polite address words carry no intent of their own: "అవును సార్" is "అవును",
+# "okay thank you sir" is "okay thank you".
+_HONORIFIC_RE = re.compile(
+    r"(?<!\w)(?:sir|sirji|madam|mam|ma'am|ji|garu|andi|"
+    r"సార్|సర్|మేడమ్|మేడం|గారు|అండి|అండీ|"
+    r"सर|मैडम|जी|சார்|மேடம்|ಸರ್|ಮೇಡಂ|സാർ|മാഡം)(?!\w)",
+    re.IGNORECASE,
+)
+
+
+def strip_honorifics(text: str) -> str:
+    """The same utterance without sir/madam/andi/garu; empty if that is all it was."""
+    return re.sub(r"\s{2,}", " ", _HONORIFIC_RE.sub(" ", text or "")).strip(" ,")
 
 
 def is_backchannel(text: str) -> bool:

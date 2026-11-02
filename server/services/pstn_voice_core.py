@@ -19,6 +19,7 @@ from server.services.pstn_lexicon import (
     agent_asked_question,
     is_backchannel,
     is_single_word_claim,
+    strip_honorifics,
 )
 from server.services.pstn_media_flow import pstn_media_flow, pstn_turn_timing
 from server.services.pstn_text_chunker import (
@@ -61,6 +62,11 @@ PSTN_ECHO_TAIL_S = 0.35
 PSTN_THINK_CANCEL_MIN_WORDS = 2
 PSTN_THINK_CANCEL_HOLD_S = 0.25
 PSTN_DUCK_TIMEOUT_S = 0.85
+# A committed interruption that turns out to be noise, an echo or a cough (no
+# caller turn follows) resumes the cut reply, as LiveKit's agents do by default
+# (false_interruption_timeout 2.0 s, resume_false_interruption).
+PSTN_FALSE_INTERRUPTION_TIMEOUT_S = 2.0
+PSTN_RESUME_MAX_CHARS = 600
 # After idle STT final: low-latency 30ms coalesce window before launch.
 PSTN_LISTEN_COALESCE_S = 0.03
 # If user still producing partials near fire time, extend once more.
@@ -260,6 +266,11 @@ class PstnVoiceLoop:
         self._reset_ducking()
         self._tts_tail_until = 0.0
         self._coalesce_task: asyncio.Task | None = None
+        # The reply a committed barge cut off, kept to resume it if no caller turn follows.
+        self._resume_task: asyncio.Task | None = None
+        # True after the agent's goodbye until it says something new.
+        self._farewell_spoken = False
+        self._last_caller_turn_at = 0.0
         self._coalesce_epoch = 0
         self._coalesce_transcript: str | None = None
         self._last_user_partial_at = 0.0
@@ -484,7 +495,9 @@ class PstnVoiceLoop:
         )
         from server.call.hangup_judge import caller_polite_thanks_only
 
-        cleaned = (text or "").strip()
+        # "అవును సార్" / "okay thank you sir" acknowledge a goodbye exactly like
+        # "అవును" / "okay thank you"; the honorific must not reopen the call.
+        cleaned = strip_honorifics(text)
         if not cleaned:
             return False
         if is_backchannel(cleaned):
@@ -587,6 +600,10 @@ class PstnVoiceLoop:
         """
         if self._hangup_started or self._phase == PHASE_ENDED or self._closed:
             return
+        if revocable and spoke_farewell:
+            # A goodbye was said in this call. If the close is revoked and the
+            # model later has nothing to add, the call ends instead of going quiet.
+            self._farewell_spoken = True
         if revocable and self._pending_caller_turn() is not None:
             # The caller already took the turn back; keep the line and let the
             # pending turn answer instead of speaking a goodbye they did not ask for.
@@ -1082,6 +1099,7 @@ class PstnVoiceLoop:
                 after_barge=after_barge,
             )
             return
+        self._last_caller_turn_at = time.monotonic()
         self._coalesce_transcript = cleaned[-PSTN_PENDING_TRANSCRIPT_MAX:]
         self._coalesce_epoch = getattr(self, "_coalesce_epoch", 0) + 1
         epoch = self._coalesce_epoch
@@ -1458,6 +1476,8 @@ class PstnVoiceLoop:
             log_pstn("intro.queue", call_id=self.call_id, queued=len(self._intro_queue), text=cleaned[:80])
             return
 
+        # A real caller turn (not echo): an interrupted reply must not resume over it.
+        self._last_caller_turn_at = time.monotonic()
         # Prefer latest substantive utterance after barge / overlapping finals.
         words = len(cleaned.split())
         if barge_final or self._awaiting_barge_final:
@@ -2597,6 +2617,37 @@ class PstnVoiceLoop:
         if text:
             self._arm_listen_coalesce(text, after_barge=True)
 
+    async def _resume_after_false_interruption(self, epoch: float, before_cut: str, remainder: str) -> None:
+        """Say the cut reply again when the interruption never became a caller turn.
+
+        Noise, an echo, a cough or a word that STT later drops can pass the barge
+        checks. If no caller turn follows within PSTN_FALSE_INTERRUPTION_TIMEOUT_S
+        and the caller is quiet, the agent picks up from the sentence it was cut in
+        instead of leaving the line silent.
+        """
+        try:
+            await asyncio.sleep(PSTN_FALSE_INTERRUPTION_TIMEOUT_S)
+            give_up_at = epoch + PSTN_FALSE_INTERRUPTION_TIMEOUT_S * 4
+            # A caller still talking will produce their own turn; wait for it.
+            while (not self._closed and time.monotonic() < give_up_at and self._last_user_partial_at
+                   and time.monotonic() - self._last_user_partial_at < PSTN_BARGE_FINAL_TIMEOUT_S):
+                await asyncio.sleep(0.2)
+            if (self._closed or self._hangup_started or self._barge_epoch != epoch
+                    or time.monotonic() >= give_up_at
+                    or self._last_caller_turn_at >= epoch or self._pending_transcript
+                    or self._turn_busy or self._awaiting_barge_final
+                    or self._phase != PHASE_LISTENING):
+                return
+            log_pstn("BARGE_FALSE_INTERRUPTION_RESUME", call_id=self.call_id, chars=len(remainder))
+            from server.agent.conversation_manager import conversation_manager
+
+            conversation_manager.note_resumed(self.session_id, " ".join(p for p in (before_cut, remainder) if p))
+            await self.speak(remainder)
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:  # noqa: BLE001 -- a failed resume leaves the call listening, as before.
+            log_pstn("barge.resume_failed", call_id=self.call_id, error=type(exc).__name__)
+
     async def _commit_barge(self, partial_text: str) -> None:
         """Canonical barge sequence — single ordered path.
 
@@ -2683,6 +2734,16 @@ class PstnVoiceLoop:
                 except Exception as exc:
                     log_pstn("playback.remote_clear.failed", call_id=self.call_id, error=str(exc)[:160])
 
+        # The sentence being played when the caller cut in, plus what was queued
+        # behind it: resumed if this turns out to be a false interruption.
+        cut = self._heard_sentences[-1] if self._heard_sentences else ""
+        before_cut = " ".join(self._heard_sentences[:-1]).strip()
+        remainder = " ".join(part for part in (cut, (self._tts_queued_text or "").strip()) if part).strip()
+        if self._resume_task and not self._resume_task.done():
+            self._resume_task.cancel()
+        self._resume_task = None
+        if remainder and not was_intro and len(remainder) <= PSTN_RESUME_MAX_CHARS:
+            self._resume_task = asyncio.create_task(self._resume_after_false_interruption(now, before_cut, remainder))
         # Local invalidation/drain and LLM cancellation cannot wait on the carrier.
         self._remote_clear_task = asyncio.create_task(clear_carrier())
         await self.interrupt_tts(already_invalidated=True)
@@ -3248,6 +3309,18 @@ class PstnVoiceLoop:
                 else:
                     await self._finish_agent_hangup(reason=hangup_reason)
                 return
+            replied = bool(spoke_from_stream or self._turn_tts_text_at > 0
+                           or getattr(tts_session, "has_sent_text", False))
+            if replied:
+                self._farewell_spoken = False
+            elif (self._farewell_spoken and turn_completed and not turn_cancelled
+                    and not self.emission_blocked() and self.call_id):
+                # After its own goodbye the model has nothing to add to the caller's
+                # "okay"/"thanks": the conversation is over. Silence here made callers
+                # say "hello?" and restarted the summary loop (2 Nov 2026).
+                log_pstn("hangup.after_farewell_no_reply", call_id=self.call_id, turn_id=self.current_turn_id)
+                await self._finish_agent_hangup(reason="goodbye", spoke_farewell=False)
+                return
             if needs_tts_fallback and not turn_cancelled and not self.emission_blocked():
                 await self._close_after_tts_failure(
                     defect="empty_tts_audio",
@@ -3501,6 +3574,8 @@ class PstnVoiceLoop:
         self._reset_ducking()
         await self._set_phase_async(PHASE_ENDED)
         self._cancel_listen_coalesce()
+        if self._resume_task and not self._resume_task.done():
+            self._resume_task.cancel()
         log_pstn(
             "CLEANUP",
             call_id=self.call_id,

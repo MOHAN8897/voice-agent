@@ -121,6 +121,18 @@ class ConversationManager:
                 sess["bargeHeard"] = ""
             sess["updatedAt"] = time.time()
 
+    def note_resumed(self, session_id: str, spoken_text: str) -> None:
+        """A false interruption was resumed: the reply was heard in full after all."""
+        sess = self._ensure(session_id)
+        spoken = (spoken_text or "").strip()
+        with self._lock:
+            sess["bargePending"] = False
+            sess["bargeHeard"] = ""
+            msgs = sess["messages"]
+            if spoken and msgs and msgs[-1].get("role") == "assistant":
+                msgs[-1]["content"] = self._truncate_content("assistant", spoken)
+            sess["updatedAt"] = time.time()
+
     def add_user_only(self, session_id: str, user_text: str) -> None:
         sess = self._ensure(session_id)
         with self._lock:

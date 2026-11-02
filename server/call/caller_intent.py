@@ -64,10 +64,10 @@ _NEGATED_END = re.compile(
 
 # "wait", "one more question" — a new turn that must cancel a pending goodbye.
 _WAIT_OR_CONTINUE = re.compile(
-    r"\b(?:wait|hold\s+on|one\s+(?:more|moment|second)|just\s+a\s+(?:moment|second)|"
+    r"\b(?:wait|hold\s+on|one\s+(?:more|moment|second|minute)|just\s+a\s+(?:moment|second|minute)|"
     r"not\s+yet|hang\s+on)\b|"
-    r"ఆగండి|ఆగు|కాస్త\s*ఆగ|ఇంకో\s*ప్రశ్న|ఇంకా\s*ప్రశ్న|"
-    r"रुकिए|रुको|ठहरिए|एक\s*और\s*सवाल|एक\s*और\s*प्रश्न|"
+    r"ఆగండి|ఆగు|కాస్త\s*ఆగ|ఇంకో\s*ప్రశ్న|ఇంకా\s*ప్రశ్న|ఒక్క\s*నిమిషం|ఒక\s*నిమిషం|"
+    r"रुकिए|रुको|ठहरिए|एक\s*और\s*सवाल|एक\s*और\s*प्रश्न|एक\s*मिनट|"
     r"காத்திருங்க|காத்திரு|நில்லுங்க|இன்னொரு\s*கேள்வி|"
     r"ನಿಲ್ಲಿ|ಕಾಯಿರಿ|ಇನ್ನೊಂದು\s*ಪ್ರಶ್ನೆ",
     re.I,

@@ -40,6 +40,9 @@ logger = logging.getLogger(__name__)
 active_vobiz_bridges: dict[str, "VobizPstnBridge"] = {}
 _vobiz_admission_lock = asyncio.Lock()
 
+# 4 × 20 ms frames: a short fade at an interruption, long enough to avoid a click.
+VOBIZ_BARGE_FADE_FRAMES = 4
+
 # Vobiz sends `start` within a second of opening the socket. A socket that stays
 # silent past this is dead (seen 2 Nov 2026: answered call, no start, no media,
 # no close), and the caller is listening to silence.
@@ -85,6 +88,7 @@ class VobizPstnBridge:
         self._cleanup_done = False
         self._prewarm_bundle = None
         self._early_greeting_task: asyncio.Task | None = None
+        self._upcoming_wire: tuple[list[bytes], str, int] = ([], "", 0)
         self._stream_started_at: float | None = None
         self._inbound_greeting: str | None = None
 
@@ -588,6 +592,8 @@ class VobizPstnBridge:
                     return
                 if playback is not None and not playback.is_generation_valid(generation_id):
                     return
+                # What would play next; a barge fades these out instead of a hard stop.
+                self._upcoming_wire = (frames[i + 1:i + 1 + VOBIZ_BARGE_FADE_FRAMES], content_type, sample_rate)
                 b64_audio = base64.b64encode(frame).decode("ascii")
                 msg: dict[str, Any] = {
                     "event": "playAudio",
@@ -673,6 +679,41 @@ class VobizPstnBridge:
                     await self.ws.send_text(json.dumps(msg))
         except Exception:
             pass
+        await self._send_barge_fade()
+
+    async def _send_barge_fade(self) -> None:
+        """Trail the voice off over ~80 ms instead of stopping mid-syllable.
+
+        Agent audio is paced in real time, so at a barge almost nothing is buffered
+        at Vobiz (PROVIDER_CLEAR reports 0 frames) and the cut is where the send
+        loop stopped. The next few frames are sent once more, ramping to silence.
+        """
+        # The paced loop exits within one frame once the generation is invalid.
+        async with self._send_wire_lock:
+            frames, content_type, sample_rate = self._upcoming_wire
+            self._upcoming_wire = ([], "", 0)
+        codec = self._wire_codec if self._wire_codec in ("linear16", "mulaw") else None
+        if not frames or codec is None or self._closed:
+            return
+        from server.services.audio_transcode import scale_wire_volume
+
+        steps = len(frames)
+        try:
+            for index, frame in enumerate(frames):
+                start, end = 1.0 - index / steps, 1.0 - (index + 1) / steps
+                faded = scale_wire_volume(frame, codec, end, start_factor=start)
+                msg: dict[str, Any] = {"event": "playAudio", "media": {
+                    "contentType": content_type, "sampleRate": sample_rate,
+                    "payload": base64.b64encode(faded).decode("ascii")}}
+                if self.stream_id:
+                    msg["streamId"] = self.stream_id
+                async with self._ws_send_lock:
+                    if self._closed:
+                        return
+                    await self.ws.send_text(json.dumps(msg))
+                await asyncio.sleep(0.02)
+        except Exception as exc:  # noqa: BLE001 -- the fade is cosmetic; the barge already stopped audio.
+            log_pstn("vobiz.barge_fade_failed", call_uuid=self.call_uuid, error_type=type(exc).__name__)
 
     async def hangup(self, reason: str = "agent_ended") -> None:
         """End the carrier leg before closing media; a socket close is not an ACK."""
