@@ -592,6 +592,28 @@ async def vobiz_answer(request: Request):
     return _build_vobiz_xml_response(stream_ws_url, recording_callback)
 
 
+@router.post("/api/vobiz/stream-reconnect")
+@router.get("/api/vobiz/stream-reconnect")
+async def vobiz_stream_reconnect(request: Request):
+    """Call XML for a live call whose media socket never started (see VobizPstnBridge).
+
+    Only the stream is reopened, on a fresh single-use token the bridge minted; the
+    session recording started at answer is left as it is.
+    """
+    payload = await _parse_vobiz_payload(request)
+    await _verify_vobiz_request(request, payload)
+    token = str(request.query_params.get("token") or "")
+    token_meta = await asyncio.to_thread(vobiz_stream_tokens.peek, token) if token else None
+    call_uuid = str((token_meta or {}).get("call_uuid") or "")
+    local = await asyncio.to_thread(vobiz_call_registry.get, call_uuid) if call_uuid else None
+    if not token_meta or not call_uuid or not (token_meta.get("stream_attempt") or 0) or (local or {}).get("ended"):
+        return Response(content='<Response><Hangup /></Response>', media_type="application/xml")
+    log_pstn("vobiz.stream.reconnect_xml", call_uuid=call_uuid, attempt=token_meta.get("stream_attempt"))
+    from urllib.parse import urlencode
+    stream_ws_url = f"{ws_public_base()}/ws/vobiz-stream?{urlencode({'token': token, 'call_uuid': call_uuid})}"
+    return _build_vobiz_xml_response(stream_ws_url)
+
+
 @router.post("/api/vobiz/fallback")
 @router.get("/api/vobiz/fallback")
 async def vobiz_fallback(request: Request):

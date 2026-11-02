@@ -43,8 +43,12 @@ async def vobiz_stream_ws(websocket: WebSocket):
 
     effective_call_uuid = expected_call_uuid or call_uuid
     merged_meta = {**(registry_meta or {}), **token_meta}
+    # A reconnect token is minted by the bridge whose stream never started, for the
+    # same admitted call: it gets its own one-time claim instead of the original's.
+    stream_attempt = int(token_meta.get("stream_attempt") or 0)
+    claim_key = "media_stream_claimed" if not stream_attempt else f"media_stream_claimed:{stream_attempt}"
 
-    if merged_meta.get("admission_key"):
+    if merged_meta.get("admission_key") and not stream_attempt:
         from server.services.saas.call_admission import claim_media
         try:
             permitted = await claim_media(uuid.UUID(str(merged_meta.get("admission_tenant_id"))), str(merged_meta["admission_key"]))
@@ -54,7 +58,7 @@ async def vobiz_stream_ws(websocket: WebSocket):
             await websocket.close(code=1008, reason="Call stream is no longer available")
             return
 
-    if not effective_call_uuid or (registry_meta or {}).get("ended") or not await vobiz_call_registry.atomic_check_and_set(effective_call_uuid, "media_stream_claimed"):
+    if not effective_call_uuid or (registry_meta or {}).get("ended") or not await vobiz_call_registry.atomic_check_and_set(effective_call_uuid, claim_key):
         await websocket.close(code=1008, reason="Call stream is already connected or ended")
         return
     await websocket.accept()

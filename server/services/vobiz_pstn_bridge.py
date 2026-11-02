@@ -29,6 +29,7 @@ from server.services.vobiz_client import (
     VOBIZ_DEFAULT_CODEC,
     VOBIZ_DEFAULT_SAMPLE_RATE,
     vobiz_call_registry,
+    vobiz_stream_tokens,
 )
 
 if TYPE_CHECKING:
@@ -38,6 +39,14 @@ logger = logging.getLogger(__name__)
 
 active_vobiz_bridges: dict[str, "VobizPstnBridge"] = {}
 _vobiz_admission_lock = asyncio.Lock()
+
+# Vobiz sends `start` within a second of opening the socket. A socket that stays
+# silent past this is dead (seen 2 Nov 2026: answered call, no start, no media,
+# no close), and the caller is listening to silence.
+VOBIZ_START_EVENT_WAIT_SEC = 5.0
+VOBIZ_STREAM_RECONNECT_ATTEMPTS = 1
+# Registry/connection fields that must not be copied into a reconnect token.
+_RECONNECT_META_SKIP = {"token", "webhook_token", "stream_url", "ended", "stream_state", "exit_reason", "status"}
 
 
 class VobizPstnBridge:
@@ -88,19 +97,22 @@ class VobizPstnBridge:
         # Track consecutive timeouts for keep-alive logic.
         _consecutive_timeouts = 0
         # Wait up to 120s for next media/event frame.
-        _RECV_TIMEOUT_BEFORE_START = 90.0
         _RECV_TIMEOUT_AFTER_START = 120.0
         _MAX_CONSECUTIVE_TIMEOUTS = 3
+        start_deadline = time.monotonic() + VOBIZ_START_EVENT_WAIT_SEC
         try:
             while not self._closed:
-                recv_timeout = _RECV_TIMEOUT_BEFORE_START if not self._start_handled else _RECV_TIMEOUT_AFTER_START
+                recv_timeout = (
+                    _RECV_TIMEOUT_AFTER_START if self._start_handled
+                    else max(0.05, start_deadline - time.monotonic())
+                )
                 try:
                     message = await asyncio.wait_for(self.ws.receive(), timeout=recv_timeout)
                     _consecutive_timeouts = 0  # reset on successful receive
                 except asyncio.TimeoutError:
                     if not self._start_handled:
                         logger.warning("[VOBIZ] WS timed out before start event")
-                        exit_reason = "start_timeout"
+                        exit_reason = await self._recover_unstarted_stream()
                         break
                     _consecutive_timeouts += 1
                     if _consecutive_timeouts >= _MAX_CONSECUTIVE_TIMEOUTS:
@@ -430,6 +442,46 @@ class VobizPstnBridge:
                     raise RuntimeError("Prepared Gemini session is no longer connected")
         return bundle
 
+    async def _recover_unstarted_stream(self) -> str:
+        """The socket opened but Vobiz never sent `start`, so the caller hears silence.
+
+        Ask Vobiz once to reopen the stream on the same live call (its prepared opening
+        is still waiting, keyed by the call). If that cannot be done, end the call rather
+        than leave the caller on a silent line. Returns the bridge exit reason.
+        """
+        call_uuid = str(self._token_meta.get("call_uuid") or "")
+        self.call_uuid = self.call_uuid or call_uuid or None
+        attempt = int(self._token_meta.get("stream_attempt") or 0)
+        local = await asyncio.to_thread(vobiz_call_registry.get, call_uuid) if call_uuid else None
+        log_pstn("vobiz.stream.no_start", call_uuid=call_uuid, attempt=attempt, wait_s=VOBIZ_START_EVENT_WAIT_SEC)
+        if (local or {}).get("ended"):
+            return "start_timeout"
+        if attempt < VOBIZ_STREAM_RECONNECT_ATTEMPTS and call_uuid and not call_uuid.startswith("vobiz-"):
+            try:
+                from urllib.parse import urlencode
+
+                from server.config.urls import public_api_base
+                from server.services.saas.voice_kyc_service import vobiz_client_for_call
+
+                meta = {key: value for key, value in self._token_meta.items()
+                        if not key.startswith(("_", "media_stream_claimed")) and key not in _RECONNECT_META_SKIP}
+                meta["stream_attempt"] = attempt + 1
+                token = await asyncio.to_thread(vobiz_stream_tokens.create, **meta)
+                client = await vobiz_client_for_call({**(local or {}), **self._token_meta})
+                if client is None:
+                    raise RuntimeError("Carrier client unavailable")
+                url = f"{public_api_base()}/api/vobiz/stream-reconnect?{urlencode({'token': token})}"
+                await asyncio.wait_for(client.transfer_call(call_uuid, aleg_url=url), timeout=8.0)
+                log_pstn("vobiz.stream.reconnect_requested", call_uuid=call_uuid, attempt=attempt + 1)
+                return "stream_reconnecting"
+            except Exception as exc:  # noqa: BLE001 -- any failure falls through to ending the call.
+                log_pstn("vobiz.stream.reconnect_failed", call_uuid=call_uuid, error_type=type(exc).__name__)
+        try:
+            await self.hangup("stream_never_started")
+        except Exception as exc:  # noqa: BLE001 -- hangup logs its own failure; cleanup still runs.
+            log_pstn("vobiz.stream.no_start_hangup_failed", call_uuid=call_uuid, error_type=type(exc).__name__)
+        return "start_timeout"
+
     async def _send_prepared_opening(self, frames: list[bytes]) -> None:
         for frame in frames:
             if self._closed:
@@ -743,6 +795,17 @@ class VobizPstnBridge:
                 if k:
                     if active_vobiz_bridges.get(str(k)) is self:
                         active_vobiz_bridges.pop(str(k), None)
+
+        if reason == "stream_reconnecting":
+            # The call itself is still live and admitted; only this dead socket goes.
+            await asyncio.to_thread(vobiz_call_registry.upsert, self.call_uuid,
+                                    {"stream_state": "reconnecting"})
+            try:
+                await self.ws.close()
+            except Exception:  # noqa: BLE001,S110 -- the socket is already dead.
+                pass
+            logger.info("[VOBIZ] Bridge closed call=%s reason=%s", self.call_uuid, reason)
+            return
 
         # Release durable call admission slot on disconnect / error if still holding capacity
         adm_key = self._token_meta.get("admission_key")

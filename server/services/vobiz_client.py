@@ -443,6 +443,15 @@ class VobizClient:
                     raise exc from None
             raise
 
+    async def transfer_call(self, call_uuid: str, *, aleg_url: str) -> dict[str, Any]:
+        """Point a live call's A leg at new call XML (its current flow stops)."""
+        auth_id = self.cfg["auth_id"]
+        payload = {"legs": "aleg", "aleg_url": aleg_url, "aleg_method": "POST"}
+        return await self._request(
+            "POST", f"/Account/{auth_id}/Call/{call_uuid}/", json=payload,
+            timeout=httpx.Timeout(connect=3.0, read=5.0, write=3.0, pool=3.0),
+        )
+
     def build_stream_ws_url(self, token: str, call_uuid: str | None = None) -> str:
         """Construct secure WebSocket URL for Vobiz media streaming."""
         base = ws_public_base()
