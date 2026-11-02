@@ -1,8 +1,10 @@
 """Download Telnyx Call Control recordings into the local call archive."""
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -73,21 +75,56 @@ def _internal_call_id(row: dict[str, Any] | None) -> str:
     return str(row.get("internal_call_id") or row.get("call_id") or "").strip()
 
 
+# The URL comes from a webhook body, so it is fetched only from Telnyx's own API or the
+# S3 storage its recordings are presigned on, and the API key is sent only to Telnyx.
+_TELNYX_API_HOSTS = {"api.telnyx.com"}
+_TELNYX_MEDIA_HOST = re.compile(r"^(?:[a-z0-9-]+\.)*telnyx\.com$")
+_S3_HOST = re.compile(r"^(?:[a-z0-9.-]+\.)?s3(?:[.-][a-z0-9-]+)*\.amazonaws\.com$")
+_MAX_RECORDING_BYTES = 128 * 1024 * 1024
+
+
+def _allowed_recording_host(url: str) -> str | None:
+    """The URL's hostname when it is safe to fetch, else None."""
+    try:
+        parsed = urlsplit(url)
+        port = parsed.port
+    except ValueError:
+        return None
+    host = (parsed.hostname or "").lower()
+    if parsed.scheme != "https" or parsed.username or parsed.password or port not in (None, 443):
+        return None
+    if host in _TELNYX_API_HOSTS or _TELNYX_MEDIA_HOST.match(host) or _S3_HOST.match(host):
+        return host
+    return None
+
+
 async def _download_recording(url: str) -> bytes:
     if not url:
         return b""
+    host = _allowed_recording_host(url)
+    if host is None:
+        logger.warning("[TELNYX] recording URL rejected (host not allowlisted)")
+        return b""
     headers: dict[str, str] = {}
-    try:
-        headers = TelnyxClient()._headers()
-    except Exception:
-        headers = {}
+    if host in _TELNYX_API_HOSTS:
+        try:
+            headers = TelnyxClient()._headers()
+        except Exception:
+            headers = {}
     timeout = httpx.Timeout(connect=15.0, read=60.0, write=15.0, pool=15.0)
-    async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
-        for hdrs in ((headers if headers else {}), {}):
+    async with httpx.AsyncClient(timeout=timeout, follow_redirects=False) as client:
+        for hdrs in ([headers, {}] if headers else [{}]):
             try:
-                response = await client.get(url, headers=hdrs)
-                if response.status_code < 400 and response.content:
-                    return response.content
+                async with client.stream("GET", url, headers=hdrs) as response:
+                    if not 200 <= response.status_code < 300:
+                        continue
+                    body = bytearray()
+                    async for chunk in response.aiter_bytes():
+                        if len(body) + len(chunk) > _MAX_RECORDING_BYTES:
+                            raise ValueError("recording exceeds the size limit")
+                        body.extend(chunk)
+                    if body:
+                        return bytes(body)
             except Exception as exc:
                 logger.warning("[TELNYX] recording download failed: %s", str(exc)[:160])
     return b""

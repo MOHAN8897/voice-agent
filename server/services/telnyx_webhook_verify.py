@@ -31,9 +31,10 @@ def verify_telnyx_signature(
 ) -> None:
     """Raise TelnyxSignatureError when verification fails.
 
+    A configured `public_key` is always enforced, whatever the environment.
     If `public_key` is empty:
       - development: skip with warning
-      - production/staging (`require_key=True`): reject (fail closed)
+      - anywhere else (`require_key=True`): reject (fail closed)
     """
     key = (public_key or "").strip()
     if not key:

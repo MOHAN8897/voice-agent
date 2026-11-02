@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
+import { portalFetch } from "@/lib/auth-client";
 
 export type TestStudioUiPrefs = {
   studioTab?: "live" | "setup" | "stack" | "contacts" | "history" | "config" | "tune" | "debug"; // contacts snaps to live
@@ -104,7 +105,7 @@ export function useTestStudioPrefs(
       if (key === lastSavedRef.current) return;
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
-        fetch("/api/test-studio/prefs", {
+        portalFetch("dev", "/api/test-studio/prefs", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",

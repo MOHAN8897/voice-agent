@@ -1637,7 +1637,7 @@ export const api = {
       return await api.request('GET', `/api/tenant/export/${jobId}`);
     },
     async exportAgents() {
-      const token = sessionStorage.getItem('dialtact_auth_token') || localStorage.getItem('dialtact_auth_token');
+      const token = api.getToken();
       const res = await fetch('/api/tenant/export/agents', {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
@@ -1653,7 +1653,7 @@ export const api = {
       window.URL.revokeObjectURL(url);
     },
     async downloadExportArchive(jobId) {
-      const token = sessionStorage.getItem('dialtact_auth_token') || localStorage.getItem('dialtact_auth_token');
+      const token = api.getToken();
       const res = await fetch(`/api/tenant/export/${jobId}/download`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });

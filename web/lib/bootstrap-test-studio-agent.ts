@@ -1,6 +1,7 @@
 import { normalizeLanguageCode, notifyTestStudioAgentsChanged } from "@/lib/agent-language";
 import { testStudioSessionId } from "@/lib/test-studio-stack";
 import { patchPrefsCache } from "@/components/test-studio/useTestStudioPrefs";
+import { portalFetch } from "@/lib/auth-client";
 
 /** Seed a new agent lab with the chosen call language (prefs + STT runtime). */
 export async function bootstrapTestStudioAgent(agentId: string, language: string): Promise<void> {
@@ -8,13 +9,13 @@ export async function bootstrapTestStudioAgent(agentId: string, language: string
   const sessionId = testStudioSessionId(agentId);
 
   await Promise.all([
-    fetch("/api/test-studio/prefs", {
+    portalFetch("dev", "/api/test-studio/prefs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({ sessionId, language: lang }),
     }),
-    fetch("/api/settings/runtime", {
+    portalFetch("dev", "/api/settings/runtime", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -55,13 +56,13 @@ export async function persistAgentCallLanguage(opts: {
   patchPrefsCache(opts.sessionId, { language: lang });
   const [agentOk] = await Promise.all([
     syncAgentCallLanguage(opts.agentId, lang),
-    fetch("/api/test-studio/prefs", {
+    portalFetch("dev", "/api/test-studio/prefs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({ sessionId: opts.sessionId, language: lang }),
     }),
-    fetch("/api/settings/runtime", {
+    portalFetch("dev", "/api/settings/runtime", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",

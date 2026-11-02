@@ -543,7 +543,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
           : `Agent script saved to ${persistWhere(j)} · ${cacheNote}`
       );
       // Keep live-turn budget aligned with the compiled brain size.
-      void fetch("/api/settings/runtime", {
+      void portalFetch("dev", "/api/settings/runtime", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -620,7 +620,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
       if (!opts?.silent) setStatus("No runtime overrides to save");
       return true;
     }
-    const r = await fetch("/api/settings/runtime", {
+    const r = await portalFetch("dev", "/api/settings/runtime", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -894,7 +894,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
   const clearSession = useCallback(async () => {
     setStatus("Clearing session…");
     const responses = await Promise.all([
-      fetch(`/api/settings/runtime?sessionId=${encodeURIComponent(sessionId)}`, {
+      portalFetch("dev", `/api/settings/runtime?sessionId=${encodeURIComponent(sessionId)}`, {
         method: "DELETE",
         credentials: "include",
       }),

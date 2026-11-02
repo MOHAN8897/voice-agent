@@ -23,6 +23,16 @@ from server.utils.errors import AppError, ErrorCode
 from server.tests.test_employee_script_pipeline import BRIEF, pipeline_model
 
 
+@pytest.fixture(autouse=True)
+def _fresh_generation_window():
+    """The per-workspace generation limit is process-wide; give each test its own window."""
+    from server.routes.app_agents import _generation_limiter
+
+    _generation_limiter.reset()
+    yield
+    _generation_limiter.reset()
+
+
 @pytest.fixture
 def creation(monkeypatch):
     principal = SimpleNamespace(tenant_id="workspace-one")

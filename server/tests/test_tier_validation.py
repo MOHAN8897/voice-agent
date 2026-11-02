@@ -22,23 +22,32 @@ def client(monkeypatch):
     get_settings.cache_clear()
 
 
-def test_tiers_endpoint_lists_three_tiers(client):
-    r = client.get("/api/tiers")
+@pytest.fixture
+def dev_client(client):
+    """Tier stacks are platform internals: Dev Portal only."""
+    from server.tests.auth_helpers import authenticated_dev_client
+
+    return authenticated_dev_client(app_mod.app)
+
+
+def test_tiers_endpoint_lists_three_tiers(client, dev_client):
+    assert client.get("/api/tiers").status_code == 401
+    r = dev_client.get("/api/tiers")
     assert r.status_code == 200
     tiers = {t["tier"] for t in r.json()["tiers"]}
     assert tiers == {"low", "medium", "premium"}
 
 
-def test_tier_resolved_returns_stack(client):
-    r = client.get("/api/tiers/medium/resolved")
+def test_tier_resolved_returns_stack(dev_client):
+    r = dev_client.get("/api/tiers/medium/resolved")
     assert r.status_code == 200
     body = r.json()
     assert body["stt"]["provider"] == "sarvam"
     assert body["combination_id"]
 
 
-def test_unknown_tier_404(client):
-    r = client.get("/api/tiers/ultra/resolved")
+def test_unknown_tier_404(dev_client):
+    r = dev_client.get("/api/tiers/ultra/resolved")
     assert r.status_code == 404
 
 

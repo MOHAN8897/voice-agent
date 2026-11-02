@@ -7,6 +7,20 @@
  *   without rel.
  */
 
+/**
+ * True for an absolute http(s) URL, or a same-origin path. Anything else — notably a
+ * `javascript:` or `data:` URL arriving in an API response — must never be navigated to.
+ */
+export function isSafeNavigationUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  try {
+    const u = new URL(url, typeof window !== 'undefined' ? window.location.href : 'http://localhost');
+    return u.protocol === 'http:' || u.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 export function isExternalHttpUrl(url) {
   if (!url || typeof url !== 'string') return false;
   try {
@@ -21,7 +35,7 @@ export function isExternalHttpUrl(url) {
 
 /** Open a third-party URL in a new tab safely. Returns the window handle or null. */
 export function openExternalUrl(url, { replace = false } = {}) {
-  if (!url) return null;
+  if (!isSafeNavigationUrl(url)) return null;
   if (!isExternalHttpUrl(url)) {
     if (replace) window.location.replace(url);
     else window.location.assign(url);

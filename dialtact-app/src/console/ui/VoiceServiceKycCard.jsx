@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { BadgeCheck, ExternalLink, Loader2, Shield, RefreshCw } from 'lucide-react';
 import { api } from '../../services/api';
 import { TactileButton } from './TactileButton';
+import { isSafeNavigationUrl } from '../../lib/navigationPolicy';
 
 const BUSINESS_TYPES = [
   ['individual', 'Individual'],
@@ -117,6 +118,8 @@ export function VoiceServiceKycCard({ onApproved }) {
     let newTab = null;
     try {
       newTab = window.open('about:blank', '_blank');
+      // The vendor page must not be able to steer this console tab (reverse tabnabbing).
+      if (newTab) newTab.opener = null;
     } catch {
       newTab = null;
     }
@@ -136,6 +139,10 @@ export function VoiceServiceKycCard({ onApproved }) {
       if (!result?.sessionUrl) {
         if (newTab && !newTab.closed) newTab.close();
         throw new Error('Verification could not start. Please try again.');
+      }
+      if (!isSafeNavigationUrl(result.sessionUrl)) {
+        if (newTab && !newTab.closed) newTab.close();
+        throw new Error('The verification link was not a web address.');
       }
       setOpenedUrl(result.sessionUrl);
       awaitingReturnRef.current = true;

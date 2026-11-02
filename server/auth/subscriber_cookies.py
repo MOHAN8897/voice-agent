@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+from contextvars import ContextVar
 
 from fastapi import Request, Response
 
@@ -10,6 +11,10 @@ from server.config.env import get_settings
 REFRESH_COOKIE = "dialtact_refresh"
 # Pre-rebrand cookie name: still accepted and cleared so existing sessions survive the rename.
 LEGACY_REFRESH_COOKIE = "voxly_refresh"
+
+#: Whether the request being answered reached us over HTTPS (set per request by the
+#: headers middleware in server/app.py from the scheme or X-Forwarded-Proto).
+request_is_https: ContextVar[bool] = ContextVar("request_is_https", default=False)
 
 
 def _cookie_opts() -> dict:
@@ -22,7 +27,10 @@ def _cookie_opts() -> dict:
     elif override in ("0", "false", "no"):
         secure = False
     else:
-        secure = settings.app_environment == "production"
+        # Production always; anywhere else whenever the visitor is on HTTPS (the public
+        # dev site), so the cookie never travels over plain HTTP there. Local http keeps it
+        # non-Secure, or the browser would drop it.
+        secure = settings.app_environment == "production" or request_is_https.get()
     return {"httponly": True, "secure": secure, "samesite": "lax", "path": "/"}
 
 

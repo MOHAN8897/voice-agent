@@ -2,15 +2,64 @@
 from __future__ import annotations
 
 from typing import Any
+from urllib.parse import urlsplit
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
 from server.auth.dependencies import require_dev_session, require_permission
+from server.auth.rbac import ROLE_SUPER_ADMIN
 from server.auth.session import SessionData
 from server.services.dev_secrets_store import ALLOWED_PATCH_KEYS, dev_secrets_store
+from server.services.saas.admin_audit import record_admin_action
 
 router = APIRouter()
+
+#: Fields holding URLs the platform calls back on: https only.
+_URL_FIELDS = frozenset({"vobiz_webhook_base_url"})
+#: Fields that redirect traffic or flip production behaviour: super admins only.
+_SUPER_ADMIN_FIELDS = frozenset({"app_environment"}) | _URL_FIELDS
+
+
+def _is_url_field(field: str) -> bool:
+    return field in _URL_FIELDS or field.endswith("_url")
+
+
+def _require_super_admin_for(session: SessionData, fields: set[str]) -> None:
+    guarded = sorted(f for f in fields if f in _SUPER_ADMIN_FIELDS or _is_url_field(f))
+    if guarded and session.role != ROLE_SUPER_ADMIN:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": {
+                    "code": "super_admin_required",
+                    "message": f"Only a super admin can change: {', '.join(guarded)}",
+                }
+            },
+        )
+
+
+def _validate_urls(patch: dict[str, Any]) -> None:
+    for field, value in patch.items():
+        if not _is_url_field(field) or value in ("", None):
+            continue
+        parts = urlsplit(str(value).strip())
+        if parts.scheme.lower() != "https" or not parts.hostname:
+            raise HTTPException(
+                status_code=400,
+                detail={"error": {"code": "validation_error", "message": f"{field} must be an https:// URL"}},
+            )
+
+
+async def _audit(session: SessionData, action: str, fields: list[str]) -> None:
+    # Field names only: values are API keys and tokens.
+    await record_admin_action(
+        actor=session.subject,
+        action=action,
+        resource_type="dev_environment",
+        resource_id="overlay",
+        payload={"fields": sorted(fields)},
+    )
 
 
 class EnvironmentPatch(BaseModel):
@@ -88,7 +137,10 @@ async def dev_environment_put(body: EnvironmentPatch, session: SessionData = Dep
             status_code=400,
             detail={"error": {"code": "validation_error", "message": "No fields to update"}},
         )
+    _require_super_admin_for(session, set(patch))
+    _validate_urls(patch)
     snapshot = dev_secrets_store.update(patch)
+    await _audit(session, "dev_environment.update", list(snapshot.get("applied_keys") or patch.keys()))
     return {
         "ok": True,
         "applied_keys": snapshot.get("applied_keys", []),
@@ -112,7 +164,9 @@ async def dev_environment_delete_field(field: str, session: SessionData = Depend
             status_code=400,
             detail={"error": {"code": "not_allowed", "message": f"Field {field} cannot be cleared via API"}},
         )
+    _require_super_admin_for(session, {field})
     snapshot = dev_secrets_store.remove_overlay_key(field)
+    await _audit(session, "dev_environment.clear", [field])
     return {
         "ok": True,
         "removed": snapshot.get("removed"),

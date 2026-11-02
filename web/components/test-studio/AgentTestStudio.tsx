@@ -290,7 +290,7 @@ export function AgentTestStudio({
     setConfigSaving(true);
     setConfigStatus("");
     try {
-      const response = await fetch("/api/test-studio/prefs", {
+      const response = await portalFetch("dev", "/api/test-studio/prefs", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

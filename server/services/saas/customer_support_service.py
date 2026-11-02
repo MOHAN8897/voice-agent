@@ -5,6 +5,7 @@ import asyncio
 import logging
 import random
 import smtplib
+import ssl
 import string
 import uuid
 from datetime import datetime, timezone
@@ -137,34 +138,66 @@ async def test_smtp_configuration(settings: dict) -> dict:
     if not host:
         return {"success": False, "error": "SMTP Host is required"}
 
-    port = int(settings.get("smtpPort") or 587)
-    username = settings.get("smtpUsername")
+    host = str(host).strip()
+    try:
+        port = int(settings.get("smtpPort") or 587)
+    except (TypeError, ValueError):
+        return {"success": False, "error": "SMTP Port must be a number"}
+    username = (settings.get("smtpUsername") or "").strip() or None
     password = settings.get("smtpPassword")
     use_tls = bool(settings.get("smtpUseTls", True))
+    # Port 465 is implicit TLS; anywhere else the password would cross the wire in clear.
+    implicit_tls = port == 465
+    if not use_tls and not implicit_tls:
+        return {"success": False, "error": "SMTP test requires TLS (STARTTLS, or implicit TLS on port 465)"}
 
-    # If password not provided in test payload, try loading persisted password
-    if not password:
+    # The stored password is only ever sent back to the stored server and account,
+    # otherwise anyone who can run a test could point it at their own host to read it.
+    if not password and username:
         factory = get_session_factory()
         if factory:
             try:
                 async with factory() as session:
-                    stmt = select(CustomerSupportConfig.smtp_password).where(CustomerSupportConfig.config_key == "global")
-                    password = (await session.execute(stmt)).scalar_one_or_none()
+                    stmt = select(
+                        CustomerSupportConfig.smtp_host,
+                        CustomerSupportConfig.smtp_port,
+                        CustomerSupportConfig.smtp_username,
+                        CustomerSupportConfig.smtp_password,
+                    ).where(CustomerSupportConfig.config_key == "global")
+                    row = (await session.execute(stmt)).one_or_none()
             except Exception:
-                pass
+                row = None
+            if row is not None and row.smtp_password:
+                same_target = (
+                    (row.smtp_host or "").strip().casefold() == host.casefold()
+                    and int(row.smtp_port or 587) == port
+                    and (row.smtp_username or "").strip() == username
+                )
+                if same_target:
+                    password = row.smtp_password
+        if not password:
+            return {
+                "success": False,
+                "error": "Enter the SMTP password to test a host, port or username that differs from the saved one",
+            }
 
     def _probe_sync():
         try:
-            server = smtplib.SMTP(host, port, timeout=10)
-            if use_tls:
-                server.starttls()
+            context = ssl.create_default_context()
+            if implicit_tls:
+                server = smtplib.SMTP_SSL(host, port, timeout=10, context=context)
+            else:
+                server = smtplib.SMTP(host, port, timeout=10)
+                server.starttls(context=context)
             if username and password:
                 server.login(username, password)
             server.noop()
             server.quit()
             return {"success": True, "message": "SMTP connection & authentication verified successfully."}
         except Exception as exc:
-            return {"success": False, "error": str(exc)}
+            # The raw error can echo server banners or credentials; keep it in the log only.
+            logger.warning("SMTP test against %s:%s failed: %s", host, port, type(exc).__name__)
+            return {"success": False, "error": "SMTP test failed: could not connect, start TLS or sign in"}
 
     return await asyncio.to_thread(_probe_sync)
 

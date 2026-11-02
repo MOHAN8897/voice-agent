@@ -16,6 +16,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { analytics } from '../services/analytics';
 import { api } from '../services/api';
+import { isSafeNavigationUrl } from '../lib/navigationPolicy';
 
 function BrandGlyph({ className = 'w-4 h-4' }) {
   return (
@@ -403,7 +404,7 @@ export function AuthModal({ isOpen, onClose = () => {}, initialMode = 'signin', 
                 The server returned the reset link directly instead of mailing it.
               </p>
               <a
-                href={resetDebugUrl}
+                href={isSafeNavigationUrl(resetDebugUrl) ? resetDebugUrl : undefined}
                 data-testid="auth-debug-reset-link"
                 className="block break-all font-mono text-[11px] underline"
               >

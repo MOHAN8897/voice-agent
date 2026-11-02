@@ -450,3 +450,11 @@
   }
 }
 
+/* Touch screens: console controls get a finger-sized hit area (40px; WCAG 2.5.8 asks for
+   24, and 40 keeps dense tables workable). Switches keep their own shape. */
+@media (pointer: coarse) {
+  .console-shell :is(button, [role='button'], select, input:not([type='checkbox']):not([type='radio']):not([type='range'])):not([role='switch']):not([aria-checked]) {
+    min-height: 40px;
+  }
+}
+

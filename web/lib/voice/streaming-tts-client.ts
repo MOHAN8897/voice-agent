@@ -1,4 +1,4 @@
-import { wsUrl } from "@/lib/api";
+import { cookieWsUrl } from "@/lib/voice/cookie-ws-url";
 import { buildWsTtsConfig, fetchTtsConfig, invalidateTtsConfigCache } from "@/lib/voice/tts-config";
 import { onTestStudioVoiceSaved } from "@/lib/voice/voice-runtime-events";
 import { VOICE_PIPELINE_LIMITS, type TtsConfig, type VoiceTraceFn } from "@/lib/voice/types";
@@ -139,7 +139,7 @@ export class StreamingTtsClient {
     }
 
     await new Promise<void>((resolve, reject) => {
-      const sock = new WebSocket(wsUrl(`/ws/tts?${q}`));
+      const sock = new WebSocket(cookieWsUrl(`/ws/tts?${q}`));
       this.sock = sock;
       let settled = false;
 

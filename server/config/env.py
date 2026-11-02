@@ -637,9 +637,40 @@ def _check_razorpay_config(settings: Settings) -> None:
         )
 
 
+_DEFAULT_SECRETS = {"dev-session-secret-change-in-production", "dev-jwt-secret-change-in-production"}
+_MIN_SECRET_CHARS = 32
+
+
+def _check_signing_secrets(settings: "Settings") -> None:
+    """Session cookies and access tokens are signed with these. A default or short secret
+    lets anyone forge a session for any tenant, admin included, so outside development
+    the server refuses to start with one."""
+    if settings.app_environment == "development":
+        weak = [
+            name for name, value in (("SESSION_SECRET", settings.session_secret), ("JWT_SECRET", settings.jwt_secret))
+            if value in _DEFAULT_SECRETS or len(value or "") < _MIN_SECRET_CHARS
+        ]
+        if weak:
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "%s is a default or shorter than %d characters; fine for development, refused elsewhere",
+                ", ".join(weak),
+                _MIN_SECRET_CHARS,
+            )
+        return
+    for name, value in (("SESSION_SECRET", settings.session_secret), ("JWT_SECRET", settings.jwt_secret)):
+        if value in _DEFAULT_SECRETS or len(value or "") < _MIN_SECRET_CHARS:
+            raise RuntimeError(
+                f"{name} must be a random value of at least {_MIN_SECRET_CHARS} characters outside development "
+                "(generate one with: python -c \"import secrets; print(secrets.token_urlsafe(48))\")"
+            )
+
+
 def validate_env() -> Settings:
     """Explicit fail-fast helper for app startup. Never logs secret values."""
     settings = get_settings()
+    _check_signing_secrets(settings)
     # Touch required fields to trigger validation
     _ = settings.openai_api_key
     _ = settings.sarvam_api_key

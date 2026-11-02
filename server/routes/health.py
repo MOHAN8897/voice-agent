@@ -15,6 +15,14 @@ from server.db.schema_revision import check_schema_revision
 router = APIRouter()
 
 
+def _public_status(status: dict) -> dict:
+    """Health is unauthenticated: keep the verdict, drop driver error text (hosts, users)."""
+    out = dict(status)
+    if out.get("configured") and not out.get("ok"):
+        out["message"] = "unavailable"
+    return out
+
+
 @router.get("/api/health")
 async def health():
     try:
@@ -29,7 +37,7 @@ async def health():
         error = str(e)
     except Exception as e:
         env_valid = False
-        error = str(e)[:300]
+        error = type(e).__name__
 
     presence = config_presence()
     db_status: dict = {"ok": False, "configured": False, "message": "skipped"}
@@ -37,17 +45,17 @@ async def health():
     schema_status: dict = {"ok": True, "configured": False, "message": "skipped"}
     if env_valid:
         try:
-            db_status = await check_db_health()
+            db_status = _public_status(await check_db_health())
         except Exception as e:
-            db_status = {"ok": False, "configured": False, "message": str(e)[:200]}
+            db_status = {"ok": False, "configured": False, "message": type(e).__name__}
         try:
             schema_status = await check_schema_revision()
         except Exception as e:
             schema_status = {"ok": False, "configured": True, "message": type(e).__name__}
         try:
-            redis_status = await check_redis_health()
+            redis_status = _public_status(await check_redis_health())
         except Exception as e:
-            redis_status = {"ok": False, "configured": False, "message": str(e)[:200]}
+            redis_status = {"ok": False, "configured": False, "message": type(e).__name__}
     # Email delivery is invisible until someone needs a reset link, which is exactly
     # when it matters. Surface the deliverability verdict (booleans only) on health so
     # a broken sender domain shows up on a monitor instead of in a support ticket.
@@ -63,18 +71,15 @@ async def health():
             "configured": False,
             "deliverable": False,
             "reason": "probe_error",
-            "detail": str(e)[:200],
+            "detail": type(e).__name__,
         }
     try:
         from server.services.r2_storage import r2_storage
 
         r2_configured = r2_storage.is_configured()
-        r2_status = {
-            "configured": r2_configured,
-            "bucket": settings.r2_bucket_name if r2_configured else None,
-        }
+        r2_status = {"configured": r2_configured}
     except Exception as e:
-        r2_status = {"configured": False, "error": str(e)[:120]}
+        r2_status = {"configured": False, "error": type(e).__name__}
     return {
         "ok": (
             env_valid

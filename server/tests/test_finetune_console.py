@@ -3,12 +3,22 @@ from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, patch
 from server.config.env import get_settings
 import server.app as app_mod
+from server.tests.auth_helpers import authenticated_dev_client
 
 def _client(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test-ft")
     monkeypatch.setenv("SARVAM_API_KEY", "sarvam-test-ft")
     get_settings.cache_clear()
-    return TestClient(app_mod.app)
+    # Runtime overrides are written from the Dev Portal only.
+    return authenticated_dev_client(app_mod.app)
+
+
+def test_runtime_writes_require_dev_session(monkeypatch):
+    _client(monkeypatch)
+    anon = TestClient(app_mod.app)
+    assert anon.post("/api/settings/runtime", json={"sessionId": "ft-anon", "ttsPace": 1.1}).status_code == 401
+    assert anon.delete("/api/settings/runtime", params={"sessionId": "ft-anon"}).status_code == 401
+    get_settings.cache_clear()
 
 def test_catalog_shape(monkeypatch):
     c = _client(monkeypatch)

@@ -11,7 +11,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "next": "^15.5.27",
+    "next": "15.5.28",
     "react": "^18.3.0",
     "react-dom": "^18.3.0"
   },

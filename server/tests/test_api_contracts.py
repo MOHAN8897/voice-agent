@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 import server.app as app_mod
 from server.config.env import get_settings
+from server.tests.auth_helpers import authenticated_dev_client
 
 
 @pytest.fixture
@@ -37,8 +38,15 @@ def test_settings_catalog_backward_compat(client):
     assert j["config"]["mode"] in ("env", "frontend")
 
 
-def test_providers_catalog_shape(client):
-    r = client.get("/api/providers/catalog")
+@pytest.fixture
+def dev_client(client):
+    """Provider catalog, status and tier routes are Dev Portal only."""
+    return authenticated_dev_client(app_mod.app)
+
+
+def test_providers_catalog_shape(client, dev_client):
+    assert client.get("/api/providers/catalog").status_code == 401
+    r = dev_client.get("/api/providers/catalog")
     assert r.status_code == 200
     j = r.json()
     assert "providers" in j and "pricing_metadata" in j
@@ -53,8 +61,8 @@ def test_stack_preview_endpoint(client):
     assert r.json()["stack"]["stt"]["provider"] == "sarvam"
 
 
-def test_validate_selection_endpoint(client):
-    r = client.post(
+def test_validate_selection_endpoint(dev_client):
+    r = dev_client.post(
         "/api/providers/sarvam/validate-selection",
         json={
             "stt": {"provider": "sarvam", "model": "saaras:v3"},
@@ -75,8 +83,9 @@ def test_health_includes_database(client):
     assert "configured" in j["database"]
 
 
-def test_providers_status_safe_metadata(client):
-    r = client.get("/api/providers/status")
+def test_providers_status_safe_metadata(client, dev_client):
+    assert client.get("/api/providers/status").status_code == 401
+    r = dev_client.get("/api/providers/status")
     assert r.status_code == 200
     j = r.json()
     assert "providers" in j

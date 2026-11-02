@@ -7,6 +7,21 @@ import { FieldError, Label } from "@/components/ui/Label";
 import { Input } from "@/components/ui/Input";
 import { portalFetch, refreshPortalSession, storeCsrfToken, portalSessionErrorMessage, type PortalKind } from "@/lib/auth-client";
 
+/**
+ * The post-login destination, only ever a path on this origin. `//evil.com` and
+ * `/\evil.com` start with "/" yet the browser resolves them to another host.
+ */
+function safeNextPath(next: string | null, fallback: string): string {
+  if (!next || typeof window === "undefined") return fallback;
+  try {
+    const url = new URL(next, window.location.origin);
+    if (url.origin !== window.location.origin) return fallback;
+    return url.pathname + url.search + url.hash;
+  } catch {
+    return fallback;
+  }
+}
+
 type LoginFormProps = {
   title: string;
   subtitle: string;
@@ -23,7 +38,7 @@ export function LoginForm({ title, subtitle, endpoint, redirectTo, portalKind }:
   const [checkingSession, setCheckingSession] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || redirectTo;
+  const next = safeNextPath(searchParams.get("next"), redirectTo);
   const apiError = searchParams.get("error");
 
   useEffect(() => {
@@ -31,7 +46,7 @@ export function LoginForm({ title, subtitle, endpoint, redirectTo, portalKind }:
     refreshPortalSession(portalKind)
       .then((ok) => {
         if (!cancelled && ok) {
-          router.replace(next.startsWith("/") ? next : redirectTo);
+          router.replace(next);
         } else if (!cancelled) {
           setCheckingSession(false);
         }
@@ -77,7 +92,7 @@ export function LoginForm({ title, subtitle, endpoint, redirectTo, portalKind }:
       if (j.csrf_token) {
         storeCsrfToken(portalKind, j.csrf_token);
       }
-      router.push(next.startsWith("/") ? next : redirectTo);
+      router.push(next);
     } catch {
       setError(
         "Could not reach the server. Start the API with npm run dev (port 8000), then use http://localhost:3000/dev/login."

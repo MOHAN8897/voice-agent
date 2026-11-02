@@ -83,7 +83,14 @@ function localOnlyDevPortalPlugin() {
   const guard = (server) => {
       server.middlewares.use((req, res, next) => {
         const url = req.url || '';
-        const path = url.split('?')[0] || '';
+        let path = url.split('?')[0] || '';
+        // Match the path the backend will route (`/api/%64ev` is `/api/dev` there).
+        try {
+          path = decodeURIComponent(path).replace(/\/{2,}/g, '/');
+        } catch {
+          res.statusCode = 400;
+          return res.end();
+        }
         const guarded =
           path === '/dev' ||
           path.startsWith('/dev/') ||
@@ -103,6 +110,54 @@ function localOnlyDevPortalPlugin() {
   };
   // `vite preview` inherits server.proxy, so the public build needs the same guard.
   return { name: 'local-only-dev-portal', configureServer: guard, configurePreviewServer: guard };
+}
+
+/**
+ * Security headers on every response, from the dev server and the public build alike:
+ * no framing (clickjacking on /signin), no MIME sniffing, a strict referrer and
+ * permissions policy, and HSTS over HTTPS. The public build also gets a
+ * Content-Security-Policy listing exactly where code may come from: this app, Google
+ * Sign-In and Razorpay checkout ('wasm-unsafe-eval' is the 3D model's mesh decoder).
+ * The dev server skips script-src, since Vite's live reload injects its own scripts.
+ */
+const PERMISSIONS_POLICY =
+  'camera=(), microphone=(self), geolocation=(), accelerometer=(), gyroscope=(), magnetometer=(), usb=(), serial=(), bluetooth=(), hid=(), midi=(), xr-spatial-tracking=()';
+const BASE_CSP = "frame-ancestors 'none'; object-src 'none'; base-uri 'self'";
+const BUILD_CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'wasm-unsafe-eval' https://accounts.google.com https://checkout.razorpay.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https:",
+  "media-src 'self' data: blob:",
+  "connect-src 'self' https: wss:",
+  "frame-src https://accounts.google.com https://api.razorpay.com https://checkout.razorpay.com",
+  "worker-src 'self' blob:",
+  "form-action 'self' https://accounts.google.com",
+  BASE_CSP,
+].join('; ');
+
+function securityHeadersPlugin() {
+  const headers = (csp) => (req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', PERMISSIONS_POLICY);
+    res.setHeader('Content-Security-Policy', csp);
+    const proto = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim();
+    if (proto === 'https') res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    next();
+  };
+  return {
+    name: 'security-headers',
+    // Block bodies: a hook that returns a function has it called later as a post hook.
+    configureServer(server) {
+      server.middlewares.use(headers(BASE_CSP));
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use(headers(BUILD_CSP));
+    },
+  };
 }
 
 /** Hashed build assets never change, so the public build lets browsers and Cloudflare keep them. */
@@ -136,10 +191,6 @@ function devNoCachePlugin() {
         res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         res.setHeader('Pragma', 'no-cache');
         res.setHeader('Expires', '0');
-        res.setHeader(
-          'Permissions-Policy',
-          'camera=(), microphone=(self), geolocation=(), accelerometer=(), gyroscope=(), magnetometer=(), usb=(), serial=(), bluetooth=(), hid=(), midi=(), xr-spatial-tracking=()',
-        );
         next();
       });
     },
@@ -152,6 +203,7 @@ const enableReticle =
 
 export default defineConfig({
   plugins: [
+    securityHeadersPlugin(),
     devNoCachePlugin(),
     ...(enableReticle
       ? [

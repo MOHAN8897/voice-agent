@@ -30,9 +30,19 @@ from server.services.saas.tenant_guard import (
     subscriber_workspace_tenant_id,
 )
 from server.utils.errors import AppError, ErrorCode
+from server.utils.rate_limiter import RateLimiter, raise_rate_limited
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+# Each of these runs paid LLM generation on the platform key; cap it per workspace.
+_generation_limiter = RateLimiter(max_requests=10, window_s=300)
+
+
+def _limit_generation(principal: SubscriberPrincipal, endpoint: str) -> None:
+    allowed, retry = _generation_limiter.allow(f"{endpoint}:tenant:{principal.tenant_id}")
+    if not allowed:
+        raise_rate_limited(retry, "Too many generation requests for this workspace. Please wait a moment.")
 
 # Matches Agent.default_tier and AgentService.create_agent; creation never
 # negotiates a tier, so readiness must be checked against this one.
@@ -114,6 +124,7 @@ async def analyze_brief(
 ):
     """Read-only clarification: never creates an agent or publishes a draft."""
     require_subscriber_permission(principal, "app.agents.write")
+    _limit_generation(principal, "analyze-brief")
     subscriber_workspace_tenant_id(principal)
     # Retired codes such as "en-GB" resolve to the pack that actually speaks them.
     language = normalize_supported_language(body.language.strip() or "en-IN")
@@ -142,6 +153,7 @@ async def compose_onboarding(
     principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
 ):
     require_subscriber_permission(principal, "app.agents.write")
+    _limit_generation(principal, "compose-onboarding")
     result = await compose_agent_onboarding(
         name=body.name.strip(),
         role=body.role.strip(),
@@ -165,6 +177,7 @@ async def build_employee(
 ):
     """Brief → dev-panel script compiler → single Calling script section → cached brain."""
     require_subscriber_permission(principal, "app.agents.write")
+    _limit_generation(principal, "build-employee")
     # Legacy clients may still send a retired code such as "en-GB"; it resolves to
     # the English locale the live stack speaks, never to a different language.
     lang = normalize_supported_language(body.language.strip() or "en-IN")

@@ -153,7 +153,7 @@ export function AppShell({ onBackToLanding, onSignOut }) {
   };
 
   return (
-    <div className="flex h-screen bg-canvas text-ink overflow-hidden select-none font-sans antialiased">
+    <div className="console-shell flex h-screen bg-canvas text-ink overflow-hidden select-none font-sans antialiased">
       {/* Primary Vertical Navigation (Responsive Desktop & Mobile Drawer) */}
       <ErrorBoundary title="Sidebar Navigation Unavailable">
         <Sidebar

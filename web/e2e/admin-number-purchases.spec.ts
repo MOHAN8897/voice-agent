@@ -59,7 +59,7 @@ const refunded = {
 
 async function boot(page: Page) {
   const calls: Array<{ url: string; method: string; body: unknown }> = [];
-  await page.context().addCookies([{ name: "vani_dev_session", value: "synthetic", url: BASE }]);
+  await page.context().addCookies([{ name: "dev_session", value: "synthetic", url: BASE }]);
   await page.route("**/api/**", (route) => route.fulfill({ json: {} }));
   await page.route("**/api/auth/dev-me", (route) =>
     route.fulfill({ json: { authenticated: true, subject: "ops@example.invalid", csrf_token: "csrf" } })

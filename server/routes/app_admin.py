@@ -30,6 +30,13 @@ router = APIRouter()
 
 
 def _require_admin(principal: SubscriberPrincipal) -> None:
+    # An impersonated session carries the target's email, so it must never count
+    # as the platform admin, whoever the target is.
+    if principal.impersonator:
+        raise HTTPException(
+            status_code=403,
+            detail={"error": {"code": "impersonation_forbidden", "message": "Not available while impersonating"}},
+        )
     require_platform_admin_email(principal.email)
 
 

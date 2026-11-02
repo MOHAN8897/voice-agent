@@ -25,6 +25,17 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 _signup_limiter = RateLimiter(max_requests=20, window_s=3600)
 _login_limiter = RateLimiter(max_requests=30, window_s=300)
+# Per account, whatever the IP: rotating addresses or proxies does not buy more guesses.
+_account_login_limiter = RateLimiter(max_requests=10, window_s=900, name="auth:login-account")
+# A 6-digit code allows 5 tries; then it is burned and a new one must be requested.
+_otp_limiter = RateLimiter(max_requests=5, window_s=900, name="auth:otp-account")
+# Reset and verification emails to one address, so the form cannot be used to flood an inbox.
+_recovery_limiter = RateLimiter(max_requests=5, window_s=3600, name="auth:recovery-account")
+
+
+def _account_key(email: str) -> str:
+    """The address as the service matches it, so `A@x.com` and ` a@x.com` share a limit."""
+    return (email or "").strip().lower()
 
 
 def _mask_email(email: str) -> str:
@@ -224,7 +235,10 @@ async def auth_signup(body: SignupBody, request: Request, response: Response):
 async def auth_login(body: LoginBody, request: Request, response: Response):
     _ensure_saas_db()
     ip = _client_ip(request) or "unknown"
-    allowed, retry = _login_limiter.allow(f"login:{ip}:{body.email}")
+    account = _account_key(body.email)
+    allowed, retry = _login_limiter.allow(f"login:{ip}:{account}")
+    if allowed:
+        allowed, retry = _account_login_limiter.allow(f"login:{account}")
     if not allowed:
         raise HTTPException(status_code=429, detail={"error": {"code": "rate_limit", "retry_after": retry}})
     try:
@@ -366,6 +380,8 @@ async def auth_forgot_password(body: ForgotPasswordBody, request: Request):
     _ensure_saas_db()
     ip = _client_ip(request) or "unknown"
     allowed, retry = _login_limiter.allow(f"forgot:{ip}")
+    if allowed:
+        allowed, retry = _recovery_limiter.allow(f"forgot:{_account_key(body.email)}")
     if not allowed:
         raise HTTPException(status_code=429, detail={"error": {"code": "rate_limit", "retry_after": retry}})
 
@@ -428,7 +444,9 @@ async def auth_forgot_password(body: ForgotPasswordBody, request: Request):
             provider.get("reason"),
             provider.get("detail") or "",
         )
-        if settings.app_environment != "production":
+        if settings.auth_debug_expose_reset_token:
+            # Only with the explicit debug flag: otherwise this field appears only for
+            # addresses that have an account, which tells anyone who asks.
             payload["debugDelivery"] = {**delivery, "provider": provider.get("reason")}
     return payload
 
@@ -483,9 +501,18 @@ async def auth_verify_email(body: VerifyEmailBody):
 async def auth_verify_email_otp(body: VerifyEmailOtpBody, request: Request, response: Response):
     _ensure_saas_db()
     ip = _client_ip(request) or "unknown"
-    allowed, retry = _login_limiter.allow(f"verify-otp:{ip}:{body.email}")
+    account = _account_key(body.email)
+    allowed, retry = _login_limiter.allow(f"verify-otp:{ip}:{account}")
     if not allowed:
         raise HTTPException(status_code=429, detail={"error": {"code": "rate_limit", "retry_after": retry}})
+    allowed, retry = _otp_limiter.allow(f"otp:{account}")
+    if not allowed:
+        # Too many guesses at this address's code: it is dead now, whoever is guessing.
+        await auth_service.burn_email_otps(account)
+        raise HTTPException(
+            status_code=429,
+            detail={"error": {"code": "otp_attempts", "message": "Too many attempts. Request a new code.", "retry_after": retry}},
+        )
     try:
         data = await auth_service.verify_email_otp(body.email, body.otp, ip=ip)
         return _attach_refresh(response, data)
@@ -504,6 +531,8 @@ async def auth_resend_verification(body: ResendVerificationBody, request: Reques
     _ensure_saas_db()
     ip = _client_ip(request) or "unknown"
     allowed, retry = _signup_limiter.allow(f"resend:{ip}")
+    if allowed:
+        allowed, retry = _recovery_limiter.allow(f"resend:{_account_key(body.email)}")
     if not allowed:
         raise HTTPException(status_code=429, detail={"error": {"code": "rate_limit", "retry_after": retry}})
     settings = get_settings()
@@ -621,45 +650,78 @@ async def auth_google_config():
     return google_signin_config()
 
 
+def _https(request: Request) -> bool:
+    proto = (request.headers.get("x-forwarded-proto") or request.url.scheme or "").split(",")[0].strip()
+    return proto == "https"
+
+
 @router.get("/api/auth/google/start")
-async def auth_google_start(return_to: str | None = None):
+async def auth_google_start(request: Request, return_to: str | None = None):
     from fastapi.responses import RedirectResponse
 
-    from server.services.saas.google_oauth_service import google_oauth_authorize_url, new_oauth_state
+    from server.services.saas.google_oauth_service import (
+        STATE_COOKIE,
+        google_oauth_authorize_url,
+        new_oauth_state,
+        state_cookie_value,
+    )
 
     _ensure_saas_db()
     try:
-        state = new_oauth_state(return_to)
-        url = google_oauth_authorize_url(state)
-        return RedirectResponse(url)
+        host = (request.headers.get("x-forwarded-host") or request.headers.get("host") or "").split(",")[0]
+        state, entry = await new_oauth_state(return_to, start_host=host.split(":")[0].strip())
+        url = google_oauth_authorize_url(state, redirect_uri=entry["redirect_uri"])
+        response = RedirectResponse(url)
+        # Ties the callback to this browser: a callback link someone else started (to sign
+        # this browser into their account) arrives without it and is refused.
+        response.set_cookie(
+            STATE_COOKIE,
+            state_cookie_value(state),
+            max_age=600,
+            httponly=True,
+            samesite="lax",
+            secure=_https(request),
+            path="/api/auth/google",
+        )
+        return response
     except ValueError as e:
         raise HTTPException(status_code=503, detail={"error": {"code": str(e), "message": str(e)}})
 
 
 @router.get("/api/auth/google/callback")
 async def auth_google_callback(
+    request: Request,
     code: str | None = None,
     error: str | None = None,
     state: str | None = None,
 ):
+    import hmac
+
     from fastapi.responses import RedirectResponse
 
     from server.config.env import get_settings
     from server.services.saas.google_oauth_service import (
+        STATE_COOKIE,
         consume_oauth_state,
         create_auth_handoff,
         exchange_code_for_tokens,
         login_or_register_google,
+        state_cookie_value,
     )
 
     settings = get_settings()
     default_front = settings.dialtact_frontend_url.rstrip("/")
-    state_info = consume_oauth_state(state)
+    state_info = await consume_oauth_state(state)
     front = (state_info or {}).get("return_to") or default_front
     redirect_uri = (state_info or {}).get("redirect_uri")
     if error or not code:
         return RedirectResponse(f"{front}/?auth_error=google")
     if state_info is None:
+        return RedirectResponse(f"{front}/?auth_error=google_state")
+    if state_info.get("bound") and not hmac.compare_digest(
+        request.cookies.get(STATE_COOKIE) or "", state_cookie_value(state or "")
+    ):
+        # This browser did not start this sign-in: someone sent it their own callback link.
         return RedirectResponse(f"{front}/?auth_error=google_state")
     _ensure_saas_db()
     try:
@@ -667,8 +729,10 @@ async def auth_google_callback(
         data = await login_or_register_google(id_token)
         # Do NOT Set-Cookie on this redirect — the API host is often not the SPA
         # origin (api-dev vs app-dev / Vite). SPA redeems handoff via same-origin /api.
-        hid = create_auth_handoff(data)
-        return RedirectResponse(f"{front}/#auth/callback?handoff={hid}")
+        hid = await create_auth_handoff(data)
+        response = RedirectResponse(f"{front}/#auth/callback?handoff={hid}")
+        response.delete_cookie(STATE_COOKIE, path="/api/auth/google")
+        return response
     except ValueError as e:
         if str(e) == "workspace_deleted":
             return RedirectResponse(f"{front}/?auth_error=workspace_deleted")
@@ -681,7 +745,7 @@ async def auth_handoff(body: HandoffBody, response: Response):
     _ensure_saas_db()
     from server.services.saas.google_oauth_service import consume_auth_handoff
 
-    data = consume_auth_handoff(body.handoff)
+    data = await consume_auth_handoff(body.handoff)
     if not data or not data.get("accessToken"):
         raise HTTPException(
             status_code=401,

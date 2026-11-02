@@ -243,7 +243,6 @@ export function AuthProvider({ children }) {
         const qs = hash.split('?')[1] || '';
         const params = new URLSearchParams(qs);
         const handoff = params.get('handoff');
-        const access = params.get('accessToken');
         // Remove the single-use credential without navigating before auth exists.
         window.history.replaceState({}, '', window.location.pathname + window.location.search);
         if (handoff) {
@@ -268,12 +267,9 @@ export function AuthProvider({ children }) {
           } catch {
             /* refreshSession below will clear a dead handoff */
           }
-        } else if (access) {
-          // Legacy redirect put access in the hash but Set-Cookie on the API host —
-          // cookie never reaches the SPA origin. Prefer handoff; this still restores access.
-          api.setToken(access);
-          callbackAuthenticated = true;
         }
+        // A raw access token in the link is never accepted: anyone could send one and sign
+        // this browser into their own account. Sign-in always arrives as a one-time handoff.
       }
 
       if (callbackAuthenticated) {

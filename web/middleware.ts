@@ -10,6 +10,9 @@ const DIALTACT_URL =
 const DEV_PORTAL_ALLOW_REMOTE =
   process.env.DEV_PORTAL_ALLOW_REMOTE === "1" || process.env.DEV_PORTAL_ALLOW_REMOTE === "true";
 
+/** Must match the backend's dev session cookie name (server/auth/session.py). */
+const DEV_SESSION_COOKIE = "dev_session";
+
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
 
 function hostnameIsLocal(hostname: string): boolean {
@@ -46,10 +49,17 @@ async function requireSession(
   loginPath: string
 ): Promise<NextResponse | null> {
   const endpoint = "/api/auth/dev-me";
-  const hasCookie = Boolean(
-    request.cookies.get("vani_dev_session")?.value ||
-    request.headers.get("cookie")?.includes("vani_dev_session")
-  );
+  // Fail closed: only a 2xx from the backend session check lets the page through.
+  // A cookie's mere presence proves nothing (it may be forged, expired or revoked).
+  const toLogin = (error?: string) => {
+    const login = new URL(loginPath, request.url);
+    login.searchParams.set("next", request.nextUrl.pathname + request.nextUrl.search);
+    if (error) login.searchParams.set("error", error);
+    return NextResponse.redirect(login);
+  };
+  if (!request.cookies.get(DEV_SESSION_COOKIE)?.value) {
+    return toLogin();
+  }
 
   try {
     const res = await fetch(`${API_URL}${endpoint}`, {
@@ -57,24 +67,10 @@ async function requireSession(
       cache: "no-store",
       signal: AbortSignal.timeout(10_000),
     });
-    if (res.status === 401) {
-      const login = new URL(loginPath, request.url);
-      login.searchParams.set("next", request.nextUrl.pathname + request.nextUrl.search);
-      return NextResponse.redirect(login);
-    }
-    // If backend reports 5xx or server-side error but user has cookie, do not kick them out
-    if (!res.ok) {
-      if (hasCookie) return null;
-      const login = new URL(loginPath, request.url);
-      login.searchParams.set("error", "auth_check_failed");
-      return NextResponse.redirect(login);
-    }
+    if (res.status === 401) return toLogin();
+    if (!res.ok) return toLogin("auth_check_failed");
   } catch {
-    // If backend is restarting or under load but user already has session cookie, preserve session
-    if (hasCookie) return null;
-    const login = new URL(loginPath, request.url);
-    login.searchParams.set("error", "api_unavailable");
-    return NextResponse.redirect(login);
+    return toLogin("api_unavailable");
   }
   return null;
 }

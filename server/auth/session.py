@@ -16,6 +16,8 @@ _COOKIE_APP = "app_session"
 _COOKIE_CSRF_DEV = "dev_csrf"
 _COOKIE_CSRF_APP = "app_csrf"
 _TTL_SEC = 86400 * 7
+#: The env-configured built-in admin is an unrevocable super admin, so its cookie is short-lived.
+BUILTIN_DEV_TTL_SEC = 3600 * 12
 
 
 @dataclass
@@ -55,7 +57,7 @@ def parse_session_token(token: str, expected_kind: SessionKind | None = None) ->
     parts = token.split("|")
     sig = parts[-1]
     body = "|".join(parts[:-1])
-    if _sign(body) != sig:
+    if not hmac.compare_digest(_sign(body), sig):
         return None
     kind, subject, tenant_id, role, issued_s = parts[0], parts[1], parts[2], parts[3], parts[4]
     if expected_kind and kind != expected_kind:
@@ -69,6 +71,8 @@ def parse_session_token(token: str, expected_kind: SessionKind | None = None) ->
     tenant = tenant_id if tenant_id else None
     ref = parts[5] if len(parts) >= 7 and parts[5] else None
     if kind == "dev":
+        if not ref and time.time() - issued > BUILTIN_DEV_TTL_SEC:
+            return None
         if ref:
             # A stored admin account: valid only while the account is active and the
             # token's epoch is current, and it authorizes with the *current* role.

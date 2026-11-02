@@ -1130,6 +1130,9 @@ async def _publish_core_tier_price(tier: str, inr_per_min: float, *, actor: str)
             rate_currency="INR",
             **kwargs,
         )
+        from server.utils.cache import BILLING_CATALOG_KEY, invalidate
+
+        await invalidate(BILLING_CATALOG_KEY)
     except Exception as exc:  # The profile price still governs the tier; log the mirror failure.
         import logging
 

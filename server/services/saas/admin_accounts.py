@@ -594,6 +594,30 @@ async def sign_out_everywhere(actor: Actor, account_id: str, *, reason: str, req
     return {"admin": serialize(account, actor=actor)}
 
 
+async def end_session(ref: str | None) -> None:
+    """Sign-out: revoke the cookie behind this session reference server-side. Never raises.
+
+    Sessions share one epoch per account, so this ends every session of that
+    account. A stale epoch is left alone: that cookie is already dead.
+    """
+    parsed = parse_account_ref(ref)
+    factory = get_session_factory()
+    if parsed is None or factory is None:
+        return
+    account_id, epoch = parsed
+    try:
+        async with factory() as db:
+            account = await _load(db, account_id)
+            if int(account.session_epoch or 0) != epoch:
+                return
+            account.session_epoch = epoch + 1
+            await db.commit()
+    except Exception as exc:
+        logger.warning("Admin sign-out could not revoke the session: %s", exc)
+        return
+    await refresh(force=True)
+
+
 async def reset_password(
     actor: Actor,
     account_id: str,

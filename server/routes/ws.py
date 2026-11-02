@@ -13,6 +13,8 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
+import threading
+from dataclasses import dataclass
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
@@ -23,10 +25,111 @@ from server.providers.base import STTConfig, TTSConfig
 from server.services.runtime_settings import runtime_settings
 from server.services.tts_config import TtsConfigError, merge_ws_tts_config
 from server.utils.logger import log_error, log_ws
+from server.utils.rate_limiter import RateLimiter
 
 router = APIRouter()
 
 _UPSTREAM_STT_EVENTS = {"audio_input", "speech_start", "speech_end", "flush", "config.update", "end", "ping"}
+
+# Every socket opens a paid upstream stream on the platform's provider keys, so
+# both the opening rate and the number held open at once are capped per principal.
+_voice_ws_limiter = RateLimiter(max_requests=60, window_s=60)
+_MAX_OPEN_VOICE_WS = 8
+_open_voice_ws: dict[str, int] = {}
+_open_voice_ws_lock = threading.Lock()
+_VOICE_WS_SUBPROTOCOL = "dialtact-voice"
+_AUTH_PROTOCOL_PREFIX = "dialtact-auth."
+
+
+@dataclass(frozen=True)
+class _VoiceWsGrant:
+    key: str
+    session_id: str
+    call_id: str | None
+
+
+def _ws_bearer_token(ws: WebSocket) -> str:
+    """Subscriber token from the auth subprotocol or an Authorization header — never the URL."""
+    for protocol in ws.scope.get("subprotocols") or []:
+        candidate = str(protocol or "").strip()
+        if candidate.startswith(_AUTH_PROTOCOL_PREFIX):
+            token = candidate[len(_AUTH_PROTOCOL_PREFIX):].strip()
+            if token:
+                return token
+    auth = ws.headers.get("authorization") or ""
+    if auth.lower().startswith("bearer "):
+        return auth.split(" ", 1)[1].strip()
+    return ""
+
+
+async def _voice_ws_principal(ws: WebSocket, session_id: str, call_id: str | None) -> _VoiceWsGrant | None:
+    """Dev Portal operators may open any session; subscribers only their own active call."""
+    from server.auth.dependencies import refresh_admin_sessions_if_needed
+    from server.auth.rbac import role_has_permission
+    from server.auth.session import cookie_names, parse_session_token
+
+    dev_token = ws.cookies.get(cookie_names()["dev"]) or ""
+    if dev_token:
+        await refresh_admin_sessions_if_needed(dev_token)
+        dev = parse_session_token(dev_token, "dev")
+        if dev is not None and role_has_permission(dev.role, "dev.platform_brain"):
+            return _VoiceWsGrant(key=f"dev:{dev.subject}", session_id=session_id, call_id=call_id)
+
+    token = _ws_bearer_token(ws)
+    if not token or not call_id:
+        return None
+    from server.auth.subscriber_dependencies import principal_from_verified_token
+    from server.call.call_context import get as get_call_ctx
+    from server.services.saas.tenant_guard import subscriber_workspace_tenant_id
+
+    try:
+        principal = await principal_from_verified_token(token, request_path=ws.url.path)
+    except Exception:
+        return None
+    tenants = {str(principal.tenant_id), str(subscriber_workspace_tenant_id(principal))}
+    ctx = get_call_ctx(call_id)
+    if ctx is None or str(ctx.tenant_id) not in tenants or getattr(ctx, "status", "active") != "active":
+        return None
+    # The call's own session, so a browser cannot borrow another session's overrides.
+    return _VoiceWsGrant(key=f"user:{principal.user_id}", session_id=ctx.session_id, call_id=ctx.call_id)
+
+
+async def _admit_voice_ws(ws: WebSocket) -> _VoiceWsGrant | None:
+    """Authenticate, rate-limit and reserve a slot BEFORE accepting the handshake."""
+    q = ws.query_params
+    session_id = q.get("sessionId", "default")
+    call_id = q.get("call_id") or q.get("callId") or None
+    grant = await _voice_ws_principal(ws, session_id, call_id)
+    if grant is None:
+        log_ws("Voice WS rejected: authentication required", path=ws.url.path)
+        await ws.close(code=1008)
+        return None
+    allowed, _retry = _voice_ws_limiter.allow(grant.key)
+    with _open_voice_ws_lock:
+        if allowed and _open_voice_ws.get(grant.key, 0) < _MAX_OPEN_VOICE_WS:
+            _open_voice_ws[grant.key] = _open_voice_ws.get(grant.key, 0) + 1
+        else:
+            allowed = False
+    if not allowed:
+        log_ws("Voice WS rejected: rate limited", path=ws.url.path)
+        await ws.close(code=1008)
+        return None
+    offered = ws.scope.get("subprotocols") or []
+    try:
+        await ws.accept(subprotocol=_VOICE_WS_SUBPROTOCOL if _VOICE_WS_SUBPROTOCOL in offered else None)
+    except Exception:
+        _release_voice_ws(grant)
+        raise
+    return grant
+
+
+def _release_voice_ws(grant: _VoiceWsGrant) -> None:
+    with _open_voice_ws_lock:
+        remaining = _open_voice_ws.get(grant.key, 0) - 1
+        if remaining > 0:
+            _open_voice_ws[grant.key] = remaining
+        else:
+            _open_voice_ws.pop(grant.key, None)
 
 
 def _upstream_tts_config_payload(merged: dict) -> dict:
@@ -234,10 +337,17 @@ def _connect_tts_upstream(
 
 @router.websocket("/ws/stt-realtime")
 async def ws_stt_realtime(ws: WebSocket):
-    await ws.accept()
+    grant = await _admit_voice_ws(ws)
+    if grant is None:
+        return
+    try:
+        await _stt_realtime_session(ws, grant.session_id, grant.call_id)
+    finally:
+        _release_voice_ws(grant)
+
+
+async def _stt_realtime_session(ws: WebSocket, session_id: str, call_id: str | None):
     q = ws.query_params
-    session_id = q.get("sessionId", "default")
-    call_id = q.get("call_id") or q.get("callId")
     upstream = None
     upstream_task = None
     ping_task = None
@@ -386,10 +496,17 @@ async def ws_tts(ws: WebSocket):
     Persistent browser proxy — upstream Sarvam WS reconnects per synthesis turn.
     Client keeps one /ws/tts open; sends config+text+flush each turn.
     """
-    await ws.accept()
+    grant = await _admit_voice_ws(ws)
+    if grant is None:
+        return
+    try:
+        await _tts_session(ws, grant.session_id, grant.call_id)
+    finally:
+        _release_voice_ws(grant)
+
+
+async def _tts_session(ws: WebSocket, session_id: str, call_id: str | None):
     model = ws.query_params.get("model", "bulbul:v3")
-    session_id = ws.query_params.get("sessionId", "default")
-    call_id = ws.query_params.get("call_id") or ws.query_params.get("callId")
     model = _resolve_ws_tts_model(model, session_id, call_id)
     if model not in constants.TTS_MODELS and not str(model).startswith("sonic") and model not in constants.CARTESIA_TTS_MODELS:
         model = "bulbul:v3"

@@ -1,3 +1,5 @@
+import { portalFetch } from "@/lib/auth-client";
+
 /** Single canonical call/compile language for a test-studio agent. */
 export function primaryAgentLanguage(languages?: string[] | null): string {
   const first = (languages || []).map((l) => String(l || "").trim()).find(Boolean);
@@ -30,13 +32,13 @@ export async function seedTestStudioSessionLanguage(
   language: string
 ): Promise<void> {
   await Promise.all([
-    fetch("/api/test-studio/prefs", {
+    portalFetch("dev", "/api/test-studio/prefs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({ sessionId, language }),
     }),
-    fetch("/api/settings/runtime", {
+    portalFetch("dev", "/api/settings/runtime", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",

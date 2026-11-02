@@ -375,13 +375,18 @@ app = FastAPI(
 def _cors_origins_and_credentials() -> tuple[list[str], bool]:
     settings = get_settings()
     raw = (settings.cors_origins or "").strip()
-    base_origins = [
+    # Local dev servers may call the API with credentials in development only: in
+    # production a page on someone's localhost must not ride a customer's cookie.
+    local_origins = [
         "http://localhost:3000",
         "http://localhost:5173",
         "http://localhost:8000",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:8000",
+    ] if settings.app_environment == "development" else []
+    base_origins = [
+        *local_origins,
         "https://app-dev.dialtact.com",
         "https://app.dialtact.com",
         "https://dialtact.com",
@@ -418,12 +423,19 @@ class AuthNoStoreMiddleware(BaseHTTPMiddleware):
     """Auth responses must never be cached (shared proxies / bfcache / CDN)."""
 
     async def dispatch(self, request: Request, call_next):
+        from server.auth.subscriber_cookies import request_is_https
+
+        proto = (request.headers.get("x-forwarded-proto") or request.url.scheme or "").split(",")[0].strip()
+        request_is_https.set(proto == "https")
         response = await call_next(request)
         path = request.url.path or ""
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("X-Frame-Options", "DENY")
         response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
         response.headers.setdefault("Content-Security-Policy", "frame-ancestors 'none'; object-src 'none'; base-uri 'self'")
+        if proto == "https":
+            # Browsers that have seen the site over HTTPS never fall back to plain HTTP.
+            response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
         if path.startswith("/api"):
             response.headers.setdefault("X-Robots-Tag", "noindex, nofollow")
         if "json" in response.headers.get("content-type", "") or response.status_code >= 400:
@@ -462,6 +474,10 @@ def _dev_portal_hosts_allowed(request: Request) -> bool:
             if host:
                 candidates.append(host)
     if not candidates:
+        return False
+    # Anything that came through the Cloudflare tunnel carries its client headers, whatever
+    # Host the proxies rewrote; that is the public internet, never the local admin.
+    if request.headers.get("cf-connecting-ip") or request.headers.get("cf-ray"):
         return False
     return all(_hostname_is_local(h) for h in candidates)
 
@@ -590,7 +606,11 @@ async def app_error_handler(request: Request, exc: AppError):
 
 @app.exception_handler(ConfigError)
 async def config_error_handler(request: Request, exc: ConfigError):
-    return JSONResponse(status_code=500, content={"error": {"code": "config_error", "message": str(exc)}})
+    logger.error("ConfigError: %s", str(exc)[:300])
+    return JSONResponse(
+        status_code=500,
+        content={"error": {"code": "config_error", "message": "The server is missing configuration for this action."}},
+    )
 
 
 @app.exception_handler(Exception)

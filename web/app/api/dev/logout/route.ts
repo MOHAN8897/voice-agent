@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 const API_URL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-async function proxyLogout(req: NextRequest, method: "POST" | "GET") {
+// POST only: a GET sign-out can be triggered by any <img> or link on another page.
+async function proxyLogout(req: NextRequest) {
   const res = await fetch(`${API_URL}/api/dev/logout`, {
-    method,
+    method: "POST",
     headers: { cookie: req.headers.get("cookie") || "" },
     cache: "no-store",
   });
@@ -23,9 +24,5 @@ async function proxyLogout(req: NextRequest, method: "POST" | "GET") {
 }
 
 export async function POST(req: NextRequest) {
-  return proxyLogout(req, "POST");
-}
-
-export async function GET(req: NextRequest) {
-  return proxyLogout(req, "GET");
+  return proxyLogout(req);
 }

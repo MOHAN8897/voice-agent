@@ -1,9 +1,10 @@
 """Test Studio session preferences — stack UI state persisted across restarts."""
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
 
+from server.auth.dependencies import require_dev_session
 from server.services.cartesia_voices import fetch_cartesia_voices
 from server.services.session_persist import session_persist
 
@@ -28,7 +29,7 @@ async def get_test_studio_prefs(sessionId: str = "test-studio"):
     return {"sessionId": sessionId, "prefs": session_persist.get_ui(sessionId)}
 
 
-@router.post("/api/test-studio/prefs")
+@router.post("/api/test-studio/prefs", dependencies=[Depends(require_dev_session)])
 async def save_test_studio_prefs(body: TestStudioUiPrefs):
     patch = {
         k: v
@@ -73,7 +74,10 @@ async def save_test_studio_prefs(body: TestStudioUiPrefs):
 
 
 @router.get("/api/settings/cartesia-voices")
-async def list_cartesia_voices(refresh: bool = False, model: str = "sonic-3.5"):
+async def list_cartesia_voices(request: Request, refresh: bool = False, model: str = "sonic-3.5"):
+    if refresh:
+        # A forced refresh calls Cartesia on the platform key; operators only.
+        await require_dev_session(request, None)
     await fetch_cartesia_voices(force=refresh)
     from server.config.constants import constants
     from server.services import cartesia_voices as cv

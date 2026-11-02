@@ -168,50 +168,57 @@ async def billing_catalog():
         load_tier_merchandising,
     )
 
-    settings = get_settings()
-    rates = await load_current_rates()
-    merchandising = await load_tier_merchandising()
-    return {
-        "currency": "USD",
-        "plans": [
-            {"id": "starter", "name": "Starter", "numbersIncluded": 0},
-            {"id": "growth", "name": "Growth", "numbersIncluded": 0},
-        ],
-        "numberSkus": [
-            {
-                "country": "IN",
-                "currency": "USD",
-                "monthlyCents": rates["did_monthly_usd_cents"],
-                "monthlyUsd": round(rates["did_monthly_usd_cents"] / 100.0, 2),
-                "monthlyInr": round(rates["did_monthly_inr_paise"] / 100.0, 2),
-            }
-        ],
-        "topupMinUsd": settings.topup_min_usd,
-        "topupMaxUsd": settings.topup_max_usd,
-        "topupMinInr": 100,
-        "topupMaxInr": 500000,
-        "paymentProvider": "razorpay",
-        "rates": {
-            "pstnUsdPerMin": round(rates["pstn_rate_usd_micros_per_min"] / 1_000_000.0, 6),
-            "pstnInrPerMin": round(rates["pstn_rate_inr_paise_per_min"] / 100.0, 2),
-            "webInrPerMin": round(rates["web_agent_rate_inr_paise_per_min"] / 100.0, 2),
-            "webUsdPerMin": round(rates["web_agent_rate_usd_micros_per_min"] / 1_000_000.0, 6),
-            "numberMonthlyUsd": round(rates["did_monthly_usd_micros"] / 1_000_000.0, 6),
-            "numberMonthlyInr": round(rates["did_monthly_inr_paise"] / 100.0, 2),
-            "minBalanceUsd": round(settings.pstn_min_balance_usd_cents / 100.0, 2),
-            "minBalanceInr": round(settings.pstn_min_balance_inr_paise / 100.0, 2),
-            "fxRateInr": rates["fx_rate_inr"],
-        },
-        # GST applies to INR supplies to Indian recipients. The exact split is
-        # quoted per account in POST /api/billing/quote.
-        "tax": await _public_tax_summary(),
-        "pricingVersion": int(rates.get("version") or 1),
-        "merchandisingVersion": int(merchandising.get("version") or 0),
-        "featuredStyle": merchandising.get("featuredStyle") or DEFAULT_FEATURED_STYLE,
-        # Operators choose which calculator controls the public page offers.
-        "calculator": calculator_flags(merchandising),
-        "tiers": await _public_tier_prices(rates, merchandising),
-    }
+    # Every home-page and console visit asks for this; it costs several queries. Shared
+    # through Redis for 30s; saving rates, tax or pricing tags clears it at once.
+    from server.utils.cache import BILLING_CATALOG_KEY, cached_json
+
+    async def build():
+        settings = get_settings()
+        rates = await load_current_rates()
+        merchandising = await load_tier_merchandising()
+        return {
+            "currency": "USD",
+            "plans": [
+                {"id": "starter", "name": "Starter", "numbersIncluded": 0},
+                {"id": "growth", "name": "Growth", "numbersIncluded": 0},
+            ],
+            "numberSkus": [
+                {
+                    "country": "IN",
+                    "currency": "USD",
+                    "monthlyCents": rates["did_monthly_usd_cents"],
+                    "monthlyUsd": round(rates["did_monthly_usd_cents"] / 100.0, 2),
+                    "monthlyInr": round(rates["did_monthly_inr_paise"] / 100.0, 2),
+                }
+            ],
+            "topupMinUsd": settings.topup_min_usd,
+            "topupMaxUsd": settings.topup_max_usd,
+            "topupMinInr": 100,
+            "topupMaxInr": 500000,
+            "paymentProvider": "razorpay",
+            "rates": {
+                "pstnUsdPerMin": round(rates["pstn_rate_usd_micros_per_min"] / 1_000_000.0, 6),
+                "pstnInrPerMin": round(rates["pstn_rate_inr_paise_per_min"] / 100.0, 2),
+                "webInrPerMin": round(rates["web_agent_rate_inr_paise_per_min"] / 100.0, 2),
+                "webUsdPerMin": round(rates["web_agent_rate_usd_micros_per_min"] / 1_000_000.0, 6),
+                "numberMonthlyUsd": round(rates["did_monthly_usd_micros"] / 1_000_000.0, 6),
+                "numberMonthlyInr": round(rates["did_monthly_inr_paise"] / 100.0, 2),
+                "minBalanceUsd": round(settings.pstn_min_balance_usd_cents / 100.0, 2),
+                "minBalanceInr": round(settings.pstn_min_balance_inr_paise / 100.0, 2),
+                "fxRateInr": rates["fx_rate_inr"],
+            },
+            # GST applies to INR supplies to Indian recipients. The exact split is
+            # quoted per account in POST /api/billing/quote.
+            "tax": await _public_tax_summary(),
+            "pricingVersion": int(rates.get("version") or 1),
+            "merchandisingVersion": int(merchandising.get("version") or 0),
+            "featuredStyle": merchandising.get("featuredStyle") or DEFAULT_FEATURED_STYLE,
+            # Operators choose which calculator controls the public page offers.
+            "calculator": calculator_flags(merchandising),
+            "tiers": await _public_tier_prices(rates, merchandising),
+        }
+
+    return await cached_json(BILLING_CATALOG_KEY, 30, build)
 
 
 @router.post("/api/billing/quote")

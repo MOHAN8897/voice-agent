@@ -658,7 +658,14 @@ async def telnyx_webhook(request: Request):
 
     raw = await request.body()
     try:
-        require_key = str(settings.app_environment or "").lower() in {"production", "staging"}
+        from server.services.dev_runtime import effective_app_environment
+
+        # A configured key is always enforced; only a development deployment may run
+        # without one (the runtime override can tighten that, never loosen it).
+        require_key = (
+            str(settings.app_environment or "").lower() != "development"
+            or str(effective_app_environment() or "").lower() != "development"
+        )
         body = parse_verified_webhook_json(
             payload=raw,
             headers=request.headers,

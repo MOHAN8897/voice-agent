@@ -5,10 +5,11 @@ Keys never settable from UI (stay in .env server-side) — industry standard.
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from typing import Optional
 
+from server.auth.dependencies import require_dev_session
 from server.config.constants import constants
 from server.config.env import get_settings
 from server.providers import resolve_stack_for_session
@@ -230,7 +231,8 @@ async def get_tts_config(
     return {"sessionId": sessionId, "ttsConfig": cfg}
 
 
-@router.post("/api/settings/runtime")
+# Writes are Dev Portal only: a runtime session id is shared, unscoped state.
+@router.post("/api/settings/runtime", dependencies=[Depends(require_dev_session)])
 async def post_runtime(body: RuntimePatch):
     patch = {k: v for k, v in body.model_dump().items() if k != "sessionId" and v is not None}
     if not patch:
@@ -246,7 +248,7 @@ async def post_runtime(body: RuntimePatch):
     return {"ok": True, "sessionId": body.sessionId, "values": values, "persistedToDb": persisted}
 
 
-@router.delete("/api/settings/runtime")
+@router.delete("/api/settings/runtime", dependencies=[Depends(require_dev_session)])
 async def delete_runtime(sessionId: str = Query("default")):
     runtime_settings.clear(sessionId)
     try:

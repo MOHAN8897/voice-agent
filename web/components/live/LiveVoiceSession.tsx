@@ -20,7 +20,8 @@ import { isMobileLikeDevice, mobileModeFromPreset, profileSummary, resolveVoiceA
 import { isSubstantiveTranscript, looksIncompleteReply } from "@/lib/voice/transcript-gate";
 import { detectHeadphones, headphonesFromStream } from "@/lib/voice/headphone-detect";
 import { warmupBrowserAec } from "@/lib/voice/aec-warmup";
-import { apiOrigin, wsUrl } from "@/lib/api";
+import { portalFetch } from "@/lib/auth-client";
+import { cookieWsUrl } from "@/lib/voice/cookie-ws-url";
 import { billingCharCount } from "@/lib/billing-chars";
 import { HANGUP_TRAIL_SILENCE_MS } from "@/lib/hangup";
 
@@ -444,10 +445,8 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
       markLastAssistantInterrupted();
       trace("vad", `barge-in ${reason}`);
 
-      fetch(`${apiOrigin()}/api/session/interrupt`, {
+      portalFetch("dev", "/api/session/interrupt", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({
           sessionId: sessionId || "default",
           callId: callIdRef.current,
@@ -991,7 +990,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
       }
     }
 
-    const sock = new WebSocket(`${wsUrl("/ws/stt-realtime")}?${q}`);
+    const sock = new WebSocket(`${cookieWsUrl("/ws/stt-realtime")}?${q}`);
     socketRef.current = sock;
     sock.binaryType = "arraybuffer";
     sock.onopen = () => {

@@ -18,6 +18,16 @@ from server.services.saas import employee_brain_build, voice_stack_profiles
 from server.tests.test_employee_script_pipeline import BRIEF, extraction
 
 
+@pytest.fixture(autouse=True)
+def _fresh_generation_window():
+    """The per-workspace generation limit is process-wide; give each test its own window."""
+    from server.routes.app_agents import _generation_limiter
+
+    _generation_limiter.reset()
+    yield
+    _generation_limiter.reset()
+
+
 MEDIUM_PROFILE = {
     "revision": 91,
     "profile": {"enabled": True, "supportedLanguages": ["en-IN", "te-IN"]},

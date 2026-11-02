@@ -8,14 +8,16 @@ from __future__ import annotations
 
 import base64
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 
+from server.auth.call_sessions import resolve_call_tenant, tenant_session_id
 from server.auth.subscriber_dependencies import (
     SubscriberPrincipal,
     require_subscriber_jwt_if_enabled,
 )
 from server.config.constants import coerce_supported_language, constants
+from server.config.env import get_settings
 from server.services.runtime_settings import runtime_settings
 from server.session.voice_session import VoiceSessionController
 from server.utils.audio import validate_audio_size
@@ -32,22 +34,39 @@ def _runtime(session_id: str) -> dict:
         return {}
 
 
+def _scope_voice_session(
+    request: Request, principal: SubscriberPrincipal | None, session_id: str, overrides: tuple[str, ...]
+) -> str:
+    """A tenant's turn runs in its own session namespace, on its saved instructions."""
+    if not get_settings().saas_auth_enabled:
+        return session_id
+    tenant_id = resolve_call_tenant(request, principal)
+    if tenant_id is None:
+        return session_id
+    if any(str(value or "").strip() for value in overrides):
+        raise HTTPException(status_code=403, detail="Call instructions are locked to the saved agent configuration")
+    return tenant_session_id(tenant_id, session_id)
+
+
 @router.post("/api/voice/turn")
 async def voice_turn(
+    request: Request,
     file: UploadFile = File(..., description="Audio WAV/MP3/WEBM ≤10MB"),
     language_code: str = Form("te-IN"),
     mode: str = Form("transcribe"),
-    sessionId: str = Form("default"),
+    sessionId: str = Form("default", max_length=100),
     brainPrompt: str = Form(""),
     userInstructions: str = Form(""),
     businessInstructions: str = Form(""),
     ttsSpeaker: str = Form(""),
     _auth: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
 ):
+    sessionId = _scope_voice_session(request, _auth, sessionId, (brainPrompt, userInstructions, businessInstructions))
     controller = VoiceSessionController()
     rt = _runtime(sessionId)
     try:
-        data = await file.read()
+        # Read one byte past the cap so an oversized upload is refused without buffering it all.
+        data = await file.read(constants.MAX_AUDIO_BYTES + 1)
         validate_audio_size(data, constants.MAX_AUDIO_BYTES)
         language_code = coerce_supported_language(language_code)
         if mode not in ("transcribe", "translate", "verbatim", "translit", "codemix"):
@@ -113,51 +132,3 @@ async def voice_turn(
     except Exception as e:
         log_error("Voice turn unexpected", err=str(e)[:500])
         raise HTTPException(status_code=500, detail={"error": {"code": "provider_error", "message": "Voice turn failed"}}) from e
-
-
-@router.post("/api/voice/stt-brain")
-async def voice_stt_brain_only(
-    file: UploadFile = File(...),
-    language_code: str = Form("te-IN"),
-    mode: str = Form("transcribe"),
-    sessionId: str = Form("default"),
-    brainPrompt: str = Form(""),
-    userInstructions: str = Form(""),
-    businessInstructions: str = Form(""),
-):
-    """Text-only turn (no TTS) — useful for low-latency testing / Phase 2 compatibility."""
-    controller = VoiceSessionController()
-    rt = _runtime(sessionId)
-    try:
-        data = await file.read()
-        validate_audio_size(data, constants.MAX_AUDIO_BYTES)
-        brain_instr = brainPrompt.strip() if brainPrompt and brainPrompt.strip() else None
-        eff_user = userInstructions if userInstructions else None
-        eff_business = businessInstructions if businessInstructions else None
-        result = await controller.run_turn(
-            audio_bytes=data,
-            filename=file.filename or "audio.wav",
-            content_type=file.content_type or "audio/wav",
-            language_code=language_code,
-            stt_mode=mode if mode != "transcribe" else rt.get("sttMode", "transcribe"),
-            stt_model=rt.get("sttModel"),
-            session_id=sessionId,
-            brain_prompt=brain_instr,
-            user_instructions=eff_user,
-            business_instructions=eff_business,
-            openai_model=rt.get("openaiModel"),
-            openai_temperature=rt.get("openaiTemperature"),
-            openai_reasoning_effort=rt.get("openaiReasoningEffort"),
-            openai_max_tokens=rt.get("openaiMaxTokens"),
-            synthesize_audio=False,
-        )
-        return {
-            "transcript": result.transcript,
-            "brain_text": result.brain_text,
-            "language_context": result.language_context,
-            "metrics": {"sttMs": result.stt_ms, "brainMs": result.brain_ms, "e2eMs": result.e2e_ms},
-            "request_ids": result.request_ids,
-            "usage": result.usage,
-        }
-    except AppError as e:
-        raise HTTPException(status_code=e.status_code, detail=e.to_dict()) from e

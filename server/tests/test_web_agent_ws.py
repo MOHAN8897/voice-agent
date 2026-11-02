@@ -198,10 +198,11 @@ def test_web_agent_token_prefers_subprotocol_over_url_query():
     assert route._ws_token(websocket) == "header-token"
 
 
-def test_web_agent_token_keeps_legacy_query_and_authorization_fallbacks():
+def test_web_agent_token_ignores_query_and_keeps_authorization_fallback():
     route = import_module("server.routes.web_agent_ws")
     query_ws = SimpleNamespace(scope={}, query_params={"token": "query-token"}, headers={})
     auth_ws = SimpleNamespace(scope={}, query_params={}, headers={"authorization": "Bearer authorization-token"})
 
-    assert route._ws_token(query_ws) == "query-token"
+    # Tokens in the URL end up in access logs; only the subprotocol or header count.
+    assert route._ws_token(query_ws) == ""
     assert route._ws_token(auth_ws) == "authorization-token"

@@ -5,15 +5,17 @@ POST /api/tts/stream→ proxy binary stream (audio/mpeg)
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel, Field
 
+from server.auth.call_sessions import resolve_call_tenant
 from server.auth.subscriber_dependencies import (
     SubscriberPrincipal,
     require_subscriber_jwt_if_enabled,
 )
 from server.config.constants import coerce_supported_language, constants
+from server.config.env import get_settings
 from server.services.registry_tts_service import synthesize_via_registry
 from server.services.sarvam_tts_service import synthesize, synthesize_stream
 from server.utils.errors import AppError
@@ -33,11 +35,28 @@ class TTSRequest(BaseModel):
     temperature: float | None = Field(None, ge=0.01, le=1.0)
 
 
+def _require_own_call(call_id: str, request: Request, principal: SubscriberPrincipal | None) -> None:
+    """Agent audio is archived into the call, so a tenant may only name its own live call."""
+    if not get_settings().saas_auth_enabled:
+        return
+    tenant_id = resolve_call_tenant(request, principal)
+    if tenant_id is None:
+        return
+    from server.call import call_context
+
+    ctx = call_context.get(call_id)
+    if ctx is None or str(ctx.tenant_id) != tenant_id:
+        raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Call not found"}})
+
+
 @router.post("/api/tts")
 async def tts_rest(
     body: TTSRequest,
+    request: Request,
     _auth: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
 ):
+    if body.callId:
+        _require_own_call(body.callId, request, _auth)
     # Enforce REST limit strictly
     if len(body.text) > constants.TTS_MAX_CHARS_REST:
         raise HTTPException(

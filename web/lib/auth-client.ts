@@ -83,14 +83,15 @@ export async function portalFetch(
 
 export async function portalLogout(kind: PortalKind, redirectTo: string) {
   const endpoint = kind === "dev" ? "/api/dev/logout" : "/api/app/logout";
+  // Sign-out is POST only (a GET variant could be fired cross-site by any link or image).
   try {
     const r = await portalFetch(kind, endpoint, { method: "POST" });
     if (!r.ok) {
-      await fetch(endpoint, { method: "GET", credentials: "include" });
+      await fetch(endpoint, { method: "POST", credentials: "include" });
     }
   } catch {
     try {
-      await fetch(endpoint, { method: "GET", credentials: "include" });
+      await fetch(endpoint, { method: "POST", credentials: "include" });
     } catch {
       /* last resort — still clear client state */
     }

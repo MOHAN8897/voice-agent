@@ -12,6 +12,7 @@ import { TelephonySettingsCard } from '../TelephonySettingsCard';
 import { SectionNav } from './SectionNav';
 import { FollowUpSettingsCard } from './FollowUpSettingsCard';
 import { useAuth } from '../../../context/AuthContext';
+import { isSafeNavigationUrl } from '../../../lib/navigationPolicy';
 
 const DEFAULT_PROFILE = {
   greetingPhrase: '',
@@ -644,7 +645,7 @@ export function AgentSettingsPanel({
                 <div className="mt-3 flex flex-col gap-2 text-meta leading-relaxed text-fg-body">
                   {complianceSummary.notes.map((note) => <p key={note}>{note}</p>)}
                   <ul className="flex flex-wrap gap-x-4 gap-y-2">
-                    {(complianceSummary.sources || []).map((source) => (
+                    {(complianceSummary.sources || []).filter((source) => isSafeNavigationUrl(source.url)).map((source) => (
                       <li key={source.url}><a href={source.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">{source.label}</a></li>
                     ))}
                   </ul>

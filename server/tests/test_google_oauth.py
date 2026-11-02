@@ -10,20 +10,35 @@ from server.services.saas.google_oauth_service import (
 )
 
 
-def test_oauth_state_single_use():
-    state = new_oauth_state("http://localhost:5173")
-    info = consume_oauth_state(state)
+async def test_oauth_state_single_use():
+    state, entry = await new_oauth_state("http://localhost:5173", start_host="localhost")
+    info = await consume_oauth_state(state)
     assert info is not None
     assert info.get("return_to") == "http://localhost:5173"
-    assert consume_oauth_state(state) is None
+    # Started on the host the callback lands on, so the callback checks the state cookie.
+    assert info.get("bound") is True
+    assert await consume_oauth_state(state) is None
 
 
-def test_auth_handoff_single_use():
-    hid = create_auth_handoff({"accessToken": "a", "refreshToken": "r", "user": {"email": "x@y.z"}})
-    data = consume_auth_handoff(hid)
+async def test_oauth_state_from_another_host_is_not_cookie_bound():
+    state, _ = await new_oauth_state("http://localhost:5173", start_host="api.example.com")
+    assert (await consume_oauth_state(state))["bound"] is False
+
+
+async def test_auth_handoff_single_use():
+    hid = await create_auth_handoff({"accessToken": "a", "refreshToken": "r", "user": {"email": "x@y.z"}})
+    data = await consume_auth_handoff(hid)
     assert data is not None
     assert data["accessToken"] == "a"
-    assert consume_auth_handoff(hid) is None
+    assert await consume_auth_handoff(hid) is None
+
+
+def test_state_cookie_value_is_a_hash_of_the_state():
+    from server.services.saas.google_oauth_service import state_cookie_value
+
+    assert state_cookie_value("abc") != "abc"
+    assert state_cookie_value("abc") == state_cookie_value("abc")
+    assert len(state_cookie_value("abc")) == 64
 
 
 def test_google_signin_config_shape():

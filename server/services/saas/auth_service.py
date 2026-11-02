@@ -232,16 +232,25 @@ async def issue_impersonation_session(
                     break
             if chosen is None:
                 raise ValueError("user_not_member")
+            if is_platform_admin_email(chosen[1].email):
+                # A platform admin's session would hand the support actor platform-wide power.
+                raise ValueError("target_is_platform_admin")
         else:
+            # Platform admins are never impersonated: skip them when picking a default.
+            candidates = [(m, u) for m, u in rows if not is_platform_admin_email(u.email)]
+            if not candidates:
+                raise ValueError("target_is_platform_admin")
             # Prefer customer_admin so the support view matches the tenant's admin console.
-            for m, u in rows:
-                if m.role in (ROLE_CUSTOMER_ADMIN, "customer_admin", ROLE_PLATFORM_ADMIN):
+            for m, u in candidates:
+                if m.role in (ROLE_CUSTOMER_ADMIN, "customer_admin"):
                     chosen = (m, u)
                     break
             if chosen is None:
-                chosen = rows[0]
+                chosen = candidates[0]
         membership, user = chosen
         role = _role_for_user(user.email, membership.role)
+        if role == ROLE_PLATFORM_ADMIN:
+            raise ValueError("target_is_platform_admin")
         tokens = await _issue_tokens(
             session,
             user,
@@ -424,16 +433,34 @@ async def login_or_create_oauth_user(
             if membership.role != role:
                 membership.role = role
         if user.email_verified_at is None:
+            # Anyone can sign up with an address they do not own and leave it unverified.
+            # Google has now proven who owns it, so whatever that signup set is void: its
+            # password stops working and any session it holds is ended. Otherwise the
+            # squatter's password would open the real owner's account from here on.
+            user.password_hash = await asyncio.to_thread(hash_portal_password, secrets.token_urlsafe(32))
+            await session.execute(
+                update(RefreshToken)
+                .where(RefreshToken.user_id == user.user_id, RefreshToken.revoked_at.is_(None))
+                .values(revoked_at=_utcnow())
+            )
             user.email_verified_at = _utcnow()
         if user.status == "pending_verification":
             user.status = "active"
             user.updated_at = _utcnow()
+        if user.status == "disabled":
+            raise ValueError("account_disabled")
         tokens = await _issue_tokens(session, user, tenant.tenant_id, role, auth_time=_utcnow())
         await _log_event(session, f"login_{provider}", user_id=user.user_id, tenant_id=tenant.tenant_id)
         onboarded = await check_user_completed_onboarding(session, user.user_id)
         await session.commit()
         await _seed_admin_wallet(tenant.tenant_id, user.user_id, user.email)
         return {**tokens, **_session_public(user, tenant, role, has_completed_onboarding=onboarded)}
+
+
+def _masked(email: str) -> str:
+    """Enough of an address to correlate a log line with an account, not to harvest one."""
+    local, _, domain = (email or "").partition("@")
+    return f"{(local[:1] or '*')}***@{domain}" if domain else "***"
 
 
 def _generate_email_otp() -> str:
@@ -526,7 +553,7 @@ async def signup(
         # The reason belongs in the operator's log, not in the signup response.
         logger.error(
             "signup verification email not delivered to %s: code=%s status=%s detail=%s",
-            norm,
+            _masked(norm),
             delivery.code,
             delivery.provider_status,
             delivery.detail,
@@ -887,6 +914,8 @@ async def forgot_password(email: str) -> str | None:
         if user is None:
             return None
         raw = secrets.token_urlsafe(32)
+        # Only the newest link works: an older one sitting in an inbox stops being a key.
+        await session.execute(delete(PasswordResetToken).where(PasswordResetToken.user_id == user.user_id))
         session.add(
             PasswordResetToken(
                 token_hash=_hash_token(raw),
@@ -916,11 +945,12 @@ async def reset_password(token: str, new_password: str) -> dict[str, Any]:
         if row is None:
             raise ValueError("invalid_token")
         user = await session.get(User, row.user_id)
-        if user is None:
+        if user is None or user.status == "disabled":
             raise ValueError("invalid_token")
         user.password_hash = await asyncio.to_thread(hash_portal_password, new_password)
         user.updated_at = _utcnow()
-        await session.delete(row)
+        # Every reset link for the account is spent, not just this one.
+        await session.execute(delete(PasswordResetToken).where(PasswordResetToken.user_id == user.user_id))
         # Everything else on the account is signed out — the reset link may have been
         # forwarded, and the old password is no longer trustworthy.
         await session.execute(
@@ -1227,7 +1257,7 @@ async def verify_email_otp(email: str, otp: str, *, ip: str | None = None) -> di
             )
         )
         row = tok.scalar_one_or_none()
-        if row is None:
+        if row is None or user.status == "disabled":
             raise ValueError("invalid_otp")
         row.used_at = _utcnow()
         user.email_verified_at = _utcnow()
@@ -1252,6 +1282,27 @@ async def verify_email_otp(email: str, otp: str, *, ip: str | None = None) -> di
         await session.commit()
         await _seed_admin_wallet(tenant.tenant_id, user.user_id, user.email)
         return {**tokens, **_session_public(user, tenant, role, has_completed_onboarding=onboarded)}
+
+
+async def burn_email_otps(email: str) -> None:
+    """Spend every outstanding sign-up code for an address: after too many wrong guesses
+    the code in flight is dead and a new one has to be requested."""
+    factory = get_session_factory()
+    if factory is None:
+        return
+    norm = _normalize_email(email)
+    async with factory() as session:
+        user = (
+            await session.execute(select(User).where(func.lower(User.email) == norm, User.deleted_at.is_(None)))
+        ).scalar_one_or_none()
+        if user is None:
+            return
+        await session.execute(
+            update(EmailVerificationToken)
+            .where(EmailVerificationToken.user_id == user.user_id, EmailVerificationToken.used_at.is_(None))
+            .values(used_at=_utcnow())
+        )
+        await session.commit()
 
 
 async def verify_email_token(token: str) -> None:
@@ -1300,7 +1351,7 @@ async def resend_verification_email(email: str, *, expose_debug_otp: bool = Fals
     if not delivery.ok:
         logger.error(
             "resent verification email not delivered to %s: code=%s status=%s detail=%s",
-            norm,
+            _masked(norm),
             delivery.code,
             delivery.provider_status,
             delivery.detail,

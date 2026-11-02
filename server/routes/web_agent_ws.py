@@ -29,9 +29,7 @@ def _ws_token(ws: WebSocket) -> str:
             token = candidate[len(_WEB_AGENT_AUTH_PROTOCOL_PREFIX):].strip()
             if token:
                 return token
-    q = ws.query_params.get("token") or ""
-    if q.strip():
-        return q.strip()
+    # No ?token= fallback: query strings land in proxy and access logs.
     auth = ws.headers.get("authorization") or ""
     if auth.lower().startswith("bearer "):
         return auth.split(" ", 1)[1].strip()

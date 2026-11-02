@@ -5,9 +5,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from server.auth.dependencies import require_dev_session
 from server.config.constants import constants
 from server.config.env import get_settings
 from server.services.dev_runtime import effective_app_environment, effective_config_mode, effective_voice_tier
@@ -15,7 +16,9 @@ from server.providers import get_provider_registry, resolve_stack
 from server.providers.base import StackSelection, StageSelection
 from server.utils.errors import AppError
 
-router = APIRouter()
+# Vendor catalog, health, fallback chains and tier stacks are platform internals:
+# Dev Portal only (the customer app reads its voice options from its own routes).
+router = APIRouter(dependencies=[Depends(require_dev_session)])
 
 
 def _catalog_handler() -> dict[str, Any]:

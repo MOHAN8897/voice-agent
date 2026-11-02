@@ -19,6 +19,12 @@ from server.services.brain_budget import resolve_brain_budget
 from server.services.prompt_cache_key import cache_eligible
 from server.services.prompt_cache_tracker import prompt_cache_tracker
 from server.auth.calls_tenant import resolve_calls_tenant_id
+from server.auth.dependencies import require_dev_session
+from server.auth.instructions_access import (
+    InstructionsAccess,
+    authorize_instruction_session,
+    require_instructions_access,
+)
 from server.auth.tenant_context import tenant_id_from_request
 from server.call.call_store import call_store
 from server.utils.metrics import metrics
@@ -30,15 +36,27 @@ router = APIRouter()
 async def call_metrics(call_id: str, scoped_tenant: str = Depends(resolve_calls_tenant_id)):
     from server.call.call_ledger import call_ledger
     from server.call.memory_manager import memory_manager
+    from server.call.paths import validate_call_id_format
 
+    try:
+        call_id = validate_call_id_format(call_id)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"code": "validation_error", "message": "Invalid call_id format"}},
+        ) from exc
     stored = await call_store.get(call_id)
     if stored is None and not call_ledger.meta_path(call_id).exists():
         raise HTTPException(
             status_code=404,
             detail={"error": {"code": "not_found", "message": "Call not found"}},
         )
-    if get_settings().saas_auth_enabled and stored:
-        if str(stored.get("tenant_id") or "") != scoped_tenant:
+    if get_settings().saas_auth_enabled:
+        # A call that only exists on disk is owned by the tenant its meta names.
+        tenant = str((stored or {}).get("tenant_id") or "")
+        if not tenant:
+            tenant = str((call_ledger.read_meta(call_id) or {}).get("tenant_id") or "")
+        if not tenant or tenant != scoped_tenant:
             raise HTTPException(
                 status_code=404,
                 detail={"error": {"code": "not_found", "message": "Call not found"}},
@@ -60,7 +78,8 @@ async def call_metrics(call_id: str, scoped_tenant: str = Depends(resolve_calls_
     }
 
 
-@router.get("/api/metrics")
+# Process-wide counters across every tenant's sessions — Dev Portal only.
+@router.get("/api/metrics", dependencies=[Depends(require_dev_session)])
 async def get_metrics():
     snap = metrics.snapshot()
     snap["sessions"] = conversation_manager.stats()
@@ -125,7 +144,7 @@ async def fleet_analytics(
     }
 
 
-@router.post("/api/metrics/reset")
+@router.post("/api/metrics/reset", dependencies=[Depends(require_dev_session)])
 async def reset_metrics():
     metrics.reset()
     prompt_cache_tracker.reset()
@@ -137,7 +156,9 @@ async def effective_prompt(
     sessionId: str = Query("default"),
     transcript: str = Query("Python అంటే ఏమిటి?", max_length=5000),
     language_code: str = Query("te-IN"),
+    access: InstructionsAccess = Depends(require_instructions_access),
 ):
+    await authorize_instruction_session(sessionId, access)
     behaviour = instruction_store.get_behaviour(sessionId)
     business = instruction_store.get_business(sessionId)
     style = instruction_store.get_style(sessionId)

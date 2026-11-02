@@ -37,3 +37,11 @@
 .signin-card input:focus { border-color: #000 !important; box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.08) !important; } /* taste-skill-ignore: a focus ring, not a resting shadow */
 .signin-card :is(a, button, input):focus-visible { outline: 2px solid #000; outline-offset: 2px; }
 .signin-card span.font-mono.uppercase { /* taste-skill-ignore: turns the form's monospace divider into plain text */ font-family: inherit; text-transform: none; letter-spacing: 0; font-size: 0.8125rem; color: #6b6b6b; }
+
+/* Touch screens: the form's text links and the remember-me row get finger-sized hit
+   areas, and its smallest text grows to stay readable. */
+@media (pointer: coarse) {
+  .signin-card button[type='button']:not([class*='bg-']):not([aria-label]),
+  .signin-card label:has(input[type='checkbox']) { min-height: 44px; display: inline-flex; align-items: center; }
+  .signin-card [class*='text-[11.5px]'] { font-size: 0.8125rem !important; }
+}

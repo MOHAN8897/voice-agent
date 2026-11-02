@@ -32,6 +32,9 @@ def _isolate_test_database(tmp_path_factory):
     os.environ["DATA_DIR"] = str(tmp_path_factory.mktemp("voice-agent-unit-data"))
     previous_fx_live = os.environ.get("FX_RATE_LIVE")
     os.environ["FX_RATE_LIVE"] = "false"
+    # Rate limits count in-process under tests: a shared Redis would carry counts
+    # between test runs and between tests.
+    os.environ.setdefault("RATE_LIMIT_BACKEND", "memory")
     previous_saas_auth = os.environ.get("SAAS_AUTH_ENABLED")
     os.environ["SAAS_AUTH_ENABLED"] = "false"
     test_secrets = {key: os.environ.get(key) for key in ("OPENAI_API_KEY", "SARVAM_API_KEY")}
@@ -122,13 +125,16 @@ def _isolate_provider_health():
 @pytest.fixture(autouse=True)
 def _isolate_request_limits():
     """Each test gets a fresh request window; rate-limit tests still enforce it."""
-    from server.app import rate_limiter, tts_limiter
+    import server.app  # noqa: F401  (registers every router's limiters)
+    from server.routes.auth import _account_lockout
+    from server.utils.rate_limiter import reset_all
 
-    rate_limiter.reset()
-    tts_limiter.reset()
+    resets = (reset_all, _account_lockout.reset)
+    for reset in resets:
+        reset()
     yield
-    rate_limiter.reset()
-    tts_limiter.reset()
+    for reset in resets:
+        reset()
 
 
 @pytest.fixture(autouse=True)

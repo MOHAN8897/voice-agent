@@ -130,7 +130,7 @@ export function DevRuntimePanel() {
             type="button"
             variant="secondary"
             onClick={() =>
-              fetch("/api/settings/runtime?sessionId=dev-studio", {
+              portalFetch("dev", "/api/settings/runtime?sessionId=dev-studio", {
                 method: "DELETE",
                 credentials: "include",
               }).then(() => load())

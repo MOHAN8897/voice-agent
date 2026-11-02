@@ -3,16 +3,19 @@ Session control — barge-in: stop playback, reconcile history to what the calle
 """
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from server.agent.conversation_manager import conversation_manager
+from server.auth.dependencies import require_dev_session
 from server.call import call_context
 from server.utils.metrics import metrics
 
 router = APIRouter()
 
 
-@router.post("/api/session/interrupt")
+# Debug controls for the Dev Portal Test Studio; any session or call id is addressable,
+# so only a signed operator may use them.
+@router.post("/api/session/interrupt", dependencies=[Depends(require_dev_session)])
 async def interrupt_session(body: dict):
     """
     Barge-in from browser (or PSTN loop): caller committed an interrupt.
@@ -42,7 +45,7 @@ async def interrupt_session(body: dict):
     return {"ok": True, "sessionId": session_id, "state": "INTERRUPTED"}
 
 
-@router.get("/api/session/history")
+@router.get("/api/session/history", dependencies=[Depends(require_dev_session)])
 async def get_history(sessionId: str = "default"):
     history = conversation_manager.get_history(sessionId)
     return {"sessionId": sessionId, "messages": history, "count": len(history)}

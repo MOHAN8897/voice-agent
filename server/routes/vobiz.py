@@ -7,6 +7,8 @@ import hashlib
 import hmac
 import logging
 import math
+import os
+import time
 import uuid
 from typing import Any
 
@@ -138,6 +140,58 @@ def _signature_matches(auth_token: str, request: Request, *, master: bool = Fals
     return False
 
 
+_NONCE_TTL_S = 300
+_nonce_redis: dict[str, Any] = {"client": None, "down_until": 0.0}
+
+
+async def _nonce_client():
+    """Shared Redis for webhook nonces, or None (not configured, under tests, or down)."""
+    if os.getenv("RATE_LIMIT_BACKEND", "").lower() == "memory":
+        return None
+    if _nonce_redis["client"] is not None:
+        return _nonce_redis["client"]
+    if time.monotonic() < _nonce_redis["down_until"]:
+        return None
+    try:
+        url = getattr(get_settings(), "redis_url", None) or os.getenv("REDIS_URL")
+        if not url:
+            _nonce_redis["down_until"] = time.monotonic() + 300
+            return None
+        import redis.asyncio as aioredis
+
+        client = aioredis.from_url(url, socket_connect_timeout=0.3, socket_timeout=0.2)
+        await asyncio.wait_for(client.ping(), timeout=0.4)
+        _nonce_redis["client"] = client
+        return client
+    except Exception:
+        _nonce_redis["down_until"] = time.monotonic() + 30
+        return None
+
+
+async def _reject_replayed_nonce(request: Request) -> None:
+    """A signed callback is valid once: record its nonce for the signature window.
+
+    Fails open when Redis is unavailable — a Redis outage must not drop live calls.
+    """
+    nonce = request.headers.get("x-vobiz-signature-v3-nonce") or request.headers.get("x-vobiz-signature-v2-nonce")
+    if not nonce:
+        return
+    client = await _nonce_client()
+    if client is None:
+        return
+    digest = hashlib.sha256(f"{request.url.path}|{nonce}".encode()).hexdigest()
+    try:
+        fresh = await asyncio.wait_for(
+            client.set(f"vobiz:nonce:{digest}", b"1", nx=True, ex=_NONCE_TTL_S), timeout=0.3
+        )
+    except Exception:
+        _nonce_redis.update(client=None, down_until=time.monotonic() + 30)
+        return
+    if not fresh:
+        logger.warning("[VOBIZ] Webhook rejected: replayed nonce path=%s", request.url.path)
+        raise HTTPException(status_code=401, detail="Replayed carrier webhook")
+
+
 async def _verify_vobiz_request(request: Request, payload: dict[str, Any]) -> None:
     """Accept parent or mapped tenant credentials, or a call-scoped bearer token."""
     settings = get_settings()
@@ -152,10 +206,12 @@ async def _verify_vobiz_request(request: Request, payload: dict[str, Any]) -> No
         for version in ("v2", "v3")
     )
     if _signature_matches(auth_token, request):
+        await _reject_replayed_nonce(request)
         return
     # Sub-account callbacks: the parent-signed MA variant proves the call came
     # from our own Vobiz account tree without decrypting the child token.
     if _signature_matches(auth_token, request, master=True):
+        await _reject_replayed_nonce(request)
         return
 
     tenant_id = await _vobiz_callback_tenant_id(payload)
@@ -171,6 +227,7 @@ async def _verify_vobiz_request(request: Request, payload: dict[str, Any]) -> No
         except Exception as exc:
             logger.info("[VOBIZ] tenant callback lookup unavailable error_type=%s", type(exc).__name__)
     if child_token and _signature_matches(child_token, request):
+        await _reject_replayed_nonce(request)
         return
 
     # The signed media token is a separate, high-entropy call-scoped authenticator.
@@ -196,7 +253,6 @@ async def _verify_vobiz_request(request: Request, payload: dict[str, Any]) -> No
         request.headers.get("X-Vobiz-Auth-Token")
         or request.headers.get("X-Vobiz-Signature")
         or request.headers.get("Authorization", "").replace("Bearer ", "").replace("Basic ", "")
-        or request.query_params.get("auth_token")
         or ""
     ).strip()
     if header_token:

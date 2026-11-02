@@ -15,6 +15,16 @@ from server.brain.employee_script_pipeline import GenerationStageError
 from server.providers.base import LLMConfig
 
 
+@pytest.fixture(autouse=True)
+def _fresh_generation_window():
+    """The per-workspace generation limit is process-wide; give each test its own window."""
+    from server.routes.app_agents import _generation_limiter
+
+    _generation_limiter.reset()
+    yield
+    _generation_limiter.reset()
+
+
 BRIEF = ("Agent name is Meera. Company is Example Clinic. Answer questions about opening hours. "
          "Opening hours are 09:00 to 18:00. Do not offer bookings.")
 

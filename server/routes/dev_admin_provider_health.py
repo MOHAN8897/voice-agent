@@ -20,6 +20,8 @@ from server.services.saas.admin_audit import record_admin_action
 router = APIRouter(tags=["dev-admin-provider-health"])
 
 READ_PERMISSION = "dev.admin.tenants"
+#: Resolving incidents and spending provider tokens on probes changes provider state.
+WRITE_PERMISSION = "dev.stack.write"
 
 COMPONENT_LABEL = {
     "llm": "Language model (LLM)",
@@ -197,7 +199,7 @@ async def provider_health_overview(session: SessionData = Depends(require_dev_se
 
 @router.post("/api/dev/admin/provider-health/incidents/{incident_id}/resolve")
 async def resolve_incident(incident_id: str, request: Request, session: SessionData = Depends(require_dev_session)):
-    require_permission(session, READ_PERMISSION)
+    require_permission(session, WRITE_PERMISSION)
     if not ph.provider_health.acknowledge(incident_id):
         raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Incident not found."}})
     await record_admin_action(actor=session.subject, action="provider_health.incident_resolved",
@@ -208,7 +210,7 @@ async def resolve_incident(incident_id: str, request: Request, session: SessionD
 @router.post("/api/dev/admin/provider-health/sarvam/recheck")
 async def recheck_sarvam(request: Request, session: SessionData = Depends(require_dev_session)):
     """After topping up: test every Sarvam key now (a few tokens each)."""
-    require_permission(session, READ_PERMISSION)
+    require_permission(session, WRITE_PERMISSION)
     from server.services.sarvam_keys import probe_all
 
     results = await probe_all()

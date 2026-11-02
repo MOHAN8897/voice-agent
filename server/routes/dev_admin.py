@@ -1,6 +1,8 @@
 """Platform dev admin ? SaaS operations (PRD-06)."""
 from __future__ import annotations
 
+from server.utils.cache import BILLING_CATALOG_KEY, invalidate
+
 import io
 import logging
 import secrets
@@ -49,6 +51,7 @@ from server.services.saas.admin_wallet_adjust import (
     admin_adjust_reference,
     tenant_exists,
 )
+from server.services.saas.platform_admins import is_platform_admin_email
 
 router = APIRouter()
 
@@ -934,6 +937,11 @@ async def impersonate_tenant(
         )
     except ValueError as e:
         code = str(e)
+        if code == "target_is_platform_admin":
+            raise HTTPException(
+                status_code=403,
+                detail={"error": {"code": code, "message": "Platform admin accounts cannot be impersonated"}},
+            )
         raise HTTPException(status_code=400, detail=code.replace("_", " "))
 
     settings = get_settings()
@@ -941,7 +949,7 @@ async def impersonate_tenant(
     # Prefer local Vite for ops handoff so tunnel never receives the session.
     if "localhost" not in front and "127.0.0.1" not in front:
         front = "http://localhost:5173"
-    hid = create_auth_handoff(data)
+    hid = await create_auth_handoff(data)
     url = f"{front}/#auth/callback?handoff={hid}"
     await record_admin_action(
         actor=session.subject,
@@ -1162,6 +1170,17 @@ async def admin_reset_password(user_id: str, session: SessionData = Depends(requ
         user = await db.get(User, uid)
         if user is None:
             raise HTTPException(status_code=404, detail="Not found")
+        if is_platform_admin_email(user.email):
+            # Knowing a platform admin's password would make any dev.admin.users holder one.
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "error": {
+                        "code": "target_is_platform_admin",
+                        "message": "Platform admin passwords cannot be reset here",
+                    }
+                },
+            )
         user.password_hash = hash_portal_password(new_pw)
         await db.commit()
     await record_admin_action(actor=session.subject, action="user.reset_password", resource_type="user", resource_id=user_id)
@@ -2618,6 +2637,7 @@ async def put_billing_rates(body: BillingRatesBody, session: SessionData = Depen
             pstn_premium_inr_per_min=body.pstnPremiumInrPerMin,
             fx_rate_inr=body.fxRateInr,
         )
+        await invalidate(BILLING_CATALOG_KEY)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     await record_admin_action(
@@ -2752,6 +2772,7 @@ async def put_pricing_merchandising(
             featured_style=body.featuredStyle,
             calculator=body.calculator,
         )
+        await invalidate(BILLING_CATALOG_KEY)
     except MerchandisingError as exc:
         raise HTTPException(
             status_code=exc.status_code,
@@ -3037,6 +3058,7 @@ async def put_tax_settings(
 
     try:
         state = await save_config(body.model_dump(), actor=session.subject)
+        await invalidate(BILLING_CATALOG_KEY)
     except ValueError as exc:
         code = str(exc)
         messages = {

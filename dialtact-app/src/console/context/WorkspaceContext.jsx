@@ -6,6 +6,7 @@ import { normalizeAgent, normalizePhoneNumber, normalizeWallet } from '../../ser
 import { isUuid } from '../../lib/voiceDisplay';
 import { saveAndPublishAgentBrain } from '../../services/agentBrain';
 import { stashPurchaseForRedirect } from '../ui/PurchaseProvisioningBanner';
+import { isSafeNavigationUrl } from '../../lib/navigationPolicy';
 
 function authed() {
   return !!api.getToken();
@@ -724,8 +725,9 @@ export function WorkspaceProvider({ children }) {
     if (provisioned?.purchaseId && provisioned?.provisioning && !provisioned?.phoneNumberId) {
       stashPurchaseForRedirect(provisioned.purchaseId, assignToAgentId || null);
     }
-    if (provisioned?.checkoutUrl || provisioned?.url) {
-      window.location.href = provisioned.checkoutUrl || provisioned.url;
+    const checkout = provisioned?.checkoutUrl || provisioned?.url;
+    if (checkout && isSafeNavigationUrl(checkout)) {
+      window.location.href = checkout;
       return provisioned;
     }
     // Only a provider-confirmed number ID may enter the tenant's number list.

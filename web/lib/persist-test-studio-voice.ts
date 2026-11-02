@@ -2,6 +2,7 @@
 import { TEST_STUDIO_SESSION_ID } from "@/lib/test-studio-stack";
 import { invalidateTtsConfigCache } from "@/lib/voice/tts-config";
 import { notifyTestStudioVoiceSaved } from "@/lib/voice/voice-runtime-events";
+import { portalFetch } from "@/lib/auth-client";
 
 export async function persistTestStudioVoice(opts: {
   ttsSpeaker: string;
@@ -13,7 +14,7 @@ export async function persistTestStudioVoice(opts: {
   const sessionId = opts.sessionId || TEST_STUDIO_SESSION_ID;
 
   try {
-    const r = await fetch("/api/settings/runtime", {
+    const r = await portalFetch("dev", "/api/settings/runtime", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",

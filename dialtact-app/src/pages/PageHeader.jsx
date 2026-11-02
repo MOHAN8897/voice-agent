@@ -53,7 +53,7 @@ export function PageHeader({ title, subtitle, onBackToLanding, onEnterConsole, o
             <button
               type="button"
               onClick={onBackToLanding}
-              className="text-xs font-semibold text-[#524E5E] hover:text-[#0F0E17] flex items-center gap-1.5 transition-colors"
+              className="min-h-[44px] text-xs font-semibold text-[#524E5E] hover:text-[#0F0E17] flex items-center gap-1.5 transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Platform</span>
@@ -65,14 +65,14 @@ export function PageHeader({ title, subtitle, onBackToLanding, onEnterConsole, o
           <button
             type="button"
             onClick={onBackToLanding}
-            className="text-xs font-semibold text-[#524E5E] hover:text-[#0F0E17] px-3 py-1.5 rounded-lg hover:bg-[#FAF9FD] transition-colors"
+            className="min-h-[44px] text-xs font-semibold text-[#524E5E] hover:text-[#0F0E17] px-3 py-1.5 rounded-lg hover:bg-[#FAF9FD] transition-colors"
           >
             Platform Home
           </button>
           <button
             type="button"
             onClick={handleAuthClick}
-            className="px-3.5 py-1.5 rounded-xl bg-[#0F0E17] text-white text-xs font-semibold hover:bg-[#27253D] transition-all flex items-center gap-1.5 shadow-xs"
+            className="min-h-[44px] px-3.5 py-1.5 rounded-xl bg-[#0F0E17] text-white text-xs font-semibold hover:bg-[#27253D] transition-all flex items-center gap-1.5 shadow-xs"
           >
             <span>{isAuthenticated ? 'Open Console' : 'Sign In'}</span>
             <ArrowRight className="w-3.5 h-3.5" />
