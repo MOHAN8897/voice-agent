@@ -112,7 +112,8 @@ def call_retail(row: dict, meta: dict, *, rates: dict, tier_records: dict | None
     return None
 
 
-def call_cost(row: dict, meta: dict, fallback_fx: float) -> dict | None:
+def call_cost(row: dict, meta: dict, fallback_fx: float, hosting: dict | None = None) -> dict | None:
+    from server.services.saas.hosting_costs import hosting_assumptions, server_cost_per_minute_usd
     from server.services.usage_pricing import cost_telnyx_call_breakdown, cost_vobiz_call_breakdown
 
     usage = meta.get("usage") or {}
@@ -176,6 +177,10 @@ def call_cost(row: dict, meta: dict, fallback_fx: float) -> dict | None:
     if measured_inr is not None:
         api_inr += analysis_usd * fx
     transcript_inr = transcript_usd * fx
+    # Estimated Railway hosting for the connected time (see hosting_costs),
+    # kept unrounded like the other per-call amounts here.
+    server_usd = server_cost_per_minute_usd(hosting or hosting_assumptions())["total"] * seconds / 60
+    server_inr = server_usd * fx
     call_tier = str(row.get("tier") or "premium").lower()
     return {
         "callId": row["call_id"],
@@ -189,8 +194,10 @@ def call_cost(row: dict, meta: dict, fallback_fx: float) -> dict | None:
         "carrierInr": carrier_inr,
         "transcriptUsd": transcript_usd,
         "transcriptInr": transcript_inr,
-        "costUsd": api_usd + carrier_usd + transcript_usd,
-        "costInr": api_inr + carrier_inr + transcript_inr,
+        "serverUsd": server_usd,
+        "serverInr": server_inr,
+        "costUsd": api_usd + carrier_usd + transcript_usd + server_usd,
+        "costInr": api_inr + carrier_inr + transcript_inr + server_inr,
         "model": usage.get("llm_model") or "unknown",
         "modelSource": model_source,
         "carrierSource": carrier_source,
@@ -208,16 +215,18 @@ def _price_per_min(rates: dict, key: str, fallback_key: str | None = None, *, mi
 
 def build_insights(rows: list[dict], rates: dict, *, since: datetime, now: datetime, capped: bool = False,
                    ledger=None, overhead_rows: list[dict] | None = None,
-                   tier_records: dict | None = None) -> dict:
+                   tier_records: dict | None = None, hosting: dict | None = None) -> dict:
     from server.call.call_ledger import call_ledger
+    from server.services.saas.hosting_costs import hosting_assumptions
     ledger = ledger or call_ledger
+    hosting = hosting or hosting_assumptions()
     fx = float(rates["fx_rate_inr"])
     eligible = []
     for row in rows:
         try:
             meta = ledger.read_meta(row["call_id"])
             # Call attribution is checked against the authoritative database row.
-            item = call_cost(row, meta, fx) if isinstance(meta, dict) and str(meta.get("tenant_id") or "") == str(row["tenant_id"]) else None
+            item = call_cost(row, meta, fx, hosting) if isinstance(meta, dict) and str(meta.get("tenant_id") or "") == str(row["tenant_id"]) else None
             retail = call_retail(row, meta, rates=rates, tier_records=tier_records, fallback_fx=fx) if item is not None else None
         except (OSError, ValueError, TypeError, AttributeError, ArithmeticError):
             item = None  # Corrupt/incomplete records reduce coverage, never the divisor.
@@ -303,12 +312,16 @@ def build_insights(rows: list[dict], rates: dict, *, since: datetime, now: datet
             "apiPerMinInr": number(sum((r["modelInr"] for r in records), Decimal(0)) / minutes) if minutes else 0.0,
             "transcriptionPerMinUsd": number(sum((r["transcriptUsd"] for r in records), Decimal(0)) / minutes) if minutes else 0.0,
             "transcriptionPerMinInr": number(sum((r["transcriptInr"] for r in records), Decimal(0)) / minutes) if minutes else 0.0,
+            "serverPerMinUsd": number(sum((r["serverUsd"] for r in records), Decimal(0)) / minutes) if minutes else 0.0,
+            "serverPerMinInr": number(sum((r["serverInr"] for r in records), Decimal(0)) / minutes) if minutes else 0.0,
             "apiUsd": number(sum((r["modelUsd"] for r in records), Decimal(0))),
             "apiInr": number(sum((r["modelInr"] for r in records), Decimal(0))),
             "carrierUsd": number(sum((r["carrierUsd"] for r in records), Decimal(0))),
             "carrierInr": number(sum((r["carrierInr"] for r in records), Decimal(0))),
             "transcriptionUsd": number(sum((r["transcriptUsd"] for r in records), Decimal(0))),
             "transcriptionInr": number(sum((r["transcriptInr"] for r in records), Decimal(0))),
+            "serverUsd": number(sum((r["serverUsd"] for r in records), Decimal(0))),
+            "serverInr": number(sum((r["serverInr"] for r in records), Decimal(0))),
             "unconnectedPrewarmUsd": number(setup_usd),
             "unconnectedPrewarmInr": number(setup_inr),
             "prewarmPerMinUsd": number(setup_usd / minutes) if minutes else 0.0,
@@ -331,6 +344,7 @@ def build_insights(rows: list[dict], rates: dict, *, since: datetime, now: datet
         "callsReviewed": len(rows),
         "fxRateInr": fx,
         "channels": channels,
+        "hosting": hosting,
         "samples": [
             {
                 "callId": r["callId"],
@@ -354,7 +368,8 @@ def build_insights(rows: list[dict], rates: dict, *, since: datetime, now: datet
             "Average = known supplier costs / connected minutes; each minute has equal weight.",
             "API costs use reported tokens at published rates. Carrier CDR totals are used when available; tariffs are estimates.",
             "Margin uses the retail rate pinned to each call; calls without a pinned price are excluded from margin and shown in retail coverage.",
-            "Known unused prewarm spend is included in Flagship PSTN costs. Older unrecorded setup/summary spend, hosting, taxes and negotiated discounts are not included.",
+            "Known unused prewarm spend is included in Flagship PSTN costs. Older unrecorded setup/summary spend, taxes and negotiated discounts are not included.",
+            "Server cost is an estimate: Railway usage pricing (checked " + str(hosting.get("checkedOn")) + ") applied to an assumed per-call share of vCPU, memory and audio egress. Plan fees and idle replicas are not allocated to calls.",
             "Records without usable cost attribution are excluded and shown in coverage. This is pricing guidance, not a supplier invoice.",
         ],
     }

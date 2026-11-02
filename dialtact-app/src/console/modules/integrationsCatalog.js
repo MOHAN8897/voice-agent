@@ -37,7 +37,7 @@ export const FULL_INTEGRATIONS_CATALOG = [
     category: "Scheduling",
     timing: "in_call",
     timing_label: "During calls",
-    auth_type: "oauth",
+    auth_type: "api_key",
     description: "Find open times and book appointments in your Cal.com calendar.",
     actions: ["Find Available Slots", "Create Booking", "Cancel Booking", "Reschedule Booking"],
     badge: "Popular",
@@ -199,8 +199,8 @@ export const FULL_INTEGRATIONS_CATALOG = [
     id: "TWILIO_SMS",
     name: "Twilio SMS",
     category: "Communication",
-    timing: "post_call",
-    timing_label: "After calls",
+    timing: "in_call",
+    timing_label: "During calls",
     auth_type: "api_key",
     description: "Text callers their confirmations and booking details, and check delivery.",
     actions: ["Send SMS Message", "Check Message Status"],
@@ -277,6 +277,19 @@ export const FULL_INTEGRATIONS_CATALOG = [
   },
 
   // --- 7. DATABASES & SPREADSHEETS ---
+  {
+    id: "GOOGLESHEETS",
+    name: "Google Sheets",
+    category: "Database",
+    timing: "in_call",
+    timing_label: "During calls",
+    auth_type: "oauth",
+    description: "Look callers up in your Google Sheet during the call and add a row with their details and call summary.",
+    actions: ["Find Rows", "Add Row"],
+    badge: "Popular",
+    iconName: "FileSpreadsheet",
+    color: "text-green-600 bg-green-600/10"
+  },
   {
     id: "AIRTABLE",
     name: "Airtable",

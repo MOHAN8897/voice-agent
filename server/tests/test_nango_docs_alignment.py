@@ -45,7 +45,9 @@ async def test_refresh_failure_disables_tool_and_recovery_restores_it(client, db
     raw, headers = signed(_refresh(True))
     assert (await client.post("/api/integrations/nango-webhook", content=raw, headers=headers)).json()["status"] == "ok"
     row = await _row(db)
-    assert row.status == "ACTIVE" and row.metadata_ == {"gateway_verified": True}
+    # Recovery restores the tool and keeps the tenant's saved setup.
+    assert row.status == "ACTIVE" and row.metadata_["gateway_verified"] is True
+    assert "needs_reauth" not in row.metadata_
 
 
 async def test_refresh_webhook_for_other_connection_or_unknown_app_row_is_ignored(client, db, monkeypatch):
@@ -88,6 +90,16 @@ async def test_console_reconciliation_marks_auth_failed_connection(client, db, m
     assert items[0]["needs_reauth"] is True and (await _row(db)).status == "ERROR"
 
 
+async def test_connection_missing_from_the_gateway_needs_a_reconnect(client, db, monkeypatch):
+    """After a move to another gateway (or a delete in its dashboard) the stored id cannot authenticate."""
+    monkeypatch.setattr(routes.nango_service, "is_configured", lambda: True)
+    monkeypatch.setattr(routes.nango_service, "get_tenant_connections", AsyncMock(return_value=[]))
+    items = (await client.get("/api/integrations", headers=AUTH)).json()["items"]
+    row = await _row(db)
+    assert items[0]["needs_reauth"] is True and row.status == "ERROR"
+    assert row.metadata_["settings"] == {"channel": "C-test"}  # the saved setup survives the reconnect
+
+
 async def test_reconnect_revokes_the_superseded_gateway_connection(client, db, monkeypatch):
     monkeypatch.setattr(routes.nango_service, "verify_or_sync_connection", AsyncMock(return_value=True))
     monkeypatch.setattr(routes.nango_service, "get_tenant_connections", AsyncMock(return_value=[
@@ -98,7 +110,9 @@ async def test_reconnect_revokes_the_superseded_gateway_connection(client, db, m
     assert response.status_code == 200
     revoke.assert_awaited_once_with(connection_id="owned", app_name="SLACK")
     assert (await _row(db)).connection_id == "fresh"
-    # Re-activating the same connection revokes nothing.
+    # Re-activating the same connection revokes nothing once the old one is gone.
+    monkeypatch.setattr(routes.nango_service, "get_tenant_connections", AsyncMock(return_value=[
+        {"connection_id": "fresh", "provider_config_key": "slack"}]))
     revoke.reset_mock()
     assert (await client.post("/api/integrations/SLACK/activate", headers=AUTH, json={"connection_id": "fresh"})).status_code == 200
     revoke.assert_not_awaited()
@@ -112,7 +126,7 @@ def test_only_auth_errors_make_a_connection_unusable():
 
 
 async def test_delete_uses_current_connections_path(monkeypatch):
-    service = NangoService(secret_key="test-only")
+    service = NangoService(secret_key="test-only", base_url="https://api.nango.dev")
     seen = {}
 
     def fake(req, timeout=5.0):
@@ -153,7 +167,8 @@ async def test_calcom_paths_do_not_repeat_base_version_and_send_api_version():
         await nango_service._execute_proxy_tool("cal-com-v2", "c", "CALCOM_CREATE_BOOKING", {
             "event_type_id": 7, "start": "2026-11-02T04:30:00Z", "name": "A", "email": "a@example.test", "notes": "n"})
     assert post.call_args[0][0].endswith("/proxy/bookings")
-    assert post.call_args.kwargs["headers"]["cal-api-version"] == "2024-08-13"
+    # Creating a booking requires the 2026-02-25 contract.
+    assert post.call_args.kwargs["headers"]["cal-api-version"] == "2026-02-25"
     assert post.call_args.kwargs["json"]["bookingFieldsResponses"] == {"notes": "n"}
 
 

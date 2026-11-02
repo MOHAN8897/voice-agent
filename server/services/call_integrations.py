@@ -13,10 +13,11 @@ Runtime rule for a call that carries a selection::
 
 A call with no selection (``None``) keeps the agent's saved integration rules.
 
-Only apps listed in :data:`CALL_INTEGRATION_PROFILES` can be attached. Apps in
-the catalog whose actions need resource ids nobody has configured (a Slack
-channel, a ClickUp list, a Notion parent ...) are returned as ``setup_required``
-so the console shows them disabled instead of letting them fail mid-call.
+Only apps listed in :data:`CALL_INTEGRATION_PROFILES` can be attached. Apps
+whose actions need a resource the tenant has not chosen yet (a Slack channel, a
+ClickUp list, a Notion parent ...; see integration_settings) are returned as
+``setup_required`` so the console shows them disabled instead of letting them
+fail mid-call.
 """
 from __future__ import annotations
 
@@ -75,15 +76,76 @@ CALL_INTEGRATION_PROFILES: dict[str, dict[str, Any]] = {
     "TWILIO_SMS": {
         "in_call": "Send the caller a text message they ask for during the call.",
     },
+    "CALCOM": {
+        "in_call": "Check open times and book, move or cancel the caller's Cal.com bookings during the call.",
+    },
+    "SLACK": {
+        "in_call": "Post an urgent note to your team's Slack channel during the call.",
+        "post_call": "Post the call summary and next step to your Slack channel after the call.",
+    },
+    "DISCORD": {
+        "in_call": "Post an urgent note to your team's Discord channel during the call.",
+        "post_call": "Post the call summary and next step to your Discord channel after the call.",
+    },
+    "GOOGLESHEETS": {
+        "in_call": "Look the caller up in your Google Sheet and add a row for them during the call.",
+        "post_call": "Add the caller's details and the call summary as a row in your Google Sheet after the call.",
+    },
+    "AIRTABLE": {
+        "in_call": "Look up records in your Airtable table during the call.",
+        "post_call": "Add the caller and the call summary as a record in your Airtable table after the call.",
+    },
+    "NOTION": {
+        "in_call": "Search your Notion pages during the call.",
+        "post_call": "Save the call notes as a page in Notion after the call.",
+    },
+    "SUPABASE": {
+        "in_call": "Look up the caller's record in your Supabase table during the call.",
+        "post_call": "Save the caller's details and call summary as a row in your Supabase table after the call.",
+    },
+    "ASANA": {
+        "in_call": "Create an Asana task while talking when a follow-up is agreed.",
+        "post_call": "Create a follow-up task in your Asana project after the call.",
+    },
+    "CLICKUP": {
+        "in_call": "Create a ClickUp task while talking when a follow-up is agreed.",
+        "post_call": "Create a follow-up task in your ClickUp list after the call.",
+    },
+    "MONDAY": {
+        "in_call": "Add an item to your Monday.com board while talking when a follow-up is agreed.",
+        "post_call": "Add a follow-up item to your Monday.com board after the call.",
+    },
+    "MAILCHIMP": {
+        "in_call": "Add the caller to your mailing list, only when they agree to receive updates.",
+    },
+    "LINEAR": {
+        "in_call": "Look up or open Linear issues for what the caller reports during the call.",
+        "post_call": "Open a Linear issue with the call summary after the call.",
+    },
+    "JIRA": {
+        "in_call": "Check or open Jira issues for what the caller reports during the call.",
+        "post_call": "Open a Jira issue with the call summary after the call.",
+    },
+    "GITHUB": {
+        "in_call": "Look up or open GitHub issues for what the caller reports during the call.",
+        "post_call": "Open a GitHub issue with the call summary after the call.",
+    },
+    "SENDGRID": {
+        "in_call": "Send the caller an email they ask for during the call, from your SendGrid sender.",
+    },
+    "WHATSAPP": {
+        "in_call": "Send the caller your approved WhatsApp template with the details they ask for during the call.",
+    },
 }
 
-# Catalog apps that exist but cannot run from a call without resource ids that
-# nobody can supply today (no per-connection settings store yet).
+# What the tenant must choose on the Integrations page before calls can use the
+# app (see integration_settings.APP_SETTINGS for the fields).
 SETUP_REQUIRED: dict[str, str] = {
     "CALCOM": "Needs a Cal.com event type to be configured before calls can book it.",
     "SLACK": "Needs a Slack channel to be configured, and the bot invited to it.",
     "DISCORD": "Needs a Discord channel to be configured.",
     "AIRTABLE": "Needs an Airtable base and table to be configured.",
+    "GOOGLESHEETS": "Needs a Google Sheet and tab to be configured.",
     "NOTION": "Needs a Notion parent page or database to be configured.",
     "SUPABASE": "Needs a Supabase table and lookup column to be configured.",
     "ASANA": "Needs an Asana project to be configured.",
@@ -103,6 +165,18 @@ POST_CALL_DEFAULT_ACTION: dict[str, str] = {
     "TODOIST": "TODOIST_CREATE_TASK",
     "GMAIL": "GMAIL_CREATE_DRAFT",
     "HUBSPOT": "HUBSPOT_CREATE_CONTACT",
+    "SLACK": "SLACK_SEND_MESSAGE",
+    "DISCORD": "DISCORD_SEND_MESSAGE",
+    "AIRTABLE": "AIRTABLE_CREATE_RECORD",
+    "GOOGLESHEETS": "GOOGLESHEETS_ADD_ROW",
+    "NOTION": "NOTION_CREATE_PAGE",
+    "SUPABASE": "SUPABASE_INSERT_ROW",
+    "ASANA": "ASANA_CREATE_TASK",
+    "CLICKUP": "CLICKUP_CREATE_TASK",
+    "MONDAY": "MONDAY_CREATE_ITEM",
+    "LINEAR": "LINEAR_CREATE_ISSUE",
+    "JIRA": "JIRA_CREATE_ISSUE",
+    "GITHUB": "GITHUB_CREATE_ISSUE",
 }
 
 PLATFORM_TOOLS = frozenset({"SAVE_ENQUIRY", "CONFIRM_ORDER", "REQUEST_HUMAN_HANDOFF"})
@@ -149,9 +223,7 @@ def normalize_selection(raw: Any) -> list[dict[str, str]] | None:
         key = _norm(app)
         modes = supported_modes(key)
         if not modes:
-            reason = SETUP_REQUIRED.get(key)
-            raise SelectionError(422, "integration_not_available",
-                                 reason or "This integration cannot be used from calls yet.")
+            raise SelectionError(422, "integration_not_available", "This integration cannot be used from calls yet.")
         if not mode:
             from server.services.tool_schema_registry import default_action_timing
 
@@ -226,10 +298,16 @@ async def validate_selection(tenant_id: str, agent_id: str, raw: Any, factory: A
     if rules is None:
         raise SelectionError(404, "not_found", "Agent not found")
     verified = await _verified_apps(tenant_id, factory)
+    from server.services.integration_settings import is_configured, tenant_settings
+
+    settings = await tenant_settings(tenant_id, factory)
     for item in selection:
         if item["app"] not in verified:
             raise SelectionError(409, "integration_not_connected",
                                  f"{display_name(item['app'])} is not connected for this workspace. Connect it on the Integrations page first.")
+        if not is_configured(item["app"], settings.get(item["app"])):
+            raise SelectionError(409, "integration_setup_required",
+                                 f"{display_name(item['app'])} needs setting up on the Integrations page first. {SETUP_REQUIRED.get(item['app'], '')}".strip())
         if not agent_allows(item["app"], rules):
             raise SelectionError(409, "integration_disabled_for_agent",
                                  f"{display_name(item['app'])} is turned off for this agent.")
@@ -260,6 +338,12 @@ async def available_for_agent(tenant_id: str, agent_id: str, factory: Any = None
     if rules is None:
         raise SelectionError(404, "not_found", "Agent not found")
     verified = await _verified_apps(tenant_id, factory)
+    from server.services.integration_settings import is_configured, tenant_settings
+
+    settings = await tenant_settings(tenant_id, factory)
+    from server.services.integration_policy import disabled_apps
+
+    off = await disabled_apps(tenant_id, factory)
     async with factory() as session:
         rows = (await session.execute(select(TenantIntegration).where(
             TenantIntegration.tenant_id == uuid.UUID(str(tenant_id)),
@@ -273,12 +357,16 @@ async def available_for_agent(tenant_id: str, agent_id: str, factory: Any = None
         modes = [m for m in MODES if m in profile]
         connected = app in verified
         allowed = agent_allows(app, rules)
-        if not modes:
-            state, reason = "setup_required", SETUP_REQUIRED.get(app, "This integration cannot be used from calls yet.")
+        if app in off:
+            state, reason = "disabled_by_admin", "Turned off for this workspace by the platform administrator."
+        elif not modes:
+            state, reason = "unavailable", "This integration cannot be used from calls yet."
         elif app in reauth and not connected:
             state, reason = "needs_reauth", "The connection expired. Reconnect it on the Integrations page."
         elif not connected:
             state, reason = "not_connected", "Connect it on the Integrations page first."
+        elif not is_configured(app, settings.get(app)):
+            state, reason = "setup_required", SETUP_REQUIRED.get(app, "Finish setting it up on the Integrations page.")
         elif not allowed:
             state, reason = "disabled_for_agent", "Turned off for this agent in its integration settings."
         else:
@@ -297,7 +385,8 @@ async def available_for_agent(tenant_id: str, agent_id: str, factory: Any = None
                        "description": profile[m]} for m in modes],
             "defaultMode": catalog_default or (modes[0] if modes else None),
         })
-    order = {"available": 0, "disabled_for_agent": 1, "needs_reauth": 2, "not_connected": 3, "setup_required": 4}
+    order = {"available": 0, "disabled_for_agent": 1, "setup_required": 2, "needs_reauth": 3, "not_connected": 4,
+             "unavailable": 5, "disabled_by_admin": 6}
     items.sort(key=lambda i: (order[i["state"]], i["name"]))
     return items
 
@@ -418,12 +507,20 @@ def filter_tools(tools: list[dict], selection: list[dict[str, str]] | None) -> l
 
 def capability_rows(selection: list[dict[str, str]] | None, tools: list[dict]) -> list[str]:
     """Prompt lines naming this call's integrations (and what is not attached)."""
-    if selection is None:
-        return []
     from server.services.tool_schema_registry import tool_definition
 
     live = {tool_definition(str(t.get("name") or ""))[0] for t in tools
             if tool_definition(str(t.get("name") or "")) and str(t.get("name") or "").upper() not in PLATFORM_TOOLS}
+    if selection is None:
+        # The agent's saved settings decide: name each attached app's job so the
+        # model uses the right one and promises nothing from an app it lacks.
+        if not live:
+            return []
+        rows = ["call_integrations: agent_settings"]
+        rows += [f"- {display_name(app)} (during the call): {CALL_INTEGRATION_PROFILES[app]['in_call']}"
+                 for app in sorted(live) if "in_call" in CALL_INTEGRATION_PROFILES.get(app, {})]
+        rows.append("Only the apps listed above can be used during this call. Do not offer bookings, emails, tickets or records in any other system.")
+        return rows
     rows = ["call_integrations: chosen_for_this_call"]
     for item in selection:
         if item["mode"] == "in_call" and item["app"] in live:
@@ -448,6 +545,31 @@ def _first(facts: dict[str, Any], *keys: str) -> str:
         if isinstance(value, str) and value.strip():
             return value.strip()
     return ""
+
+
+def _team_note(who: str, phone: str, summary: str, next_action: str) -> str:
+    """Internal note for the business's own tools (never sent to the caller)."""
+    if not (summary or next_action):
+        return ""
+    head = f"Call with {who}" + (f" ({phone})" if phone else "")
+    body = summary or ""
+    if next_action:
+        body = f"{body}\nNext step: {next_action}".strip()
+    return f"{head}: {body}"[:3500]
+
+
+# Post-call actions that file one internal note; each maps (title, note) to arguments.
+_NOTE_ACTIONS: dict[str, Any] = {
+    "SLACK_SEND_MESSAGE": lambda title, note: {"text": note},
+    "DISCORD_SEND_MESSAGE": lambda title, note: {"content": note[:1900]},
+    "NOTION_CREATE_PAGE": lambda title, note: {"title": title, "content": note[:1900]},
+    "ASANA_CREATE_TASK": lambda title, note: {"name": title, "notes": note},
+    "CLICKUP_CREATE_TASK": lambda title, note: {"name": title, "description": note},
+    "MONDAY_CREATE_ITEM": lambda title, note: {"item_name": f"{title}: {note}"[:250]},
+    "LINEAR_CREATE_ISSUE": lambda title, note: {"title": title, "description": note},
+    "JIRA_CREATE_ISSUE": lambda title, note: {"summary": title, "description": note},
+    "GITHUB_CREATE_ISSUE": lambda title, note: {"title": title, "body": note},
+}
 
 
 def post_call_arguments(action: str, outcome: dict[str, Any], meta: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -477,6 +599,25 @@ def post_call_arguments(action: str, outcome: dict[str, Any], meta: dict[str, An
         if next_action:
             body += f"\n\nNext step: {next_action}"
         return {"to": email, "subject": "Following up on our call", "body": body[:7000]}
+    note = _team_note(who, phone if name else "", summary, next_action)
+    if action in _NOTE_ACTIONS:
+        if not note:
+            return None
+        title = f"Follow up with {who}"[:200]
+        return _NOTE_ACTIONS[action](title, note)
+    if action == "AIRTABLE_CREATE_RECORD":
+        fields = {k: v for k, v in (("Name", name), ("Phone", phone), ("Email", email), ("Summary", summary)) if v}
+        return {"fields": fields} if summary and fields else None
+    if action == "GOOGLESHEETS_ADD_ROW":
+        from datetime import date
+
+        values = {k: v for k, v in (("Name", name), ("Phone", phone), ("Email", email), ("Summary", summary),
+                                    ("Next step", next_action)) if v}
+        return {"values": {**values, "Date": date.today().isoformat()}} if summary and values else None
+    if action == "SUPABASE_INSERT_ROW":
+        row = {k: v for k, v in (("name", name), ("phone", phone), ("email", email),
+                                 ("summary", summary), ("next_action", next_action)) if v}
+        return {"row": row} if summary and row else None
     if action == "HUBSPOT_CREATE_CONTACT":
         if not name or not (email or phone):
             return None

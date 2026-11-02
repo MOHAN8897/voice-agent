@@ -176,6 +176,14 @@ Write-Host "    Dialtact (product)  http://127.0.0.1:5173"
 Write-Host "    Admin panel        http://localhost:3000/dev/login  (DEV_PORTAL_* in .env)"
 Write-Host "    Test Studio        http://localhost:3000/dev/test-studio"
 Write-Host "    API health         http://127.0.0.1:8000/api/health"
+if (Test-SelfHostedNango -RepoRoot $RepoRoot) {
+    $nangoBase = (Get-DotEnvValue -RepoRoot $RepoRoot -Key "NANGO_BASE_URL").TrimEnd('/')
+    if (Test-HttpOk "$nangoBase/health" 3) {
+        Write-Host "    Integrations       $nangoBase  (Nango, ready)"
+    } else {
+        Write-Host "    Integrations       NOT RUNNING - apps show 'Not available yet'. Start Docker Desktop, rerun npm run dev."
+    }
+}
 Write-Host ""
 if ($tunnelStarted -and $publicApp -and $publicApp -notmatch "localhost") {
     Write-Host "  PUBLIC (Cloudflare tunnel)"

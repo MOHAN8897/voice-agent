@@ -1,4 +1,5 @@
-# Stop local dev servers (API 8000, Next 3000-3003, Dialtact 5173) and Cloudflare/ngrok tunnels.
+# Stop local dev servers (API 8000, Next 3000-3003, Dialtact 5173), Cloudflare/ngrok tunnels
+# and the self-hosted Nango containers (stopped, not removed: connections are kept).
 # Kills process trees (uvicorn reloader + worker, npm/node, wrapper PowerShell windows)
 # and waits until the ports are actually free.
 
@@ -9,6 +10,7 @@ Write-Host "dev:down starting..."
 $ok = Stop-VoiceAgentDevStack
 
 if (-not $ok) { exit 1 }
+Stop-NangoGateway -RepoRoot (Split-Path -Parent $PSScriptRoot)
 # Only remove generated state once shutdown has actually succeeded.
 foreach ($folder in @('voice-agent-dev-runners', 'voice-agent-dev-jobs')) {
     $tempRoot = [IO.Path]::GetFullPath($env:TEMP).TrimEnd('\')

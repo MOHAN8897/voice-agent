@@ -40,8 +40,14 @@ async def execute_extended_action(client: httpx.AsyncClient, base: str, headers:
             data = response.json()
             if not isinstance(data.get("collection"), list):
                 return {"status": "error", "message": "Calendar availability could not be verified."}
-            slots = [item["start_time"] for item in data["collection"][:10] if item.get("status") == "available" and item.get("start_time")]
-            return {"status": "available" if slots else "unavailable", "slots": slots, "summary": "Availability returned by the calendar."}
+            from zoneinfo import ZoneInfo
+
+            # Calendly answers in UTC; the caller must hear their own clock time.
+            zone = ZoneInfo(str(params.get("time_zone") or "Asia/Kolkata"))
+            slots = [datetime.fromisoformat(item["start_time"].replace("Z", "+00:00")).astimezone(zone).isoformat()
+                     for item in data["collection"][:10] if item.get("status") == "available" and item.get("start_time")]
+            return {"status": "available" if slots else "unavailable", "slots": slots, "time_zone": str(zone),
+                    "summary": "Availability returned by the calendar, in the caller's time zone."}
         start = datetime.fromisoformat(params["start_time"].replace("Z", "+00:00"))
         if start.tzinfo is None or start <= datetime.now(timezone.utc):
             return {"status": "error", "message": "Choose a future time with its timezone."}
@@ -57,7 +63,9 @@ async def execute_extended_action(client: httpx.AsyncClient, base: str, headers:
             return {"status": "unknown", "message": "The booking could not be confirmed. Check the calendar before retrying."}
         return {"status": "success", "confirmed": True, "event_uri": resource.get("event"), "invitee_uri": resource["uri"], "summary": "Calendar booking confirmed."}
     if action == "SALESFORCE_CREATE_TASK":
-        endpoint, payload, result_key = "/services/data/v57.0/sobjects/Task", params, "task_id"
+        from server.services.nango_service import SALESFORCE_API_VERSION
+
+        endpoint, payload, result_key = f"/services/data/{SALESFORCE_API_VERSION}/sobjects/Task", params, "task_id"
     elif action == "AIRTABLE_CREATE_RECORD":
         endpoint = f"/v0/{path_segment(params['base_id'])}/{path_segment(params['table_name'])}"
         payload, result_key = {"fields": params["fields"]}, "record_id"

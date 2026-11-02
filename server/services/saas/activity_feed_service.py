@@ -982,7 +982,17 @@ async def _system_alerts(session, M, *, tenant_id: uuid.UUID) -> list[dict[str, 
                                      {"kind": "open_billing", "label": "Open billing"}]))
 
     I = M["TenantIntegration"]
+    from server.db.connection import get_session_factory
+    from server.services.integration_policy import disabled_apps
+    from server.services.tool_schema_registry import _normalize
+
+    # An app the platform switched off cannot be reconnected; asking would be a dead end.
+    # Only a reminder is at stake, so without a readable policy every reminder stays.
+    factory = get_session_factory()
+    off = await disabled_apps(str(tenant_id), factory) if factory is not None else set()
     for row in (await session.execute(select(I).where(I.tenant_id == tenant_id, I.status == "ERROR").limit(10))).scalars():
+        if _normalize(row.app_name) in off:
+            continue
         label = _app_label(row.app_name)
         alerts.append(_item(key=f"alert:integration:{row.id}", type_="integration.reconnect", category="system",
                             at=row.updated_at, tone="danger", actor=None,

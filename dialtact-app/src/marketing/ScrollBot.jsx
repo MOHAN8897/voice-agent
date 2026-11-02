@@ -21,6 +21,14 @@ const BOT_H = 706;
  * `<BotAnchor />` is filled by the body, not by the canvas around it.
  */
 const BODY = { w: 576 / 950, h: 432 / 706, cx: (183 + 288) / 950, cy: (71 + 216) / 706 };
+/** The body's top and bottom edges in the canvas, as fractions of its height. */
+const BODY_TOP = 71 / 706;
+const BODY_BOTTOM = (71 + 432) / 706;
+/** While travelling the body stays this far inside the viewport (the top clears the header). */
+const VIEW_MARGIN_TOP = 72;
+const VIEW_MARGIN = 8;
+/** The clip played on take-off: a hop, so it visibly sets off rather than sliding. */
+const TRAVEL_MOVE = 'HOP';
 
 /** Lengths of the Blender-authored one-shot clips (scripts/blender/add_scroll_clips.py). */
 const CLIP_MS = {
@@ -283,6 +291,18 @@ export function ScrollBot({ controllerRef, hidden = false }) {
         // Reduced motion appears in place; otherwise it flies in from the right edge.
         p.px = reduce ? tx : vw + 40; p.py = tpy; p.s = ts; p.ready = true; p.key = key;
       }
+      // Its body never leaves the screen. Riding with the page, the old section used to
+      // carry it off the top before the flight began: it vanished and turned up at the
+      // next slot. The edge now pushes it along as the page scrolls (continuously, so
+      // never a snap), and it is seen to leave and travel the whole way.
+      const keepInView = () => {
+        const top = BODY_TOP * BOT_H * p.s;
+        const bottom = BODY_BOTTOM * BOT_H * p.s;
+        const lo = sy + Math.min(VIEW_MARGIN_TOP - top, vh - VIEW_MARGIN - bottom);
+        const hi = sy + vh - VIEW_MARGIN - bottom;
+        if (p.py < lo) { p.py = lo; p.vy = Math.max(0, p.vy); }
+        if (p.py > hi) { p.py = hi; p.vy = Math.min(0, p.vy); }
+      };
       let distance = Math.hypot(tx - p.px, tpy - p.py);
       if (key !== p.key) {
         p.key = key;
@@ -290,7 +310,15 @@ export function ScrollBot({ controllerRef, hidden = false }) {
         // just bends the path). Reduced motion fades out and back in instead.
         if (p.arrived && distance > ARRIVED_PX * 3) {
           if (reduce) p.leaving = true;
-          else { p.windup = WINDUP_S; p.trip = distance; }
+          else {
+            p.windup = WINDUP_S; p.trip = distance;
+            // The recorded take-off, so the body moves frame by frame on its way like it
+            // does in every other gesture; the section's own gesture follows on arrival.
+            if (!hold.current && controllerRef.current) {
+              if (botRef.current) botRef.current.dataset.botMove = TRAVEL_MOVE;
+              controllerRef.current.setState(TRAVEL_MOVE);
+            }
+          }
         }
       }
 
@@ -319,7 +347,10 @@ export function ScrollBot({ controllerRef, hidden = false }) {
           p.py += p.vy * h;
         }
       }
-      if (!reduce) p.s += (ts - p.s) * (1 - Math.exp(-dt * SCALE_RATE));
+      if (!reduce) {
+        p.s += (ts - p.s) * (1 - Math.exp(-dt * SCALE_RATE));
+        keepInView();
+      }
       distance = Math.hypot(tx - p.px, tpy - p.py);
       const speed = Math.hypot(p.vx, p.vy);
 

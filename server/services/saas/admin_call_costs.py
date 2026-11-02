@@ -2,6 +2,8 @@
 
 Every number is read from the call's immutable snapshots or the admin rate
 version. Missing measurements stay ``None``; this module never invents a tariff.
+The one estimate is server (Railway hosting) cost, which is labelled as such
+and priced from ``hosting_costs`` assumptions.
 """
 from __future__ import annotations
 
@@ -9,6 +11,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from server.services.saas.composed_costing import price_composed_usage
+from server.services.saas.hosting_costs import price_call_hosting
 
 _STAGE_KEYS = ("stt", "llm", "tts")
 
@@ -180,7 +183,14 @@ def _supplementary(meta: dict, *, fx: float | None) -> dict[str, Any]:
     }
 
 
-def _supplier(meta: dict, *, channel: str, fx: float | None) -> dict[str, Any]:
+def _supplier(
+    meta: dict,
+    *,
+    channel: str,
+    fx: float | None,
+    duration_sec: float,
+    hosting: dict | None,
+) -> dict[str, Any]:
     measured = _measured_stage_result(meta)
     missing: list[str] = []
     stage_costs = _stage_costs(measured)
@@ -202,6 +212,7 @@ def _supplier(meta: dict, *, channel: str, fx: float | None) -> dict[str, Any]:
             missing.append("model_cost")
     carrier = _carrier(meta, channel=channel, fx=fx)
     other = _supplementary(meta, fx=fx)
+    server = price_call_hosting(duration_sec, fx=fx, assumptions=hosting)
     if carrier["status"] == "unavailable":
         missing.append("carrier_cost")
     if other["costInr"] is None or other["costUsd"] is None:
@@ -211,11 +222,13 @@ def _supplier(meta: dict, *, channel: str, fx: float | None) -> dict[str, Any]:
         other_inr, other_usd = other["costInr"], other["costUsd"]
         if other_inr == 0 and other_usd == 0:
             other_inr = other_usd = 0.0
+    if server["costInr"] is None:
+        missing.append("server_cost")
     total_inr = total_usd = None
-    if status == "ready" and carrier["amountInr"] is not None and other_inr is not None:
-        total_inr = ai_inr + carrier["amountInr"] + other_inr
+    if status == "ready" and carrier["amountInr"] is not None and other_inr is not None and server["costInr"] is not None:
+        total_inr = ai_inr + carrier["amountInr"] + other_inr + server["costInr"]
     if status == "ready" and carrier["amountUsd"] is not None and other_usd is not None:
-        total_usd = ai_usd + carrier["amountUsd"] + other_usd
+        total_usd = ai_usd + carrier["amountUsd"] + other_usd + server["costUsd"]
     if total_inr is None or total_usd is None:
         status = "incomplete"
         if "carrier_cost" not in missing and (carrier["amountInr"] is None or carrier["amountUsd"] is None):
@@ -228,6 +241,7 @@ def _supplier(meta: dict, *, channel: str, fx: float | None) -> dict[str, Any]:
         "stages": stage_costs,
         "carrier": carrier,
         "other": other,
+        "server": server,
     }
 
 
@@ -241,6 +255,7 @@ def build_call_costs(
     applied_usd_micros: Any,
     current_rates: dict | None,
     tier_rate: dict | None = None,
+    hosting: dict | None = None,
 ) -> dict[str, Any]:
     channel_norm = str(channel or "pstn").strip().lower()
     fx = _fx_rate(meta, current_rates)
@@ -252,7 +267,8 @@ def build_call_costs(
         tier_rate=tier_rate,
         fx=fx,
     )
-    supplier = _supplier(meta, channel=channel_norm, fx=fx)
+    duration = max(0.0, _number(duration_sec) or 0.0)
+    supplier = _supplier(meta, channel=channel_norm, fx=fx, duration_sec=duration, hosting=hosting)
     margin_inr = margin_usd = margin_percent = None
     if retail["totalBilledInr"] is not None and supplier["totalInr"] is not None:
         margin_inr = retail["totalBilledInr"] - supplier["totalInr"]

@@ -76,6 +76,12 @@ const ADMIN_GROUPS: Array<{
         label: "Verification",
         icon: <IconActivity className="h-4 w-4" />,
       },
+      {
+        // Which apps workspaces may use, per workspace, with connection status and usage.
+        href: "/dev/admin/integrations",
+        label: "Integrations",
+        icon: <IconSettings className="h-4 w-4" />,
+      },
     ],
   },
   {

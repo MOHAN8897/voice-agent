@@ -282,8 +282,10 @@ async def compile_agent_capabilities(text: str, agent_id: str) -> str:
         except (ProgrammingError, OperationalError):
             # Existing manual capture remains available before migration 047.
             config = None
-    return apply_available_tools(text, await agent_available_tools(agent_id, text, tenant_id=tenant_id),
-                                 followup_config=config)
+    from server.services.call_integrations import capability_rows
+
+    tools = await agent_available_tools(agent_id, text, tenant_id=tenant_id)
+    return apply_available_tools(text, tools, followup_config=config, call_integration_rows=capability_rows(None, tools))
 
 
 def capabilities_section_present(compiled_text: str | None) -> bool:

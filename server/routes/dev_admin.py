@@ -2047,8 +2047,11 @@ async def list_admin_calls(
     from server.services.saas.billing_rates import load_current_rates
     from sqlalchemy import cast, or_, String
 
+    from server.services.saas.hosting_costs import hosting_assumptions
+
     rates = await load_current_rates()
     fx = float(rates.get("fx_rate_inr") or 0) or None
+    hosting = hosting_assumptions()
 
     factory = get_session_factory()
     async with factory() as db:
@@ -2150,6 +2153,7 @@ async def list_admin_calls(
                 applied_usd_micros=r.applied_rate_usd_micros_per_min,
                 current_rates=rates,
                 tier_rate=catalog_rate,
+                hosting=hosting,
             )
             supplier = costs["supplier"]
             stages = supplier["stages"]
@@ -2175,6 +2179,9 @@ async def list_admin_calls(
                 "retailUsd": costs["retail"]["totalBilledUsd"],
                 "supplierCostInr": supplier["totalInr"],
                 "supplierCostUsd": supplier["totalUsd"],
+                "serverCostInr": supplier["server"]["costInr"],
+                "serverCostUsd": supplier["server"]["costUsd"],
+                "serverCostPerMinInr": supplier["server"]["perMinuteInr"],
                 "marginInr": costs["margin"]["inr"],
                 "marginUsd": costs["margin"]["usd"],
                 "marginPercent": costs["margin"]["percent"],
@@ -2192,6 +2199,7 @@ async def list_admin_calls(
                     "llmInr": stages["llm"]["costInr"],
                     "ttsInr": stages["tts"]["costInr"],
                     "otherInr": supplier["other"]["costInr"],
+                    "serverInr": supplier["server"]["costInr"],
                 },
             })
 
@@ -2201,6 +2209,7 @@ async def list_admin_calls(
             "limit": limit_val,
             "offset": offset_val,
             "fxRateInr": fx,
+            "hosting": hosting,
             "calls": calls_data,
         }
 
@@ -2256,8 +2265,10 @@ async def get_admin_call_detail(
 
         from server.services.dev_runtime import effective_app_environment
         from server.services.saas.admin_call_costs import build_call_costs
+        from server.services.saas.hosting_costs import hosting_assumptions
         from server.services.saas.voice_stack_profiles import _native_tier_retail_rate, load_profile_records
 
+        hosting = hosting_assumptions()
         tier_records = await load_profile_records(effective_app_environment(), None)
         if channel_norm == "browser":
             catalog_rate = {
@@ -2276,6 +2287,7 @@ async def get_admin_call_detail(
             applied_usd_micros=call.applied_rate_usd_micros_per_min,
             current_rates=rates,
             tier_rate=catalog_rate,
+            hosting=hosting,
         )
         supplier = costs["supplier"]
         measured_stages = supplier["stages"]
@@ -2406,6 +2418,7 @@ async def get_admin_call_detail(
                     "components": measured_stages["tts"]["components"],
                 },
                 "other": supplier["other"],
+                "server": {**supplier["server"], "assumptions": hosting},
             },
             "margin": costs["margin"],
             "transcriptSummary": review.get("transcript_preview") or meta.get("post_call_summary"),

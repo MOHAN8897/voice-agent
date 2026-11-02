@@ -6,7 +6,7 @@ import {
   LifeBuoy, Video, GitBranch, Layers, Check, Info, Clock, ArrowRight,
   AlertCircle, Key, Lock, ArrowUpRight, CheckCheck, HelpCircle,
   Activity, ArrowDownRight, Terminal, Globe, ChevronRight, Play,
-  BookOpen, Link2, ShieldAlert, Cpu
+  BookOpen, Link2, ShieldAlert, Cpu, FileSpreadsheet
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import Nango from '@nangohq/frontend';
@@ -17,6 +17,7 @@ import { Badge } from '../ui/StatusBadge';
 import { EmptyState } from '../ui/EmptyState';
 import { api } from '../../services/api';
 import { FULL_INTEGRATIONS_CATALOG } from './integrationsCatalog';
+import { IntegrationSetupDialog } from '../ui/IntegrationSetupDialog';
 
 // Third-party category and brand colours for app icon tiles only (intentionally not
 // design tokens: they identify the vendor). Status never uses these.
@@ -37,6 +38,7 @@ export const CATEGORY_COLORS = {
 
 export const BRAND_COLORS = {
   GOOGLECALENDAR: { bg: 'bg-[#4285F4]/10', text: 'text-[#4285F4]', border: 'border-[#4285F4]/30', glow: 'rgba(66, 133, 244, 0.12)', hex: '#4285F4' },
+  GOOGLESHEETS: { bg: 'bg-[#0F9D58]/10', text: 'text-[#0F9D58]', border: 'border-[#0F9D58]/30', glow: 'rgba(15, 157, 88, 0.12)', hex: '#0F9D58' },
   CALCOM: { bg: 'bg-[#111111]/10', text: 'text-[#111111]', border: 'border-[#111111]/30', glow: 'rgba(17, 17, 17, 0.12)', hex: '#111111' },
   CALENDLY: { bg: 'bg-[#006BFF]/10', text: 'text-[#006BFF]', border: 'border-[#006BFF]/30', glow: 'rgba(0, 107, 255, 0.12)', hex: '#006BFF' },
   HUBSPOT: { bg: 'bg-[#FF7A59]/10', text: 'text-[#FF7A59]', border: 'border-[#FF7A59]/30', glow: 'rgba(255, 122, 89, 0.12)', hex: '#FF7A59' },
@@ -121,6 +123,7 @@ export function IntegrationsModule() {
   const [requestSubmitted, setRequestSubmitted] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
   const [disconnectApp, setDisconnectApp] = useState(null);
+  const [setupApp, setSetupApp] = useState(null);
   const connectUiRef = useRef(null);
   const pendingAuthorizationRef = useRef(null);
 
@@ -202,8 +205,11 @@ export function IntegrationsModule() {
       triggerConfetti();
       setToastMessage(`Connected ${name}.`);
       setTimeout(() => setToastMessage(null), 4000);
+      const connectedApp = connectModalApp;
       setConnectModalApp(null);
       await fetchIntegrations();
+      // Apps that act on a chosen channel, board or event type ask for it right away.
+      if (connectedApp?.setup_missing?.length) setSetupApp(connectedApp);
     };
     try {
       if (pendingAuthorizationRef.current?.appId === appId) {
@@ -223,10 +229,13 @@ export function IntegrationsModule() {
       }
       let activating = false;
       let completed = false;
-      const nango = new Nango({ connectSessionToken: data.session_token });
+      // A self-hosted gateway tells us where its API and Connect form live.
+      const nango = new Nango({ connectSessionToken: data.session_token, ...(data.api_url ? { host: data.api_url } : {}) });
       connectUiRef.current?.close();
       connectUiRef.current = nango.openConnectUI({
         sessionToken: data.session_token,
+        ...(data.connect_url ? { baseURL: data.connect_url } : {}),
+        ...(data.api_url ? { apiURL: data.api_url } : {}),
         detectClosedAuthWindow: true,
         onEvent: async (event) => {
           if (event.type === 'connect' && !activating && !completed) {
@@ -375,6 +384,7 @@ export function IntegrationsModule() {
       case 'layers': case 'Layers': return <Layers className={className} />;
       case 'zap': case 'Zap': return <Zap className={className} />;
       case 'sliders': case 'Sliders': return <Sliders className={className} />;
+      case 'FileSpreadsheet': return <FileSpreadsheet className={className} />;
       default: return <Database className={className} />;
     }
   };
@@ -613,7 +623,12 @@ export function IntegrationsModule() {
 
                       {/* Status and sign-in method */}
                       <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                        {isConnected ? (
+                        {isConnected && app.setup_missing?.length ? (
+                          <Badge tone="warning" dot data-testid={`setup-badge-${app.id.toLowerCase()}`}
+                            title={app.call_setup_note || 'Choose what your agents use in this app before calls can use it.'}>
+                            Set up needed
+                          </Badge>
+                        ) : isConnected ? (
                           <Badge tone="success" dot>Connected</Badge>
                         ) : needsReauth ? (
                           <Badge
@@ -665,6 +680,17 @@ export function IntegrationsModule() {
 
                       <div className="shrink-0">
                         {isConnected ? (
+                          <div className="flex items-center gap-1">
+                          {app.setup_fields?.length > 0 && (
+                            <TactileButton
+                              variant={app.setup_missing?.length ? 'primary' : 'ghost'}
+                              size="sm"
+                              onClick={() => setSetupApp(app)}
+                              data-testid={`setup-btn-${app.id.toLowerCase()}`}
+                            >
+                              {app.setup_missing?.length ? 'Set up' : 'Settings'}
+                            </TactileButton>
+                          )}
                           <TactileButton
                             variant="ghost"
                             size="sm"
@@ -674,6 +700,7 @@ export function IntegrationsModule() {
                           >
                             Disconnect
                           </TactileButton>
+                          </div>
                         ) : app.oauth_ready === false ? (
                           <span
                             data-testid={`not-ready-${app.id.toLowerCase()}`}
@@ -905,6 +932,12 @@ export function IntegrationsModule() {
               {selectedAppModal.description}
             </p>
 
+            {selectedAppModal.call_setup_note && (
+              <p className="rounded-control border border-warning-line bg-warning-soft px-3 py-2 text-ui text-warning-fg">
+                {selectedAppModal.call_setup_note} Your agents cannot use it until this is set up.
+              </p>
+            )}
+
             <div className="space-y-2">
               <h4 className="text-ui font-medium text-ink">
                 What your agents can do
@@ -979,6 +1012,19 @@ export function IntegrationsModule() {
             </form>
           </div>
         </div>
+      )}
+
+      {setupApp && (
+        <IntegrationSetupDialog
+          app={setupApp}
+          onClose={() => setSetupApp(null)}
+          onSaved={async (data) => {
+            setSetupApp(null);
+            setToastMessage(data?.missing?.length ? `Saved. Still needed: ${data.missing.join(', ')}.` : `${setupApp.name} is ready for calls.`);
+            setTimeout(() => setToastMessage(null), 4000);
+            await fetchIntegrations();
+          }}
+        />
       )}
 
       {/* Disconnect confirmation */}

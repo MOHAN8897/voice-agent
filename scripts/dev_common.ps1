@@ -111,6 +111,98 @@ function Ensure-RedisServer {
     return $false
 }
 
+# --- Self-hosted Nango (integrations gateway) ---------------------------------
+# docker-compose.nango.yml, always under this project name so start and stop find
+# the same containers. Without it every integration shows "Not available yet".
+$script:NangoProject = "dialtact-nango"
+
+function Get-DotEnvValue {
+    param([string]$RepoRoot, [string]$Key)
+    $envFile = Join-Path $RepoRoot ".env"
+    if (-not (Test-Path $envFile)) { return $null }
+    foreach ($line in (Get-Content -Path $envFile -ErrorAction SilentlyContinue)) {
+        if ($line -match "^\s*$Key\s*=\s*(.*?)\s*$") { return $Matches[1].Trim('"', "'") }
+    }
+    return $null
+}
+
+function Test-SelfHostedNango {
+    param([string]$RepoRoot)
+    $base = Get-DotEnvValue -RepoRoot $RepoRoot -Key "NANGO_BASE_URL"
+    return [bool]($base -and $base -match '^(?i)https?://(localhost|127\.0\.0\.1)(:\d+)?/?$') -and
+        (Test-Path (Join-Path $RepoRoot "docker-compose.nango.yml"))
+}
+
+function Test-DockerReady {
+    $docker = Get-Command docker -ErrorAction SilentlyContinue
+    if (-not $docker) { return $false }
+    & cmd.exe /c "docker info >nul 2>&1"
+    return $LASTEXITCODE -eq 0
+}
+
+function Start-DockerDesktop {
+    if (Test-DockerReady) { return $true }
+    $exe = @(
+        (Join-Path $env:ProgramFiles "Docker\Docker\Docker Desktop.exe"),
+        (Join-Path $env:LOCALAPPDATA "Programs\Docker\Docker\Docker Desktop.exe")
+    ) | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+    if (-not $exe) {
+        Write-Warning "Docker Desktop is not installed; integrations need it (self-hosted Nango)."
+        return $false
+    }
+    if (-not (Get-Process -Name "Docker Desktop" -ErrorAction SilentlyContinue)) {
+        Write-Host "Starting Docker Desktop (integrations gateway)..."
+        Start-Process -FilePath $exe | Out-Null
+    } else {
+        Write-Host "Waiting for Docker Desktop's engine..."
+    }
+    $deadline = (Get-Date).AddSeconds(180)
+    while ((Get-Date) -lt $deadline) {
+        if (Test-DockerReady) { return $true }
+        Start-Sleep -Seconds 3
+    }
+    Write-Warning "Docker Desktop did not become ready within 3 minutes."
+    return $false
+}
+
+function Ensure-NangoGateway {
+    param([string]$RepoRoot)
+    if (-not (Test-SelfHostedNango -RepoRoot $RepoRoot)) { return $true }  # Nango Cloud: nothing local to start
+    $base = (Get-DotEnvValue -RepoRoot $RepoRoot -Key "NANGO_BASE_URL").TrimEnd('/')
+    if (Test-HttpOk "$base/health" 3) {
+        Write-Host "Integrations gateway (Nango) is up at $base"
+        return $true
+    }
+    if (-not (Start-DockerDesktop)) {
+        Write-Warning "Integrations gateway not started: every app will show 'Not available yet'. Start Docker Desktop, then run npm run dev again."
+        return $false
+    }
+    Write-Host "Starting the integrations gateway (Nango containers)..."
+    $compose = Join-Path $RepoRoot "docker-compose.nango.yml"
+    $envFile = Join-Path $RepoRoot ".env"
+    & cmd.exe /c "docker compose -p $script:NangoProject -f `"$compose`" --env-file `"$envFile`" up -d >nul 2>&1"
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "docker compose could not start Nango. Run: docker compose -p $script:NangoProject -f docker-compose.nango.yml --env-file .env up -d"
+        return $false
+    }
+    if (Wait-ForService -Label "Integrations gateway (Nango)" -Url "$base/health" -MaxAttempts 60 -TimeoutSec 3) {
+        return $true
+    }
+    Write-Warning "Nango containers started but $base/health is not answering. Check: docker logs $script:NangoProject-nango-server-1"
+    return $false
+}
+
+function Stop-NangoGateway {
+    param([string]$RepoRoot)
+    if (-not (Test-SelfHostedNango -RepoRoot $RepoRoot)) { return }
+    if (-not (Test-DockerReady)) { return }  # Docker not running: the containers are already down
+    Write-Host "Stopping the integrations gateway (Nango containers; connections are kept)..."
+    $compose = Join-Path $RepoRoot "docker-compose.nango.yml"
+    $envFile = Join-Path $RepoRoot ".env"
+    # stop, never down -v: the volume holds every tenant's encrypted connection.
+    & cmd.exe /c "docker compose -p $script:NangoProject -f `"$compose`" --env-file `"$envFile`" stop >nul 2>&1"
+}
+
 function Test-VoiceAgentPythonDeps {
     param(
         [Parameter(Mandatory = $true)][string]$PythonPath,
@@ -593,6 +685,20 @@ if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction Sile
 `$env:PYTHONUNBUFFERED = '1'
 `$env:PYTHONIOENCODING = 'utf-8'
 `$env:NEXT_TELEMETRY_DISABLED = '1'
+# uvicorn --reload restarts its worker with Ctrl+C, which Windows sends to every
+# process on this console. The runner swallows it so it keeps logging; the API
+# vanished on every code change before. A handler is not inherited, so the
+# worker still gets the Ctrl+C it is meant to stop on.
+try {
+    Add-Type -Namespace DevRunner -Name Ctrl -MemberDefinition @'
+public delegate bool Handler(uint type);
+[System.Runtime.InteropServices.DllImport("kernel32.dll")]
+public static extern bool SetConsoleCtrlHandler(Handler handler, bool add);
+public static Handler Keep = t => t == 0;
+public static void Install() { SetConsoleCtrlHandler(Keep, true); }
+'@
+    [DevRunner.Ctrl]::Install()
+} catch { }
 Set-Location -LiteralPath '$($WorkingDir.Replace("'", "''"))'
 try { `$Host.UI.RawUI.WindowTitle = '$($Title.Replace("'", "''"))' } catch { }
 `$log = '$($LogFile.Replace("'", "''"))'

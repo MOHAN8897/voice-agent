@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 from functools import lru_cache
 
 from jsonschema import Draft202012Validator, FormatChecker
@@ -37,6 +38,8 @@ _SCHEMAS: dict[str, list[dict]] = {
                 "properties": {
                     "date":     {"type": "string", "description": "YYYY-MM-DD"},
                     "duration": {"type": "integer", "description": "Duration in minutes (default 30)"},
+                    "day_start": {"type": "string", "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"},
+                    "day_end":   {"type": "string", "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"},
                 },
                 "required": ["date"],
             },
@@ -57,11 +60,12 @@ _SCHEMAS: dict[str, list[dict]] = {
         {
             "type": "function",
             "name": "GOOGLECALENDAR_LIST_EVENTS",
-            "description": "List upcoming calendar events for a date",
+            "description": "Find this caller's own appointments on a date, to cancel or move one. Other people's appointments are never returned",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "date": {"type": "string", "description": "YYYY-MM-DD"},
+                    "attendee_email": {"type": "string", "description": "Caller email, if they booked with one"},
                 },
                 "required": ["date"],
             },
@@ -73,8 +77,8 @@ _SCHEMAS: dict[str, list[dict]] = {
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "event_id": {"type": "string", "description": "The Google Calendar event ID to cancel"},
-                    "calendar_id": {"type": "string", "description": "Calendar identifier (default: primary)"},
+                    "event_id": {"type": "string", "description": "Event ID from GOOGLECALENDAR_LIST_EVENTS or a booking made in this call"},
+                    "attendee_email": {"type": "string", "description": "Caller email the appointment was booked with"},
                 },
                 "required": ["event_id"],
             },
@@ -86,7 +90,8 @@ _SCHEMAS: dict[str, list[dict]] = {
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "event_id": {"type": "string", "description": "The Google Calendar event ID to reschedule"},
+                    "event_id": {"type": "string", "description": "Event ID from GOOGLECALENDAR_LIST_EVENTS or a booking made in this call"},
+                    "attendee_email": {"type": "string", "description": "Caller email the appointment was booked with"},
                     "start":    {"type": "string", "description": "New start datetime ISO 8601"},
                     "end":      {"type": "string", "description": "Optional new end datetime ISO 8601"},
                     "summary":  {"type": "string", "description": "Optional updated event title"},
@@ -122,8 +127,22 @@ _SCHEMAS: dict[str, list[dict]] = {
                     "event_type_uri": {"type": "string"},
                     "start_date":     {"type": "string", "description": "YYYY-MM-DD"},
                     "end_date":       {"type": "string", "description": "YYYY-MM-DD"},
+                    "time_zone":      {"type": "string", "description": "Caller IANA timezone for the returned times, default Asia/Kolkata"},
                 },
                 "required": ["event_type_uri", "start_date", "end_date"],
+            },
+        },
+        {
+            "type": "function",
+            "name": "CALENDLY_FIND_BOOKINGS",
+            "description": "Find the caller's upcoming Calendly bookings by the email they booked with",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "invitee_email": {"type": "string", "description": "Email the caller booked with"},
+                    "time_zone":     {"type": "string", "description": "Caller IANA timezone, default Asia/Kolkata"},
+                },
+                "required": ["invitee_email"],
             },
         },
         {
@@ -133,7 +152,7 @@ _SCHEMAS: dict[str, list[dict]] = {
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "event_uuid": {"type": "string", "description": "Calendly scheduled event UUID"},
+                    "event_uuid": {"type": "string", "description": "Event UUID from CALENDLY_FIND_BOOKINGS or a booking made in this call"},
                     "reason":     {"type": "string", "description": "Reason for cancellation"},
                 },
                 "required": ["event_uuid"],
@@ -184,12 +203,24 @@ _SCHEMAS: dict[str, list[dict]] = {
         },
         {
             "type": "function",
+            "name": "CALCOM_FIND_BOOKINGS",
+            "description": "Find the caller's upcoming Cal.com bookings by the email they booked with",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "email": {"type": "string", "description": "Email the caller booked with"},
+                },
+                "required": ["email"],
+            },
+        },
+        {
+            "type": "function",
             "name": "CALCOM_CANCEL_BOOKING",
             "description": "Cancel an existing Cal.com appointment booking",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "booking_uid": {"type": "string", "description": "Cal.com booking UID"},
+                    "booking_uid": {"type": "string", "description": "Booking UID from CALCOM_FIND_BOOKINGS or a booking made in this call"},
                     "reason":      {"type": "string", "description": "Reason for cancellation"},
                 },
                 "required": ["booking_uid"],
@@ -202,7 +233,7 @@ _SCHEMAS: dict[str, list[dict]] = {
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "booking_uid": {"type": "string", "description": "Cal.com booking UID"},
+                    "booking_uid": {"type": "string", "description": "Booking UID from CALCOM_FIND_BOOKINGS or a booking made in this call"},
                     "start":       {"type": "string", "description": "New start datetime ISO 8601"},
                     "reason":      {"type": "string", "description": "Reason for rescheduling"},
                 },
@@ -481,6 +512,39 @@ _SCHEMAS: dict[str, list[dict]] = {
                     "filter":     {"type": "string", "description": "Optional search term or filter formula"},
                 },
                 "required": ["base_id", "table_name"],
+            },
+        },
+    ],
+
+    "GOOGLESHEETS": [
+        {
+            "type": "function",
+            "name": "GOOGLESHEETS_FIND_ROWS",
+            "description": "Look up the caller's row in the business's Google Sheet by the value they gave (for example their phone number or order ID)",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "spreadsheet_id": {"type": "string"},
+                    "sheet_name":     {"type": "string"},
+                    "lookup_column":  {"type": "string"},
+                    "value":          {"type": "string", "description": "The value to find in the lookup column, as the caller gave it"},
+                },
+                "required": ["spreadsheet_id", "sheet_name", "lookup_column", "value"],
+            },
+        },
+        {
+            "type": "function",
+            "name": "GOOGLESHEETS_ADD_ROW",
+            "description": "Add a row to the business's Google Sheet, for example the caller's details and what they asked for",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "spreadsheet_id": {"type": "string"},
+                    "sheet_name":     {"type": "string"},
+                    "values": {"type": "object", "additionalProperties": {"type": "string"},
+                               "description": "Column heading -> value, using the sheet's own headings (for example Name, Phone, Email, Summary)"},
+                },
+                "required": ["spreadsheet_id", "sheet_name", "values"],
             },
         },
     ],
@@ -953,12 +1017,12 @@ _SCHEMAS: dict[str, list[dict]] = {
         {
             "type": "function",
             "name": "WOOCOMMERCE_UPDATE_ORDER_STATUS",
-            "description": "Update the fulfillment or processing status of a WooCommerce order",
+            "description": "Cancel or put on hold a WooCommerce order that has not shipped, when the caller asks",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "order_id": {"type": "string", "description": "WooCommerce order ID"},
-                    "status":   {"type": "string", "description": "New status: processing, on-hold, completed, cancelled, refunded"},
+                    "status":   {"type": "string", "description": "New status: cancelled or on-hold"},
                 },
                 "required": ["order_id", "status"],
             },
@@ -974,9 +1038,12 @@ _SCHEMAS: dict[str, list[dict]] = {
                 "type": "object",
                 "properties": {
                     "to":      {"type": "string", "description": "E.164 phone number"},
-                    "message": {"type": "string"},
+                    "message": {"type": "string", "description": "Text placed in the approved template"},
+                    "phone_number_id":   {"type": "string"},
+                    "template_name":     {"type": "string"},
+                    "template_language": {"type": "string"},
                 },
-                "required": ["to", "message"],
+                "required": ["to", "message", "phone_number_id", "template_name", "template_language"],
             },
         },
     ],
@@ -1102,7 +1169,8 @@ for _tool in _SCHEMAS["WOOCOMMERCE"]:
     # neither before any request (top-level anyOf is not portable across
     # realtime model function-schema dialects).
     if _tool["name"] == "WOOCOMMERCE_UPDATE_ORDER_STATUS":
-        _tool["parameters"]["properties"]["status"]["enum"] = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"]
+        # Completing, refunding or failing an order is staff work, not a caller request.
+        _tool["parameters"]["properties"]["status"]["enum"] = ["cancelled", "on-hold"]
 for _tool in _SCHEMAS["CALCOM"]:
     if _tool["name"] in {"CALCOM_CREATE_BOOKING", "CALCOM_GET_AVAILABLE_SLOTS"}:
         _tool["parameters"]["properties"]["time_zone"] = {"type": "string", "description": "Caller IANA timezone, default Asia/Kolkata"}
@@ -1135,7 +1203,7 @@ VOICE_RESPONSE_KEYS: dict[str, tuple] = {
     "GITHUB":           ("status", "issue_number", "html_url", "issues", "summary"),
     "INTERCOM":         ("status", "conversation_id", "contact_id", "summary"),
     "PIPEDRIVE":        ("status", "id", "summary"),
-    "SHOPIFY":          ("status", "order_id", "name", "financial_status", "fulfillment_status", "fulfillments", "customer", "tracking_number", "summary"),
+    "SHOPIFY":          ("status", "order_id", "name", "financial_status", "fulfillment_status", "fulfillments", "customer", "customer_id", "email", "orders_count", "tracking_number", "summary"),
     "TWILIO_SMS":       ("status", "message_sid", "delivery_status", "summary"),
     "MICROSOFTTEAMS":   ("status", "message_id", "summary"),
     "CLICKUP":          ("status", "task_id", "url", "summary"),
@@ -1151,8 +1219,16 @@ VOICE_RESPONSE_KEYS: dict[str, tuple] = {
     "TODOIST":          ("status", "task_id", "content", "summary"),
 }
 
-VOICE_RESPONSE_KEYS["GOOGLECALENDAR"] += ("events", "time_zone")
-VOICE_RESPONSE_KEYS["CALENDLY"] += ("slots", "confirmed", "event_uri", "invitee_uri")
+VOICE_RESPONSE_KEYS["GOOGLECALENDAR"] += ("events", "time_zone", "free_ranges")
+VOICE_RESPONSE_KEYS["CALENDLY"] += ("slots", "confirmed", "event_uri", "invitee_uri", "bookings", "time_zone")
+VOICE_RESPONSE_KEYS["CALCOM"] += ("bookings", "time_zone")
+VOICE_RESPONSE_KEYS["NOTION"] += ("pages",)
+VOICE_RESPONSE_KEYS["AIRTABLE"] += ("items",)
+VOICE_RESPONSE_KEYS["GOOGLESHEETS"] = ("status", "rows", "matches", "row_number", "summary", "message")
+
+# Kept executable for older compiled agents, never offered to the model:
+# FIND_SLOTS duplicates FIND_FREE_SLOTS, and a caller cannot name a deal stage id.
+HIDDEN_FROM_MODEL = frozenset({"GOOGLECALENDAR_FIND_SLOTS", "HUBSPOT_UPDATE_DEAL_STAGE"})
 
 
 def _normalize(app_name: str) -> str:
@@ -1173,7 +1249,7 @@ def get_tools_for_tenant(active_app_names: list[str]) -> list[dict]:
         key = _normalize(raw_name)
         for schema in _SCHEMAS.get(key, []):
             tool_name = schema.get("name", "")
-            if tool_name and tool_name not in seen:
+            if tool_name and tool_name not in seen and tool_name not in HIDDEN_FROM_MODEL:
                 seen.add(tool_name)
                 schemas.append(schema)
     return schemas
@@ -1219,34 +1295,61 @@ async def get_tools_for_agent(active_apps: list[str], tenant_id: str, agent_id: 
         rules = (await session.execute(select(AgentIntegration).where(
             AgentIntegration.tenant_id == uuid.UUID(tenant_id), AgentIntegration.agent_id == uuid.UUID(agent_id),
         ))).scalars().all()
+    from server.services.call_integrations import agent_allows, agent_whitelist, selected_apps
+    from server.services.integration_settings import filled_params, is_configured, model_facing_schema, setting_params, tenant_settings
+
+    settings = await tenant_settings(tenant_id, factory)
     configured = {_normalize(t) for t in configured_tools} if configured_tools is not None else None
-    allowed = []
+    # (app, tool, source): "pick" = chosen for this call, "rule" = the agent's
+    # saved setting, "default" = catalog default with no rule.
+    picked: list[tuple[str, dict, str]] = []
     for tool in get_tools_for_tenant(active_apps):
         app = tool_definition(tool["name"])[0]
+        if tool["name"] in POST_CALL_ONLY:
+            continue
         if configured is not None and tool["name"] not in configured and app not in configured:
+            continue
+        app_settings = settings.get(app)
+        required = set(tool["parameters"].get("required", []))
+        # A resource the tenant has not chosen (channel, board, event type) would
+        # have to be invented by the model; such actions are not offered.
+        if not is_configured(app, app_settings) or not (setting_params(tool["name"]) & required) <= set(filled_params(app, tool["name"], app_settings)):
             continue
         matching = [r for r in rules if _normalize(r.app_name) == app]
         if selection is not None:
-            from server.services.call_integrations import agent_allows, agent_whitelist, selected_apps
-
             if app not in selected_apps(selection, "in_call") or not agent_allows(app, rules):
                 continue
-            whitelist = agent_whitelist(app, rules)
+            whitelist = agent_whitelist(app, rules, "in_call")
             if whitelist and tool["name"] not in whitelist:
                 continue
-            allowed.append(tool)
+            picked.append((app, tool, "pick"))
             continue
-        if not matching and default_action_timing(app) != "in_call":
+        if not matching:
+            if default_action_timing(app) == "in_call":
+                picked.append((app, tool, "default"))
             continue
-        if matching and not any(r.enabled and r.timing_mode == "in_call" and
-                                (not r.action_whitelist or tool["name"] in {a.upper() for a in r.action_whitelist}) for r in matching):
-            continue
-        allowed.append(tool)
-    if compiled_text:
-        from server.brain.capabilities import tools_used_by_script
+        if any(r.enabled and r.timing_mode == "in_call" and
+               (not r.action_whitelist or tool["name"] in {a.upper() for a in r.action_whitelist}) for r in matching):
+            picked.append((app, tool, "rule"))
+    from server.brain.capabilities import SCHEDULING_APPS, script_uses_scheduling
 
-        # Only tools this agent's own workflow can use reach the model each turn.
-        allowed = tools_used_by_script(allowed, compiled_text)
+    defaults_schedule = script_uses_scheduling(compiled_text) if compiled_text else None
+    default_calendar = next((app for app, _, source in picked if source == "default" and app in SCHEDULING_APPS), None)
+    chosen_calendar = any(source != "default" and app in SCHEDULING_APPS for app, _, source in picked)
+    allowed: list[dict] = []
+    for app, tool, source in picked:
+        if app in SCHEDULING_APPS and source != "pick":
+            # Each schema is sent every turn; a workflow that never books does not
+            # get calendars (call 35002575 carried ten unused ones). A calendar
+            # picked for this very call is the tenant's explicit request and stays.
+            if defaults_schedule is False:
+                continue
+            # Two default calendars would leave the model choosing where to book;
+            # one the agent's settings turned on replaces the default one.
+            if source == "default" and (chosen_calendar or app != default_calendar):
+                continue
+        allowed.append(model_facing_schema(tool))
+    platform_tools: list[dict] = []
     if include_platform:
         from server.brain.capabilities import order_confirmation_allowed_from_script
         from server.call.enquiry import SAVE_ENQUIRY_TOOL
@@ -1257,8 +1360,36 @@ async def get_tools_for_agent(active_apps: list[str], tenant_id: str, agent_id: 
         platform_tools = [SAVE_ENQUIRY_TOOL, REQUEST_HUMAN_HANDOFF_TOOL]
         if order_confirmation_allowed_from_script(compiled_text):
             platform_tools.append(CONFIRM_ORDER_TOOL)
-        allowed = [*allowed[:32-len(platform_tools)], *platform_tools]
-    return allowed
+    return [*cap_whole_apps(allowed, MAX_MODEL_TOOLS - len(platform_tools)), *platform_tools]
+
+
+MAX_MODEL_TOOLS = 32
+# A draft is for the team to review after the call; offered live, the model
+# saves a draft when the caller asked for an email to be sent.
+POST_CALL_ONLY = frozenset({"GMAIL_CREATE_DRAFT"})
+
+
+def cap_whole_apps(tools: list[dict], limit: int) -> list[dict]:
+    """Keep whole apps within the provider tool limit, never half an app."""
+    from server.utils.logger import logger
+
+    groups: dict[str, list[dict]] = {}
+    for tool in tools:
+        groups.setdefault(tool_definition(tool["name"])[0], []).append(tool)
+    kept: list[dict] = []
+    dropped: list[str] = []
+    for app, group in groups.items():
+        if len(kept) + len(group) <= limit:
+            kept.extend(group)
+        else:
+            dropped.append(app)
+    if dropped:
+        logger.warning("[TOOLS] Tool limit reached; apps not offered this call: %s", ",".join(dropped))
+    return kept
+
+
+def count_model_tools(active_apps: list[str]) -> int:
+    return len(get_tools_for_tenant(active_apps))
 
 
 def tool_definition(tool_name: str) -> tuple[str, dict] | None:
@@ -1291,6 +1422,23 @@ def _validator(tool_name: str) -> Draft202012Validator:
     return Draft202012Validator(schema, format_checker=FormatChecker())
 
 
+# Template text a model writes when it lacks the fact ("[Your address here]",
+# "{{name}}", "<insert link>"). Sent to a caller it reads as a broken message.
+_PLACEHOLDER = re.compile(r"\[\s*(?:your|insert|enter|add|caller'?s?|business|company|clinic|link|address|name)\b[^\]]{0,80}\]"
+                          r"|\{\{[^}]{0,40}\}\}|<\s*(?:insert|your|enter)\b[^>]{0,60}>", re.IGNORECASE)
+_OUTGOING_TEXT = ("body", "text", "message", "content")
+_EMAIL = re.compile(r"[^@\s]+@[^@\s]+\.[A-Za-z]{2,}")
+
+
+def _email_fields(definition: dict) -> list[str]:
+    """Arguments that carry an email address: named so, or "to" on an email action."""
+    props = definition["parameters"].get("properties", {})
+    name = definition.get("name", "").upper()
+    mail_action = "EMAIL" in name.split("_") or name.startswith("GMAIL_")
+    return [k for k in props if "email" in k.lower() and props[k].get("type") == "string"] + (
+        ["to"] if "to" in props and mail_action else [])
+
+
 def validate_tool_arguments(tool_name: str, arguments: dict) -> str | None:
     """Return a caller-safe validation error without echoing customer values."""
     if tool_definition(tool_name) is None:
@@ -1303,8 +1451,15 @@ def validate_tool_arguments(tool_name: str, arguments: dict) -> str | None:
         definition = tool_definition(tool_name)[1]
         if any(isinstance(arguments.get(key), str) and not arguments[key].strip() for key in definition["parameters"].get("required", [])):
             return "Required action details are missing or invalid; ask for clarification."
+        if any(isinstance(arguments.get(k), str) and arguments[k].strip() and not _EMAIL.fullmatch(arguments[k].strip())
+               for k in _email_fields(definition)):
+            return ("That email address could not be made out. Ask the caller to spell it slowly, "
+                    "letter by letter, then read it back to them.")
         if next(_validator(tool_name).iter_errors(arguments), None) is not None:
             return "Required action details are missing or invalid; ask for clarification."
+        if "SEND" in tool_name.upper().split("_") and any(
+                isinstance(arguments.get(k), str) and _PLACEHOLDER.search(arguments[k]) for k in _OUTGOING_TEXT):
+            return "The message still has placeholder text. Send only details you actually have, or offer a follow-up."
     except (TypeError, ValueError, RecursionError):
         return "Action arguments are invalid."
     return None

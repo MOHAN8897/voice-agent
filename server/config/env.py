@@ -286,6 +286,14 @@ class Settings(BaseSettings):
         "https://api.nango.dev",
         validation_alias=AliasChoices("NANGO_BASE_URL", "nango_base_url"),
     )
+    # Browser-facing addresses of a self-hosted gateway. NANGO_BASE_URL may be a
+    # private address the server reaches; the console's Connect form needs these.
+    nango_public_url: str | None = Field(
+        None, validation_alias=AliasChoices("NANGO_PUBLIC_URL", "nango_public_url"),
+    )
+    nango_connect_url: str | None = Field(
+        None, validation_alias=AliasChoices("NANGO_CONNECT_URL", "nango_connect_url"),
+    )
 
     # --- SaaS subscriber auth & billing ---
     saas_auth_enabled: bool = Field(False, alias="SAAS_AUTH_ENABLED")

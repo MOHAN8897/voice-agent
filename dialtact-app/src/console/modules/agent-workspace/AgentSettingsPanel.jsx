@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Phone, LayoutGrid, Users, PhoneCall, ShieldCheck } from 'lucide-react';
+import { Phone, LayoutGrid, Users, PhoneCall, ShieldCheck, Plug } from 'lucide-react';
 import { SolidCard } from '../../ui/SolidCard';
 import { TactileButton } from '../../ui/TactileButton';
 import { Badge } from '../../ui/StatusBadge';
@@ -11,6 +11,7 @@ import { api } from '../../../services/api';
 import { TelephonySettingsCard } from '../TelephonySettingsCard';
 import { SectionNav } from './SectionNav';
 import { FollowUpSettingsCard } from './FollowUpSettingsCard';
+import { AgentIntegrationsCard } from './AgentIntegrationsCard';
 import { useAuth } from '../../../context/AuthContext';
 import { isSafeNavigationUrl } from '../../../lib/navigationPolicy';
 
@@ -377,6 +378,7 @@ export function AgentSettingsPanel({
           ['identity', 'Agent & phone', Users, 'Name, language, on or off, and number'],
           ['routing', 'Call handling', PhoneCall, 'Business hours and where calls go'],
           ['followups', 'Follow-ups & scoring', PhoneCall, 'Callbacks, schedules and lead priority'],
+          ['integrations', 'Apps', Plug, 'Connected apps used during and after calls'],
           ['compliance', 'Recording & compliance', ShieldCheck, 'Recording notice and calling rules'],
         ]} />
       {profileError && <p role="alert" className="rounded-control border border-warning-line bg-warning-soft p-3 text-copy text-warning-fg">{profileError} Reload the page before saving so your current call settings are kept.</p>}
@@ -658,6 +660,7 @@ export function AgentSettingsPanel({
       </div>
       </fieldset>
       {['all', 'followups'].includes(category) && <fieldset disabled={readOnly || savingChanges || saving}><FollowUpSettingsCard config={followup} onChange={setFollowup} acknowledged={followupAcknowledged} onAcknowledge={setFollowupAcknowledged} needsConsent={Boolean(followup?.enabled && (!JSON.parse(initialSnapshot || '{}').followup?.enabled || (followup.callbackMode === 'automatic' && JSON.parse(initialSnapshot || '{}').followup?.callbackMode !== 'automatic') || (followup.missedMode === 'automatic' && JSON.parse(initialSnapshot || '{}').followup?.missedMode !== 'automatic') || (followup.recallOutboundMode === 'automatic' && JSON.parse(initialSnapshot || '{}').followup?.recallOutboundMode !== 'automatic')))} error={followupError} /></fieldset>}
+      {['all', 'integrations'].includes(category) && agentId && <AgentIntegrationsCard agentId={agentId} readOnly={readOnly} />}
     </div>
   );
 }

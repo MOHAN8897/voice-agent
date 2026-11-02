@@ -12,7 +12,7 @@ from uuid import UUID
 import httpx
 import pytest
 from fastapi import FastAPI
-from sqlalchemy import JSON
+from sqlalchemy import JSON, select
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
@@ -88,7 +88,7 @@ def test_shape_and_unsupported_apps_are_rejected():
         {"app": "GOOGLECALENDAR", "mode": "in_call"}, {"app": "TODOIST", "mode": "post_call"},  # catalog default
     ]
     for bad, code in (
-        ([{"app": "SLACK", "mode": "post_call"}], "integration_not_available"),      # needs a channel configured
+        ([{"app": "PIPEDRIVE", "mode": "in_call"}], "integration_not_available"),    # not offered to calls
         ([{"app": "GOOGLECALENDAR", "mode": "post_call"}], "integration_mode_unsupported"),
         ([{"app": "TODOIST", "mode": "in_call"}, {"app": "TODOIST", "mode": "post_call"}], "integration_selection_invalid"),
         ([{"app": "../etc", "mode": "in_call"}], "integration_selection_invalid"),
@@ -118,6 +118,24 @@ async def test_selection_must_be_connected_verified_and_owned(db):
     assert err.value.code == "integration_disabled_for_agent"
 
 
+async def test_apps_needing_setup_are_selectable_only_once_configured(db):
+    with pytest.raises(ci.SelectionError) as err:  # connected, but no channel chosen
+        await ci.validate_selection(str(TID), str(AID), [{"app": "SLACK", "mode": "post_call"}])
+    assert err.value.status_code == 409 and err.value.code == "integration_setup_required"
+    _, names = await _tool_names(db, [{"app": "SLACK", "mode": "in_call"}])
+    assert "SLACK_SEND_MESSAGE" not in names
+    async with db() as session:
+        row = (await session.execute(select(TenantIntegration).where(TenantIntegration.app_name == "SLACK"))).scalar_one()
+        row.metadata_ = {"gateway_verified": True, "settings": {"channel": "C0123"}}
+        await session.commit()
+    assert await ci.validate_selection(str(TID), str(AID), [{"app": "SLACK", "mode": "post_call"}])
+    tools = await get_tools_for_agent(await tenant_tool_cache.get_active_app_names(str(TID), db), str(TID), str(AID), db,
+                                      selection=[{"app": "SLACK", "mode": "in_call"}])
+    slack = next(t for t in tools if t["name"] == "SLACK_SEND_MESSAGE")
+    # The model never sees (or invents) the channel; the server fills it.
+    assert "channel" not in slack["parameters"]["properties"] and slack["parameters"]["required"] == ["text"]
+
+
 # ------------------------------------------------------------------ exposure
 async def _tool_names(db, selection):
     active = await tenant_tool_cache.get_active_app_names(str(TID), db)
@@ -127,7 +145,9 @@ async def _tool_names(db, selection):
 
 async def test_exposed_tools_are_selected_connected_and_agent_allowed(db):
     apps, _ = await _tool_names(db, None)
-    assert apps == {"GOOGLECALENDAR", "CALENDLY"}  # agent defaults: catalog in-call apps only
+    # Agent defaults: catalog in-call apps only, and one default calendar so the
+    # model is never left choosing between two booking systems.
+    assert apps == {"GOOGLECALENDAR"}
     apps, names = await _tool_names(db, [{"app": "GMAIL", "mode": "in_call"}, {"app": "TODOIST", "mode": "post_call"}])
     assert apps == {"GMAIL"}  # Calendar is connected but not attached; Todoist runs after the call only
     assert "TODOIST_CREATE_TASK" not in names
@@ -237,7 +257,10 @@ def test_prompt_rows_name_only_attached_apps():
     assert "Do not offer bookings" in text and "Google Calendar" not in text
     none = "\n".join(ci.capability_rows([{"app": "TODOIST", "mode": "post_call"}], [{"name": "SAVE_ENQUIRY"}]))
     assert "No external app can be used during this call" in none
-    assert ci.capability_rows(None, tools) == []
+    # Without a per-call pick the agent's settings decide, and the prompt still names each app's job.
+    defaults = "\n".join(ci.capability_rows(None, tools))
+    assert "Gmail Follow-Up (during the call)" in defaults and "Do not offer bookings" in defaults
+    assert ci.capability_rows(None, [{"name": "SAVE_ENQUIRY"}]) == []
     from server.brain.capabilities import apply_available_tools
 
     brain = "--- CALL CAPABILITIES ---\nold\n\n--- PLATFORM CALL RULES ---\nx"
@@ -293,7 +316,8 @@ async def test_single_call_api_validates_and_carries_the_selection(db, monkeypat
                                 integrations=[{"app": "GOOGLECALENDAR", "mode": "in_call"}])
     await tel.telephony_outbound(body, principal)
     assert dial.await_args.kwargs["contact"] == {"integration_selection": [{"app": "GOOGLECALENDAR", "mode": "in_call"}]}
-    for bad, status in (([{"app": "HUBSPOT", "mode": "in_call"}], 409), ([{"app": "SLACK", "mode": "post_call"}], 422)):
+    for bad, status in (([{"app": "HUBSPOT", "mode": "in_call"}], 409), ([{"app": "SLACK", "mode": "post_call"}], 409),
+                        ([{"app": "PIPEDRIVE", "mode": "in_call"}], 422)):
         with pytest.raises(HTTPException) as err:
             await tel.telephony_outbound(tel.OutboundCallBody(agentId=str(AID), toE164="+15550100000", integrations=bad), principal)
         assert err.value.status_code == status

@@ -5,6 +5,8 @@ from datetime import date, datetime, time, timedelta, timezone
 from typing import Any
 from zoneinfo import ZoneInfo
 
+import hashlib
+
 import httpx
 
 from server.services.integration_safety import path_segment
@@ -31,8 +33,36 @@ async def _busy(client: httpx.AsyncClient, base: str, headers: dict, start: date
     return spans
 
 
-async def execute_calendar_action(client: httpx.AsyncClient, base: str, headers: dict, action: str, params: dict) -> dict:
+PARTY_KEY = "dialtact_party"
+
+
+def party_tag(phone_digits: str) -> str:
+    """Stored on events the agent books, so the same caller can find them later
+    without the agent ever reading other people's appointments."""
+    return hashlib.sha256(f"dialtact-party:{phone_digits}".encode()).hexdigest()[:32] if phone_digits else ""
+
+
+def _owned_by_caller(event: dict, tag: str, email: str) -> bool:
+    private = ((event.get("extendedProperties") or {}).get("private") or {})
+    if tag and private.get(PARTY_KEY) == tag:
+        return True
+    wanted = email.strip().casefold()
+    return bool(wanted) and any(str(a.get("email") or "").casefold() == wanted for a in event.get("attendees") or [])
+
+
+def _hhmm(value: Any, default: time) -> time:
+    try:
+        hour, minute = str(value).split(":")
+        return time(int(hour), int(minute))
+    except (TypeError, ValueError):
+        return default
+
+
+async def execute_calendar_action(client: httpx.AsyncClient, base: str, headers: dict, action: str, params: dict,
+                                  context: dict | None = None) -> dict:
     mutation_started = False
+    tag = party_tag(str((context or {}).get("party_phone") or ""))
+    email = str(params.get("attendee_email") or "")
     try:
         calendar = str(params.get("calendar_id") or "primary")
         root = f"{base}/proxy/calendar/v3/calendars/{path_segment(calendar)}"
@@ -46,29 +76,54 @@ async def execute_calendar_action(client: httpx.AsyncClient, base: str, headers:
             start = datetime.combine(target, time.min, zone)
             end = start + timedelta(days=1)
             if action == "GOOGLECALENDAR_LIST_EVENTS":
+                if not tag and not email:
+                    return {"status": "error", "message": "Ask for the email the appointment was booked with."}
                 response = await client.get(f"{root}/events", headers=headers, params={
                     "timeMin": start.isoformat(), "timeMax": end.isoformat(), "singleEvents": "true",
-                    "orderBy": "startTime", "maxResults": 10,
+                    "orderBy": "startTime", "maxResults": 250,
                 })
                 response.raise_for_status()
-                events = [{k: event[k] for k in ("id", "summary", "start", "end") if k in event} for event in response.json().get("items", [])]
-                return {"status": "success", "events": events, "summary": f"Retrieved {len(events)} calendar events."}
+                # Only this caller's appointments: other bookings hold other people's details.
+                events = [{k: event[k] for k in ("id", "summary", "start", "end") if k in event}
+                          for event in response.json().get("items", [])
+                          if event.get("status") != "cancelled" and _owned_by_caller(event, tag, email)]
+                return {"status": "success" if events else "not_found", "events": events,
+                        "summary": f"Found {len(events)} appointment(s) for this caller."}
             duration = int(params.get("duration") or 30)
             if not 5 <= duration <= 480:
                 raise ValueError("Invalid duration")
             busy = await _busy(client, base, headers, start, end, calendar)
             # Samples of calendar free time are not a promise of business hours.
-            cursor = datetime.combine(target, time(9), zone)
-            stop = datetime.combine(target, time(17), zone)
-            slots: list[str] = []
-            while cursor + timedelta(minutes=duration) <= stop and len(slots) < 8:
+            cursor = datetime.combine(target, _hhmm(params.get("day_start"), time(9)), zone)
+            stop = datetime.combine(target, _hhmm(params.get("day_end"), time(17)), zone)
+            # The whole bookable day, not just its first hours: a caller asking
+            # for the afternoon must be offered afternoon times.
+            starts: list[datetime] = []
+            while cursor + timedelta(minutes=duration) <= stop and len(starts) < 48:
                 finish = cursor + timedelta(minutes=duration)
                 if cursor > datetime.now(timezone.utc) and not any(cursor < b_end and finish > b_start for b_start, b_end in busy):
-                    slots.append(cursor.isoformat())
+                    starts.append(cursor)
                 cursor += timedelta(minutes=30)
-            return {"status": "available" if slots else "unavailable", "available_slots": slots,
+            ranges: list[list[datetime]] = []
+            for slot in starts:
+                if ranges and slot - ranges[-1][1] == timedelta(minutes=30):
+                    ranges[-1][1] = slot
+                else:
+                    ranges.append([slot, slot])
+            return {"status": "available" if starts else "unavailable",
+                    "available_slots": [s.isoformat() for s in starts[:24]],
+                    "free_ranges": [f"{a:%H:%M}-{b + timedelta(minutes=duration):%H:%M}" for a, b in ranges],
                     "date": target.isoformat(), "time_zone": str(zone),
-                    "message": "Calendar free-time samples between 09:00 and 17:00; confirm the business's appointment hours before booking."}
+                    "message": "Free times within the business's bookable hours "
+                               f"{_hhmm(params.get('day_start'), time(9)):%H:%M}-{_hhmm(params.get('day_end'), time(17)):%H:%M}."}
+        if action in {"GOOGLECALENDAR_CANCEL_EVENT", "GOOGLECALENDAR_DELETE_EVENT",
+                      "GOOGLECALENDAR_RESCHEDULE_EVENT", "GOOGLECALENDAR_UPDATE_EVENT"}:
+            current = await client.get(f"{root}/events/{path_segment(params.get('event_id') or '')}", headers=headers)
+            if current.status_code == 404:
+                return {"status": "not_found", "message": "That appointment was not found. Nothing was changed."}
+            current.raise_for_status()
+            if not _owned_by_caller(current.json(), tag, email):
+                return {"status": "error", "message": "That appointment could not be matched to this caller. Nothing was changed."}
         if action in {"GOOGLECALENDAR_CANCEL_EVENT", "GOOGLECALENDAR_DELETE_EVENT"}:
             event_id = path_segment(params.get('event_id') or '')
             mutation_started = True
@@ -111,6 +166,8 @@ async def execute_calendar_action(client: httpx.AsyncClient, base: str, headers:
             payload.update(summary=params["summary"], description=params.get("description") or "")
             if params.get("attendee_email"):
                 payload["attendees"] = [{"email": params["attendee_email"]}]
+            if tag:
+                payload["extendedProperties"] = {"private": {PARTY_KEY: tag}}
             mutation_started = True
             response = await client.post(f"{root}/events", headers=headers, json=payload)
         response.raise_for_status()

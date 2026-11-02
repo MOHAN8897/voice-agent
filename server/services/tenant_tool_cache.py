@@ -61,7 +61,14 @@ async def _query_db(tenant_id: str, session_factory: Any | None) -> list[str]:
                     TenantIntegration.status == "ACTIVE",
                 )
             )
-            return [i.app_name for i in res.scalars().all() if (i.metadata_ or {}).get("gateway_verified") is True]
+            verified = [i.app_name for i in res.scalars().all() if (i.metadata_ or {}).get("gateway_verified") is True]
+        from server.services.integration_policy import disabled_apps
+        from server.services.tool_schema_registry import _normalize
+
+        # Apps the platform admin turned off for this workspace are not usable,
+        # even while the connection itself stays valid.
+        off = await disabled_apps(str(tenant_id), session_factory)
+        return [app for app in verified if _normalize(app) not in off]
     except Exception as exc:
         logger.warning("[TENANT_TOOL_CACHE] DB query failed: %s", type(exc).__name__)
         return []
@@ -104,6 +111,13 @@ async def get_connection_id(tenant_id: str, app_name: str, session_factory: Any 
     except Exception as exc:
         logger.warning("[TENANT_TOOL_CACHE] connection lookup failed: %s", type(exc).__name__)
         return None
+
+
+def invalidate_all() -> None:
+    """Drop every tenant's entry (after a platform-wide integration switch)."""
+    global _epoch
+    _epoch += 1
+    _cache.clear()
 
 
 def invalidate(tenant_id: str) -> None:

@@ -164,7 +164,8 @@ async def test_nango_service_provider_mapping_and_connect_initiation():
     assert service.get_provider_key("SLACK") == "slack"
     assert service.get_provider_key("HUBSPOT") == "hubspot"
     assert service.get_provider_key("SALESFORCE") == "salesforce"
-    assert service.get_provider_key("GITHUB") == "github-getting-started"
+    # The production GitHub config, not Nango's public_repo-only demo integration.
+    assert service.get_provider_key("GITHUB") == "github"
 
     # Test connect initiation with mock response
     mock_connect_resp = {

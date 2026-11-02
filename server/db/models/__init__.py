@@ -4,7 +4,9 @@ from server.db.models.entities import Agent, Call, ConfigVersion, Tenant, TierAs
 from server.db.models.integration_models import (
     AgentIntegration,
     OAuthState,
+    PlatformIntegrationSetting,
     TenantIntegration,
+    TenantIntegrationOverride,
     ToolExecution,
 )
 from server.db.models.phase5_models import Campaign, DncEntry
@@ -18,6 +20,8 @@ __all__ = [
     "TierAssignment",
     "ConfigVersion",
     "Call",
+    "PlatformIntegrationSetting",
+    "TenantIntegrationOverride",
     "Campaign",
     "DncEntry",
     "User",

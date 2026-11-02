@@ -1,0 +1,72 @@
+# Self-hosted Nango (free tier: auth + proxy), replacing Nango Cloud.
+#
+#   docker compose -f docker-compose.nango.yml --env-file .env up -d
+#
+# API + dashboard on :3003, Connect UI on :3009. Its Postgres and Redis are not
+# published to the host (5432/6379 belong to the app's own database and cache).
+# Required in .env (see .env.example):
+#   NANGO_ENCRYPTION_KEY  base64 of 32 random bytes. Set once; changing it makes
+#                         every stored credential unreadable.
+#   NANGO_SECRET_KEY      the API secret the app uses; pinned into the server as
+#                         its dev environment key so both sides always match.
+#   NANGO_DASHBOARD_USERNAME / NANGO_DASHBOARD_PASSWORD  dashboard basic auth.
+# OAuth providers redirect to ${NANGO_PUBLIC_URL}/oauth/callback; register that
+# URL in each provider's OAuth app. Use an HTTPS host for providers that reject
+# http://localhost (Slack, Zoom, Intercom).
+services:
+  nango-db:
+    image: postgres:16.0-alpine
+    environment:
+      POSTGRES_USER: nango
+      POSTGRES_PASSWORD: ${NANGO_DB_PASSWORD:-nango}
+      POSTGRES_DB: nango
+    volumes:
+      - nango-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nango"]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+
+  nango-redis:
+    image: redis:7.2.4
+    restart: unless-stopped
+
+  nango-server:
+    image: nangohq/nango-server:hosted-0.71.14
+    platform: linux/amd64
+    depends_on:
+      nango-db:
+        condition: service_healthy
+      nango-redis:
+        condition: service_started
+    environment:
+      NANGO_ENCRYPTION_KEY: ${NANGO_ENCRYPTION_KEY:?set NANGO_ENCRYPTION_KEY}
+      NANGO_DB_HOST: nango-db
+      NANGO_DB_PORT: "5432"
+      NANGO_DB_USER: nango
+      NANGO_DB_PASSWORD: ${NANGO_DB_PASSWORD:-nango}
+      NANGO_DB_NAME: nango
+      NANGO_DB_SSL: "false"
+      RECORDS_DATABASE_URL: postgresql://nango:${NANGO_DB_PASSWORD:-nango}@nango-db:5432/nango
+      NANGO_REDIS_URL: redis://nango-redis:6379
+      SERVER_PORT: "3003"
+      NANGO_SERVER_URL: ${NANGO_PUBLIC_URL:-http://localhost:3003}
+      NANGO_PUBLIC_SERVER_URL: ${NANGO_PUBLIC_URL:-http://localhost:3003}
+      FLAG_SERVE_CONNECT_UI: "true"
+      NANGO_CONNECT_UI_PORT: "3009"
+      NANGO_PUBLIC_CONNECT_URL: ${NANGO_CONNECT_URL:-http://localhost:3009}
+      FLAG_AUTH_ENABLED: "false"
+      AUTH_ALLOW_SIGNUP: "false"
+      NANGO_DASHBOARD_USERNAME: ${NANGO_DASHBOARD_USERNAME:?set NANGO_DASHBOARD_USERNAME}
+      NANGO_DASHBOARD_PASSWORD: ${NANGO_DASHBOARD_PASSWORD:?set NANGO_DASHBOARD_PASSWORD}
+      NANGO_SECRET_KEY_DEV: ${NANGO_SECRET_KEY:?set NANGO_SECRET_KEY}
+      NANGO_LOGS_ENABLED: "false"
+      LOG_LEVEL: info
+    ports:
+      - "3003:3003"
+      - "3009:3009"
+    restart: unless-stopped
+
+volumes:
+  nango-pg:

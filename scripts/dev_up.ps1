@@ -88,6 +88,13 @@ function Write-DevBanner {
         Write-Host "  API                   NOT RUNNING"
         Write-Host "  Check the 'Voice Agent API' window or: $LogDir\api.log"
     }
+    if (Test-SelfHostedNango -RepoRoot $RepoRoot) {
+        if ($script:nangoOk) {
+            Write-Host "  Integrations gateway  $((Get-DotEnvValue -RepoRoot $RepoRoot -Key 'NANGO_BASE_URL').TrimEnd('/')) (Nango, ready)"
+        } else {
+            Write-Host "  Integrations gateway  NOT RUNNING - apps show 'Not available yet' (start Docker Desktop, rerun npm run dev)"
+        }
+    }
     try {
         $redisOk = Test-NetConnection -ComputerName 127.0.0.1 -Port 6379 -InformationLevel Quiet -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
         if ($redisOk) {
@@ -118,8 +125,11 @@ $apiOk = $false
 $webOk = $false
 $dialtactOk = $false
 
+$nangoOk = $true
 if (-not $WebOnly) {
     Ensure-RedisServer | Out-Null
+    # Before the API: integrations read the gateway's apps on their first request.
+    $nangoOk = Ensure-NangoGateway -RepoRoot $RepoRoot
     if (-not (Test-VoiceAgentPythonDeps -PythonPath $python -RepoRoot $RepoRoot)) {
         throw "Install Python dependencies before starting the API (see commands above)."
     }

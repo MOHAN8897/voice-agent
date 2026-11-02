@@ -783,14 +783,19 @@ async def get_agent_post_call_actions(tenant_id: str, agent_id: str) -> list[str
             )
             res = await session.execute(stmt)
             integrations = res.scalars().all()
+            from server.services.call_integrations import POST_CALL_DEFAULT_ACTION
             from server.services.tool_schema_registry import _normalize, tool_definition
             actions = set()
             for integration in integrations:
-                # Connecting an app is not consent to automatic outbound messages.
+                # Connecting an app is not consent to automatic outbound messages:
+                # only an after-call rule the tenant enabled for this agent runs.
+                app = _normalize(integration.app_name)
                 for action in integration.action_whitelist or []:
                     definition = tool_definition(action)
-                    if definition and definition[0] == _normalize(integration.app_name):
+                    if definition and definition[0] == app:
                         actions.add(action.upper())
+                if not integration.action_whitelist and app in POST_CALL_DEFAULT_ACTION:
+                    actions.add(POST_CALL_DEFAULT_ACTION[app])
             return sorted(actions)
     except Exception as exc:
         logger.warning("[POST_CALL] Failed to fetch agent post call actions: %s", exc)
@@ -826,7 +831,10 @@ async def reconcile_and_dispatch_post_call(call_id: str, outcome: dict[str, Any]
     from server.services import call_integrations
 
     selection = await call_integrations.selection_for_call(str(call_id), tenant_id=tenant_id)
-    meta: dict[str, Any] = {}
+    try:
+        meta: dict[str, Any] = call_ledger.read_meta(str(call_id)) or {}
+    except Exception:  # noqa: BLE001 - arguments then come from the outcome only.
+        meta = {}
     if selection is None:
         actions = await get_agent_post_call_actions(tenant_id, agent_id)
     else:
@@ -838,10 +846,6 @@ async def reconcile_and_dispatch_post_call(call_id: str, outcome: dict[str, Any]
                 AgentIntegration.tenant_id == uuid.UUID(tenant_id), AgentIntegration.agent_id == uuid.UUID(agent_id),
             ))).scalars().all()
         actions = await call_integrations.post_call_plan(selection, list(rules))
-        try:
-            meta = call_ledger.read_meta(str(call_id)) or {}
-        except Exception:  # noqa: BLE001 - arguments then come from the outcome only.
-            meta = {}
     facts = outcome.get("extracted_fields") or {}
     if not isinstance(facts, dict):
         facts = {}
@@ -852,7 +856,9 @@ async def reconcile_and_dispatch_post_call(call_id: str, outcome: dict[str, Any]
         # Only actual extracted values are used. Missing resource IDs, recipients
         # or other required setup are rejected by the action schema.
         arguments = {key: facts[key] for key in properties if key in facts}
-        if selection is not None and action in call_integrations.POST_CALL_DEFAULT_ACTION.values():
+        # Built actions take their arguments from the call outcome, for picked
+        # calls and agent rules alike; free-form fact names never match a schema.
+        if action in call_integrations.POST_CALL_DEFAULT_ACTION.values():
             built = call_integrations.post_call_arguments(action, outcome, meta)
             if built is None:
                 results.append({"action": action, "result": {
@@ -874,6 +880,12 @@ POST_CALL_REQUIRED_DETAILS: dict[str, tuple[str, ...]] = {
     "GMAIL_CREATE_DRAFT": ("caller email", "call summary"),
     "HUBSPOT_CREATE_CONTACT": ("caller name", "caller email or phone"),
     "TODOIST_CREATE_TASK": ("next step or call summary",),
+    **{action: ("next step or call summary",) for action in (
+        "SLACK_SEND_MESSAGE", "DISCORD_SEND_MESSAGE", "NOTION_CREATE_PAGE", "ASANA_CREATE_TASK", "CLICKUP_CREATE_TASK",
+        "MONDAY_CREATE_ITEM", "LINEAR_CREATE_ISSUE", "JIRA_CREATE_ISSUE", "GITHUB_CREATE_ISSUE")},
+    "AIRTABLE_CREATE_RECORD": ("call summary",),
+    "GOOGLESHEETS_ADD_ROW": ("call summary",),
+    "SUPABASE_INSERT_ROW": ("call summary",),
 }
 
 

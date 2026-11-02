@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
 
@@ -123,6 +123,16 @@ function localOnlyDevPortalPlugin() {
 const PERMISSIONS_POLICY =
   'camera=(), microphone=(self), geolocation=(), accelerometer=(), gyroscope=(), magnetometer=(), usb=(), serial=(), bluetooth=(), hid=(), midi=(), xr-spatial-tracking=()';
 const BASE_CSP = "frame-ancestors 'none'; object-src 'none'; base-uri 'self'";
+// The integrations Connect form is framed from the gateway (self-hosted
+// NANGO_CONNECT_URL, else Nango Cloud). Without it here the form never opens.
+function originOf(url, fallback) {
+  try { return new URL(url).origin; } catch { return fallback; }
+}
+// The gateway addresses live in the repo-root .env next to the API's, which Vite
+// does not read for its own config; only the NANGO_ values are loaded here.
+const nangoEnv = { ...loadEnv('', fileURLToPath(new URL('..', import.meta.url)), 'NANGO_'), ...process.env };
+const NANGO_CONNECT_ORIGIN = originOf(nangoEnv.NANGO_CONNECT_URL, 'https://connect.nango.dev');
+const NANGO_API_ORIGIN = originOf(nangoEnv.NANGO_PUBLIC_URL, 'https://api.nango.dev');
 const BUILD_CSP = [
   "default-src 'self'",
   "script-src 'self' 'wasm-unsafe-eval' https://accounts.google.com https://checkout.razorpay.com",
@@ -130,8 +140,8 @@ const BUILD_CSP = [
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https:",
   "media-src 'self' data: blob:",
-  "connect-src 'self' https: wss:",
-  "frame-src https://accounts.google.com https://api.razorpay.com https://checkout.razorpay.com",
+  `connect-src 'self' https: wss: ${NANGO_API_ORIGIN}`,
+  `frame-src https://accounts.google.com https://api.razorpay.com https://checkout.razorpay.com ${NANGO_CONNECT_ORIGIN}`,
   "worker-src 'self' blob:",
   "form-action 'self' https://accounts.google.com",
   BASE_CSP,

@@ -28,6 +28,21 @@ from server.utils.logger import logger
 TOOL_TIMEOUT_SECONDS = 8.0
 
 
+def call_party_phone(call_id: str | None) -> str:
+    """The other party's number (caller inbound, callee outbound), digits only."""
+    if not call_id:
+        return ""
+    try:
+        from server.call.call_ledger import call_ledger
+
+        meta = call_ledger.read_meta(str(call_id)) or {}
+    except Exception:  # noqa: BLE001 - no number means no ownership match
+        return ""
+    direction = str(meta.get("direction") or "").lower()
+    raw = meta.get("callee_e164") if direction in {"outbound", "outgoing", "outbound-api"} else meta.get("caller_id")
+    return re.sub(r"\D", "", str(raw or ""))
+
+
 class DialtactToolRouter:
     def __init__(self) -> None:
         self.nango = nango_service
@@ -62,6 +77,10 @@ class DialtactToolRouter:
                 app = definition[0]
                 if not any(_normalize(i.app_name) == app and (i.metadata_ or {}).get("gateway_verified") is True for i in integrations):
                     return False
+                from server.services.integration_policy import is_enabled
+
+                if not await is_enabled(tenant_id, app, factory):
+                    return False
                 rules = (await session.execute(select(AgentIntegration).where(
                     AgentIntegration.tenant_id == tenant_uuid, AgentIntegration.agent_id == agent_uuid,
                 ))).scalars().all()
@@ -71,7 +90,7 @@ class DialtactToolRouter:
 
                     if app not in selected_apps(selection, timing) or not agent_allows(app, rules):
                         return False
-                    whitelist = agent_whitelist(app, rules, None if timing == "in_call" else timing)
+                    whitelist = agent_whitelist(app, rules, timing)
                     return not whitelist or tool_name.upper() in whitelist
                 if matching:
                     return any(r.enabled and r.timing_mode == timing and
@@ -90,11 +109,41 @@ class DialtactToolRouter:
         if not tenant_id or not agent_id:
             return {"status": "error", "message": "Unauthorized: Missing tenant or agent context"}
         tool_name = tool_name.upper()
+        definition = tool_definition(tool_name)
+        if definition is not None and definition[0] != "PLATFORM" and isinstance(arguments, dict):
+            from server.services.integration_settings import filled_params, setting_params, tenant_settings
+
+            # Setup-owned values (channel, board, event type) come from the
+            # tenant's saved choice, never from the model.
+            owned = setting_params(tool_name)
+            saved = (await tenant_settings(tenant_id, get_session_factory())).get(definition[0])
+            arguments = {**{k: v for k, v in arguments.items() if k not in owned},
+                         **filled_params(definition[0], tool_name, saved)}
+        converted = False
+        if timing == "in_call" and definition is not None and isinstance(arguments, dict):
+            from server.services.recipient_guard import written_address
+            from server.services.tool_schema_registry import _EMAIL, _email_fields
+
+            # Speech recognition writes an address as words ("ravi dot k at gmail
+            # dot com"), and the model often passes them on unchanged.
+            for field in _email_fields(definition[1]):
+                value = arguments.get(field)
+                if isinstance(value, str) and value.strip() and not _EMAIL.fullmatch(value.strip()):
+                    written = written_address(value)
+                    if written:
+                        arguments = {**arguments, field: written}
+                        converted = True
         error = validate_tool_arguments(tool_name, arguments)
         if error:
             return {"status": "error", "message": error}
         if not await self.authorized(tenant_id, agent_id, tool_name, timing=timing, call_id=call_id or None):
             return {"status": "error", "message": "This action is not enabled for this agent and workspace."}
+        if timing == "in_call":
+            from server.services import recipient_guard
+
+            unconfirmed = recipient_guard.check(call_id, tool_name, arguments, converted=converted)
+            if unconfirmed is not None:
+                return unconfirmed
         from server.call.enquiry import PLATFORM_ACTIONS
 
         if tool_name in PLATFORM_ACTIONS:
@@ -132,7 +181,7 @@ class DialtactToolRouter:
         try:
             result = await asyncio.wait_for(self.nango.execute_in_call_tool(
                 tenant_id=tenant_id, action_name=tool_name, params=arguments,
-                timeout_sec=TOOL_TIMEOUT_SECONDS,
+                timeout_sec=TOOL_TIMEOUT_SECONDS, context={"party_phone": call_party_phone(call_id)},
             ), timeout=TOOL_TIMEOUT_SECONDS)
             if not isinstance(result, dict) or not result.get("status"):
                 result = {"status": "unknown", "message": "The action result could not be verified."}

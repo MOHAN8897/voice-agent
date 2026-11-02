@@ -107,12 +107,15 @@ async def test_proxy_google_calendar_cancel_event():
     fake_resp.status_code = 204
     fake_resp.text = ""
 
-    with patch("httpx.AsyncClient.delete", new_callable=AsyncMock, return_value=fake_resp) as mock_delete:
+    owned = MagicMock(status_code=200)
+    owned.json.return_value = {"id": "event_abc_123", "attendees": [{"email": "caller@example.com"}]}
+    with patch("httpx.AsyncClient.get", AsyncMock(return_value=owned)), \
+            patch("httpx.AsyncClient.delete", new_callable=AsyncMock, return_value=fake_resp) as mock_delete:
         res = await nango_service._execute_proxy_tool(
             provider_key="google-calendar",
             connection_id="conn-123",
             action_name="GOOGLECALENDAR_CANCEL_EVENT",
-            params={"event_id": "event_abc_123"},
+            params={"event_id": "event_abc_123", "attendee_email": "Caller@Example.com"},
         )
         assert res["status"] == "cancelled"
         assert res["event_id"] == "event_abc_123"
@@ -126,14 +129,37 @@ async def test_proxy_google_calendar_cancel_event():
 async def test_proxy_google_calendar_reschedule_event():
     fake_resp = MagicMock(status_code=200)
     fake_resp.json.return_value = {"id": "event_abc_123"}
+    from server.services.integration_calendar import PARTY_KEY, party_tag
+
+    owned = MagicMock(status_code=200)
+    owned.json.return_value = {"id": "event_abc_123", "extendedProperties": {"private": {PARTY_KEY: party_tag("919800000000")}}}
     listing = MagicMock(status_code=200)
     listing.json.return_value = {"items": []}
-    with patch("httpx.AsyncClient.get", AsyncMock(return_value=listing)), patch("httpx.AsyncClient.patch", AsyncMock(return_value=fake_resp)) as mock_patch:
+    with patch("httpx.AsyncClient.get", AsyncMock(side_effect=[owned, listing])), patch("httpx.AsyncClient.patch", AsyncMock(return_value=fake_resp)) as mock_patch:
         result = await nango_service._execute_proxy_tool(provider_key="google-calendar", connection_id="conn-test",
-            action_name="GOOGLECALENDAR_RESCHEDULE_EVENT", params={"event_id": "event_abc_123", "start": "2030-10-20T14:00:00+05:30", "end": "2030-10-20T14:30:00+05:30"})
+            action_name="GOOGLECALENDAR_RESCHEDULE_EVENT", params={"event_id": "event_abc_123", "start": "2030-10-20T14:00:00+05:30", "end": "2030-10-20T14:30:00+05:30"},
+            context={"party_phone": "919800000000"})
     assert result["status"] == "success" and result["confirmed"] and result["rescheduled"]
     assert result["event_id"] == "event_abc_123"
     mock_patch.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_free_slots_cover_the_whole_bookable_day():
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    zone = ZoneInfo("Asia/Kolkata")
+    metadata = MagicMock(status_code=200)
+    metadata.json.return_value = {"timeZone": "Asia/Kolkata"}
+    morning_busy = [(datetime(2030, 10, 20, 10, 0, tzinfo=zone), datetime(2030, 10, 20, 11, 0, tzinfo=zone))]
+    with patch("httpx.AsyncClient.get", AsyncMock(return_value=metadata)), \
+            patch("server.services.integration_calendar._busy", AsyncMock(return_value=morning_busy)):
+        result = await nango_service._execute_proxy_tool(provider_key="google-calendar", connection_id="conn-test",
+            action_name="GOOGLECALENDAR_FIND_FREE_SLOTS", params={"date": "2030-10-20", "duration": 30})
+    # Afternoon times are offered, not just the first few morning slots.
+    assert "2030-10-20T16:30:00+05:30" in result["available_slots"]
+    assert result["free_ranges"] == ["09:00-10:00", "11:00-17:00"]
 
 
 @pytest.mark.asyncio
@@ -221,3 +247,29 @@ async def test_proxy_twilio_sms_get_status():
         assert call_url.endswith("/proxy/2010-04-01/Accounts/AC123/Messages/SM12345.json")
 
 
+
+
+@pytest.mark.asyncio
+async def test_calendar_never_changes_or_reads_another_callers_appointment():
+    """A caller may only see, cancel or move appointments booked by them."""
+    other = MagicMock(status_code=200)
+    other.json.return_value = {"id": "evt-other", "summary": "Dr visit - Priya", "attendees": [{"email": "priya@example.com"}]}
+    with patch("httpx.AsyncClient.get", AsyncMock(return_value=other)), \
+            patch("httpx.AsyncClient.delete", new_callable=AsyncMock) as mock_delete:
+        res = await nango_service._execute_proxy_tool(provider_key="google-calendar", connection_id="conn",
+            action_name="GOOGLECALENDAR_CANCEL_EVENT", params={"event_id": "evt-other", "attendee_email": "me@example.com"},
+            context={"party_phone": "919811111111"})
+    assert res["status"] == "error"
+    mock_delete.assert_not_awaited()
+
+    meta = MagicMock(status_code=200)
+    meta.json.return_value = {"timeZone": "Asia/Kolkata"}
+    events = MagicMock(status_code=200)
+    events.json.return_value = {"items": [
+        {"id": "evt-other", "summary": "Dr visit - Priya", "attendees": [{"email": "priya@example.com"}]},
+        {"id": "evt-mine", "summary": "Cleaning", "attendees": [{"email": "me@example.com"}]},
+    ]}
+    with patch("httpx.AsyncClient.get", AsyncMock(side_effect=[meta, events])):
+        res = await nango_service._execute_proxy_tool(provider_key="google-calendar", connection_id="conn",
+            action_name="GOOGLECALENDAR_LIST_EVENTS", params={"date": "2030-01-02", "attendee_email": "me@example.com"})
+    assert [e["id"] for e in res["events"]] == ["evt-mine"]

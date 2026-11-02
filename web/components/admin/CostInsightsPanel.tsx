@@ -24,6 +24,10 @@ type Channel = {
   carrierInr: number;
   transcriptionUsd: number;
   transcriptionInr: number;
+  serverUsd?: number;
+  serverInr?: number;
+  serverPerMinUsd?: number;
+  serverPerMinInr?: number;
   unconnectedPrewarmUsd: number;
   unconnectedPrewarmInr: number;
   prewarmPerMinUsd?: number;
@@ -42,6 +46,7 @@ type Insights = {
   callsReviewed: number;
   windowCapped: boolean;
   channels: Channel[];
+  hosting?: { label: string; sourceUrl: string; checkedOn: string };
   notes: string[];
   samples: { callId: string; tenant: string; channel: string; tier?: string; durationSec: number; costUsd: number; costInr: number; model: string; carrierSource: string }[];
 };
@@ -90,7 +95,7 @@ export function CostInsightsPanel({ display }: {
 
   return (
     <section data-testid="admin-cost-insights" aria-label="Observed supplier costs">
-      <DevCard title="Observed supplier cost per minute" description="Live supplier costs for carrier telephony, recording, transcription, and agent AI engine averaged per minute.">
+      <DevCard title="Observed supplier cost per minute" description="Live supplier costs for carrier telephony, recording, transcription and agent AI engine, plus estimated Railway server cost, averaged per minute.">
         <div className="flex flex-wrap items-end gap-4">
           <label className="text-xs text-text-muted">Usage window
             <select aria-label="Cost analysis window" value={days} onChange={(e) => setDays(Number(e.target.value))}
@@ -116,10 +121,12 @@ export function CostInsightsPanel({ display }: {
               const apiPerMinInr = mins > 0 ? channel.apiInr / mins : 0;
               const txPerMinUsd = mins > 0 ? channel.transcriptionUsd / mins : 0;
               const txPerMinInr = mins > 0 ? channel.transcriptionInr / mins : 0;
+              const serverPerMinUsd = channel.serverPerMinUsd ?? (mins > 0 ? (channel.serverUsd || 0) / mins : 0);
+              const serverPerMinInr = channel.serverPerMinInr ?? (mins > 0 ? (channel.serverInr || 0) / mins : 0);
               const prewarmPerMinUsd = channel.prewarmPerMinUsd ?? (mins > 0 ? (channel.unconnectedPrewarmUsd || 0) / mins : 0);
               const prewarmPerMinInr = channel.prewarmPerMinInr ?? (mins > 0 ? (channel.unconnectedPrewarmInr || 0) / mins : 0);
-              const totalPerMinUsd = channel.averageUsdPerMin ?? (carrierPerMinUsd + apiPerMinUsd + txPerMinUsd + (channel.channel === "pstn" ? prewarmPerMinUsd : 0));
-              const totalPerMinInr = channel.averageInrPerMin ?? (carrierPerMinInr + apiPerMinInr + txPerMinInr + (channel.channel === "pstn" ? prewarmPerMinInr : 0));
+              const totalPerMinUsd = channel.averageUsdPerMin ?? (carrierPerMinUsd + apiPerMinUsd + txPerMinUsd + serverPerMinUsd + (channel.channel === "pstn" ? prewarmPerMinUsd : 0));
+              const totalPerMinInr = channel.averageInrPerMin ?? (carrierPerMinInr + apiPerMinInr + txPerMinInr + serverPerMinInr + (channel.channel === "pstn" ? prewarmPerMinInr : 0));
 
               return <article key={channel.channel} data-testid={`cost-channel-${channel.channel}`} className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-inset p-4">
                 <div className="flex items-center justify-between">
@@ -168,6 +175,11 @@ export function CostInsightsPanel({ display }: {
                       {mins > 0 ? currency(txPerMinUsd, txPerMinInr) : "—"} <span className="text-[10px] font-normal text-text-muted">{mins > 0 ? "/ min" : ""}</span>
                     </dd>
 
+                    <dt className="text-text-muted font-medium">Server (Railway, estimated) / min</dt>
+                    <dd className="text-right font-mono font-semibold text-text">
+                      {mins > 0 ? currency(serverPerMinUsd, serverPerMinInr) : "—"} <span className="text-[10px] font-normal text-text-muted">{mins > 0 ? "/ min" : ""}</span>
+                    </dd>
+
                     {channel.channel.startsWith("pstn") && ((channel.unconnectedPrewarmRecords ?? 0) > 0 || prewarmPerMinInr > 0) && (
                       <>
                         <dt className="text-text-muted font-medium">Unused Prewarm Overhead / min</dt>
@@ -204,7 +216,7 @@ export function CostInsightsPanel({ display }: {
             </div>
           </details>
           <ul className="mt-4 flex list-disc flex-col gap-1 pl-4 text-xs text-text-muted">{report.data.notes.map((note) => <li key={note}>{note}</li>)}</ul>
-          <p className="mt-2 text-xs text-text-muted"><a className="underline" href="https://www.vobiz.ai/docs/cdr" target="_blank" rel="noreferrer">Carrier billing documentation</a> · <a className="underline" href="https://ai.google.dev/gemini-api/docs/live-api/best-practices#pricing-and-billing" target="_blank" rel="noreferrer">Gemini billing documentation</a></p>
+          <p className="mt-2 text-xs text-text-muted"><a className="underline" href="https://www.vobiz.ai/docs/cdr" target="_blank" rel="noreferrer">Carrier billing documentation</a> · <a className="underline" href="https://ai.google.dev/gemini-api/docs/live-api/best-practices#pricing-and-billing" target="_blank" rel="noreferrer">Gemini billing documentation</a>{report.data.hosting && <> · <a className="underline" href={report.data.hosting.sourceUrl} target="_blank" rel="noreferrer">Railway pricing (checked {report.data.hosting.checkedOn})</a></>}</p>
         </>}
       </DevCard>
     </section>

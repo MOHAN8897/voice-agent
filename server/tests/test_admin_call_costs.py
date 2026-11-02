@@ -7,6 +7,17 @@ import pytest
 from server.services.saas import composed_costing as costs
 from server.services.saas.admin_call_costs import build_call_costs
 from server.services.saas.cost_insights import build_insights
+from server.services.saas.hosting_costs import hosting_assumptions, price_call_hosting
+
+# Default Railway estimate per call-minute, by hand: 0.1 vCPU * $0.000463
+# + 0.1 GB * $0.000231 + 2.4 MB / 1024 * $0.05 per GB egress.
+SERVER_USD_PER_MIN = 0.1 * 0.000463 + 0.1 * 0.000231 + 2.4 / 1024 * 0.05
+
+
+def _server_inr(seconds, fx, places=4):
+    # Per-call admin rows round like other INR lines; insights keep full precision.
+    value = SERVER_USD_PER_MIN * seconds / 60 * fx
+    return round(value, places) if places is not None else value
 
 
 def _ready_supplier(stt=1.0, llm=2.0, tts=2.0):
@@ -49,9 +60,11 @@ def test_ready_call_uses_pinned_retail_and_actual_carrier_cost():
     assert result["retail"]["source"] == "rate_snapshot"
     assert result["retail"]["totalBilledInr"] == pytest.approx(10.0)
     assert result["supplier"]["carrier"]["status"] == "actual"
-    assert result["supplier"]["totalInr"] == pytest.approx(6.5)
-    assert result["margin"]["inr"] == pytest.approx(3.5)
-    assert result["margin"]["percent"] == pytest.approx(35.0)
+    server_inr = _server_inr(120, 95)
+    assert result["supplier"]["server"]["costInr"] == pytest.approx(server_inr)
+    assert result["supplier"]["totalInr"] == pytest.approx(6.5 + server_inr)
+    assert result["margin"]["inr"] == pytest.approx(round(3.5 - server_inr, 2))
+    assert result["margin"]["percent"] == pytest.approx((3.5 - server_inr) * 10, abs=0.05)
     assert result["fxRateInr"] == pytest.approx(95.0)
 
 
@@ -113,6 +126,7 @@ def test_applied_rate_wins_and_zero_duration_bills_zero():
     assert result["retail"]["rateInrPerMin"] == pytest.approx(9.0)
     assert result["retail"]["totalBilledInr"] == 0.0
     assert result["supplier"]["carrier"]["status"] == "not_applicable"
+    assert result["supplier"]["server"]["costInr"] == 0.0
     assert result["supplier"]["totalInr"] == 0.0
     assert result["margin"]["inr"] == 0.0
     assert result["margin"]["percent"] is None
@@ -178,10 +192,13 @@ def test_cost_insights_margin_uses_each_call_applied_retail_rate():
         overhead_rows=[],
     )
     pstn = next(channel for channel in result["channels"] if channel["channel"] == "pstn_medium")
-    assert pstn["costInr"] == pytest.approx(1.95)
+    server_inr = _server_inr(60, 95, places=None)
+    assert pstn["serverInr"] == pytest.approx(server_inr)
+    assert pstn["serverPerMinInr"] == pytest.approx(server_inr)
+    assert pstn["costInr"] == pytest.approx(1.95 + server_inr)
     assert pstn["retailInr"] == pytest.approx(5.0)
-    assert pstn["marginInr"] == pytest.approx(3.05)
-    assert pstn["marginPercent"] == pytest.approx(61.0)
+    assert pstn["marginInr"] == pytest.approx(3.05 - server_inr)
+    assert pstn["marginPercent"] == pytest.approx(round((3.05 - server_inr) * 20, 1))
     assert pstn["retailPricedCalls"] == 1
     assert pstn["retailCoveragePercent"] == 100.0
     assert pstn["currentPriceInrPerMin"] == pytest.approx(5.0)
@@ -239,9 +256,10 @@ def test_cost_insights_reconstructs_composed_cost_from_pinned_snapshot():
     pstn = next(channel for channel in result["channels"] if channel["channel"] == "pstn_medium")
     assert pstn["apiInr"] == pytest.approx(75.49)
     assert pstn["carrierInr"] == pytest.approx(10.0)
-    assert pstn["costInr"] == pytest.approx(85.49)
+    server_inr = _server_inr(60, 100, places=None)
+    assert pstn["costInr"] == pytest.approx(85.49 + server_inr)
     assert pstn["retailInr"] == pytest.approx(5.0)
-    assert pstn["marginInr"] == pytest.approx(-80.49)
+    assert pstn["marginInr"] == pytest.approx(-80.49 - server_inr)
 
 
 def test_cost_insights_includes_custom_composed_tiers():
@@ -261,7 +279,7 @@ def test_cost_insights_includes_custom_composed_tiers():
     assert custom["currentPriceInrPerMin"] == pytest.approx(3.5)
     # The rate pinned to the call still wins over today's catalog price.
     assert custom["retailInr"] == pytest.approx(5.0)
-    assert custom["marginInr"] == pytest.approx(3.05)
+    assert custom["marginInr"] == pytest.approx(3.05 - _server_inr(60, 95, places=None))
 
 
 def test_cost_insights_has_no_invented_current_price_or_margin():
@@ -279,3 +297,52 @@ def test_cost_insights_has_no_invented_current_price_or_margin():
     assert pstn["retailInr"] == pytest.approx(5.0)
     assert pstn["currentPriceInrPerMin"] is None
     assert pstn["currentPriceUsdPerMin"] is None
+
+
+def test_server_cost_prices_railway_usage_per_call_minute():
+    result = price_call_hosting(180, fx=100, assumptions=hosting_assumptions())
+    assert result["status"] == "estimate"
+    assert result["label"] == "Server (Railway, estimated)"
+    assert result["perMinuteUsd"] == pytest.approx(SERVER_USD_PER_MIN)
+    assert result["costUsd"] == pytest.approx(round(SERVER_USD_PER_MIN * 3, 6))
+    assert result["costInr"] == pytest.approx(round(SERVER_USD_PER_MIN * 3 * 100, 4))
+    parts = result["components"]
+    assert parts["cpuUsd"] == pytest.approx(0.1 * 0.000463 * 3, abs=1e-6)
+    assert parts["memoryUsd"] == pytest.approx(0.1 * 0.000231 * 3, abs=1e-6)
+    assert parts["egressUsd"] == pytest.approx(2.4 / 1024 * 0.05 * 3, abs=1e-6)
+
+
+def test_server_cost_assumptions_cite_railway_and_accept_overrides(monkeypatch):
+    defaults = hosting_assumptions()
+    assert defaults["sourceUrl"] == "https://railway.com/pricing"
+    assert defaults["checkedOn"] == "2026-11-02"
+    assert defaults["overridden"] == []
+
+    monkeypatch.setenv("RAILWAY_VCPU_PER_CALL", "0.25")
+    monkeypatch.setenv("RAILWAY_EGRESS_MB_PER_CALL_MINUTE", "not-a-number")
+    tuned = hosting_assumptions({"memoryGbPerCall": "0.5"})
+    assert tuned["vcpuPerCall"] == "0.25"
+    assert tuned["memoryGbPerCall"] == "0.5"
+    # An unusable override keeps the default instead of zeroing the cost.
+    assert tuned["egressMbPerCallMinute"] == "2.4"
+    assert sorted(tuned["overridden"]) == ["memoryGbPerCall", "vcpuPerCall"]
+    expected = 0.25 * 0.000463 + 0.5 * 0.000231 + 2.4 / 1024 * 0.05
+    assert price_call_hosting(60, fx=None, assumptions=tuned)["perMinuteUsd"] == pytest.approx(expected)
+
+
+def test_server_cost_without_fx_leaves_inr_supplier_total_unknown():
+    result = build_call_costs(
+        meta={"provider_cost_result": _ready_supplier(), "usage": {}},
+        channel="browser",
+        tier="medium",
+        duration_sec=60,
+        applied_inr_paise=500,
+        applied_usd_micros=53191,
+        current_rates={},
+    )
+    server = result["supplier"]["server"]
+    assert server["costUsd"] == pytest.approx(round(SERVER_USD_PER_MIN, 6))
+    assert server["costInr"] is None
+    assert "server_cost" in result["missing"]
+    assert result["supplier"]["totalInr"] is None
+    assert result["supplier"]["totalUsd"] == pytest.approx(0.05 + round(SERVER_USD_PER_MIN, 6))

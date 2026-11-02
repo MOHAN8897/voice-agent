@@ -51,6 +51,11 @@ PERMISSION_INFO: dict[str, dict[str, str]] = {
         "label": "Support tickets and delivery",
         "detail": "Read and answer customer support requests and check email delivery.",
     },
+    "dev.admin.integrations": {
+        "area": "accounts",
+        "label": "Integrations",
+        "detail": "Turn apps on or off for every workspace or for one, and see each workspace's connections and integration usage.",
+    },
     "dev.stack.read": {
         "area": "voice",
         "label": "View voice stacks",

@@ -25,6 +25,9 @@ interface CallRow {
   retailUsd: number | null;
   supplierCostInr: number | null;
   supplierCostUsd: number | null;
+  serverCostInr: number | null;
+  serverCostUsd: number | null;
+  serverCostPerMinInr: number | null;
   marginInr: number | null;
   marginUsd: number | null;
   marginPercent: number | null;
@@ -39,6 +42,7 @@ interface CallRow {
     llmInr: number | null;
     ttsInr: number | null;
     otherInr: number | null;
+    serverInr: number | null;
   };
   agentFailureCount?: number;
   agentFailureLast?: AgentFailure | null;
@@ -56,6 +60,32 @@ interface AgentFailure {
   delivered?: boolean | null;
   partial_text?: string | null;
   transcript?: string | null;
+}
+
+/** Railway unit prices and per-call shares behind the server cost estimate. */
+interface HostingAssumptions {
+  label: string;
+  sourceUrl: string;
+  docsUrl: string;
+  checkedOn: string;
+  overridden: string[];
+  vcpuUsdPerMinute: string;
+  memoryGbUsdPerMinute: string;
+  egressUsdPerGb: string;
+  vcpuPerCall: string;
+  memoryGbPerCall: string;
+  egressMbPerCallMinute: string;
+}
+
+interface ServerCost {
+  status: string;
+  label: string;
+  costInr: number | null;
+  costUsd: number;
+  perMinuteInr: number | null;
+  perMinuteUsd: number;
+  components: { cpuUsd: number; memoryUsd: number; egressUsd: number };
+  assumptions: HostingAssumptions;
 }
 
 interface StageComponent {
@@ -135,6 +165,7 @@ interface CallDetail {
       components: StageComponent[];
     };
     other: { costInr: number | null; costUsd: number | null };
+    server: ServerCost;
   };
   margin: { inr: number | null; usd: number | null; percent: number | null };
   statusTags?: string[];
@@ -149,12 +180,23 @@ interface CallsResponse {
   limit: number;
   offset: number;
   fxRateInr: number;
+  hosting?: HostingAssumptions;
   calls: CallRow[];
 }
+
+const HOSTING_FIELDS: { key: keyof HostingAssumptions; label: string; unit: string }[] = [
+  { key: "vcpuUsdPerMinute", label: "vCPU price", unit: "$ / vCPU-minute" },
+  { key: "memoryGbUsdPerMinute", label: "Memory price", unit: "$ / GB-minute" },
+  { key: "egressUsdPerGb", label: "Egress price", unit: "$ / GB" },
+  { key: "vcpuPerCall", label: "vCPU per live call", unit: "vCPU" },
+  { key: "memoryGbPerCall", label: "Memory per live call", unit: "GB" },
+  { key: "egressMbPerCallMinute", label: "Audio egress per call-minute", unit: "MB" },
+];
 
 export function GlobalCallsWorkbench() {
   const [calls, setCalls] = useState<CallRow[]>([]);
   const [total, setTotal] = useState(0);
+  const [hosting, setHosting] = useState<HostingAssumptions | null>(null);
   const [limit] = useState(25);
   const [offset, setOffset] = useState(0);
   const [search, setSearch] = useState("");
@@ -194,6 +236,7 @@ export function GlobalCallsWorkbench() {
       if (data && data.ok) {
         setCalls(data.calls || []);
         setTotal(data.total || 0);
+        setHosting(data.hosting ?? null);
       } else {
         throw new Error("Invalid response from server");
       }
@@ -249,6 +292,7 @@ export function GlobalCallsWorkbench() {
   const supplierKnown = calls.filter((call) => call.supplierCostInr != null);
   const pageRetailInr = retailKnown.reduce((acc, call) => acc + (call.retailInr ?? 0), 0);
   const pageSupplierInr = supplierKnown.reduce((acc, call) => acc + (call.supplierCostInr ?? 0), 0);
+  const pageServerInr = supplierKnown.reduce((acc, call) => acc + (call.serverCostInr ?? 0), 0);
   const pageMarginInr = pricedCalls.reduce((acc, call) => acc + (call.marginInr ?? 0), 0);
   const pageMarginRetail = pricedCalls.reduce((acc, call) => acc + (call.retailInr ?? 0), 0);
   const pageMarginPct = pageMarginRetail > 0 ? (pageMarginInr / pageMarginRetail) * 100 : null;
@@ -294,6 +338,9 @@ export function GlobalCallsWorkbench() {
           <p className="mt-1.5 text-2xl font-bold tracking-tight text-amber-300">{money(pageSupplierInr, 4)}</p>
           <p className="mt-1 text-xs text-text-subtle">
             {supplierKnown.length} of {calls.length} calls fully measured
+          </p>
+          <p className="mt-0.5 text-xs text-text-subtle">
+            Incl. {money(pageServerInr, 4)} server (Railway, estimated)
           </p>
         </div>
 
@@ -497,7 +544,7 @@ export function GlobalCallsWorkbench() {
                           </p>
                         ) : (
                           <p className="text-[10px] text-text-subtle">
-                            PSTN: {money(call.breakdown.carrierInr)} · AI: {money(aiCost)}
+                            PSTN: {money(call.breakdown.carrierInr)} · AI: {money(aiCost)} · Server (est.): {money(call.breakdown.serverInr, 4)}
                           </p>
                         )}
                       </td>
@@ -571,6 +618,33 @@ export function GlobalCallsWorkbench() {
             </Button>
           </div>
         </div>
+
+        {hosting && (
+          <details className="mt-4 rounded-xl border border-surface-border-subtle bg-surface-raised/20 p-4 text-xs" data-testid="server-cost-assumptions">
+            <summary className="cursor-pointer font-semibold text-text">
+              {hosting.label}: pricing and per-call assumptions
+            </summary>
+            <dl className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto]">
+              {HOSTING_FIELDS.map((field) => (
+                <div key={field.key} className="contents">
+                  <dt className="text-text-muted">{field.label}</dt>
+                  <dd className="text-right font-mono text-text">
+                    {String(hosting[field.key])} <span className="text-text-subtle">{field.unit}</span>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <p className="mt-3 text-text-muted">
+              Railway usage pricing checked {hosting.checkedOn}:{" "}
+              <a href={hosting.sourceUrl} target="_blank" rel="noreferrer" className="underline underline-offset-4">railway.com/pricing</a>
+              {" · "}
+              <a href={hosting.docsUrl} target="_blank" rel="noreferrer" className="underline underline-offset-4">pricing docs</a>.
+              {" "}Per-call shares are planning estimates, not measurements. Plan fees and idle replicas are not allocated to calls.
+              {" "}Set the matching RAILWAY_* environment variables on the API service to change them
+              {hosting.overridden.length > 0 ? ` (overridden now: ${hosting.overridden.join(", ")})` : ""}.
+            </p>
+          </details>
+        )}
       </DevCard>
 
       {/* Modal: Call Cost Audit Drawer */}
@@ -769,6 +843,31 @@ export function GlobalCallsWorkbench() {
                         <p>Characters Synthesized: <span className="font-mono text-text">{detail.supplier.tts.characters.toLocaleString()} chars</span></p>
                         <p>Output Audio: <span className="font-mono text-text">{detail.supplier.tts.outputAudioSeconds.toFixed(1)}s</span></p>
                         <p>Pinned rate: <span className="font-mono text-[11px] text-text-subtle">{componentLabel(detail.supplier.tts.components)}</span></p>
+                      </div>
+                    </div>
+
+                    {/* Server Box */}
+                    <div className="rounded-xl border border-surface-border-subtle bg-surface-raised/30 p-4 space-y-2 sm:col-span-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-text text-sm">5. {detail.supplier.server.label}</span>
+                        <span className="font-mono text-xs font-bold text-amber-300">
+                          {money(detail.supplier.server.costInr, 4)}
+                        </span>
+                      </div>
+                      <div className="text-xs text-text-muted space-y-1">
+                        <p>
+                          Per call-minute: <span className="font-mono text-text">{money(detail.supplier.server.perMinuteInr, 4)}</span>
+                          {" "}({usd(detail.supplier.server.perMinuteUsd, 6)})
+                        </p>
+                        <p>
+                          vCPU {usd(detail.supplier.server.components.cpuUsd, 6)} · Memory {usd(detail.supplier.server.components.memoryUsd, 6)} · Egress {usd(detail.supplier.server.components.egressUsd, 6)}
+                        </p>
+                        <p>
+                          Assumes {detail.supplier.server.assumptions.vcpuPerCall} vCPU, {detail.supplier.server.assumptions.memoryGbPerCall} GB RAM and {detail.supplier.server.assumptions.egressMbPerCallMinute} MB egress per call-minute ·{" "}
+                          <a href={detail.supplier.server.assumptions.sourceUrl} target="_blank" rel="noreferrer" className="underline underline-offset-4">
+                            Railway pricing, checked {detail.supplier.server.assumptions.checkedOn}
+                          </a>
+                        </p>
                       </div>
                     </div>
                   </div>

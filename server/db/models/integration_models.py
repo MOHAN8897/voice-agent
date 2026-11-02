@@ -100,3 +100,33 @@ class OAuthState(Base):
     __table_args__ = (
         Index("idx_oauth_states_expiry", "expires_at"),
     )
+
+
+class PlatformIntegrationSetting(Base):
+    """Platform-admin switch for one catalog app: off hides it from every workspace."""
+
+    __tablename__ = "platform_integration_settings"
+
+    app_name: Mapped[str] = mapped_column(String(64), primary_key=True)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    updated_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+
+
+class TenantIntegrationOverride(Base):
+    """Per-workspace admin override; wins over the platform switch in both directions."""
+
+    __tablename__ = "tenant_integration_overrides"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id", ondelete="CASCADE"), nullable=False)
+    app_name: Mapped[str] = mapped_column(String(64), nullable=False)
+    enabled: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    updated_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "app_name", name="uq_tenant_integration_overrides_tenant_app"),
+    )

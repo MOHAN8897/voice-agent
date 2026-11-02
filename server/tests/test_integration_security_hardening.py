@@ -50,7 +50,8 @@ async def db(monkeypatch):
             Tenant(tenant_id=TID, name="First"), Tenant(tenant_id=OTHER, name="Other"),
             Agent(agent_id=AID, tenant_id=TID, name="Own agent"),
             Agent(agent_id=FOREIGN, tenant_id=OTHER, name="Foreign agent"),
-            TenantIntegration(tenant_id=TID, app_name="SLACK", connection_id="owned", metadata_={"gateway_verified": True}),
+            TenantIntegration(tenant_id=TID, app_name="SLACK", connection_id="owned",
+                              metadata_={"gateway_verified": True, "settings": {"channel": "C-test"}}),
         ])
         await session.commit()
     yield factory

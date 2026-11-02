@@ -1360,6 +1360,26 @@ export const api = {
     async callOptions(agentId) {
       return await api.request('GET', `/api/integrations/call-options?agentId=${encodeURIComponent(agentId)}`);
     },
+    /** Saved setup (channel, board, event type ...) for one connected app. */
+    async settings(appId) {
+      return await api.request('GET', `/api/integrations/${encodeURIComponent(appId)}/settings`);
+    },
+    async saveSettings(appId, settings) {
+      return await api.request('PUT', `/api/integrations/${encodeURIComponent(appId)}/settings`, { settings });
+    },
+    /** Live choices for a setup field, read from the tenant's own account. */
+    // `values`: the form's unsaved fields a list depends on (a sheet's tabs need its link).
+    async options(appId, field, values) {
+      const draft = values && Object.keys(values).length ? `&values=${encodeURIComponent(JSON.stringify(values))}` : '';
+      return await api.request('GET', `/api/integrations/${encodeURIComponent(appId)}/options?field=${encodeURIComponent(field)}${draft}`);
+    },
+    /** Which connected apps this agent uses, when, and with which actions. */
+    async agentRules(agentId) {
+      return await api.request('GET', `/api/integrations/agent-rules?agentId=${encodeURIComponent(agentId)}`);
+    },
+    async saveAgentRules(agentId, rules) {
+      return await api.request('PUT', `/api/integrations/agent-rules?agentId=${encodeURIComponent(agentId)}`, { rules });
+    },
   },
 
   leads: {

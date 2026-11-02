@@ -49,6 +49,7 @@ from server.routes.dev_admin import router as dev_admin_router
 from server.routes.dev_admin_accounts import router as dev_admin_accounts_router
 from server.routes.dev_admin_number_purchases import router as dev_admin_number_purchases_router
 from server.routes.dev_admin_provider_health import router as dev_admin_provider_health_router
+from server.routes.dev_admin_integrations import router as dev_admin_integrations_router
 from server.routes.dev_admin_team import router as dev_admin_team_router
 from server.routes.app_billing import router as app_billing_router
 from server.routes.app_channels import router as app_channels_router
@@ -662,6 +663,7 @@ app.include_router(dev_admin_router)
 app.include_router(dev_admin_accounts_router)
 app.include_router(dev_admin_number_purchases_router)
 app.include_router(dev_admin_provider_health_router)
+app.include_router(dev_admin_integrations_router)
 app.include_router(dev_admin_team_router)
 app.include_router(app_billing_router)
 app.include_router(app_channels_router)

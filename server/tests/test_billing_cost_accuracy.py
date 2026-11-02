@@ -74,6 +74,11 @@ def test_cdr_zero_billsec_is_valid_and_total_duration_is_not_a_fallback():
     assert not cdr_billing_fields({"data":{"uuid":"call", "duration":60}}, "call")
 
 
+# Estimated Railway server cost per call-minute at the default assumptions
+# (see hosting_costs): 0.1 vCPU, 0.1 GB RAM and 2.4 MB of audio egress.
+SERVER_USD_PER_MIN = 0.1 * 0.000463 + 0.1 * 0.000231 + 2.4 / 1024 * 0.05
+
+
 def rates():
     return {"fx_rate_inr":80, "pstn_rate_usd_micros_per_min":200000, "pstn_rate_inr_paise_per_min":1600,
         "web_agent_rate_usd_micros_per_min":100000, "web_agent_rate_inr_paise_per_min":800}
@@ -94,10 +99,11 @@ def test_average_weights_minutes_and_shows_missing_usage_and_setup_overhead():
         ledger=SimpleNamespace(read_meta=lambda cid:metadata[cid]), overhead_rows=[{"cost_usd":.3,"cost_inr":24}])
     pstn = next(c for c in result["channels"] if c["channel"] == "pstn_premium")
     web = next(c for c in result["channels"] if c["channel"] == "browser")
-    assert pstn["averageUsdPerMin"] == pytest.approx(2.575)  # (1 + 9 + .3) / 4 minutes.
+    # (1 + 9 + .3) / 4 minutes, plus the per-minute server estimate.
+    assert pstn["averageUsdPerMin"] == pytest.approx(2.575 + SERVER_USD_PER_MIN)
     assert pstn["coveragePercent"] == 66.7
     assert pstn["missingCostCalls"] == 1 and pstn["carrierCdrCalls"] == 2
-    assert web["averageUsdPerMin"] == .5 and web["carrierUsd"] == 0
+    assert web["averageUsdPerMin"] == pytest.approx(.5 + SERVER_USD_PER_MIN) and web["carrierUsd"] == 0
     assert len(result["samples"]) == 3
     assert all("phone" not in row and "transcript" not in row for row in result["samples"])
 
@@ -300,7 +306,7 @@ async def test_post_call_costs_are_isolated_idempotent_and_included_in_average(m
         result = build_insights([{"call_id":"call-a","tenant_id":"tenant","channel":"browser","duration_sec":60}],
             rates(), since=now-timedelta(days=30), now=now, overhead_rows=[])
         browser_ch = next(c for c in result["channels"] if c["channel"] == "browser")
-        assert browser_ch["averageUsdPerMin"] == pytest.approx(.1 + expected * 2)
+        assert browser_ch["averageUsdPerMin"] == pytest.approx(.1 + expected * 2 + SERVER_USD_PER_MIN)
     finally:
         get_settings.cache_clear()
 

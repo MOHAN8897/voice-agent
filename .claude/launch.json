@@ -3,20 +3,62 @@
   "configurations": [
     {
       "name": "api",
-      "url": "http://localhost:8000",
-      "port": 8000
+      "port": 8000,
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev:api"
+      ]
     },
     {
       "name": "dialtact",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev:dialtact"],
+      "runtimeArgs": [
+        "run",
+        "dev:dialtact"
+      ],
       "port": 5173
     },
     {
       "name": "web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev:web"],
+      "runtimeArgs": [
+        "run",
+        "dev:web"
+      ],
       "port": 3000
+    },
+    {
+      "name": "api-current",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "uvicorn",
+        "server.app:app",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8001"
+      ],
+      "port": 8001
+    },
+    {
+      "name": "dialtact-current",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "set VITE_BACKEND_ORIGIN=http://localhost:8001&& npm run dev --prefix dialtact-app -- --port 5174 --strictPort"
+      ],
+      "port": 5174
+    },
+    {
+      "name": "web-current",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "set API_INTERNAL_URL=http://127.0.0.1:8001&& npm run dev --prefix web -- -p 3001"
+      ],
+      "port": 3001
     }
   ]
 }
