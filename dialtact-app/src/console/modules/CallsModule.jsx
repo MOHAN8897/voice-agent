@@ -61,6 +61,7 @@ import { formatInr, formatUsd, relativeTime } from '../../lib/money';
 import { contactName, maskPhone } from '../../lib/phoneMask';
 import { normalizeCall } from '../../services/apiNormalize';
 import { fetchCallRecord } from './home/activityDetail';
+import { CallFollowUp } from './CallFollowUp';
 import { LanguageTag } from '../ui/LanguageTag';
 import { languagePrefix, useLanguageRequests } from '../lib/languageRequests';
 
@@ -1211,6 +1212,8 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                       </div>
                     )}
                   </div>
+
+                  <CallFollowUp call={activeCall} />
 
                   <div>
                     <h4 className="mb-2.5 flex items-center gap-1.5 text-ui font-semibold text-ink">
