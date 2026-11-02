@@ -885,6 +885,7 @@ POST_CALL_REQUIRED_DETAILS: dict[str, tuple[str, ...]] = {
         "MONDAY_CREATE_ITEM", "LINEAR_CREATE_ISSUE", "JIRA_CREATE_ISSUE", "GITHUB_CREATE_ISSUE")},
     "AIRTABLE_CREATE_RECORD": ("call summary",),
     "GOOGLESHEETS_ADD_ROW": ("call summary",),
+    "WHATSAPP_SEND_MESSAGE": ("the caller's phone number", "call summary"),
     "SUPABASE_INSERT_ROW": ("call summary",),
 }
 

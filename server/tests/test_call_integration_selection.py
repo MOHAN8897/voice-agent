@@ -328,3 +328,16 @@ async def test_single_call_api_validates_and_carries_the_selection(db, monkeypat
     await tel.telephony_outbound(tel.OutboundCallBody(agentId=str(AID), toE164="+15550100000"), principal)
     assert dial.await_args.kwargs["contact"] is None  # nothing chosen: agent defaults
     assert dial.await_count == 2
+
+
+def test_whatsapp_after_call_goes_to_the_number_the_call_was_on():
+    from server.services.call_integrations import POST_CALL_DEFAULT_ACTION, post_call_arguments, supported_modes
+
+    assert "post_call" in supported_modes("WHATSAPP") and POST_CALL_DEFAULT_ACTION["WHATSAPP"] == "WHATSAPP_SEND_MESSAGE"
+    outcome = {"summary_en": "Booked a cleaning for Friday 11 AM.", "next_action": "Bring the old X-ray.",
+               "extracted_fields": {"phone": "+911111111111"}}  # a number said on the call is not used
+    inbound = post_call_arguments("WHATSAPP_SEND_MESSAGE", outcome, {"direction": "inbound", "caller_id": "+91 98765 43210"})
+    assert inbound == {"to": "+919876543210", "message": "Booked a cleaning for Friday 11 AM. Next step: Bring the old X-ray."}
+    outbound = post_call_arguments("WHATSAPP_SEND_MESSAGE", outcome, {"direction": "outbound", "callee_e164": "+919000011122"})
+    assert outbound["to"] == "+919000011122"
+    assert post_call_arguments("WHATSAPP_SEND_MESSAGE", {"summary_en": ""}, {"caller_id": "+919876543210"}) is None

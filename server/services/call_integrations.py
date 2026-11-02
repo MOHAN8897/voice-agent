@@ -135,6 +135,7 @@ CALL_INTEGRATION_PROFILES: dict[str, dict[str, Any]] = {
     },
     "WHATSAPP": {
         "in_call": "Send the caller your approved WhatsApp template with the details they ask for during the call.",
+        "post_call": "Send the caller a WhatsApp follow-up (your approved template) with a short recap after the call.",
     },
 }
 
@@ -169,6 +170,7 @@ POST_CALL_DEFAULT_ACTION: dict[str, str] = {
     "DISCORD": "DISCORD_SEND_MESSAGE",
     "AIRTABLE": "AIRTABLE_CREATE_RECORD",
     "GOOGLESHEETS": "GOOGLESHEETS_ADD_ROW",
+    "WHATSAPP": "WHATSAPP_SEND_MESSAGE",
     "NOTION": "NOTION_CREATE_PAGE",
     "SUPABASE": "SUPABASE_INSERT_ROW",
     "ASANA": "ASANA_CREATE_TASK",
@@ -301,7 +303,13 @@ async def validate_selection(tenant_id: str, agent_id: str, raw: Any, factory: A
     from server.services.integration_settings import is_configured, tenant_settings
 
     settings = await tenant_settings(tenant_id, factory)
+    from server.services.integration_policy import disabled_apps
+
+    off = await disabled_apps(tenant_id, factory)
     for item in selection:
+        if item["app"] in off:
+            raise SelectionError(409, "integration_disabled_by_admin",
+                                 f"{display_name(item['app'])} is not available on this platform right now.")
         if item["app"] not in verified:
             raise SelectionError(409, "integration_not_connected",
                                  f"{display_name(item['app'])} is not connected for this workspace. Connect it on the Integrations page first.")
@@ -505,12 +513,21 @@ def filter_tools(tools: list[dict], selection: list[dict[str, str]] | None) -> l
     return out
 
 
+# A message reaches the caller in writing: one invented price, address or opening
+# hour becomes a promise the business never made (live tests sent made-up timings).
+SEND_ONLY_KNOWN = ("A message, text or email you send may contain only facts written in your instructions or "
+                   "knowledge, or the result of an action in this call. If the caller asks for something you do not "
+                   "have (an address, timings, a price list), say so and offer a follow-up instead of sending. "
+                   "Never invent details, never use placeholders, never mention attachments.")
+
+
 def capability_rows(selection: list[dict[str, str]] | None, tools: list[dict]) -> list[str]:
     """Prompt lines naming this call's integrations (and what is not attached)."""
     from server.services.tool_schema_registry import tool_definition
 
     live = {tool_definition(str(t.get("name") or ""))[0] for t in tools
             if tool_definition(str(t.get("name") or "")) and str(t.get("name") or "").upper() not in PLATFORM_TOOLS}
+    sends = any("SEND" in str(t.get("name") or "").upper().split("_") for t in tools)
     if selection is None:
         # The agent's saved settings decide: name each attached app's job so the
         # model uses the right one and promises nothing from an app it lacks.
@@ -520,6 +537,8 @@ def capability_rows(selection: list[dict[str, str]] | None, tools: list[dict]) -
         rows += [f"- {display_name(app)} (during the call): {CALL_INTEGRATION_PROFILES[app]['in_call']}"
                  for app in sorted(live) if "in_call" in CALL_INTEGRATION_PROFILES.get(app, {})]
         rows.append("Only the apps listed above can be used during this call. Do not offer bookings, emails, tickets or records in any other system.")
+        if sends:
+            rows.append(SEND_ONLY_KNOWN)
         return rows
     rows = ["call_integrations: chosen_for_this_call"]
     for item in selection:
@@ -532,6 +551,8 @@ def capability_rows(selection: list[dict[str, str]] | None, tools: list[dict]) -
         rows.append("No external app can be used during this call. Do not promise to book, send, look up or create anything in another system while talking.")
     else:
         rows.append("Only the apps listed above are attached to this call. Do not offer bookings, emails, tickets or records in any other system.")
+        if sends:
+            rows.append(SEND_ONLY_KNOWN)
     return rows
 
 
@@ -608,6 +629,15 @@ def post_call_arguments(action: str, outcome: dict[str, Any], meta: dict[str, An
     if action == "AIRTABLE_CREATE_RECORD":
         fields = {k: v for k, v in (("Name", name), ("Phone", phone), ("Email", email), ("Summary", summary)) if v}
         return {"fields": fields} if summary and fields else None
+    if action == "WHATSAPP_SEND_MESSAGE":
+        # The number the call was actually on, never one heard in conversation.
+        direction = str((meta or {}).get("direction") or "").lower()
+        line = (meta or {}).get("callee_e164") if direction in {"outbound", "outgoing", "outbound-api"} else (meta or {}).get("caller_id")
+        to = re.sub(r"[^\d+]", "", str(line or ""))
+        if len(re.sub(r"\D", "", to)) < 8 or not summary:
+            return None
+        recap = summary if not next_action else f"{summary} Next step: {next_action}"
+        return {"to": to, "message": recap[:900]}
     if action == "GOOGLESHEETS_ADD_ROW":
         from datetime import date
 

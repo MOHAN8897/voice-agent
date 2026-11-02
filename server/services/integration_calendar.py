@@ -9,7 +9,7 @@ import hashlib
 
 import httpx
 
-from server.services.integration_safety import path_segment
+from server.services.integration_safety import path_segment, spread
 
 
 def _instant(value: Any) -> datetime:
@@ -111,7 +111,7 @@ async def execute_calendar_action(client: httpx.AsyncClient, base: str, headers:
                 else:
                     ranges.append([slot, slot])
             return {"status": "available" if starts else "unavailable",
-                    "available_slots": [s.isoformat() for s in starts[:24]],
+                    "available_slots": [s.isoformat() for s in spread(starts)],
                     "free_ranges": [f"{a:%H:%M}-{b + timedelta(minutes=duration):%H:%M}" for a, b in ranges],
                     "date": target.isoformat(), "time_zone": str(zone),
                     "message": "Free times within the business's bookable hours "

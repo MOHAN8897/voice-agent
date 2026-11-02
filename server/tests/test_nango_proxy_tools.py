@@ -273,3 +273,27 @@ async def test_calendar_never_changes_or_reads_another_callers_appointment():
         res = await nango_service._execute_proxy_tool(provider_key="google-calendar", connection_id="conn",
             action_name="GOOGLECALENDAR_LIST_EVENTS", params={"date": "2030-01-02", "attendee_email": "me@example.com"})
     assert [e["id"] for e in res["events"]] == ["evt-mine"]
+
+
+def test_slot_lists_cover_the_whole_day_within_the_ten_item_limit():
+    from datetime import datetime, timedelta
+
+    from server.services.integration_safety import spread, start_ranges
+
+    day = [datetime(2030, 10, 20, 9) + timedelta(minutes=30 * i) for i in range(16)]  # 09:00 .. 16:30
+    sample = spread(day)
+    assert len(sample) == 10 and sample[0] == day[0] and sample[-1] == day[-1]
+    assert any(s.hour >= 15 for s in sample)  # the afternoon is visible
+    assert start_ranges(day[:4] + day[6:]) == ["09:00-10:30", "12:00-16:30"]
+
+
+@pytest.mark.asyncio
+async def test_calcom_slots_report_the_afternoon_too():
+    starts = [f"2030-10-20T{9 + i // 2:02d}:{30 * (i % 2):02d}:00.000+05:30" for i in range(16)]
+    resp = MagicMock(status_code=200)
+    resp.json.return_value = {"data": {"2030-10-20": [{"start": s} for s in starts]}}
+    with patch("httpx.AsyncClient.get", AsyncMock(return_value=resp)):
+        result = await nango_service._execute_proxy_tool(provider_key="cal-com-v2", connection_id="conn-test",
+            action_name="CALCOM_GET_AVAILABLE_SLOTS", params={"date": "2030-10-20", "event_type_id": "1"})
+    assert result["start_ranges"] == ["09:00-16:30"]
+    assert len(result["slots"]) == 10 and "T16:30" in result["slots"][-1]

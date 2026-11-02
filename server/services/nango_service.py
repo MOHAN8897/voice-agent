@@ -1080,10 +1080,20 @@ class NangoService:
                     data = resp.json()
                     by_day = data.get("data") if isinstance(data.get("data"), dict) else {}
                     slots = [s.get("start") for s in by_day.get(date_val, []) if isinstance(s, dict) and s.get("start")]
+                    from server.services.integration_safety import spread, start_ranges
+
+                    starts = []
+                    for raw in slots:
+                        try:
+                            starts.append(datetime.fromisoformat(str(raw).replace("Z", "+00:00")))
+                        except ValueError:
+                            continue
                     return {
-                        "status": "available",
+                        "status": "available" if slots else "unavailable",
                         "date": date_val,
-                        "slots": slots[:6],
+                        # The whole day, not its first few slots (the afternoon used to be invisible).
+                        "slots": spread(slots),
+                        "start_ranges": start_ranges(starts),
                         "summary": f"Found {len(slots)} available slots on {date_val}.",
                         "message": f"Found {len(slots)} available slots.",
                     }

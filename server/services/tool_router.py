@@ -144,6 +144,11 @@ class DialtactToolRouter:
             unconfirmed = recipient_guard.check(call_id, tool_name, arguments, converted=converted)
             if unconfirmed is not None:
                 return unconfirmed
+            from server.services import message_grounding
+
+            invented = message_grounding.check(call_id, tool_name, arguments)
+            if invented is not None:
+                return invented
         from server.call.enquiry import PLATFORM_ACTIONS
 
         if tool_name in PLATFORM_ACTIONS:

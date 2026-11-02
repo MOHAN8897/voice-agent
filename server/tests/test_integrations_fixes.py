@@ -1,7 +1,7 @@
 """Tests covering all 5 integration problems and security auditing:
 1. Supported integrations offered for specific supported actions
 2. Capabilities match promises (Google Calendar cancel & reschedule implemented)
-3. Verified integration count is exactly 28
+3. Verified integration count is exactly 29
 4. Non-UUID tenant IDs & network errors return clean responses without HTTP 500
 5. No internal technical details or vendor provider keys leaked to tenants
 """
@@ -15,9 +15,9 @@ from server.routes.integrations_catalog import CATALOG_INTEGRATIONS
 from server.services.tool_schema_registry import _SCHEMAS, list_supported_apps, get_tools_for_tenant
 
 
-def test_problem_3_integration_count_is_exactly_28():
-    """Verify the integration catalog has exactly 28 verified integrations."""
-    assert len(CATALOG_INTEGRATIONS) == 28, f"Expected 28 integrations, got {len(CATALOG_INTEGRATIONS)}"
+def test_problem_3_integration_count_is_exactly_29():
+    """Verify the integration catalog has exactly 29 verified integrations."""
+    assert len(CATALOG_INTEGRATIONS) == 29, f"Expected 29 integrations, got {len(CATALOG_INTEGRATIONS)}"
     app_ids = [item["id"] for item in CATALOG_INTEGRATIONS]
     assert len(app_ids) == len(set(app_ids)), "Duplicate integration IDs found in catalog"
 
@@ -86,9 +86,11 @@ def test_problem_2_capabilities_match_backend_schemas():
     assert "CALCOM_CANCEL_BOOKING" in calcom_tool_names
     assert "CALCOM_RESCHEDULE_BOOKING" in calcom_tool_names
 
-    # 6. Verify comprehensive backing for all 28 catalog items
+    # 6. Verify comprehensive backing for all 29 catalog items
     action_to_schema_subnames = {
         "Find Free Slots": ["FIND_FREE_SLOTS", "FIND_SLOTS"],
+        "Find Rows": ["FIND_ROWS"],
+        "Add Row": ["ADD_ROW"],
         "Create Booking": ["CREATE_EVENT", "CREATE_BOOKING"],
         "Cancel Event": ["CANCEL_EVENT"],
         "Reschedule Event": ["RESCHEDULE_EVENT"],
@@ -165,7 +167,7 @@ def test_problem_2_capabilities_match_backend_schemas():
 async def test_problem_4_and_5_catalog_endpoint_no_leaks_and_no_500(client):
     response = await client.get('/api/integrations/catalog', headers={'authorization': 'Bearer test-session'})
     assert response.status_code == 200
-    assert response.json()['total'] == 28
+    assert response.json()['total'] == 29
     assert all('nango_provider_key' not in item for item in response.json()['items'])
 
 

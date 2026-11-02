@@ -1220,6 +1220,8 @@ VOICE_RESPONSE_KEYS: dict[str, tuple] = {
 }
 
 VOICE_RESPONSE_KEYS["GOOGLECALENDAR"] += ("events", "time_zone", "free_ranges")
+VOICE_RESPONSE_KEYS["CALCOM"] += ("start_ranges", "date")
+VOICE_RESPONSE_KEYS["CALENDLY"] += ("start_ranges",)
 VOICE_RESPONSE_KEYS["CALENDLY"] += ("slots", "confirmed", "event_uri", "invitee_uri", "bookings", "time_zone")
 VOICE_RESPONSE_KEYS["CALCOM"] += ("bookings", "time_zone")
 VOICE_RESPONSE_KEYS["NOTION"] += ("pages",)
@@ -1305,8 +1307,6 @@ async def get_tools_for_agent(active_apps: list[str], tenant_id: str, agent_id: 
     picked: list[tuple[str, dict, str]] = []
     for tool in get_tools_for_tenant(active_apps):
         app = tool_definition(tool["name"])[0]
-        if tool["name"] in POST_CALL_ONLY:
-            continue
         if configured is not None and tool["name"] not in configured and app not in configured:
             continue
         app_settings = settings.get(app)
@@ -1322,14 +1322,18 @@ async def get_tools_for_agent(active_apps: list[str], tenant_id: str, agent_id: 
             whitelist = agent_whitelist(app, rules, "in_call")
             if whitelist and tool["name"] not in whitelist:
                 continue
+            if tool["name"] in POST_CALL_ONLY and not (whitelist and tool["name"] in whitelist):
+                continue
             picked.append((app, tool, "pick"))
             continue
         if not matching:
-            if default_action_timing(app) == "in_call":
+            if default_action_timing(app) == "in_call" and tool["name"] not in POST_CALL_ONLY:
                 picked.append((app, tool, "default"))
             continue
+        # An after-call-only action is offered live only when the agent's settings name it.
         if any(r.enabled and r.timing_mode == "in_call" and
-               (not r.action_whitelist or tool["name"] in {a.upper() for a in r.action_whitelist}) for r in matching):
+               ((not r.action_whitelist and tool["name"] not in POST_CALL_ONLY)
+                or tool["name"] in {a.upper() for a in r.action_whitelist or []}) for r in matching):
             picked.append((app, tool, "rule"))
     from server.brain.capabilities import SCHEDULING_APPS, script_uses_scheduling
 
@@ -1364,8 +1368,9 @@ async def get_tools_for_agent(active_apps: list[str], tenant_id: str, agent_id: 
 
 
 MAX_MODEL_TOOLS = 32
-# A draft is for the team to review after the call; offered live, the model
-# saves a draft when the caller asked for an email to be sent.
+# A draft is for the team to review after the call; offered live by default, the
+# model saved a draft when the caller asked for an email to be sent. An agent whose
+# settings name the action explicitly still gets it.
 POST_CALL_ONLY = frozenset({"GMAIL_CREATE_DRAFT"})
 
 

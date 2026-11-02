@@ -44,9 +44,13 @@ async def execute_extended_action(client: httpx.AsyncClient, base: str, headers:
 
             # Calendly answers in UTC; the caller must hear their own clock time.
             zone = ZoneInfo(str(params.get("time_zone") or "Asia/Kolkata"))
-            slots = [datetime.fromisoformat(item["start_time"].replace("Z", "+00:00")).astimezone(zone).isoformat()
-                     for item in data["collection"][:10] if item.get("status") == "available" and item.get("start_time")]
-            return {"status": "available" if slots else "unavailable", "slots": slots, "time_zone": str(zone),
+            starts = [datetime.fromisoformat(item["start_time"].replace("Z", "+00:00")).astimezone(zone)
+                      for item in data["collection"] if item.get("status") == "available" and item.get("start_time")]
+            from server.services.integration_safety import spread, start_ranges
+
+            # Spread over the whole window, not its first ten slots.
+            return {"status": "available" if starts else "unavailable", "slots": [s.isoformat() for s in spread(starts)],
+                    "start_ranges": start_ranges(starts), "time_zone": str(zone),
                     "summary": "Availability returned by the calendar, in the caller's time zone."}
         start = datetime.fromisoformat(params["start_time"].replace("Z", "+00:00"))
         if start.tzinfo is None or start <= datetime.now(timezone.utc):
