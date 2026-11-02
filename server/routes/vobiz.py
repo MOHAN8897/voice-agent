@@ -481,7 +481,9 @@ async def vobiz_answer(request: Request):
             agent = await agent_service.get_agent(str(agent_id), tenant_id=str(tenant_id))
             voice_settings = agent.get("voice_settings") or {}
             selected_tier = canonical_voice_tier(agent.get("default_tier") or "medium")
-            if selected_tier in {"low", "medium"} and voice_settings.get("stackSelectionVersion") == 1:
+            # Operator-created tiers (e.g. a Gnani "Premium" copied from Standard) are
+            # composed stacks like low/medium; only the built-in premium slot keeps its path.
+            if selected_tier != "premium" and voice_settings.get("stackSelectionVersion") == 1:
                 tier = selected_tier
                 stack_override = await saas_stack_override_for_agent(agent)
                 language = str(stack_override.get("language") or (agent.get("languages") or ["te-IN"])[0])

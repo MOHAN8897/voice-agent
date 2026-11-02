@@ -79,12 +79,26 @@ function symbolFor(currency) {
 }
 
 /** Server-published PSTN rates only; a missing rate stays unavailable rather than guessed. */
+/**
+ * The voice tiers customers can pick, in catalog order: Economy, Standard, the
+ * operator's own tiers, then Premium. A tier the operator switched off is left out.
+ */
+function billingTiers(wallet) {
+  const rates = wallet?.tierRates;
+  if (!rates || typeof rates !== 'object') return BILLING_TIERS;
+  const ids = Object.keys(rates);
+  const custom = ids.filter((id) => !['low', 'medium', 'premium'].includes(id)).sort();
+  return ['low', 'medium', ...custom, 'premium']
+    .filter((id) => ids.includes(id) && rates[id]?.enabled !== false)
+    .map((id) => ({ id, label: BILLING_TIERS.find((tier) => tier.id === id)?.label || id }));
+}
+
 function pstnTierRate(wallet, tier) {
   const [inrField, usdField] = {
     low: ['pstnLowRateInrPerMin', 'pstnLowRateUsdPerMin'],
     medium: ['pstnMediumRateInrPerMin', 'pstnMediumRateUsdPerMin'],
     premium: ['pstnPremiumRateInrPerMin', 'pstnPremiumRateUsdPerMin'],
-  }[tier];
+  }[tier] || [];
   const inrSource = wallet?.[inrField] ?? wallet?.tierRates?.[tier]?.inrPerMin;
   const usdSource = wallet?.[usdField] ?? wallet?.tierRates?.[tier]?.usdPerMin;
   const inr = Number(inrSource);
@@ -504,7 +518,7 @@ export function BillingModule() {
                 Phone calls are billed by the second at the rate of your agent's voice tier:
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 pb-1">
-                {BILLING_TIERS.map((tier) => {
+                {billingTiers(serverWallet).map((tier) => {
                   const rate = pstnTierRate(serverWallet, tier.id);
                   return (
                     <div key={tier.id} className="p-2.5 rounded-control bg-canvas border border-line">

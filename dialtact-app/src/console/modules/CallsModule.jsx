@@ -1107,7 +1107,8 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                         <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
                           <dt className="text-fg-body">Voice quality</dt>
                           <dd data-testid={`call-tier-${activeCall.tier}`} className="font-semibold text-ink">
-                            {TIER_LABEL[activeCall.tier] || humanizeToken(activeCall.tier)}
+                            {/* An operator-created tier ("medium_copy_1") shows the name the operator gave it. */}
+                            {wallet?.tierRates?.[activeCall.tier]?.label || TIER_LABEL[activeCall.tier] || humanizeToken(activeCall.tier)}
                           </dd>
                         </div>
                       )}

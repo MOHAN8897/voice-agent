@@ -93,11 +93,16 @@ async def wallet_summary(tenant_id: uuid.UUID, user_id: uuid.UUID | None = None)
                     "usdPerMin": web_rate["usdMicrosPerMin"] / 1000000,
                     "label": str((rec.get("profile") or {}).get("label") or t)}
             t_rate = _native_tier_retail_rate(rates, t, record=rec)
+            profile = rec.get("profile") or {}
             if t_rate and t_rate.get("inrPaisePerMin"):
                 tier_rates_map[t] = {
                     "usdPerMin": round(t_rate["usdMicrosPerMin"] / 1_000_000.0, 6) if t_rate.get("usdMicrosPerMin") else None,
                     "inrPerMin": round(t_rate["inrPaisePerMin"] / 100.0, 2),
                 }
+            if t in tier_rates_map:
+                # The operator's own tier name, and whether customers can choose it at all.
+                tier_rates_map[t]["label"] = str(profile.get("label") or t)
+                tier_rates_map[t]["enabled"] = profile.get("enabled") is not False
     except Exception as exc:
         logger.debug("[WALLET] tier rate overlay error: %s", exc)
 
