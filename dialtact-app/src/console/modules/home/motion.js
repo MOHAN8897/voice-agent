@@ -25,9 +25,14 @@ export const crossfade = {
 /** The detail drawer (desktop, from the right) and sheet (phones, from the bottom). */
 export const drawerSpring = { type: 'spring', stiffness: 420, damping: 42, mass: 0.9 };
 
-/** Height reveal. Overflow is clipped only while animating so sticky headers inside keep working. */
+/**
+ * Height reveal. `clip`, not `hidden`: a hidden box is a scroll container, so a
+ * sticky header inside it (Home's "Needs you") stuck to the box instead of the
+ * page and sat over the first row until transitionEnd, which can come late.
+ * A clip box clips the same way without capturing sticky positioning.
+ */
 export const collapse = {
-  initial: { opacity: 0, height: 0, overflow: 'hidden' },
+  initial: { opacity: 0, height: 0, overflow: 'clip' },
   animate: { opacity: 1, height: 'auto', transition: { duration: 0.22, ease: EASE_OUT }, transitionEnd: { overflow: 'visible' } },
-  exit: { opacity: 0, height: 0, overflow: 'hidden', transition: { duration: 0.16, ease: 'easeOut' } },
+  exit: { opacity: 0, height: 0, overflow: 'clip', transition: { duration: 0.16, ease: 'easeOut' } },
 };
