@@ -181,3 +181,17 @@ async def test_structured_creation_settings_cannot_inject_script(setting: dict[s
             language="en-IN", interpret_brief=False, generation_config=setting,
         )
     assert error.value.issues[0]["code"] == code
+
+
+@pytest.mark.parametrize("value,source,supported", [
+    # A long unpunctuated brief: the earlier "not" is about exercise, not the gym's name.
+    ("subhasri gym", "ask their daily routine like will they do yoga or some exercise and if they not "
+                     "tell them to join our gym near them vanasthalipuram which name is subhasri gym", True),
+    ("Acme", "Never say you are from Acme.", False),
+    ("Beta", "Do not mention Acme or Beta.", False),
+    ("Acme Corp", "Never pretend to be from a company called Acme Corp", False),
+])
+def test_only_a_nearby_negation_rejects_a_name(value, source, supported):
+    from server.brain.brief_contract import source_supported
+
+    assert source_supported(value, source) is supported

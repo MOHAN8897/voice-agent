@@ -35,7 +35,11 @@ def source_supported(value: str, source: str) -> bool:
         return False
     for match in re.finditer(r"(?<!\w)" + re.escape(proposed) + r"(?!\w)", original):
         prior_clause = re.split(r"[.!?;।\n]", original[:match.start()])[-1]
-        if not re.search(r"\b(?:never|not|no|don'?t|do not|without)\b", prior_clause):
+        # Only a negation governing this phrase counts ("never say you are from Acme"),
+        # not one earlier in a long unpunctuated brief ("if they do not exercise, ...
+        # join our gym, Subhasri Gym").
+        prior_words = " ".join(prior_clause.split()[-8:])
+        if not re.search(r"\b(?:never|not|no|don'?t|do not|without)\b", prior_words):
             return True
         if re.match(r"^(?:never|not|no|don'?t|do not|without)\b", proposed):
             return True
