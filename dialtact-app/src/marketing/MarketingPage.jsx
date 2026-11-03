@@ -12,6 +12,7 @@ import { UseCasesSection, WorkspaceSection } from './ProofSections';
 import { FaqSection, FinalCtaSection, MarketingFooter, PricingSection } from './ClosingSections';
 import { ScrollBot } from './ScrollBot';
 import GlowCursor from '@/components/reactbits/GlowCursor';
+import { TrailCursor } from './TrailCursor';
 import { renderMode } from '../lib/renderSupport';
 import './mascot.css';
 import './marketing.css';
@@ -56,17 +57,19 @@ function useSmoothScroll() {
 }
 
 /**
- * React Bits Glow Cursor, faint (a tenth of its default strength) and white, on devices
- * with a mouse that run WebGL well, and never under reduced motion.
+ * Which cursor glow this device gets. React Bits Glow Cursor (WebGL fluid, faint and
+ * white) where a mouse meets WebGL that runs well; everywhere else — the devices that
+ * play the recorded mascot, touch screens, reduced motion — the 2D TrailCursor, so the
+ * glow shows on every device instead of none.
  */
-function useGlowCursor() {
-  const [on, setOn] = useState(false);
+function useCursorKind() {
+  const [kind, setKind] = useState(null);
   useEffect(() => {
     const mouse = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    setOn(mouse && !calm && renderMode() === 'live');
+    setKind(mouse && !calm && renderMode() === 'live' ? 'fluid' : 'trail');
   }, []);
-  return on;
+  return kind;
 }
 
 export function MarketingPage({
@@ -79,7 +82,7 @@ export function MarketingPage({
   isModalOpen,
 }) {
   useSmoothScroll();
-  const glow = useGlowCursor();
+  const cursor = useCursorKind();
 
   // The body is light for the rest of the app; match it to this page so overscroll
   // and rubber-banding never flash a pale edge.
@@ -99,7 +102,8 @@ export function MarketingPage({
 
   return (
     <div className="mk">
-      {glow && (
+      {cursor === 'trail' && <TrailCursor className="mk-glow-cursor" />}
+      {cursor === 'fluid' && (
         <GlowCursor
           className="mk-glow-cursor"
           color="#ffffff"

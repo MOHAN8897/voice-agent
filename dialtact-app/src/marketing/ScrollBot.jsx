@@ -46,11 +46,15 @@ const SPRING_W = 4.4;
 const SPRING_Z = 0.82;
 /** How fast the mascot's size follows the slot it is heading to, per second. */
 const SCALE_RATE = 2.6;
+/**
+ * Reduced motion still travels, so the mascot is never seen to vanish and reappear (it
+ * used to fade out and jump, which read as teleporting on phones with animations turned
+ * down): a critically damped glide, with no hop, arc, lean, squash or sway.
+ */
+const CALM_W = 3.2;
+const CALM_Z = 1;
 /** The crouch before take-off (anticipation), in seconds. */
 const WINDUP_S = 0.18;
-/** Reduced motion fades out, jumps, and fades back in (seconds each way). */
-const FADE_OUT_S = 0.2;
-const FADE_IN_S = 0.35;
 /** Taps this close together count as a burst of excitement. */
 const COMBO_MS = 1600;
 /** Within this many pixels of its slot the mascot counts as arrived. */
@@ -141,7 +145,6 @@ export function ScrollBot({ controllerRef, hidden = false }) {
     hop: 0, hopV: 0, // a jump, canvas px (negative is up)
     windup: 0, trip: 0, arc: 0, arrived: false, press: false,
     alive: 0, leanX: 0, leanR: 0, // sway at rest, lean toward the cursor
-    fade: 1, leaving: false,
   });
   const taps = useRef([]);
   const [bursts, setBursts] = useState([]);
@@ -307,39 +310,28 @@ export function ScrollBot({ controllerRef, hidden = false }) {
       if (key !== p.key) {
         p.key = key;
         // Leaving a slot it had settled in: crouch first, then fly (a retarget mid-flight
-        // just bends the path). Reduced motion fades out and back in instead.
-        if (p.arrived && distance > ARRIVED_PX * 3) {
-          if (reduce) p.leaving = true;
-          else {
-            p.windup = WINDUP_S; p.trip = distance;
-            // The recorded take-off, so the body moves frame by frame on its way like it
-            // does in every other gesture; the section's own gesture follows on arrival.
-            if (!hold.current && controllerRef.current) {
-              if (botRef.current) botRef.current.dataset.botMove = TRAVEL_MOVE;
-              controllerRef.current.setState(TRAVEL_MOVE);
-            }
+        // just bends the path). Reduced motion glides straight over instead.
+        if (p.arrived && distance > ARRIVED_PX * 3 && !reduce) {
+          p.windup = WINDUP_S; p.trip = distance;
+          // The recorded take-off, so the body moves frame by frame on its way like it
+          // does in every other gesture; the section's own gesture follows on arrival.
+          if (!hold.current && controllerRef.current) {
+            if (botRef.current) botRef.current.dataset.botMove = TRAVEL_MOVE;
+            controllerRef.current.setState(TRAVEL_MOVE);
           }
         }
       }
 
-      if (reduce) {
-        if (p.leaving) {
-          p.fade = Math.max(0, p.fade - dt / FADE_OUT_S);
-          if (p.fade === 0) p.leaving = false;
-        } else {
-          p.fade = Math.min(1, p.fade + dt / FADE_IN_S);
-          p.px = tx; p.py = tpy; p.s = ts;
-        }
-        p.vx = 0; p.vy = 0; p.windup = 0;
-      } else if (nowDocked && distance < ARRIVED_PX && !p.windup) {
+      if (nowDocked && distance < ARRIVED_PX && !p.windup) {
         // Docked and arrived: stay glued to the corner while the page scrolls.
         p.px = tx; p.py = tpy; p.vx = 0; p.vy = 0;
       } else if (p.windup > 0) {
         p.windup = Math.max(0, p.windup - dt);
       } else {
         // Spring toward the slot: slow out, fast through the middle, slow in.
-        const k = SPRING_W * SPRING_W;
-        const c = 2 * SPRING_Z * SPRING_W;
+        const w = reduce ? CALM_W : SPRING_W;
+        const k = w * w;
+        const c = 2 * (reduce ? CALM_Z : SPRING_Z) * w;
         for (let i = 0; i < steps; i += 1) {
           p.vx += (k * (tx - p.px) - c * p.vx) * h;
           p.vy += (k * (tpy - p.py) - c * p.vy) * h;
@@ -347,10 +339,8 @@ export function ScrollBot({ controllerRef, hidden = false }) {
           p.py += p.vy * h;
         }
       }
-      if (!reduce) {
-        p.s += (ts - p.s) * (1 - Math.exp(-dt * SCALE_RATE));
-        keepInView();
-      }
+      p.s += (ts - p.s) * (1 - Math.exp(-dt * SCALE_RATE));
+      keepInView();
       distance = Math.hypot(tx - p.px, tpy - p.py);
       const speed = Math.hypot(p.vx, p.vy);
 
@@ -385,7 +375,7 @@ export function ScrollBot({ controllerRef, hidden = false }) {
       const x = p.px;
       const y = Math.max(-BOT_H * p.s * 0.5, Math.min(vh - BOT_H * p.s * 0.5, p.py - sy + arc));
 
-      const arrived = distance < ARRIVED_PX && !p.leaving && p.windup === 0;
+      const arrived = distance < ARRIVED_PX && p.windup === 0;
       // Touching down: a quick squash, like a landing.
       if (arrived && !p.arrived && !reduce && speed > 60) p.sqV -= 1.4;
       p.arrived = arrived;
@@ -443,7 +433,6 @@ export function ScrollBot({ controllerRef, hidden = false }) {
         p.leanX += (toward * near * 22 - p.leanX) * (1 - Math.exp(-dt * 5));
         p.leanR += (toward * near * 4 - p.leanR) * (1 - Math.exp(-dt * 5));
         tiltRef.current.style.transform = `translate3d(${(swayX + p.leanX).toFixed(1)}px, ${(p.hop + bob).toFixed(1)}px, 0) rotate(${(p.tilt + swayR + p.leanR).toFixed(2)}deg) scale(${sx2.toFixed(4)}, ${sy2.toFixed(4)})`;
-        tiltRef.current.style.opacity = p.fade < 1 ? p.fade.toFixed(3) : '';
       }
       if (bubbleRef.current) {
         const w = BOT_W * p.s;

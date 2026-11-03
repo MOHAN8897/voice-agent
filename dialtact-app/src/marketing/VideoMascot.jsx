@@ -29,6 +29,12 @@ export function VideoMascot({ onReady }) {
     videos.forEach((video) => { video.muted = true; video.playsInline = true; });
 
     let alive = true;
+    let blocked = false;
+    // Clips downloaded ahead of time, as blob URLs. Each one used to be fetched only when
+    // its gesture began, so on a phone network the take-off hop arrived after the flight
+    // was over and the mascot slid across as a still picture.
+    const ready = new Map();
+    const srcFor = (name) => ready.get(name) || `${BASE}/${name}.${format}`;
     let clips = null;
     let size = [950, 706];
     let front = 0;
@@ -65,10 +71,11 @@ export function VideoMascot({ onReady }) {
         next.poster = `${BASE}/poster.webp`;
         next.style.opacity = '1';
       }
-      next.src = `${BASE}/${name}.${format}`;
+      next.src = srcFor(name);
       next.addEventListener('loadeddata', () => {
         if (!alive || mine !== token) return;
-        next.play().catch(NOOP); // blocked autoplay (iOS Low Power Mode) keeps the frame
+        // Blocked autoplay (iOS Low Power Mode) keeps the frame until the next tap.
+        next.play().then(() => { blocked = false; }, () => { blocked = true; });
         next.style.opacity = '1';
         if (next !== current) {
           current.style.opacity = '0';
@@ -110,6 +117,33 @@ export function VideoMascot({ onReady }) {
       dispose: NOOP,
     };
 
+    // A tap is what Low Power Mode waits for before it lets a video play.
+    const resume = () => {
+      if (!blocked || !alive) return;
+      videos[front].play().then(() => { blocked = false; }, NOOP);
+    };
+    ['pointerup', 'touchend', 'keydown'].forEach((type) => window.addEventListener(type, resume, { passive: true }));
+
+    /**
+     * Download the clips one after another while the page is idle: the take-off hop and
+     * the moods the sections settle into first, then every gesture. Data Saver keeps only
+     * the hop, which is played on every trip.
+     */
+    const preload = (names) => {
+      const queue = [...new Set(names)].filter((name) => clips?.[name] && !ready.has(name));
+      const next = () => {
+        const name = queue.shift();
+        if (!alive || !name) return;
+        fetch(`${BASE}/${name}.${format}`)
+          .then((response) => (response.ok ? response.blob() : null))
+          .then((blob) => { if (blob && alive) ready.set(name, URL.createObjectURL(blob)); })
+          .catch(NOOP)
+          .finally(() => { if (alive) idle(next); });
+      };
+      next();
+    };
+    const idle = (fn) => (window.requestIdleCallback ? window.requestIdleCallback(fn, { timeout: 1500 }) : window.setTimeout(fn, 200));
+
     fetch(`${BASE}/manifest.json`)
       .then((response) => response.json())
       .then((manifest) => {
@@ -118,13 +152,19 @@ export function VideoMascot({ onReady }) {
         size = [manifest.width, manifest.height];
         show('IDLE', { first: true });
         onReadyRef.current?.(controller);
+        const used = Array.from(document.querySelectorAll('[data-bot-state], [data-bot-gesture]'))
+          .flatMap((el) => [el.dataset.botState, el.dataset.botGesture]);
+        const saveData = Boolean(navigator.connection?.saveData);
+        idle(() => preload(saveData ? ['HOP'] : ['HOP', ...used, ...Object.keys(clips)]));
       })
       .catch(NOOP);
 
     return () => {
       alive = false;
       window.clearTimeout(gestureTimer);
+      ['pointerup', 'touchend', 'keydown'].forEach((type) => window.removeEventListener(type, resume));
       videos.forEach((video) => { video.pause(); video.removeAttribute('src'); video.load(); });
+      ready.forEach((url) => URL.revokeObjectURL(url));
     };
   }, []);
 
