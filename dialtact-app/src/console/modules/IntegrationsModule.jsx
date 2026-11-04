@@ -175,10 +175,49 @@ export function IntegrationsModule() {
     } catch (_) {}
   };
 
+  // Sign-in (OAuth) apps: the connect session is created while the dialog is
+  // open, so "Continue" can open the provider's window inside the user's own
+  // click. A window opened later (after a network wait, or from the embedded
+  // Nango form, which never receives the click) is blocked or delayed by the
+  // browser: that was the slow "next step".
+  const preparedRef = useRef(null);
+  const authRef = useRef(null);
+  const requestSession = (appId) => api.request('POST', `/api/integrations/${appId}/connect`, {
+    base_redirect_uri: `${window.location.origin}/api/integrations/callback`,
+  });
+  const prepareSession = (app) => {
+    if (!app || app.auth_type !== 'oauth') return;
+    const entry = { appId: app.id, at: Date.now(), data: null };
+    entry.promise = requestSession(app.id).then((data) => {
+      entry.data = data;
+      return data;
+    });
+    entry.promise.catch(() => {}); // reported when the user presses Continue
+    preparedRef.current = entry;
+  };
+  const takePrepared = (appId) => {
+    const entry = preparedRef.current;
+    preparedRef.current = null;
+    // Connect sessions last 30 minutes; refresh well before that.
+    return entry && entry.appId === appId && Date.now() - entry.at < 20 * 60 * 1000 ? entry : null;
+  };
+  const stopAuth = () => {
+    try { authRef.current?.clear?.(); } catch { /* nothing to stop */ }
+    authRef.current = null;
+  };
+  useEffect(() => () => stopAuth(), []);
+
   const openConnectDialog = (app) => {
     setConnectionError(null);
     setConnectModalApp(app);
     setAccountAlias(`workspace-${app.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`);
+    prepareSession(app);
+  };
+  const closeConnectDialog = () => {
+    stopAuth();
+    preparedRef.current = null;
+    setConnecting(null);
+    setConnectModalApp(null);
   };
 
   const handleExecuteConnect = async (appId) => {
@@ -220,23 +259,71 @@ export function IntegrationsModule() {
         }
         return;
       }
-      const data = await api.request('POST', `/api/integrations/${appId}/connect`, {
-        base_redirect_uri: `${window.location.origin}/api/integrations/callback`,
-        account_identifier: alias || undefined,
-      });
-      if (data?.status !== 'INITIATED' || !data?.session_token) {
-        throw new Error('Secure connection form unavailable. Please contact your administrator.');
+      const isOauth = connectModalApp?.auth_type === 'oauth';
+      const prepared = takePrepared(appId);
+      const sessionFor = (data) => {
+        if (data?.status !== 'INITIATED' || !data?.session_token) {
+          throw new Error('Secure connection form unavailable. Please contact your administrator.');
+        }
+        // A self-hosted gateway tells us where its API and Connect form live.
+        return new Nango({ connectSessionToken: data.session_token, ...(data.api_url ? { host: data.api_url } : {}) });
+      };
+
+      if (isOauth) {
+        // Open the provider window now, inside this click, when the session is ready;
+        // otherwise as soon as it arrives (still within the click's grace period).
+        const startAuth = (data) => {
+          const nango = sessionFor(data);
+          stopAuth();
+          authRef.current = nango;
+          // No "detect closed window": Google's sign-in page cuts the link to the
+          // opener (Cross-Origin-Opener-Policy), so the window always looks closed
+          // and the result was dropped while the user was still signing in.
+          return nango.auth(data.provider_config_key, { detectClosedAuthWindow: false });
+        };
+        const pending = prepared?.data
+          ? startAuth(prepared.data)
+          : (prepared?.promise || requestSession(appId)).then(startAuth);
+        let result;
+        try {
+          result = await pending;
+        } catch (error) {
+          stopAuth();
+          if (error?.type === 'blocked_by_browser') {
+            setConnectionError('Your browser blocked the sign-in window. Allow pop-ups for this site, then press Continue again.');
+          } else if (error?.type) {
+            setConnectionError('Sign-in did not complete. Please press Continue to try again.');
+          } else {
+            setConnectionError(connectFailureMessage(error));
+          }
+          setConnecting(null);
+          prepareSession(connectModalApp); // a fresh session for the retry
+          return;
+        }
+        stopAuth();
+        try {
+          const connectionId = result?.connectionId;
+          if (!connectionId) throw new Error('Authorization returned no connection. Please retry.');
+          pendingAuthorizationRef.current = { appId, connectionId };
+          await activate(connectionId);
+        } catch {
+          setConnectionError('Connection could not be verified. Please retry or contact your administrator.');
+        } finally {
+          setConnecting(null);
+        }
+        return;
       }
+
+      // API-key apps: Nango's secure form asks for the key; no extra window opens.
+      const data = await requestSession(appId);
       let activating = false;
       let completed = false;
-      // A self-hosted gateway tells us where its API and Connect form live.
-      const nango = new Nango({ connectSessionToken: data.session_token, ...(data.api_url ? { host: data.api_url } : {}) });
+      const nango = sessionFor(data);
       connectUiRef.current?.close();
       connectUiRef.current = nango.openConnectUI({
         sessionToken: data.session_token,
         ...(data.connect_url ? { baseURL: data.connect_url } : {}),
         ...(data.api_url ? { apiURL: data.api_url } : {}),
-        detectClosedAuthWindow: true,
         onEvent: async (event) => {
           if (event.type === 'connect' && !activating && !completed) {
             activating = true;
@@ -255,7 +342,7 @@ export function IntegrationsModule() {
               setConnecting(null);
             }
           } else if (event.type === 'error') {
-            setConnectionError('Authorization did not complete. Please retry the secure connection.');
+            setConnectionError('The connection did not complete. Please check the details and try again.');
             connectUiRef.current?.close();
             connectUiRef.current = null;
             setConnecting(null);
@@ -800,7 +887,7 @@ export function IntegrationsModule() {
               </div>
               <button
                 type="button"
-                onClick={() => setConnectModalApp(null)}
+                onClick={closeConnectDialog}
                 className={closeButtonClass}
                 aria-label="Close connect dialog"
               >
@@ -860,6 +947,11 @@ export function IntegrationsModule() {
               </div>
             </div>
 
+            {connecting === connectModalApp.id && connectModalApp.auth_type === 'oauth' && !connectionError && (
+              <p role="status" data-testid="connect-signin-hint" className="text-ui text-fg-body bg-surface-subtle border border-line rounded-control p-3">
+                Finish signing in to {connectModalApp.name} in the window that opened. This page updates by itself when you approve access. Closed that window? Press Cancel and try again.
+              </p>
+            )}
             {connectionError && (
               <p role="alert" data-testid="connection-error" className="text-ui text-danger-fg bg-danger-soft border border-danger-line rounded-control p-3">{connectionError}</p>
             )}
@@ -874,7 +966,7 @@ export function IntegrationsModule() {
                 <TactileButton
                   variant="ghost"
                   size="md"
-                  onClick={() => setConnectModalApp(null)}
+                  onClick={closeConnectDialog}
                   className="flex-1 sm:flex-initial justify-center"
                 >
                   Cancel
@@ -888,7 +980,7 @@ export function IntegrationsModule() {
                   loading={connecting === connectModalApp.id}
                   className="flex-1 sm:flex-initial justify-center"
                 >
-                  {connecting === connectModalApp.id ? 'Opening…' : (
+                  {connecting === connectModalApp.id ? (connectModalApp.auth_type === 'oauth' ? 'Waiting for sign-in…' : 'Opening…') : (
                     <>
                       Continue
                       <ArrowUpRight className="w-4 h-4" aria-hidden="true" />

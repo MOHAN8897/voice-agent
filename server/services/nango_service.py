@@ -538,6 +538,9 @@ class NangoService:
                     "session_token": token,
                     "state": state,
                     "status": "INITIATED",
+                    # The gateway's key for this app: the console starts sign-in apps
+                    # directly from the user's click (no embedded form, no blocked pop-up).
+                    "provider_config_key": provider_key,
                     # Where the browser opens the Connect form (self-hosted gateway);
                     # absent for Nango Cloud, whose defaults the SDK already uses.
                     "api_url": settings.nango_public_url or None,

@@ -10,19 +10,25 @@ async function setup(page, failActivation = false, failureStatus = 503) {
   const user = { id: 'integration-test', userId: 'integration-test', fullName: 'Integration Tester', name: 'Integration Tester', email: 'integration-test@example.invalid', hasCompletedOnboarding: true, role: 'subscriber', tenantId: 'integration-test-tenant' };
   const b64 = (value) => Buffer.from(JSON.stringify(value)).toString('base64url');
   const token = `${b64({ alg: 'none' })}.${b64({ sub: user.id, exp: Math.floor(Date.now() / 1000) + 3600 })}.test`;
+  // Fake Nango SDK. Sign-in apps use auth() (window opened from the user's own
+  // click); the embedded openConnectUI form is only for API-key apps.
   await page.route('**/@nangohq_frontend.js*', (route) => route.fulfill({ contentType: 'text/javascript', body: `
     export default class TestConnect {
-      openConnectUI({onEvent}) {
-        const form = document.createElement('div');
-        form.setAttribute('role', 'dialog'); form.setAttribute('aria-label', 'Test authorization');
-        form.style = 'position:fixed;inset:20%;z-index:999999;background:white;padding:40px';
-        for (const [label, event] of [['Complete test authorization', {type:'connect',payload:{connectionId:'synthetic-owned-connection'}}],['Fail test authorization',{type:'error'}]]) {
-          const button = document.createElement('button'); button.textContent = label;
-          button.onclick = () => onEvent(event); form.appendChild(button);
-        }
-        document.body.appendChild(form);
-        return { close() { form.remove(); onEvent({type:'close'}); } };
+      auth(key, options) {
+        window.__authCalls = (window.__authCalls || []).concat([{ key, options }]);
+        return new Promise((resolve, reject) => {
+          const form = document.createElement('div');
+          form.setAttribute('role', 'dialog'); form.setAttribute('aria-label', 'Test authorization');
+          form.style = 'position:fixed;inset:20%;z-index:999999;background:white;padding:40px';
+          const add = (label, fn) => { const b = document.createElement('button'); b.textContent = label; b.onclick = () => { form.remove(); fn(); }; form.appendChild(b); };
+          add('Complete test authorization', () => resolve({ connectionId: 'synthetic-owned-connection', providerConfigKey: key }));
+          add('Fail test authorization', () => { const e = new Error('denied'); e.type = 'unknown_error'; reject(e); });
+          add('Block test window', () => { const e = new Error('blocked'); e.type = 'blocked_by_browser'; reject(e); });
+          document.body.appendChild(form);
+        });
       }
+      clear() {}
+      openConnectUI() { throw new Error('sign-in apps must not use the embedded form'); }
     }` }));
   await page.route('**/api/**', async (route) => {
     const request = route.request();
@@ -32,7 +38,7 @@ async function setup(page, failActivation = false, failureStatus = 503) {
     else if (path === '/api/auth/session') data = { authenticated: true, saas_auth_enabled: true };
     else if (path === '/api/integrations') data = { items: state.active ? [{ app_name: 'GOOGLECALENDAR', status: 'ACTIVE' }] : [] };
     else if (path === '/api/integrations/catalog') data = { items: [{ id: 'GOOGLECALENDAR', name: 'Google Calendar', category: 'Scheduling', auth_type: 'oauth', timing: 'in_call', actions: ['Find Free Slots'] }] };
-    else if (path.endsWith('/GOOGLECALENDAR/connect')) { state.initiations++; data = { status: 'INITIATED', session_token: 'synthetic-session' }; }
+    else if (path.endsWith('/GOOGLECALENDAR/connect')) { state.initiations++; data = { status: 'INITIATED', session_token: 'synthetic-session', provider_config_key: 'google-calendar' }; }
     else if (path.endsWith('/GOOGLECALENDAR/activate')) {
       state.activations.push(request.postDataJSON());
       status = failActivation && state.activations.length === 1 ? failureStatus : 200;
@@ -52,7 +58,7 @@ async function setup(page, failActivation = false, failureStatus = 503) {
   }, { token, user });
   await page.goto('/#dashboard/integrations');
   await page.getByRole('button', { name: 'Connect', exact: true }).click();
-  await page.getByRole('button', { name: 'Continue securely' }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'Test authorization' })).toBeVisible();
   return state;
 }
@@ -62,7 +68,7 @@ test('failed backend verification retries the same authorization without duplica
   await page.getByRole('button', { name: 'Complete test authorization' }).click();
   await expect(page.getByText('Connection could not be verified.', { exact: false })).toBeVisible();
   await expect(page.getByRole('dialog', { name: 'Test authorization' })).toBeHidden();
-  await page.getByRole('button', { name: 'Continue securely' }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Disconnect', exact: true })).toBeVisible();
   expect(state.initiations).toBe(1);
   expect(state.activations).toHaveLength(2);
@@ -83,11 +89,11 @@ test('failed backend verification retries the same authorization without duplica
 test('provider authorization error closes the form and makes retry available', async ({ page }) => {
   const state = await setup(page);
   await page.getByRole('button', { name: 'Fail test authorization' }).click();
-  await expect(page.getByText('Authorization did not complete.', { exact: false })).toBeVisible();
+  await expect(page.getByText('Sign-in did not complete.', { exact: false })).toBeVisible();
   await expect(page.getByRole('dialog', { name: 'Test authorization' })).toBeHidden();
-  await expect(page.getByRole('button', { name: 'Continue securely' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeEnabled();
   expect(state.activations).toHaveLength(0);
-  await page.getByRole('button', { name: 'Continue securely' }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Complete test authorization' }).click();
   await expect(page.getByRole('button', { name: 'Disconnect', exact: true })).toBeVisible();
   expect(state.initiations).toBe(2);
@@ -97,9 +103,25 @@ test('permanent connection rejection allows fresh authorization', async ({ page 
   const state = await setup(page, true, 403);
   await page.getByRole('button', { name: 'Complete test authorization' }).click();
   await expect(page.getByText('Connection could not be verified.', { exact: false })).toBeVisible();
-  await page.getByRole('button', { name: 'Continue securely' }).click();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'Test authorization' })).toBeVisible();
   expect(state.initiations).toBe(2);
+  await page.getByRole('button', { name: 'Complete test authorization' }).click();
+  await expect(page.getByRole('button', { name: 'Disconnect', exact: true })).toBeVisible();
+});
+
+test('sign-in window opens from the click with the closed-window check off, and a blocked window says so', async ({ page }) => {
+  const state = await setup(page);
+  const calls = await page.evaluate(() => window.__authCalls);
+  expect(calls).toHaveLength(1);
+  expect(calls[0].key).toBe('google-calendar');
+  // Google's sign-in page cuts the opener link, so this check would drop the result.
+  expect(calls[0].options.detectClosedAuthWindow).toBe(false);
+  // The session was prepared when the dialog opened, before Continue.
+  expect(state.initiations).toBe(1);
+  await page.getByRole('button', { name: 'Block test window' }).click();
+  await expect(page.getByText('Allow pop-ups for this site', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Complete test authorization' }).click();
   await expect(page.getByRole('button', { name: 'Disconnect', exact: true })).toBeVisible();
 });
