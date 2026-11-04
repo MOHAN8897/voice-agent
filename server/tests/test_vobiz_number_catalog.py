@@ -58,6 +58,7 @@ def _configure_catalog_route(
     db_numbers=(),
     reserved_numbers=(),
     db_available=True,
+    stock=(),
 ):
     monkeypatch.setattr(app_telephony, "require_subscriber_permission", lambda *_args: None)
     factory = (
@@ -91,12 +92,14 @@ def _configure_catalog_route(
         lambda self: setattr(self, "cfg", {"auth_id": "MA_TEST", "auth_token": "unit-test-token"}),
     )
 
-    async def fail_if_local_pool_is_used(**_kwargs):
-        raise AssertionError("Vobiz tenant inventory must not use the local platform pool")
+    async def platform_stock(*, country=None, provider=None):
+        # The platform's own main-account stock; empty unless a test sets it.
+        assert provider == "vobiz", "stock must be limited to the active carrier"
+        return list(stock)
 
     monkeypatch.setattr(
         "server.services.saas.number_inventory.list_inventory_for_sale",
-        fail_if_local_pool_is_used,
+        platform_stock,
     )
 
 
@@ -188,3 +191,28 @@ async def test_tenant_catalog_fails_closed_when_db_is_unavailable(monkeypatch):
         await app_telephony.search_numbers(country="IN", principal=principal)
 
     assert caught.value.status_code == 503
+
+
+
+@pytest.mark.asyncio
+async def test_tenant_catalog_lists_platform_stock_first_on_vobiz(monkeypatch):
+    """Numbers on the main account (admin stock, released numbers) are sold to verified workspaces."""
+
+    async def provider_search(_client, *, country, limit):
+        return [{"e164": "+918064262252", "status": "active", "country": "IN", "auth_id": None,
+                 "setup_fee": 0, "monthly_fee": 100, "currency": "INR"}]
+
+    _configure_catalog_route(
+        monkeypatch,
+        search=provider_search,
+        stock=[{"e164": "+917965480745", "country": "IN", "source": "inventory", "numberId": "x", "telnyxNumberId": None}],
+    )
+    principal = SubscriberPrincipal(uuid.uuid4(), uuid.uuid4(), "owner", "buyer@example.test")
+    result = await app_telephony.search_numbers(country="IN", principal=principal)
+    numbers = [row["e164"] for row in result["numbers"]]
+    assert numbers[0] == "+917965480745"
+    assert "+918064262252" in numbers
+    stock_row = result["numbers"][0]
+    # Tenants never see carrier or internal pool identifiers.
+    assert stock_row["provider"] == "direct_voice" and stock_row["telnyxNumberId"] is None
+    assert "numberId" not in stock_row and stock_row["source"] == "direct_voice"

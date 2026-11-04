@@ -106,6 +106,11 @@ async def test_vobiz_answer_webhook_returns_valid_xml(campaign_db, monkeypatch):
     """Verify POST /api/vobiz/answer generates valid VoiceXML with WebSocket stream instructions when agent is known."""
     from server.tests.test_campaign_execution_safety import TID
     monkeypatch.setattr("server.db.connection.get_session_factory", lambda: campaign_db)
+    # The test workspace has passed phone-service verification (inbound KYC gate).
+    async def _kyc_approved(*_a, **_k):
+        return None
+
+    monkeypatch.setattr("server.services.saas.voice_kyc_service.assert_voice_kyc_approved", _kyc_approved)
     token = vobiz_stream_tokens.create(
         call_uuid="vobiz-call-abc-123",
         agent_id="test-agent-123",
@@ -520,6 +525,11 @@ async def test_vobiz_policy_transfer_xml_escaping(campaign_db, monkeypatch):
     from server.services.saas.telephony_profile import InboundDecision
     from server.tests.test_campaign_execution_safety import TID
     monkeypatch.setattr("server.db.connection.get_session_factory", lambda: campaign_db)
+    # The test workspace has passed phone-service verification (inbound KYC gate).
+    async def _kyc_approved(*_a, **_k):
+        return None
+
+    monkeypatch.setattr("server.services.saas.voice_kyc_service.assert_voice_kyc_approved", _kyc_approved)
 
     mock_decision = InboundDecision(
         should_answer=False,

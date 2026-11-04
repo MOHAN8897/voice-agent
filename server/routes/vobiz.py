@@ -349,21 +349,29 @@ async def vobiz_answer(request: Request):
     account_tenant_id = (token_meta or {}).get("vobiz_account_tenant_id") or local_reg.get("vobiz_account_tenant_id") or (profile or {}).get("vobiz_account_tenant_id") or tenant_id
     # This must precede transfers as well as media streaming. Browser redirects
     # and submitted documents never authorize a call.
-    if account_scope == "tenant":
+    # Numbers now live on the platform's main account, so the KYC gate follows the
+    # workspace that holds the number, not the Vobiz account it sits on. Only the
+    # platform's own unassigned inventory skips it.
+    # Outbound calls are already checked when they are placed (and admin test
+    # calls carry no customer KYC), so the new check covers inbound calls.
+    kyc_tenant_id = account_tenant_id if account_scope == "tenant" else tenant_id
+    if account_scope == "tenant" or (direction != "outbound" and kyc_tenant_id):
         try:
             from server.services.saas.voice_kyc_service import assert_voice_kyc_approved
-            if not account_tenant_id:
+            if not kyc_tenant_id:
                 raise ValueError("Missing account owner")
             from server.db.connection import get_session_factory
             from server.db.models.entities import Tenant
+            from server.services.saas.number_inventory import is_platform_inventory_tenant
             factory = get_session_factory()
             if factory is None:
                 raise ValueError("Account database unavailable")
             async with factory() as session:
-                tenant = await session.get(Tenant, uuid.UUID(str(account_tenant_id)))
+                tenant = await session.get(Tenant, uuid.UUID(str(kyc_tenant_id)))
                 if tenant is None or tenant.status != "active":
                     raise ValueError("Account inactive")
-            await assert_voice_kyc_approved(uuid.UUID(str(account_tenant_id)), action="receive a phone call")
+            if not is_platform_inventory_tenant(tenant):
+                await assert_voice_kyc_approved(uuid.UUID(str(kyc_tenant_id)), action="receive a phone call")
         except Exception as exc:
             logger.warning("Phone call denied at verification gate error_type=%s", type(exc).__name__)
             return Response(content='<Response><Hangup /></Response>', media_type="application/xml")

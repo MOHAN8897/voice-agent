@@ -59,11 +59,7 @@ export function BuyNumberPanel({
   const [results, setResults] = useState<Candidate[] | null>(null);
   const [balance, setBalance] = useState<Balance>(null);
   const [picked, setPicked] = useState<Candidate | null>(null);
-  // On Vobiz a number must sit on the workspace's own verified account to take
-  // calls, so buying straight into a workspace is the default there.
-  const [destination, setDestination] = useState<"inventory" | "workspace">(
-    presetTenantId || provider === "vobiz" ? "workspace" : "inventory"
-  );
+  const [destination, setDestination] = useState<"inventory" | "workspace">(presetTenantId ? "workspace" : "inventory");
   const [tenantId, setTenantId] = useState(presetTenantId ?? "");
   const [reason, setReason] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -248,9 +244,8 @@ export function BuyNumberPanel({
                 <span>
                   <span className="font-medium text-text">Platform inventory</span>
                   <span className="block text-text-subtle">
-                    {provider === "vobiz"
-                      ? "Kept on the platform account as stock. Workspaces cannot buy it themselves; give it to one with Assign number, which moves it to that workspace's verified Vobiz account. Takes no calls until then."
-                      : "Listed for workspaces to buy. Takes no calls until a workspace owns it."}
+                    Kept on the platform&apos;s main account as stock. Verified workspaces see it when they buy a number, or you
+                    can give it to one with Assign number. Takes no calls until a workspace owns it.
                   </span>
                 </span>
               </label>
@@ -258,7 +253,10 @@ export function BuyNumberPanel({
                 <input type="radio" name="buy-dest" checked={destination === "workspace"} onChange={() => setDestination("workspace")} className="mt-0.5" />
                 <span>
                   <span className="font-medium text-text">A specific workspace</span>
-                  <span className="block text-text-subtle">Active in that workspace right away. The workspace is not charged for this order.</span>
+                  <span className="block text-text-subtle">
+                    Active in that workspace right away, still on the platform&apos;s main account. The workspace must have passed
+                    phone-service verification and is not charged for this order.
+                  </span>
                 </span>
               </label>
             </fieldset>

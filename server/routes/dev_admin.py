@@ -1688,31 +1688,26 @@ async def allocate_number(body: AllocateNumberBody, session: SessionData = Depen
     if active_prov == "vobiz":
         from server.services.saas.voice_kyc_service import assert_voice_kyc_approved, vobiz_client_for_tenant
         await assert_voice_kyc_approved(tid, action="assign a phone number")
-        from server.services.saas.voice_kyc_service import VoiceKycError, transfer_parent_number_to_tenant
-
-        # A platform-inventory number lives on our parent account: move it to the
-        # tenant's verified sub-account first (no-op if the tenant already owns it).
+        # Numbers stay on the platform's main Vobiz account; the workspace's
+        # sub-account is only its KYC. Assign only what the main account owns.
         async with get_session_factory()() as db:
             current = (await db.execute(select(PhoneNumber).where(
                 PhoneNumber.e164 == e164, PhoneNumber.released_at.is_(None)))).scalar_one_or_none()
-        if current is not None and current.tenant_id != tid:
-            from server.services.saas.number_inventory import ensure_platform_inventory_tenant
+        legacy_same_tenant = current is not None and current.tenant_id == tid and current.vobiz_account_scope == "tenant"
+        if not legacy_same_tenant:
+            from server.services.vobiz_client import VobizClient
 
-            if current.tenant_id != await ensure_platform_inventory_tenant():
-                raise HTTPException(status_code=409, detail="number_already_assigned")
-        try:
-            confirmed_carrier_id = await transfer_parent_number_to_tenant(tid, e164)
-        except VoiceKycError as exc:
-            code = str(exc)
-            if code == "number_not_on_platform_account":
-                raise HTTPException(status_code=409, detail="number_not_owned_by_customer_account") from None
-            raise HTTPException(status_code=409, detail={"error": {"code": code,
-                "message": "The number could not be moved to this workspace's phone account yet. Check it on Vobiz before retrying."}}) from None
-        except HTTPException:
-            raise
-        except Exception:
-            logger.warning("[ADMIN] vobiz number transfer failed")
-            raise HTTPException(status_code=502, detail="Vobiz could not move this number. Nothing was assigned.") from None
+            parent = VobizClient()
+            try:
+                owned = await parent.list_account_numbers(search=e164, limit=100)
+            except Exception:
+                logger.warning("[ADMIN] vobiz ownership check failed")
+                raise HTTPException(status_code=502, detail="Vobiz could not be reached. Nothing was assigned.") from None
+            confirmed_carrier_id = next((str(n["id"]) for n in owned if n.get("e164") == e164
+                                         and n.get("account_id") == parent.auth_id and n.get("id")
+                                         and n.get("status") == "active"), None)
+            if not confirmed_carrier_id:
+                raise HTTPException(status_code=409, detail="number_not_on_platform_account")
     async with get_session_factory()() as db:
         tenant = await db.get(Tenant, tid)
         if tenant is None or tenant.deleted_at is not None:
@@ -1736,10 +1731,10 @@ async def allocate_number(body: AllocateNumberBody, session: SessionData = Depen
             existing.tenant_id = tid
             if active_prov == "telnyx":
                 existing.telnyx_number_id = body.telnyxNumberId or getattr(existing, "telnyx_number_id", None) or "carrier_platform"
-            elif active_prov == "vobiz":
+            elif active_prov == "vobiz" and confirmed_carrier_id:
                 existing.carrier_number_id = confirmed_carrier_id
-                existing.vobiz_account_scope = "tenant"
-                existing.vobiz_account_tenant_id = tid
+                existing.vobiz_account_scope = None  # main account
+                existing.vobiz_account_tenant_id = None
                 existing.telnyx_number_id = None
             existing.status = "active"
             existing.inbound_enabled = True
@@ -1753,8 +1748,8 @@ async def allocate_number(body: AllocateNumberBody, session: SessionData = Depen
                 billing_source="manual",
                 telnyx_number_id=(body.telnyxNumberId or "carrier_platform") if active_prov == "telnyx" else None,
                 carrier_number_id=confirmed_carrier_id if active_prov == "vobiz" else None,
-                vobiz_account_scope="tenant" if active_prov == "vobiz" else None,
-                vobiz_account_tenant_id=tid if active_prov == "vobiz" else None,
+                vobiz_account_scope=None,  # main account
+                vobiz_account_tenant_id=None,
                 inbound_enabled=True,
                 outbound_enabled=True,
                 created_at=datetime.now(timezone.utc),
@@ -4260,8 +4255,8 @@ async def purchase_platform_carrier_number(
             billing_source="inventory" if to_inventory else "admin",
             inbound_enabled=not to_inventory,
             outbound_enabled=not to_inventory,
-            vobiz_account_scope="tenant" if customer_account else None,
-            vobiz_account_tenant_id=tenant_uuid if customer_account else None,
+            vobiz_account_scope=None,  # every number lives on the main account
+            vobiz_account_tenant_id=None,
         )
         db.add(reservation)
         try:

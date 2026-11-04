@@ -257,17 +257,15 @@ async def test_production_console_rejects_untrusted_dialtact_like_origins(db, mo
         svc._trusted_return_url(url)
 
 
-async def test_direct_child_purchase_sets_inbound_app_first(db, carrier):
+async def test_tenant_number_is_bought_on_the_main_account_after_kyc(db, carrier):
+    """The sub-account is only KYC: the number itself is ordered on the main account."""
     parent, child = carrier
     await onboard()
     await approve(parent)
-    async def purchase(_e164):
-        child.ensure_default_application.assert_awaited_once()
-        async with db() as session:
-            assert (await session.get(VobizSubaccount, TID)).application_id == "child-app"
-        return {"id": "real-number-id"}
-    child.place_number_order.side_effect = purchase
+    parent.provision_ordered_number = AsyncMock(return_value={"phone_number_id": "real-number-id"})
     assert (await svc.provision_tenant_number(TID, PHONE))["phone_number_id"] == "real-number-id"
+    parent.provision_ordered_number.assert_awaited_once_with(PHONE)
+    child.place_number_order.assert_not_awaited()
 
 
 async def test_foreign_or_missing_number_never_falls_back_to_parent(db, carrier):
@@ -332,7 +330,9 @@ async def test_worker_uses_persisted_provider_and_recovers_interrupted_job(db, m
     async with db() as session:
         purchase = await session.get(NumberPurchase, pid)
         phone = await session.get(PhoneNumber, purchase.phone_number_id)
-        assert purchase.status == "active" and phone.vobiz_account_tenant_id == TID
+        # Main account: the platform keeps the number when the workspace releases it.
+        assert purchase.status == "active" and phone.tenant_id == TID
+        assert phone.vobiz_account_scope is None and phone.vobiz_account_tenant_id is None
         assert phone.carrier_number_id == "real-number-id"
     assert not await provision_worker.process_one_job()
 
@@ -536,3 +536,32 @@ async def test_failed_document_creates_a_new_session_instead_of_reusing_old_link
     await svc.start_kyc_session(**args)
     assert parent.create_customer_subaccount.await_count == 1
     assert parent.create_customer_kyc_session.await_count == 2
+
+
+async def test_worker_hands_a_stock_number_to_the_buyer_instead_of_duplicating_it(db, monkeypatch):
+    """A number sold from the main-account stock keeps its row: no second active row."""
+    from server.services.saas import activity_log, provision_worker
+    monkeypatch.setattr(provision_worker, "get_session_factory", lambda: db)
+    monkeypatch.setattr(activity_log, "record_event", AsyncMock())
+    monkeypatch.setattr(svc, "provision_tenant_number", AsyncMock(return_value={"phone_number_id": "real-number-id"}))
+    monkeypatch.setattr("server.services.telephony.active_telephony_provider", lambda: "vobiz")
+    inventory = uuid4()
+    async with db() as session:
+        session.add(Tenant(tenant_id=inventory, name="Platform inventory", status="active", plan="platform", limits={}))
+        stock = PhoneNumber(tenant_id=inventory, e164=PHONE, status="available", billing_source="inventory",
+                            carrier_number_id="real-number-id", inbound_enabled=False, outbound_enabled=False)
+        session.add(stock)
+        purchase = NumberPurchase(tenant_id=TID, e164=PHONE, status="paid", provider="vobiz")
+        session.add(purchase)
+        await session.flush()
+        session.add(ProvisionJob(purchase_id=purchase.id, status="queued", attempts=0,
+                                 updated_at=datetime.now(timezone.utc)))
+        await session.commit()
+        stock_id, pid = stock.id, purchase.id
+    assert await provision_worker.process_one_job()
+    async with db() as session:
+        purchase = await session.get(NumberPurchase, pid)
+        assert purchase.status == "active" and purchase.phone_number_id == stock_id
+        rows = (await session.execute(select(PhoneNumber).where(PhoneNumber.e164 == PHONE))).scalars().all()
+        assert len(rows) == 1
+        assert rows[0].tenant_id == TID and rows[0].inbound_enabled and rows[0].vobiz_account_scope is None

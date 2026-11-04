@@ -277,8 +277,9 @@ async def process_one_job() -> bool:
         if provider == "vobiz":
             from server.services.saas.voice_kyc_service import provision_tenant_number
 
-            # The child reconciles its own numbers before POSTing. A crash after
-            # purchase is recovered with the same tenant credentials and DID.
+            # Bought on the main account after the workspace's KYC check. The
+            # order reconciles against numbers the main account already owns, so a
+            # retry after a crash (or a sale from inventory) never buys twice.
             result = await provision_tenant_number(purchase.tenant_id, purchase.e164)
             confirmed_id = _provider_number_id(result)
             if provider_number_id and confirmed_id != provider_number_id:
@@ -482,7 +483,31 @@ async def process_one_job() -> bool:
             user = await session.get(User, purchase.user_id)
             if user:
                 phone_tenant_id = workspace_tenant_id_for_subscriber(purchase.tenant_id, user.email)
-        pn = PhoneNumber(
+        # A number sold from the platform's stock already has a row in the
+        # inventory: hand that row over instead of inserting a second one.
+        from server.db.models.entities import Tenant
+        from server.services.saas.number_inventory import INVENTORY_TENANT_NAME
+
+        stocked = (await session.execute(select(PhoneNumber).join(
+            Tenant, Tenant.tenant_id == PhoneNumber.tenant_id,
+        ).where(
+            PhoneNumber.e164 == purchase.e164,
+            PhoneNumber.released_at.is_(None),
+            Tenant.name == INVENTORY_TENANT_NAME,
+            Tenant.plan == "platform",
+        ).with_for_update(of=PhoneNumber))).scalar_one_or_none()
+        if stocked is not None:
+            stocked.tenant_id = phone_tenant_id
+            stocked.status = phone_number_status
+            stocked.purchase_id = purchase.id
+            stocked.billing_source = "wallet" if not purchase.stripe_checkout_session_id else "stripe"
+            stocked.inbound_enabled = stocked.outbound_enabled = True
+            stocked.agent_id = purchase.assign_agent_id
+            if provider == "vobiz" and provider_number_id:
+                stocked.carrier_number_id = provider_number_id
+            stocked.vobiz_account_scope = None
+            stocked.vobiz_account_tenant_id = None
+        pn = stocked if stocked is not None else PhoneNumber(
             tenant_id=phone_tenant_id,
             e164=purchase.e164,
             status=phone_number_status,
@@ -492,12 +517,14 @@ async def process_one_job() -> bool:
             outbound_enabled=True,
             agent_id=purchase.assign_agent_id,
             carrier_number_id=provider_number_id if provider == "vobiz" else None,
-            vobiz_account_scope="tenant" if provider == "vobiz" else None,
-            vobiz_account_tenant_id=purchase.tenant_id if provider == "vobiz" else None,
+            # Main account: the platform keeps the number when the workspace releases it.
+            vobiz_account_scope=None,
+            vobiz_account_tenant_id=None,
             telnyx_number_id=provider_number_id if provider == "telnyx" else None,
             created_at=_utcnow(),
         )
-        session.add(pn)
+        if stocked is None:
+            session.add(pn)
         await session.flush()
         purchase.phone_number_id = pn.id
         purchase.status = "active" if phone_number_status == "active" else "provisioning"

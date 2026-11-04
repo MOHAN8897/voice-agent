@@ -141,85 +141,52 @@ def test_carrier_purchase_without_a_workspace_targets_the_inventory():
     assert body.tenantId is None
 
 
-class _FakeVobiz:
-    """A parent or child Vobiz account holding a set of numbers."""
-
-    def __init__(self, auth_id, owned):
-        self.auth_id = auth_id
-        self.owned = owned  # shared dict e164 -> owner auth_id
-        self.calls = []
-
-    async def list_account_numbers(self, *, search, limit):
-        return [{"e164": e, "account_id": a, "id": f"id-{e}", "status": "active"}
-                for e, a in self.owned.items() if e == search and a == self.auth_id]
-
-    async def ensure_default_application(self, *, name, app_id):
-        return app_id or "app-1"
-
-    async def assign_number_to_subaccount(self, *, e164, sub_auth_id):
-        self.calls.append(("assign", e164, sub_auth_id))
-        self.owned[e164] = sub_auth_id
-
-    async def _request(self, method, path, **kw):
-        self.calls.append((method, path, kw.get("json")))
-
-
-def _transfer_env(monkeypatch, owned):
+def test_tenant_numbers_are_bought_on_the_main_account_after_kyc(monkeypatch):
     from server.services.saas import voice_kyc_service as kyc
     import server.services.vobiz_client as vc
 
-    parent, child = _FakeVobiz("PARENT", owned), _FakeVobiz("CHILD", owned)
+    calls = []
 
-    async def approved(*_a, **_k):
-        return None
+    async def approved(tenant_id, *, action):
+        calls.append(("kyc", tenant_id, action))
 
-    async def child_client(_tid):
-        return child
+    class _Parent:
+        async def provision_ordered_number(self, e164):
+            calls.append(("parent_order", e164))
+            return {"phone_number_id": "vobiz-id-1"}
 
-    class _Acct:
-        application_id = None
-
-    class _Sess:
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *_):
-            return False
-
-        async def get(self, *_a, **_k):
-            return _Acct()
-
-        async def commit(self):
-            pass
+    async def no_child(_tid):
+        raise AssertionError("the tenant sub-account must not be used to buy numbers")
 
     monkeypatch.setattr(kyc, "assert_voice_kyc_approved", approved)
-    monkeypatch.setattr(kyc, "vobiz_client_for_tenant", child_client)
-    monkeypatch.setattr(kyc, "get_session_factory", lambda: (lambda: _Sess()))
-    monkeypatch.setattr(vc, "VobizClient", lambda: parent)
-    return kyc, parent, child
+    monkeypatch.setattr(kyc, "vobiz_client_for_tenant", no_child)
+    monkeypatch.setattr(vc, "VobizClient", lambda: _Parent())
+    tid = uuid.uuid4()
+    assert asyncio.run(kyc.provision_tenant_number(tid, "+918064262252")) == {"phone_number_id": "vobiz-id-1"}
+    # KYC is checked first, then the order goes to the main account.
+    assert calls == [("kyc", tid, "activate a phone number"), ("parent_order", "+918064262252")]
 
 
-def test_assigning_a_pool_number_moves_it_to_the_tenant_sub_account(monkeypatch):
-    owned = {"+917965480745": "PARENT"}
-    kyc, parent, child = _transfer_env(monkeypatch, owned)
-    number_id = asyncio.run(kyc.transfer_parent_number_to_tenant(uuid.uuid4(), "+917965480745"))
-    assert number_id == "id-+917965480745"
-    assert owned["+917965480745"] == "CHILD"
-    assert ("assign", "+917965480745", "CHILD") in parent.calls
-    # Inbound calls are routed to the tenant's application.
-    assert any(c[0] == "POST" and c[2] == {"app_id": "app-1"} for c in child.calls)
+def test_tenant_number_purchase_stops_when_kyc_is_not_approved(monkeypatch):
+    from server.services.saas import voice_kyc_service as kyc
+    import server.services.vobiz_client as vc
+
+    async def refused(_tid, *, action):
+        raise HTTPException(status_code=403, detail="voice_kyc_required")
+
+    monkeypatch.setattr(kyc, "assert_voice_kyc_approved", refused)
+    monkeypatch.setattr(vc, "VobizClient", lambda: pytest.fail("no order without KYC"))
+    with pytest.raises(HTTPException):
+        asyncio.run(kyc.provision_tenant_number(uuid.uuid4(), "+918064262252"))
 
 
-def test_transfer_is_a_no_op_when_the_tenant_already_owns_the_number(monkeypatch):
-    owned = {"+917965480745": "CHILD"}
-    kyc, parent, _ = _transfer_env(monkeypatch, owned)
-    assert asyncio.run(kyc.transfer_parent_number_to_tenant(uuid.uuid4(), "+917965480745")) == "id-+917965480745"
-    assert parent.calls == []
+def test_inventory_sale_listing_only_shows_the_active_carrier(monkeypatch):
+    rows = [_pn("+917965480745", carrier="18d1"), _pn("+13526146416", telnyx="3041")]
 
+    async def inv():
+        return uuid.uuid4()
 
-def test_transfer_refuses_a_number_the_platform_does_not_own(monkeypatch):
-    owned = {"+917965480745": "SOMEONE_ELSE"}
-    kyc, parent, _ = _transfer_env(monkeypatch, owned)
-    with pytest.raises(kyc.VoiceKycError, match="number_not_on_platform_account"):
-        asyncio.run(kyc.transfer_parent_number_to_tenant(uuid.uuid4(), "+917965480745"))
-    assert parent.calls == []
+    monkeypatch.setattr(number_inventory, "ensure_platform_inventory_tenant", inv)
+    monkeypatch.setattr(number_inventory, "get_session_factory", lambda: (lambda: _Session(rows)))
+    listed = asyncio.run(number_inventory.list_inventory_for_sale(provider="vobiz"))
+    assert [r["e164"] for r in listed] == ["+917965480745"]

@@ -733,33 +733,34 @@ async def search_numbers(
             if r_e164:
                 seen.add(str(r_e164).strip())
 
-    # Telnyx keeps the platform-owned pool path. Vobiz inventory is sourced
-    # directly from its unassigned inventory endpoint below; local/demo rows are
-    # never used as a fallback for Vobiz availability.
-    if active_prov != "vobiz":
-        for item in await list_inventory_for_sale(country=country):
-            e164 = str(item.get("e164") or "")
-            if not e164 or e164 in seen:
-                continue
-            classified = classify_number(e164, country=country, region=item.get("region"))
-            if wanted_category and classified["category"] != wanted_category:
-                continue
-            if not matches_area(item, classified, area) or not matches_digits(e164):
-                continue
-            seen.add(e164)
-            priced.append(
-                {
-                    **item,
-                    **classified,
-                    "requirements": number_requirements(item),
-                    "monthlyUsd": monthly_usd,
-                    "monthlyInr": monthly_inr,
-                    "fee": monthly_usd,
-                    "country": country,
-                    "provider": "direct_voice" if not is_admin else item.get("source", active_prov),
-                    "telnyxNumberId": item.get("telnyxNumberId") if is_admin else None,
-                }
-            )
+    # The platform's own stock comes first: numbers already on the main account
+    # (bought by the admin, or released by a workspace). Only rows with a real
+    # carrier ID are listed; Vobiz's unassigned inventory follows below.
+    for item in await list_inventory_for_sale(country=country, provider=active_prov):
+        e164 = str(item.get("e164") or "")
+        if not e164 or e164 in seen:
+            continue
+        classified = classify_number(e164, country=country, region=item.get("region"))
+        if wanted_category and classified["category"] != wanted_category:
+            continue
+        if not matches_area(item, classified, area) or not matches_digits(e164):
+            continue
+        seen.add(e164)
+        public = item if is_admin else {k: v for k, v in item.items() if k not in ("numberId", "source")}
+        priced.append(
+            {
+                **public,
+                **classified,
+                "requirements": number_requirements(item),
+                "monthlyUsd": monthly_usd,
+                "monthlyInr": monthly_inr,
+                "fee": monthly_usd,
+                "country": country,
+                "source": item.get("source", "inventory") if is_admin else "direct_voice",
+                "provider": "direct_voice" if not is_admin else item.get("source", active_prov),
+                "telnyxNumberId": item.get("telnyxNumberId") if is_admin else None,
+            }
+        )
 
     try:
         if active_prov == "vobiz":

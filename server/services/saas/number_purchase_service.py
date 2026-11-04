@@ -625,13 +625,21 @@ async def purchase_with_wallet(
 
     active_provider = active_telephony_provider()
     carrier_row: dict | None = None
+    from_stock = False
     if active_provider == "vobiz":
         from server.services.saas.voice_kyc_service import assert_voice_kyc_approved
 
         await assert_voice_kyc_approved(principal.tenant_id, action="buy a phone number")
-        # The account-owned-number endpoint is not an availability check. Only
-        # an exact match in unassigned provider inventory can proceed to debit.
-        carrier_row = await _assert_vobiz_inventory_number_available(e164, country_code)
+        from server.services.saas.number_inventory import get_inventory_number, has_carrier_id
+
+        # A number in the platform's own stock is already on the main account:
+        # sold from inventory, with no carrier order and no carrier charge.
+        stocked = await get_inventory_number(e164)
+        from_stock = stocked is not None and stocked.status == "available" and has_carrier_id(stocked)
+        if not from_stock:
+            # The account-owned-number endpoint is not an availability check. Only
+            # an exact match in unassigned provider inventory can proceed to debit.
+            carrier_row = await _assert_vobiz_inventory_number_available(e164, country_code)
     else:
         transferred = await _purchase_from_inventory(
             principal,
@@ -642,8 +650,10 @@ async def purchase_with_wallet(
         if transferred is not None:
             return transferred
 
-    # Never debit a buyer for a DID the active provider cannot order.
-    await assert_carrier_can_buy(e164, carrier_row=carrier_row)
+    # Never debit a buyer for a DID the active provider cannot order. A number
+    # from the platform's own stock needs no carrier order, so no carrier check.
+    if not (active_provider == "vobiz" and from_stock):
+        await assert_carrier_can_buy(e164, carrier_row=carrier_row)
     inventory_tid = await ensure_platform_inventory_tenant()
     # Each number holds a call channel from the platform's Vobiz pool (Vobiz
     # sells none with a DID). Any auto-buy happens here, before the transaction,

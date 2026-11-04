@@ -62,6 +62,9 @@ async def test_inbound_uses_tenant_saved_stack_and_fails_closed(monkeypatch, tie
     monkeypatch.setattr(call_admission, "reserve", reserve)
     monkeypatch.setattr(call_admission, "finish", AsyncMock())
     monkeypatch.setattr(call_admission, "provider_event", AsyncMock())
+    # Main-account numbers: the KYC gate follows the workspace holding the number.
+    kyc_gate = AsyncMock(return_value=None)
+    monkeypatch.setattr("server.services.saas.voice_kyc_service.assert_voice_kyc_approved", kyc_gate)
 
     signature = base64.b64encode(hmac.new(b"unit-inbound-secret", b"https://voice.example/api/vobiz/answer.unit-nonce", hashlib.sha256).digest()).decode()
     request = Request({"type": "http", "scheme": "https", "method": "POST", "server": ("voice.example", 443),
@@ -69,6 +72,8 @@ async def test_inbound_uses_tenant_saved_stack_and_fails_closed(monkeypatch, tie
                            (b"x-vobiz-signature-v3", signature.encode()), (b"x-vobiz-signature-v3-nonce", b"unit-nonce")
                        ]})
     response = await vobiz.vobiz_answer(request)
+    kyc_gate.assert_awaited_once()
+    assert str(kyc_gate.await_args.args[0]) == tenant_id
     get_agent.assert_awaited_once_with("saved-agent", tenant_id=tenant_id)
 
     if failure:

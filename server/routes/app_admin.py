@@ -638,8 +638,8 @@ async def admin_buy_phone_number(
         reservation = PhoneNumber(
             tenant_id=target_tenant_id, e164=e164, status="provisioning", billing_source="admin",
             inbound_enabled=False, outbound_enabled=False, agent_id=bind_agent_id,
-            vobiz_account_scope="tenant" if customer_account else None,
-            vobiz_account_tenant_id=target_tenant_id if customer_account else None,
+            vobiz_account_scope=None,  # every number lives on the main account
+            vobiz_account_tenant_id=None,
         )
         session.add(reservation)
         try:

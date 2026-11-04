@@ -447,6 +447,11 @@ async def test_vobiz_unavailable_number_is_rejected_before_wallet_debit(monkeypa
 
     monkeypatch.setattr("server.services.saas.voice_kyc_service.assert_voice_kyc_approved", voice_verified)
 
+    async def not_in_stock(_e164):
+        return None
+
+    monkeypatch.setattr("server.services.saas.number_inventory.get_inventory_number", not_in_stock)
+
     async def debit(*_args, **_kwargs):
         debit_calls.append(True)
         raise AssertionError("wallet must not be debited for unavailable provider inventory")

@@ -22,7 +22,7 @@ INVENTORY_TENANT_NAME = "Platform inventory"
 
 
 def is_platform_inventory_tenant(tenant: Tenant) -> bool:
-    return tenant.name == INVENTORY_TENANT_NAME and tenant.plan == "platform"
+    return getattr(tenant, "name", None) == INVENTORY_TENANT_NAME and getattr(tenant, "plan", None) == "platform"
 
 
 def _utcnow() -> datetime:
@@ -199,7 +199,7 @@ async def reconcile_release_pending_numbers(limit: int = 25) -> int:
     return done
 
 
-async def list_inventory_for_sale(*, country: str | None = None) -> list[dict]:
+async def list_inventory_for_sale(*, country: str | None = None, provider: str | None = None) -> list[dict]:
     """Inventory DIDs customers can buy (not yet assigned to a workspace)."""
     inventory_tid = await ensure_platform_inventory_tenant()
     factory = get_session_factory()
@@ -221,6 +221,9 @@ async def list_inventory_for_sale(*, country: str | None = None) -> list[dict]:
         # Never sell a pool row the carrier never gave us an ID for: it is a
         # leftover from a test or a failed order, not a number we own.
         if not has_carrier_id(pn):
+            continue
+        # Only numbers on the active carrier can be sold and routed.
+        if provider and _inventory_provider(pn) != provider:
             continue
         # Rough country filter from E.164 prefix; US/CA share +1.
         if country_u and country_u not in {"US", "CA"}:
