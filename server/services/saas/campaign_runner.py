@@ -213,6 +213,9 @@ async def _dial_claim(campaign_id, run_id, tenant_id, owner, contact_id, attempt
         error = None if result.get("ok") else "Call request could not be confirmed; review before retrying."
         if result.get("code") == "predial_policy_changed":
             state, error, no_dial_confirmed = "blocked", "Policy changed before dialing; no call was placed.", True
+        elif result.get("code") == "carrier_capacity":
+            # Vobiz refused it for capacity: no call exists. Wait and retry.
+            state, error = "pending", "Waiting for call capacity"
     except HTTPException as exc:
         code = ((exc.detail or {}).get("error") or {}).get("code") if isinstance(exc.detail, dict) else ""
         state = "pending" if exc.status_code == 429 else "dnc_excluded" if code == "dnc_blocked" else "blocked"

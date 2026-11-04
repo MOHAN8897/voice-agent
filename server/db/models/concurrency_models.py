@@ -88,3 +88,53 @@ class TenantConcurrencyDaily(Base):
     #: Campaign dials deferred (re-queued) because every channel was busy.
     queued: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+
+class CapacityIncident(Base):
+    """A call or purchase refused for lack of capacity, one row per kind, workspace and minute.
+
+    ``tenant_key`` is the workspace id, or ``platform`` for incidents that are not
+    one workspace's (a Vobiz-side refusal). ``count`` grows inside the minute so a
+    busy campaign leaves one row, not hundreds.
+    """
+
+    __tablename__ = "capacity_incidents"
+    __table_args__ = (Index("ix_capacity_incidents_created", "created_at"),)
+
+    #: minute bucket (UTC, ``YYYYmmddHHMM``) + kind + tenant_key
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    #: tenant_limit | platform_full | reserved_full | cps_paced | carrier_capacity | number_blocked | channel_blocked
+    kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    tenant_key: Mapped[str] = mapped_column(String(40), nullable=False)
+    tenant_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    count: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    #: Short operator-facing detail (never a secret, never a phone number).
+    detail: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+
+class VobizCapacityPurchase(Base):
+    """A concurrency or CPS bundle bought on the platform's Vobiz account from the admin page."""
+
+    __tablename__ = "vobiz_capacity_purchases"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    #: Client request id: one click buys once.
+    request_id: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    #: concurrent_calls | cps
+    resource_type: Mapped[str] = mapped_column(String(24), nullable=False)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    #: Price shown to the admin (Vobiz preview), decimal string.
+    quoted_monthly_cost: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    monthly_cost: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    currency: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    #: pending | succeeded | failed | unknown (timed out: check Vobiz before retrying)
+    status: Mapped[str] = mapped_column(String(16), default="pending", nullable=False)
+    vobiz_subscription_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    next_billing_date: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    error: Mapped[str | None] = mapped_column(String(400), nullable=True)
+    actor: Mapped[str] = mapped_column(String(255), nullable=False)
+    reason: Mapped[str] = mapped_column(String(500), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)

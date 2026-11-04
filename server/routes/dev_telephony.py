@@ -880,6 +880,14 @@ async def _outbound_vobiz(
     except VobizApiError as e:
         await pstn_prewarm_registry.cancel("vobiz", tracking_id)
         detail = (e.body or str(e))[:400]
+        if e.status == 429:
+            # Vobiz refused the call for the account's concurrency or CPS limit:
+            # no call exists, nothing is billed, and campaigns re-queue it.
+            from server.services.saas import capacity_incidents
+
+            await capacity_incidents.record("carrier_capacity", getattr(session, "tenant_id", None),
+                                            detail="Vobiz answered 429 to a new outbound call")
+            return {"ok": False, "error": detail, "status": 429, "code": "carrier_capacity", "retry_after": 5}
         return {"ok": False, "error": detail, "status": e.status, "code": "dial_failed", "vobiz_error": detail}
 
 

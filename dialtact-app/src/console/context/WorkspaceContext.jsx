@@ -701,6 +701,10 @@ export function WorkspaceProvider({ children }) {
           refunded: purchase.refunded === true,
         };
       }
+      if (status === 'awaiting_approval') {
+        // Paid; activation waits for a quick platform review. Not a failure.
+        return { ...purchase, ok: false, failureReason: 'awaiting_approval' };
+      }
       if (status === 'needs_attention') {
         // The server's message says the payment is safe and support is on it.
         return { ...purchase, ok: false, failureReason: 'needs_attention' };
@@ -741,6 +745,12 @@ export function WorkspaceProvider({ children }) {
         await assignNumberToAgent(phoneId, assignToAgentId);
       }
       return provisioned;
+    }
+    if (provisioned?.status === 'awaiting_approval' && provisioned?.purchaseId) {
+      // Paid and waiting for the platform to approve its call line; the
+      // provisioning banner keeps checking and reports when it is active.
+      await refreshWallet();
+      return { ...provisioned, ok: false, failureReason: 'awaiting_approval' };
     }
     if (provisioned?.provisioning && provisioned?.purchaseId) {
       // The provider order is async; poll until the server confirms the number

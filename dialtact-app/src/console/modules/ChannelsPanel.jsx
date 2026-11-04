@@ -14,13 +14,13 @@ import { humanizeToken } from '../../lib/internalLabels';
  */
 
 const EVENT_LABEL = {
-  purchase: 'Channels purchased',
-  renewal: '30-day renewal',
-  renewal_failed: 'Renewal failed (grace period)',
-  lapsed: 'Paid channels ended',
+  purchase: 'Extra channels added',
+  renewal: 'Renewed',
+  renewal_failed: 'Renewal failed',
+  lapsed: 'Extra channels ended',
   downgrade_scheduled: 'Reduction scheduled',
   downgrade_cancelled: 'Reduction cancelled',
-  downgrade_applied: 'Paid channels ended at renewal',
+  downgrade_applied: 'Reduced at renewal',
 };
 
 function inr(value) {
@@ -187,31 +187,15 @@ export function ChannelsPanel({ onCharged }) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 className="text-title text-ink flex items-center gap-2">
-              <PhoneCall className="w-4 h-4 text-fg-subtle" aria-hidden="true" /> Call channels
+              <PhoneCall className="w-4 h-4 text-fg-subtle" aria-hidden="true" /> Calls at the same time
             </h2>
             <p className="text-ui text-fg-muted mt-0.5">
-              A channel is one phone call running at the same time. Extra inbound calls are refused and
-              campaign calls wait in the queue until a channel frees up.
+              Your phone numbers come ready to take calls. To run more calls at the same time, add extra channels.
             </p>
           </div>
           <div className="text-right shrink-0">
             <div className="text-heading text-ink font-mono tabular-nums">{ch.activeNow ?? 0}/{ch.cap ?? 0}</div>
             <div className="text-meta text-fg-muted">in use now</div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-2 text-center">
-          <div className="rounded-control border border-line bg-canvas p-2">
-            <div className="text-title font-mono tabular-nums text-ink">{ch.included ?? 0}</div>
-            <div className="text-meta text-fg-muted">Included</div>
-          </div>
-          <div className="rounded-control border border-line bg-canvas p-2">
-            <div className="text-title font-mono tabular-nums text-ink">{ch.paid ?? 0}</div>
-            <div className="text-meta text-fg-muted">Paid</div>
-          </div>
-          <div className="rounded-control border border-line bg-canvas p-2">
-            <div className="text-title font-mono tabular-nums text-ink">{ch.cap ?? 0}</div>
-            <div className="text-meta text-fg-muted">Total limit</div>
           </div>
         </div>
 
@@ -228,12 +212,12 @@ export function ChannelsPanel({ onCharged }) {
             <p className="text-ui text-fg-body">
               {pricing.free
                 ? 'Extra channels are currently free.'
-                : <>Extra channels cost <strong className="text-ink font-mono tabular-nums">{inr(pricing.priceInrPerChannel)}</strong> each per {pricing.periodDays} days, paid from your wallet.</>}
-              {sub?.periodEnd && sub.status !== 'lapsed' ? ` Next renewal: ${shortDate(sub.periodEnd)}.` : ''}
-              {pending != null ? ` Reducing to ${pending} paid at renewal.` : ''}
+                : <><strong className="text-ink font-mono tabular-nums">{inr(pricing.priceInrPerChannel)}</strong> per extra channel, every {pricing.periodDays} days, from your wallet.</>}
+              {sub?.periodEnd && sub.status !== 'lapsed' && currentPaid > 0 ? ` Renews on ${shortDate(sub.periodEnd)}.` : ''}
+              {pending != null ? ` Changing to ${pending} at renewal.` : ''}
             </p>
             <div className="flex flex-wrap items-center gap-2">
-              <label htmlFor="paid-channels" className="text-ui font-medium text-fg-body">Paid channels</label>
+              <label htmlFor="paid-channels" className="text-ui font-medium text-fg-body">Extra channels</label>
               <TactileButton variant="secondary" size="xs" aria-label="Fewer channels" disabled={target <= 0} onClick={() => setTarget((t) => Math.max(0, t - 1))}>−</TactileButton>
               <input
                 id="paid-channels"
@@ -252,28 +236,24 @@ export function ChannelsPanel({ onCharged }) {
 
             {confirming && quote && (
               <div className="rounded-card border border-accent/40 bg-accent-soft p-4 space-y-2 text-ui text-ink" data-testid="channels-quote">
-                <div className="flex justify-between gap-3"><span>Paid channels</span><span className="font-mono tabular-nums">{quote.currentPaidChannels} → {quote.targetPaidChannels}</span></div>
-                <div className="flex justify-between gap-3"><span>Total channels after</span><span className="font-mono tabular-nums">{quote.totalChannelsAfter}</span></div>
+                <div className="flex justify-between gap-3"><span>Extra channels</span><span className="font-mono tabular-nums">{quote.currentPaidChannels} → {quote.targetPaidChannels}</span></div>
                 {quote.rule === 'downgrade_at_period_end' ? (
                   <p className="text-ui text-fg-body">
-                    Nothing is charged or refunded now. You keep {quote.currentPaidChannels} paid channels until {shortDate(quote.periodEnd)}; the renewal then charges for {quote.targetPaidChannels}.
+                    No charge now. You keep {quote.currentPaidChannels} until {shortDate(quote.periodEnd)}, then {quote.targetPaidChannels} from your next renewal.
                   </p>
                 ) : quote.rule === 'cancel_pending_downgrade' ? (
                   <p className="text-ui text-fg-body">Cancels the scheduled reduction. Nothing is charged now.</p>
                 ) : (
                   <>
                     <div className="flex justify-between gap-3 font-semibold">
-                      <span>Charged now</span>
+                      <span>Due now</span>
                       <span className="font-mono tabular-nums">{inr(quote.chargeNowInr)}</span>
                     </div>
-                    <p className="text-ui text-fg-body">
-                      {quote.free
-                        ? 'Channels are free right now; nothing is debited.'
-                        : quote.rule === 'prorated'
-                          ? `${inr(quote.priceInrPerChannel)} × ${quote.targetPaidChannels - quote.currentPaidChannels} added channel(s), prorated to your renewal on ${shortDate(quote.periodEnd)}.`
-                          : `${inr(quote.priceInrPerChannel)} × ${quote.targetPaidChannels} channel(s) for ${quote.periodDays} days, until ${shortDate(quote.periodEnd)}.`}
-                      {!quote.free && ` Renews at ${inr(quote.recurringInr)} every ${quote.periodDays} days from your wallet credit (GST was invoiced on your top-up).`}
-                    </p>
+                    {!quote.free && (
+                      <p className="text-ui text-fg-body">
+                        Then {inr(quote.recurringInr)} every {quote.periodDays} days from your wallet{quote.periodEnd ? `, next on ${shortDate(quote.periodEnd)}` : ''}.
+                      </p>
+                    )}
                   </>
                 )}
                 <div className="flex flex-wrap justify-end gap-2 pt-1">
@@ -290,7 +270,7 @@ export function ChannelsPanel({ onCharged }) {
 
       <SolidCard className="space-y-4 min-w-0">
         <div>
-          <h2 className="text-title text-ink">Channel usage in the last 30 days</h2>
+          <h2 className="text-title text-ink">Usage in the last 30 days</h2>
           <p className="text-ui text-fg-muted mt-0.5">The most calls running at once each day, against your limit.</p>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
@@ -302,13 +282,13 @@ export function ChannelsPanel({ onCharged }) {
         {daily.length > 0 && <DailyBars daily={daily} />}
         {(totals?.rejected || 0) + (totals?.queued || 0) > 0 && offered && (
           <p className="text-ui text-warning-fg">
-            Calls were refused or queued because every channel was busy. Adding channels lets more calls run at once.
+            Some calls had to wait because all your channels were busy. Add extra channels to run more calls at once.
           </p>
         )}
         <div className="pt-3 border-t border-line">
-          <h3 className="text-ui font-semibold text-ink mb-1.5">Channel charges and changes</h3>
+          <h3 className="text-ui font-semibold text-ink mb-1.5">Extra channel history</h3>
           {(data?.events || []).length === 0 ? (
-            <p className="text-ui text-fg-muted">No channel changes yet.</p>
+            <p className="text-ui text-fg-muted">No extra channels added yet.</p>
           ) : (
             <ul className="space-y-1.5 max-h-40 overflow-y-auto text-ui">
               {data.events.map((ev) => (

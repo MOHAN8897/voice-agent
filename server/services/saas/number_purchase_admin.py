@@ -87,6 +87,10 @@ def _bucket(purchase: NumberPurchase, job: ProvisionJob | None, debit, refund) -
         return "refunded", False
     if status == "needs_attention":
         return "needs_attention", False
+    if status == "awaiting_approval":
+        # Paid, waiting for an admin on the Call capacity page. Unapproved ones
+        # are refunded automatically after a few days (capacity_policy).
+        return "provisioning", False
     if status in {"paid", "provisioning"}:
         updated = _aware(purchase.updated_at) or _aware(purchase.created_at)
         stuck = bool(updated and _utcnow() - updated > STUCK_AFTER)
@@ -416,6 +420,7 @@ async def refund_purchase(purchase_id: uuid.UUID) -> dict:
             raise PurchaseAdminError("not_found", "Purchase not found.", 404)
         purchase, _name, job, debit, refund = rows[0]
         _b, stuck = _bucket(purchase, job, debit, refund)
+        seen_status = purchase.status
         if refund is not None:
             return {"ok": True, "duplicate": True, "tenantId": purchase.tenant_id}
         if purchase.phone_number_id or purchase.status in {"active", "provisioned"}:
@@ -427,7 +432,12 @@ async def refund_purchase(purchase_id: uuid.UUID) -> dict:
             raise PurchaseAdminError("purchase_in_progress", "Provisioning is running right now; wait for it to finish.")
         if purchase.status in {"paid", "provisioning"} and not stuck:
             raise PurchaseAdminError("purchase_in_progress", "Provisioning is still in progress; wait for it to finish.")
-        locked = await session.get(NumberPurchase, purchase_id, with_for_update=True)
+        locked = await session.get(NumberPurchase, purchase_id, with_for_update=True, populate_existing=True)
+        # The checks above read an unlocked row. If it changed meanwhile (an admin
+        # approved it, the worker started it), refunding now could leave the
+        # tenant refunded *and* owning the number.
+        if locked.status != seen_status or locked.phone_number_id:
+            raise PurchaseAdminError("purchase_changed", "This purchase changed just now. Reload and check it again.")
         locked.status = "refunded"
         locked.updated_at = _utcnow()
         job_row = (

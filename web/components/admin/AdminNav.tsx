@@ -66,6 +66,12 @@ const ADMIN_GROUPS: Array<{
         match: ["/dev/admin/tenants", "/dev/admin/users", "/dev/admin/numbers"],
       },
       {
+        // Vobiz concurrency/CPS owned vs held by tenants, buy signals, bundle purchases, number approvals.
+        href: "/dev/admin/capacity",
+        label: "Call capacity",
+        icon: <IconChart className="h-4 w-4" />,
+      },
+      {
         // Every number purchase, why it failed, and platform blockers (Vobiz balance, rent).
         href: "/dev/admin/purchases",
         label: "Number purchases",

@@ -17,9 +17,13 @@ export function PurchaseProvisioningBanner() {
     if (!purchaseId || !api.getToken()) return;
 
     let attempts = 0;
+    let cancelled = false;
+    let timer = null;
     const maxAttempts = 24;
+    const later = (ms) => { if (!cancelled) timer = setTimeout(tick, ms); };
 
     const tick = async () => {
+      if (cancelled) return;
       attempts += 1;
       try {
         const row = await api.telephony.getPurchase(purchaseId);
@@ -47,6 +51,13 @@ export function PurchaseProvisioningBanner() {
           );
           return;
         }
+        if (status === 'awaiting_approval') {
+          // Paid, waiting for approval: say so calmly and check again later.
+          setVariant('info');
+          setMessage(purchaseOutcomeMessage(row));
+          later(60000);
+          return;
+        }
         if (status === 'failed' || status === 'refunded' || status === 'needs_attention') {
           sessionStorage.removeItem(STORAGE_PURCHASE);
           sessionStorage.removeItem(STORAGE_ASSIGN_AGENT);
@@ -59,17 +70,21 @@ export function PurchaseProvisioningBanner() {
         setVariant('info');
         setMessage(`Setting up ${row?.e164 ? `number ${row.e164}` : 'your number'}. This usually takes under a minute.`);
         if (attempts < maxAttempts) {
-          setTimeout(tick, 5000);
+          later(5000);
         } else {
           setMessage(PURCHASE_COPY.stillActivating);
         }
       } catch {
-        if (attempts < maxAttempts) setTimeout(tick, 5000);
+        if (attempts < maxAttempts) later(5000);
         else setMessage(PURCHASE_COPY.checkingFailed);
       }
     };
 
     tick();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
   }, [loadWorkspaceData, assignNumberToAgent]);
 
   useEffect(() => {

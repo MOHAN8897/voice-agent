@@ -16,13 +16,15 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.ext.compiler import compiles
 
 from server.db.models.concurrency_models import (
+    CapacityIncident,
     TenantChannelEvent,
     TenantChannelSubscription,
     TenantConcurrencyDaily,
 )
 from server.db.models.entities import Agent, Base, Call, ConfigVersion, Tenant
-from server.db.models.phase5_models import PstnDialRequest
-from server.db.models.saas_models import BillingWallet, BillingWalletTransaction, User
+from server.db.models.phase5_models import PhoneNumber, PstnDialRequest
+from server.db.models.saas_models import BillingWallet, BillingWalletTransaction, NumberPurchase, User
+from server.services.saas import capacity_incidents
 from server.services.saas import call_admission as admission
 from server.services.saas import concurrency_service as channels
 
@@ -48,7 +50,8 @@ def _pricing(price_paise=0, *, capacity=10, included=1, grace=3, max_per_tenant=
 @pytest.fixture
 async def db(tmp_path, monkeypatch):
     models = [Tenant, User, Agent, Call, PstnDialRequest, ConfigVersion, BillingWallet, BillingWalletTransaction,
-              TenantChannelSubscription, TenantChannelEvent, TenantConcurrencyDaily]
+              TenantChannelSubscription, TenantChannelEvent, TenantConcurrencyDaily,
+              PhoneNumber, NumberPurchase, CapacityIncident]
     for model in models:
         for column in model.__table__.columns:
             if isinstance(column.type, ARRAY):
@@ -59,6 +62,7 @@ async def db(tmp_path, monkeypatch):
     factory = async_sessionmaker(engine, expire_on_commit=False)
     monkeypatch.setattr(admission, "get_session_factory", lambda: factory)
     monkeypatch.setattr(channels, "get_session_factory", lambda: factory)
+    monkeypatch.setattr(capacity_incidents, "get_session_factory", lambda: factory)
     settings = SimpleNamespace(saas_max_concurrent_pstn=20, saas_max_outbound_cps=100)
     monkeypatch.setattr(admission, "get_settings", lambda: settings)
     monkeypatch.setattr("server.config.env.get_settings", lambda: SimpleNamespace(**vars(settings)))

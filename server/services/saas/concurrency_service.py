@@ -3,8 +3,14 @@
 Model
 -----
 * A channel is one simultaneous PSTN call (inbound or outbound).
-* Every tenant gets ``includedChannels`` free (per-tenant override:
-  ``tenant.limits["included_channels"]``). Extra channels are bought.
+* Every active phone number a tenant owns brings ``channelsPerNumber`` (default
+  1) **held** channels: Vobiz sells no capacity with a DID, so the platform sets
+  one aside from its own pool for each number it sells.
+* Paid channels are held too. Held channels are always available to their
+  tenant; nobody else's calls can use them.
+* Every tenant also gets ``includedChannels`` free (per-tenant override:
+  ``tenant.limits["included_channels"]``). These are best effort: they use only
+  capacity nobody holds.
 * Paid channels are a **30-day** recurring subscription, matching how Vobiz
   bills the platform's own concurrency capacity (it renews every 30 days).
 * Price per channel per 30 days is set by the platform admin and versioned in
@@ -37,10 +43,14 @@ Enforcement
 ``telephony_orchestrator.assert_concurrent_limit`` call :func:`channel_cap`.
 When pricing has never been configured, the legacy caps apply unchanged
 (``tenant.limits.max_concurrent_pstn`` within ``SAAS_MAX_CONCURRENT_PSTN``).
-Once configured, a tenant may use ``included + paid`` channels, and the sum of
-live calls across all tenants never exceeds ``platformCapacity`` (the capacity
-bought from Vobiz). Campaign dials refused for capacity are re-queued by the
-campaign runner, not dropped.
+Once configured, a tenant may use ``included + number channels + paid``
+channels, the sum of live calls across all tenants never exceeds
+``platformCapacity`` (the capacity bought from Vobiz), and a call beyond a
+tenant's held channels is admitted only if it leaves every other tenant's
+unused held channels free (:func:`admission_decision`). Held channels are never
+sold past ``platformCapacity``: a number or paid-channel purchase that would is
+refused before any charge. Campaign dials refused for capacity are re-queued by
+the campaign runner, not dropped.
 """
 from __future__ import annotations
 
@@ -65,6 +75,13 @@ RESOURCE_ID = "platform"
 CACHE_TTL_S = 15.0
 RENEWAL_RETRY_INTERVAL = timedelta(hours=6)
 DEFAULT_GRACE_DAYS = 3
+DEFAULT_CHANNELS_PER_NUMBER = 1
+#: Vobiz sells concurrent calls in blocks (10 on the standard tier).
+DEFAULT_CONCURRENCY_BLOCK = 10
+#: Phone number statuses that hold channels (suspended / released numbers do not).
+NUMBER_HOLDING_STATUSES = ("active", "pending")
+#: Approved number purchases not yet active (a retry can still activate needs_attention).
+IN_FLIGHT_HOLDING_STATUSES = ("paid", "provisioning", "needs_attention")
 #: Advisory lock key that serializes platform-wide admission (PostgreSQL only).
 _PLATFORM_LOCK_KEY = 4_904_903_001
 
@@ -106,6 +123,9 @@ def _config_from_payload(version: int, payload: dict[str, Any], created_at: date
         "includedChannels": max(0, int(payload.get("includedChannels") or 0)),
         "graceDays": max(0, int(payload.get("graceDays") if payload.get("graceDays") is not None else DEFAULT_GRACE_DAYS)),
         "maxChannelsPerTenant": max(0, int(payload.get("maxChannelsPerTenant") or 0)),
+        "channelsPerNumber": max(0, int(payload.get("channelsPerNumber") if payload.get("channelsPerNumber") is not None else DEFAULT_CHANNELS_PER_NUMBER)),
+        "platformCps": max(0, int(payload.get("platformCps") or 0)),
+        "concurrencyBlockSize": max(1, int(payload.get("concurrencyBlockSize") or DEFAULT_CONCURRENCY_BLOCK)),
         "periodDays": PERIOD_DAYS,
         "updatedAt": _aware(created_at).isoformat() if created_at else None,
         "actor": payload.get("actor"),
@@ -162,8 +182,13 @@ async def save_pricing(
     included_channels: int,
     grace_days: int = DEFAULT_GRACE_DAYS,
     max_channels_per_tenant: int = 0,
+    channels_per_number: int | None = None,
+    platform_cps: int | None = None,
+    concurrency_block_size: int | None = None,
 ) -> dict[str, Any]:
-    """Publish a new pricing version. Applies to purchases and renewals from now on."""
+    """Publish a new pricing version. Applies to purchases and renewals from now on.
+
+    Fields left as None keep their previous value (or the default)."""
     clean_reason = (reason or "").strip()
     if len(clean_reason) < 8:
         raise ValueError("A reason of at least 8 characters is required to change channel pricing.")
@@ -188,6 +213,18 @@ async def save_pricing(
         raise ValueError("Grace period must be between 0 and 30 days.")
     if max_channels_per_tenant < 0:
         raise ValueError("Per-tenant maximum must be zero (no limit) or more.")
+    previous = await load_pricing(force=True) or {}
+    channels_per_number = int(channels_per_number if channels_per_number is not None
+                              else previous.get("channelsPerNumber", DEFAULT_CHANNELS_PER_NUMBER))
+    platform_cps = int(platform_cps if platform_cps is not None else previous.get("platformCps", 0))
+    concurrency_block_size = int(concurrency_block_size if concurrency_block_size is not None
+                                 else previous.get("concurrencyBlockSize", DEFAULT_CONCURRENCY_BLOCK))
+    if channels_per_number < 0 or channels_per_number > 100:
+        raise ValueError("Channels per number must be between 0 and 100.")
+    if platform_cps < 0 or platform_cps > 1000:
+        raise ValueError("Platform CPS must be between 0 (use the server default) and 1000.")
+    if concurrency_block_size < 1 or concurrency_block_size > 10000:
+        raise ValueError("Vobiz block size must be between 1 and 10000.")
 
     from server.services.saas.billing_rates import load_current_rates
 
@@ -230,6 +267,9 @@ async def save_pricing(
             "includedChannels": included_channels,
             "graceDays": grace_days,
             "maxChannelsPerTenant": max_channels_per_tenant,
+            "channelsPerNumber": channels_per_number,
+            "platformCps": platform_cps,
+            "concurrencyBlockSize": concurrency_block_size,
             "actor": actor,
             "reason": clean_reason,
         }
@@ -258,6 +298,9 @@ def public_pricing(config: dict[str, Any] | None) -> dict[str, Any]:
         "includedChannels": config["includedChannels"],
         "graceDays": config["graceDays"],
         "maxChannelsPerTenant": config["maxChannelsPerTenant"],
+        "channelsPerNumber": config.get("channelsPerNumber", DEFAULT_CHANNELS_PER_NUMBER),
+        "platformCps": config.get("platformCps", 0),
+        "concurrencyBlockSize": config.get("concurrencyBlockSize", DEFAULT_CONCURRENCY_BLOCK),
         "periodDays": PERIOD_DAYS,
         "updatedAt": config.get("updatedAt"),
         "reason": config.get("reason"),
@@ -298,8 +341,120 @@ async def channel_cap(db, tenant: Any, *, settings: Any) -> dict[str, Any]:
 
     sub = await db.get(TenantChannelSubscription, tenant.tenant_id)
     paid = _paid_in_force(sub)
-    return {"legacy": False, "cap": min(config["platformCapacity"], included + paid), "included": included,
-            "paid": paid, "platformCapacity": config["platformCapacity"], "pricingVersion": config["version"]}
+    numbers = await number_count(db, tenant.tenant_id)
+    number_channels = numbers * int(config.get("channelsPerNumber", DEFAULT_CHANNELS_PER_NUMBER))
+    return {"legacy": False, "cap": min(config["platformCapacity"], included + number_channels + paid),
+            "included": included, "paid": paid, "numbers": numbers, "numberChannels": number_channels,
+            "held": number_channels + paid,
+            "platformCapacity": config["platformCapacity"], "pricingVersion": config["version"]}
+
+
+async def number_count(db, tenant_id: uuid.UUID) -> int:
+    """Phone numbers the tenant holds channels for (active or still provisioning)."""
+    from server.db.models.phase5_models import PhoneNumber
+
+    return int((await db.execute(select(func.count()).select_from(PhoneNumber).where(
+        PhoneNumber.tenant_id == tenant_id, PhoneNumber.released_at.is_(None),
+        PhoneNumber.status.in_(NUMBER_HOLDING_STATUSES)))).scalar_one() or 0)
+
+
+async def held_by_tenant(db, config: dict[str, Any]) -> dict[uuid.UUID, dict[str, int]]:
+    """Held channels per tenant: ``{tenant: {numbers, numberChannels, paid, held}}``."""
+    from server.db.models.concurrency_models import TenantChannelSubscription
+    from server.db.models.phase5_models import PhoneNumber
+
+    per_number = int(config.get("channelsPerNumber", DEFAULT_CHANNELS_PER_NUMBER))
+    out: dict[uuid.UUID, dict[str, int]] = {}
+    rows = (await db.execute(select(PhoneNumber.tenant_id, func.count()).where(
+        PhoneNumber.released_at.is_(None), PhoneNumber.status.in_(NUMBER_HOLDING_STATUSES),
+    ).group_by(PhoneNumber.tenant_id))).all()
+    for tenant_id, n in rows:
+        out[tenant_id] = {"numbers": int(n), "numberChannels": int(n) * per_number, "paid": 0}
+    # Approved purchases still being activated hold their channel already, so two
+    # tenants cannot both be approved into the last free channel.
+    from server.db.models.saas_models import NumberPurchase
+
+    activating = (await db.execute(select(NumberPurchase.tenant_id, func.count()).where(
+        NumberPurchase.status.in_(IN_FLIGHT_HOLDING_STATUSES), NumberPurchase.phone_number_id.is_(None),
+    ).group_by(NumberPurchase.tenant_id))).all()
+    for tenant_id, n in activating:
+        row = out.setdefault(tenant_id, {"numbers": 0, "numberChannels": 0, "paid": 0})
+        row["numbers"] += int(n)
+        row["numberChannels"] += int(n) * per_number
+    now = _utcnow()
+    subs = (await db.execute(select(TenantChannelSubscription).where(
+        TenantChannelSubscription.status.in_(("active", "grace"))))).scalars().all()
+    for sub in subs:
+        paid = _paid_in_force(sub, now)
+        if paid:
+            out.setdefault(sub.tenant_id, {"numbers": 0, "numberChannels": 0, "paid": 0})["paid"] = paid
+    for row in out.values():
+        row["held"] = row["numberChannels"] + row["paid"]
+    return out
+
+
+async def active_by_tenant(db) -> dict[uuid.UUID, int]:
+    """Live PSTN calls per tenant (reservations plus untracked live calls)."""
+    from server.db.models.entities import Call
+    from server.db.models.phase5_models import PstnDialRequest
+    from server.services.saas.call_admission import ACTIVE
+
+    out: dict[uuid.UUID, int] = {}
+    for tenant_id, n in (await db.execute(select(PstnDialRequest.tenant_id, func.count()).where(
+            PstnDialRequest.status.in_(ACTIVE)).group_by(PstnDialRequest.tenant_id))).all():
+        out[tenant_id] = out.get(tenant_id, 0) + int(n)
+    reservations = select(PstnDialRequest.call_id).where(
+        PstnDialRequest.status.in_(ACTIVE), PstnDialRequest.call_id.is_not(None))
+    for tenant_id, n in (await db.execute(select(Call.tenant_id, func.count()).where(
+            Call.channel == "pstn", Call.ended_at.is_(None), Call.call_id.not_in(reservations),
+            Call.tenant_id.is_not(None)).group_by(Call.tenant_id))).all():
+        out[tenant_id] = out.get(tenant_id, 0) + int(n)
+    return out
+
+
+def admission_decision(
+    tenant_id: uuid.UUID,
+    *,
+    capacity: int,
+    active: dict[uuid.UUID, int],
+    held: dict[uuid.UUID, dict[str, int]],
+) -> str | None:
+    """None when one more call for `tenant_id` fits the shared pool; else the incident kind.
+
+    * The pool is full: ``platform_full``.
+    * The call is within the tenant's held channels: admitted (that capacity is
+      theirs; it was never sold to anyone else).
+    * Otherwise it is best effort, and admitted only if every other tenant's
+      unused held channels stay free: else ``reserved_full``.
+    """
+    live = sum(active.values())
+    if live >= capacity:
+        return "platform_full"
+    own_active = active.get(tenant_id, 0)
+    if own_active < held.get(tenant_id, {}).get("held", 0):
+        return None
+    unused_others = sum(max(0, row["held"] - active.get(other, 0)) for other, row in held.items() if other != tenant_id)
+    if live + unused_others >= capacity:
+        return "reserved_full"
+    return None
+
+
+async def platform_admission(db, tenant_id: uuid.UUID, config: dict[str, Any]) -> str | None:
+    """Platform half of admission; the caller holds :func:`lock_platform`."""
+    return admission_decision(tenant_id, capacity=int(config["platformCapacity"]),
+                              active=await active_by_tenant(db), held=await held_by_tenant(db, config))
+
+
+def platform_cps(config: dict[str, Any] | None, settings: Any) -> int:
+    """New outbound calls per second the platform Vobiz account allows."""
+    configured = int((config or {}).get("platformCps") or 0)
+    if configured > 0:
+        return max(1, min(1000, configured))
+    return max(1, min(100, int(getattr(settings, "saas_max_outbound_cps", 1) or 1)))
+
+
+async def held_total(db, config: dict[str, Any], *, exclude: uuid.UUID | None = None) -> int:
+    return sum(row["held"] for tid, row in (await held_by_tenant(db, config)).items() if tid != exclude)
 
 
 async def platform_active_calls(db) -> int:
@@ -326,14 +481,16 @@ async def lock_platform(db) -> None:
 
 
 def capacity_exception(scope: str) -> HTTPException:
-    if scope == "platform":
+    if scope in ("platform", "platform_full", "reserved_full"):
         return HTTPException(429, detail={"error": {
             "code": "platform_capacity", "retry_after": 5,
-            "message": "The platform's call capacity is fully in use. Please try again shortly."}},
+            "message": "All call lines are busy right now, so this call was not placed and you were not charged. "
+                       "Please try again in a moment. Campaign calls wait and retry on their own."}},
             headers={"Retry-After": "5"})
     return HTTPException(429, detail={"error": {
         "code": "concurrency_limit", "retry_after": 5,
-        "message": "All concurrent call channels are in use. Add channels in Billing or wait for a call to end."}},
+        "message": "All your call channels are in use, so this call was not placed. Wait for a call to end, "
+                   "or add extra channels in Billing. Campaign calls wait and retry on their own."}},
         headers={"Retry-After": "5"})
 
 
@@ -384,7 +541,8 @@ def _prorated(price_minor: int, channels: int, remaining: timedelta) -> int:
     return _half_up(Decimal(price_minor) * channels * Decimal(str(seconds)) / Decimal(str(PERIOD.total_seconds())))
 
 
-def _quote(config: dict[str, Any], sub: Any, target: int, included: int, now: datetime) -> dict[str, Any]:
+def _quote(config: dict[str, Any], sub: Any, target: int, included: int, now: datetime,
+           number_channels: int = 0) -> dict[str, Any]:
     price_paise = int(config["priceInrPaisePerChannel"])
     price_micros = int(config["priceUsdMicrosPerChannel"])
     current = _paid_in_force(sub, now)
@@ -415,7 +573,8 @@ def _quote(config: dict[str, Any], sub: Any, target: int, included: int, now: da
         "currentPaidChannels": current,
         "targetPaidChannels": target,
         "includedChannels": included,
-        "totalChannelsAfter": included + target,
+        "numberChannels": number_channels,
+        "totalChannelsAfter": included + number_channels + target,
         "pendingPaidChannels": pending,
         "priceInrPerChannel": round(price_paise / 100.0, 2),
         "priceUsdPerChannel": round(price_micros / 1_000_000.0, 6),
@@ -466,7 +625,8 @@ async def quote_change(tenant_id: uuid.UUID, target_paid: int) -> dict[str, Any]
         included = await _included_for(db, tenant_id, config)
         _validate_target(config, int(target_paid), included)
         sub = await db.get(TenantChannelSubscription, tenant_id)
-        return _quote(config, sub, int(target_paid), included, _utcnow())
+        number_channels = await number_count(db, tenant_id) * int(config.get("channelsPerNumber", DEFAULT_CHANNELS_PER_NUMBER))
+        return _quote(config, sub, int(target_paid), included, _utcnow(), number_channels)
 
 
 async def apply_change(
@@ -520,13 +680,21 @@ async def apply_change(
             raise _http(409, "quote_changed", "The price changed. Review the new total and confirm again.", quote=quote)
         before = _paid_in_force(sub, now)
         if target > before:
-            # Platform-wide oversell guard: paid channels sold cannot exceed capacity.
-            sold_others = int((await db.execute(
-                select(func.coalesce(func.sum(TenantChannelSubscription.paid_channels), 0)).where(
-                    TenantChannelSubscription.status.in_(("active", "grace")),
-                    TenantChannelSubscription.tenant_id != tenant_id))).scalar_one() or 0)
-            if sold_others + target > config["platformCapacity"]:
-                raise _http(409, "platform_capacity", "Not enough platform capacity for that many channels. Try fewer.")
+            # Platform-wide oversell guard: held channels (every tenant's number
+            # channels and paid channels) can never exceed what Vobiz sold us.
+            held_now = await held_by_tenant(db, config)
+            held_others = sum(row["held"] for tid, row in held_now.items() if tid != tenant_id)
+            # Includes this tenant's numbers still being activated.
+            own_numbers = held_now.get(tenant_id, {}).get("numberChannels", 0)
+            if held_others + own_numbers + target > config["platformCapacity"]:
+                from server.services.saas import capacity_incidents
+
+                await capacity_incidents.record(
+                    "channel_blocked", tenant_id,
+                    detail=f"held {held_others + own_numbers} + {target} paid > capacity {config['platformCapacity']}")
+                raise _http(409, "platform_capacity",
+                            "We're adding call capacity right now, so we can't add that many channels yet. "
+                            "Try fewer, or try again later. You were not charged.")
             charge = await debit_exact_in_session(
                 db, tenant_id, kind="channel_purchase", reference_id=ref, user_id=user_id,
                 want_cents=quote["chargeNowCents"], want_paise=quote["chargeNowInrPaise"],
@@ -801,6 +969,9 @@ async def tenant_overview(tenant_id: uuid.UUID, *, days: int = 30) -> dict[str, 
         "pricing": public_pricing(config),
         "channels": {
             "cap": cap["cap"], "included": cap["included"], "paid": cap["paid"], "legacy": cap["legacy"],
+            "numbers": cap.get("numbers", 0), "numberChannels": cap.get("numberChannels", 0),
+            "held": cap.get("held", cap["paid"]),
+            "channelsPerNumber": (config or {}).get("channelsPerNumber", DEFAULT_CHANNELS_PER_NUMBER) if config else 0,
             "activeNow": active_now,
         },
         "subscription": _sub_payload(sub, config, included=cap["included"]) if config else None,

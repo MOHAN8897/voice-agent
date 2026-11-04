@@ -12,7 +12,7 @@ from server.db.models.saas_models import NumberPurchase, NumberReservation
 #: become a carrier order. Its reservation is the database-level guard (unique on
 #: e164) that stops a second tenant buying the same DID, so it must outlive the
 #: checkout TTL until the provision worker settles the purchase.
-IN_FLIGHT_PURCHASE_STATUSES = ("paid", "provisioning", "needs_attention")
+IN_FLIGHT_PURCHASE_STATUSES = ("paid", "provisioning", "needs_attention", "awaiting_approval")
 
 
 def expired_reservations_statement(now: datetime):

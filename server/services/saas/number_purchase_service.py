@@ -643,6 +643,12 @@ async def purchase_with_wallet(
     # Never debit a buyer for a DID the active provider cannot order.
     await assert_carrier_can_buy(e164, carrier_row=carrier_row)
     inventory_tid = await ensure_platform_inventory_tenant()
+    # Each number holds a call channel from the platform's Vobiz pool (Vobiz
+    # sells none with a DID). Any auto-buy happens here, before the transaction,
+    # so no lock is held during Vobiz calls; the binding decision is below.
+    from server.services.saas import capacity_policy
+
+    prepared = await capacity_policy.prepare_number_purchase(principal.tenant_id)
     async with factory() as session:
         owned = (
             await session.execute(
@@ -661,12 +667,17 @@ async def purchase_with_wallet(
             settings=settings,
         )
         bind_agent = await _tenant_agent_id(session, workspace_tid, parse_assign_agent_id(assign_agent_id))
+        # Decided under the platform lock in this same transaction, before the
+        # debit: approved now (a channel is free), or paid and waiting for an
+        # admin. Never refused. Two buyers cannot both take the last channel.
+        decision = await capacity_policy.decide_in_session(session, principal.tenant_id, prepared)
+        approved = bool(decision.get("approved"))
         purchase = NumberPurchase(
             tenant_id=principal.tenant_id,
             user_id=principal.user_id,
             e164=e164,
             country_code=country_code,
-            status="paid",
+            status="paid" if approved else capacity_policy.AWAITING,
             provider=active_provider,
             assign_agent_id=bind_agent,
             created_at=_utcnow(),
@@ -691,7 +702,7 @@ async def purchase_with_wallet(
                 e164=e164,
                 tenant_id=principal.tenant_id,
                 purchase_id=purchase.id,
-                expires_at=_utcnow() + timedelta(minutes=ttl),
+                expires_at=_utcnow() + (timedelta(minutes=ttl) if approved else capacity_policy.APPROVAL_HOLD),
                 created_at=_utcnow(),
             )
         )
@@ -699,7 +710,8 @@ async def purchase_with_wallet(
         session.add(
             ProvisionJob(
                 purchase_id=purchase_id,
-                status="queued",
+                # The worker claims only "queued"; a held job waits for the admin.
+                status="queued" if approved else capacity_policy.HELD_JOB,
                 attempts=0,
                 created_at=_utcnow(),
                 updated_at=_utcnow(),
@@ -735,15 +747,27 @@ async def purchase_with_wallet(
     # The admin-configured rate, not the env default, so the quoted price and the
     # charged price are the same number.
     from server.services.saas.billing_rates import load_current_rates
+    from server.services.saas.number_purchase_errors import tenant_purchase_message
 
     rates = await load_current_rates()
+    await capacity_policy.record_decision(principal.tenant_id, decision)
+    if not approved:
+        from server.services.saas.activity_log import record_event
+
+        try:
+            await record_event(action="number.purchase.awaiting_approval", resource_type="number_purchase",
+                               resource_id=str(purchase_id), actor="system", tenant_id=principal.tenant_id,
+                               payload={"e164": e164, "reason": decision.get("reason")}, source="capacity")
+        except Exception:  # noqa: BLE001
+            pass
     return {
         "purchaseId": str(purchase_id),
         "e164": e164,
         # Provisioning is async — the carrier order can still fail. Saying "paid"
         # here is accurate; the console polls /telephony/purchases/{id} for the
         # terminal status rather than claiming the number already exists.
-        "status": "paid",
+        "status": "paid" if approved else capacity_policy.AWAITING,
+        **({} if approved else {"message": tenant_purchase_message("awaiting_approval", None, None)}),
         "provisioning": True,
         "payment": "wallet",
         **rent_terms(rates, charge=charge, purchased_at=purchased_at),

@@ -75,6 +75,12 @@ async def run_number_maintenance_if_due() -> bool:
         await renew_due_numbers()
     except Exception as exc:
         logger.warning("number rental renewal failed error_type=%s", type(exc).__name__)
+    try:
+        from server.services.saas.capacity_policy import expire_stale_approvals
+
+        await expire_stale_approvals()
+    except Exception as exc:
+        logger.warning("stale approval expiry failed error_type=%s", type(exc).__name__)
     return True
 
 
@@ -232,9 +238,16 @@ async def process_one_job() -> bool:
         return False
 
     async with factory() as session:
-        purchase = await session.get(NumberPurchase, purchase_id)
+        purchase = await session.get(NumberPurchase, purchase_id, with_for_update=True)
         job = await session.execute(select(ProvisionJob).where(ProvisionJob.purchase_id == purchase_id))
         job_row = job.scalar_one()
+        if purchase is not None and purchase.status not in {"paid", "provisioning", "needs_attention", "active"}:
+            # Refunded, rejected or still awaiting approval: buying the number now
+            # would give the tenant a number they were refunded for.
+            job_row.status = "cancelled"
+            job_row.last_error = {"code": "purchase_not_payable", "status": purchase.status}
+            await session.commit()
+            return True
         if purchase is None:
             job_row.status = "failed"
             job_row.last_error = {"message": "purchase_missing"}

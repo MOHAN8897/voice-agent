@@ -22,6 +22,8 @@ from server.db.models.phase5_models import PstnDialRequest
 from server.services.saas.voice_setup_errors import VOICE_SETUP_MESSAGES
 
 ACTIVE = ("reserved", "accepted", "answered", "uncertain")
+CARRIER_CAPACITY_MESSAGE = ("All call lines are busy right now, so this call was not placed and you were not charged. "
+                            "Please try again in a moment.")
 logger = logging.getLogger(__name__)
 from server.services.call_setup_failures import VOICE_SERVICE_UNAVAILABLE, VOICE_SERVICE_UNAVAILABLE_MESSAGE
 
@@ -139,34 +141,54 @@ async def reserve(tenant_id: uuid.UUID, request_id: str, *, provider: str, paylo
             PstnDialRequest.tenant_id == tenant_id, PstnDialRequest.destination_hash == destination_hash,
             PstnDialRequest.status.in_(ACTIVE)).limit(1))).scalar_one_or_none():
             raise HTTPException(409, detail={"error": {"code": "dial_in_progress", "message": "A call to this destination is already active or awaiting review"}})
-        if payload.get("to"):
-            platform_cps = max(1, min(100, int(getattr(settings, "saas_max_outbound_cps", 1))))
-            cps = max(1, min(platform_cps, int((tenant.limits or {}).get("max_outbound_cps") or platform_cps)))
-            recent = (await db.execute(select(func.count()).select_from(PstnDialRequest).where(
-                PstnDialRequest.tenant_id == tenant_id, PstnDialRequest.provider == provider,
-                PstnDialRequest.created_at > _now() - timedelta(seconds=1)))).scalar_one()
-            if recent >= cps:
-                raise HTTPException(429, detail={"error": {"code": "call_pacing", "message": "Calls are being paced. Please wait before starting another call.", "retry_after": 1}}, headers={"Retry-After": "1"})
-        # Channel cap: legacy limits until the admin configures channel pricing,
-        # then included + paid channels within the platform's Vobiz capacity.
+        from server.services.saas import capacity_incidents
         from server.services.saas import concurrency_service as channels
 
+        config = await channels.load_pricing()
+        if config:
+            # One platform-wide order for CPS and channels, so two tenants can
+            # neither both take the last channel nor both use the same second.
+            await channels.lock_platform(db)
+        if payload.get("to"):
+            # Vobiz meters CPS on the whole (parent) account: every tenant's new
+            # outbound calls share it. A tenant may also have a lower own limit.
+            platform_cps = channels.platform_cps(config, settings)
+            tenant_cps = max(1, min(platform_cps, int((tenant.limits or {}).get("max_outbound_cps") or platform_cps)))
+            since = _now() - timedelta(seconds=1)
+            # Outbound only (a destination): inbound calls do not use Vobiz CPS.
+            outbound = (PstnDialRequest.provider == provider, PstnDialRequest.created_at > since,
+                        PstnDialRequest.destination_hash.is_not(None))
+            recent_platform = (await db.execute(select(func.count()).select_from(PstnDialRequest).where(
+                *outbound))).scalar_one()
+            recent_tenant = (await db.execute(select(func.count()).select_from(PstnDialRequest).where(
+                PstnDialRequest.tenant_id == tenant_id, *outbound))).scalar_one()
+            paced = "cps_paced" if recent_platform >= platform_cps else "tenant_cps_paced" if recent_tenant >= tenant_cps else None
+            if paced:
+                await db.rollback()
+                await capacity_incidents.record(paced, tenant_id)
+                raise HTTPException(429, detail={"error": {"code": "call_pacing", "message": "Calls are being paced. Please wait before starting another call.", "retry_after": 1}}, headers={"Retry-After": "1"})
+        # Channel cap: legacy limits until the admin configures channel pricing,
+        # then included + number + paid channels within the platform's Vobiz
+        # capacity, with every tenant's unused held channels kept free.
         caps = await channels.channel_cap(db, tenant, settings=settings)
         active = await active_capacity(db, tenant_id)
         over = None
         if active >= caps["cap"]:
-            over = "tenant"
+            over = "tenant_limit"
         elif not caps["legacy"]:
-            await channels.lock_platform(db)
-            if await channels.platform_active_calls(db) >= caps["platformCapacity"]:
-                over = "platform"
+            # channel_cap may have read a newer pricing cache entry than `config`.
+            config = config or await channels.load_pricing()
+            if config:
+                await channels.lock_platform(db)
+                over = await channels.platform_admission(db, tenant_id, config)
         if over:
             await db.rollback()
             # Campaign dials are re-queued by the runner; everything else is refused.
             queued = str(request_id).startswith("camp:")
             await channels.record_daily(factory, tenant_id, active=active, cap=caps["cap"],
                                         rejected=0 if queued else 1, queued=1 if queued else 0)
-            raise channels.capacity_exception(over)
+            await capacity_incidents.record(over, tenant_id, detail=f"active {active} / cap {caps['cap']}")
+            raise channels.capacity_exception("tenant" if over == "tenant_limit" else over)
         db.add(PstnDialRequest(request_key=key, tenant_id=tenant_id, fingerprint=fingerprint,
             destination_hash=destination_hash, provider=provider, status="reserved", created_at=_now(), updated_at=_now()))
         await db.commit()
@@ -178,7 +200,8 @@ def safe_response(result: dict) -> dict:
     # Carrier bridge responses contain internal stream URLs/tokens and history.
     response = {key: result[key] for key in ("ok", "call_id", "callId", "call_control_id", "code", "error", "status", "retry_after") if key in result}
     if not response.get("ok"):
-        response["error"] = (VOICE_SETUP_MESSAGES.get(response.get("code")) or
+        response["error"] = (CARRIER_CAPACITY_MESSAGE if response.get("code") == "carrier_capacity" else
+                             VOICE_SETUP_MESSAGES.get(response.get("code")) or
                              (VOICE_SERVICE_UNAVAILABLE_MESSAGE if response.get("code") == VOICE_SERVICE_UNAVAILABLE else None) or
                              ("The agent could not get ready. No call was placed. Contact your administrator or try again."
                              if response.get("code") in NO_DIAL_CODES else

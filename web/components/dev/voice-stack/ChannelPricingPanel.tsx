@@ -16,6 +16,9 @@ type ChannelOverview = {
     includedChannels?: number;
     graceDays?: number;
     maxChannelsPerTenant?: number;
+    channelsPerNumber?: number;
+    platformCps?: number;
+    concurrencyBlockSize?: number;
     periodDays: number;
     updatedAt?: string | null;
   };
@@ -29,13 +32,16 @@ const inputClass =
   "w-full rounded-lg border border-surface-border bg-surface-raised px-3 py-2 text-sm text-text font-mono focus:outline-none focus:ring-2 focus:ring-accent-primary/40";
 
 /** Price per concurrent call channel and the platform's Vobiz capacity. */
-export function ChannelPricingPanel() {
+export function ChannelPricingPanel({ onSaved }: { onSaved?: () => void } = {}) {
   const [overview, setOverview] = useState<ChannelOverview | null>(null);
   const [price, setPrice] = useState("0");
   const [capacity, setCapacity] = useState("20");
   const [included, setIncluded] = useState("1");
   const [graceDays, setGraceDays] = useState("3");
   const [maxPerTenant, setMaxPerTenant] = useState("0");
+  const [perNumber, setPerNumber] = useState("1");
+  const [platformCps, setPlatformCps] = useState("0");
+  const [blockSize, setBlockSize] = useState("10");
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState("");
@@ -54,6 +60,9 @@ export function ChannelPricingPanel() {
         setIncluded(String(p.includedChannels ?? 1));
         setGraceDays(String(p.graceDays ?? 3));
         setMaxPerTenant(String(p.maxChannelsPerTenant ?? 0));
+        setPerNumber(String(p.channelsPerNumber ?? 1));
+        setPlatformCps(String(p.platformCps ?? 0));
+        setBlockSize(String(p.concurrencyBlockSize ?? 10));
       } else if (data.vobiz?.available && data.vobiz.maxConcurrent) {
         setCapacity(String(data.vobiz.maxConcurrent));
       }
@@ -74,6 +83,9 @@ export function ChannelPricingPanel() {
       includedChannels: Number(included),
       graceDays: Number(graceDays),
       maxChannelsPerTenant: Number(maxPerTenant),
+      channelsPerNumber: Number(perNumber),
+      platformCps: Number(platformCps),
+      concurrencyBlockSize: Number(blockSize),
       reason: reason.trim(),
     };
     if (!Number.isFinite(body.priceInrPerChannel) || body.priceInrPerChannel < 0) {
@@ -105,6 +117,7 @@ export function ChannelPricingPanel() {
       );
       setReason("");
       await load();
+      onSaved?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save channel pricing.");
     } finally {
@@ -118,7 +131,7 @@ export function ChannelPricingPanel() {
 
   return (
     <DevCard
-      title="Concurrent call channels"
+      title="Capacity settings"
       description="Price per simultaneous-call channel (per 30 days, matching Vobiz's 30-day capacity renewal) and the capacity the platform has bought from Vobiz."
     >
       {error && <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-200">{error}</div>}
@@ -179,6 +192,21 @@ export function ChannelPricingPanel() {
           <span className="block font-semibold text-text">Max channels per workspace</span>
           <span className="block text-[11px] text-text-muted">0 = limited only by platform capacity.</span>
           <input type="number" min="0" step="1" value={maxPerTenant} onChange={(e) => setMaxPerTenant(e.target.value)} className={inputClass} />
+        </label>
+        <label className="rounded-xl border border-surface-border bg-surface-card p-4 space-y-1.5 text-xs">
+          <span className="block font-semibold text-text">Channels held per phone number</span>
+          <span className="block text-[11px] text-text-muted">Vobiz sells no capacity with a number, so each number a tenant buys holds this many channels from platform capacity. Usually 1.</span>
+          <input type="number" min="0" max="100" step="1" value={perNumber} onChange={(e) => setPerNumber(e.target.value)} className={inputClass} />
+        </label>
+        <label className="rounded-xl border border-surface-border bg-surface-card p-4 space-y-1.5 text-xs">
+          <span className="block font-semibold text-text">Platform CPS (new calls per second)</span>
+          <span className="block text-[11px] text-text-muted">Shared by every workspace; must not exceed the Vobiz CPS limit. 0 uses the server default (SAAS_MAX_OUTBOUND_CPS).</span>
+          <input type="number" min="0" step="1" value={platformCps} onChange={(e) => setPlatformCps(e.target.value)} className={inputClass} />
+        </label>
+        <label className="rounded-xl border border-surface-border bg-surface-card p-4 space-y-1.5 text-xs">
+          <span className="block font-semibold text-text">Vobiz concurrency block size</span>
+          <span className="block text-[11px] text-text-muted">Vobiz sells concurrency in blocks (10 on the standard plan). Used to round the purchase estimate.</span>
+          <input type="number" min="1" step="1" value={blockSize} onChange={(e) => setBlockSize(e.target.value)} className={inputClass} />
         </label>
         <label className="rounded-xl border border-surface-border bg-surface-card p-4 space-y-1.5 text-xs">
           <span className="block font-semibold text-text">Reason for this change</span>

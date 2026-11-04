@@ -399,6 +399,12 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
       if (bought?.checkoutUrl) {
         return;
       }
+      if (bought?.failureReason === 'awaiting_approval') {
+        // Paid; the number activates once the platform approves its call line.
+        forgetNumber();
+        showToast(purchaseOutcomeMessage(bought), 'info', 9000);
+        return;
+      }
       if (bought?.ok === false) {
         // Paid, then not active: the server's message says what happened to the
         // money (refunded, being refunded, or safe while support finishes setup).
@@ -509,7 +515,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
     <div className="space-y-6">
       <PageHeader
         title={`Phone numbers (${phoneNumbers.length})`}
-        description="Buy a number and connect it to an agent. Each number has a monthly rent, renewed from your wallet on its purchase date; call time is billed separately."
+        description="Buy a number and connect it to an agent. Numbers renew monthly from your wallet."
         actions={
           <TactileButton
             onClick={onOpenBuyModal}
@@ -811,7 +817,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
           {pendingNumber && !purchasedSuccess && <div className="rounded-control border border-line-strong bg-canvas p-4 space-y-2" data-testid="selected-number-review">
             <p className="text-copy font-semibold text-ink">Selected number: <span className="font-mono tabular-nums">{pendingNumber.number}</span></p>
             <p className="text-copy text-ink">{priceKnown ? `${rentLabel}, renews on ${firstRenewalLabel}` : 'Price unavailable. Reload before buying.'}</p>
-            <p className="text-ui text-fg-body">Monthly rental is deducted from your prepaid wallet (GST was applied when you added funds) only when you confirm the purchase, and renews monthly. Call usage is billed separately. The number is not reserved during verification; availability and pricing are checked again before purchase.</p>
+            <p className="text-ui text-fg-body">Paid from your wallet when you confirm. Your number is ready to make and receive calls.</p>
             <div className="flex flex-wrap items-center gap-3">
               <button type="button" className="min-h-11 text-ui font-semibold text-accent-fg hover:underline" onClick={forgetNumber}>Choose a different number</button>
               {kycApproved && <TactileButton variant="primary" disabled={buying || catalogLoading || !priceKnown || !canAffordNumber || !availableCatalog.some((item) => item.number === pendingNumber.number)} onClick={() => handleBuyNumber(availableCatalog.find((item) => item.number === pendingNumber.number), { fromRow: false })} data-testid="confirm-selected-number">{buying ? 'Buying…' : 'Confirm number purchase'}</TactileButton>}
@@ -858,11 +864,8 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                   <span className="font-semibold text-ink">
                     {priceKnown ? `${rentLabel}, renews on ${firstRenewalLabel}` : 'Price unavailable'}
                   </span>
-                  {', the first month deducted from your prepaid wallet when you confirm.'}
                   <span className="block mt-0.5 text-meta text-fg-muted">
-                    Wallet credit already includes GST, charged when funds were added; no further tax is added here.
-                    The rent renews on the same date each month at the price in force that day. If the wallet cannot cover it, the line is paused (not released) until you top up.
-                    Call usage is billed separately. Verification is required before purchase.
+                    Paid from your wallet when you confirm. Ready to make and receive calls.
                   </span>
                   <span className="block mt-1">
                     Wallet: <span className="font-mono tabular-nums font-semibold text-ink">{walletAmounts(wallet).primary}</span>

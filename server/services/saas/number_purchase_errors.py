@@ -64,6 +64,10 @@ NEEDS_ATTENTION_MESSAGE = (
     "You don't need to buy it again: we'll finish the setup or refund you."
 )
 PROVISIONING_MESSAGE = "Payment received. We're activating your number; this usually takes under a minute."
+AWAITING_APPROVAL_MESSAGE = (
+    "Payment received. Your number is being set up and will be ready shortly. "
+    "You don't need to do anything. If we can't complete it within 3 days, the full amount goes back to your wallet."
+)
 REFUNDED_MESSAGE = "This purchase was cancelled and the charge has been refunded to your wallet."
 
 
@@ -81,6 +85,8 @@ def tenant_purchase_message(status: str, code: str | None, refunded: bool | None
         return REFUNDED_MESSAGE
     if status == "needs_attention":
         return NEEDS_ATTENTION_MESSAGE
+    if status == "awaiting_approval":
+        return AWAITING_APPROVAL_MESSAGE
     if status == "failed":
         if refunded:
             return _FAILED_REFUNDED.get(str(code or ""), _FAILED_REFUNDED_DEFAULT)

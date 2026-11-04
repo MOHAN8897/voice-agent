@@ -12,6 +12,8 @@ export const PURCHASE_COPY = {
     "We couldn't reach our servers to complete your purchase. Your wallet wasn't charged. Check your connection and try again.",
   unknownRefusal:
     "We couldn't complete your purchase just now. Your wallet wasn't charged. Please try again in a few minutes.",
+  awaitingApproval:
+    "Payment received. Your number is being set up and will be ready shortly. You don't need to do anything. If we can't complete it within 3 days, the full amount goes back to your wallet.",
   stillActivating:
     "Your number is paid for and still being activated. It will appear in your list shortly. Please don't buy it again.",
   needsAttention:
@@ -44,6 +46,7 @@ export function purchaseOutcomeMessage(purchase) {
   if (server && !looksInternal(server)) return server;
   const status = String(purchase.status || '').toLowerCase();
   if (status === 'needs_attention') return PURCHASE_COPY.needsAttention;
+  if (status === 'awaiting_approval') return PURCHASE_COPY.awaitingApproval;
   if (status === 'failed') return purchase.refunded ? PURCHASE_COPY.failedRefunded : PURCHASE_COPY.failedRefundPending;
   return PURCHASE_COPY.stillActivating;
 }
