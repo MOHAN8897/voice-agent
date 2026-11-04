@@ -697,6 +697,53 @@ async def provision_tenant_number(tenant_id: UUID, e164: str) -> dict:
     return {"phone_number_id": number_id}
 
 
+async def _child_owned_id(client, e164: str) -> str | None:
+    owned = await client.list_account_numbers(search=e164, limit=100)
+    return next((str(n["id"]) for n in owned if n.get("e164") == e164
+                 and n.get("account_id") == client.auth_id and n.get("id")
+                 and n.get("status") == "active"), None)
+
+
+async def transfer_parent_number_to_tenant(tenant_id: UUID, e164: str) -> str:
+    """Move a DID from the platform's parent Vobiz account to the tenant's sub-account.
+
+    Platform-inventory numbers live on the parent account, but a tenant's calls
+    run on its own verified sub-account, so the number must move there before it
+    can be assigned. Returns the carrier number ID once the sub-account owns it.
+    Idempotent: a number the sub-account already owns is returned as is.
+    """
+    from server.services.vobiz_client import VobizClient
+
+    await assert_voice_kyc_approved(tenant_id, action="assign a phone number")
+    child = await vobiz_client_for_tenant(tenant_id)
+    already = await _child_owned_id(child, e164)
+    if already:
+        return already
+    parent = VobizClient()
+    parent_owned = await parent.list_account_numbers(search=e164, limit=100)
+    if not any(n.get("e164") == e164 and n.get("account_id") == parent.auth_id and n.get("status") == "active"
+               for n in parent_owned):
+        raise VoiceKycError("number_not_on_platform_account")
+    factory = get_session_factory()
+    async with factory() as session:
+        account = await session.get(VobizSubaccount, tenant_id, with_for_update=True)
+        app_id = await child.ensure_default_application(name=f"tenant_{tenant_id.hex}", app_id=account.application_id)
+        account.application_id = app_id
+        await session.commit()
+    await parent.assign_number_to_subaccount(e164=e164, sub_auth_id=child.auth_id)
+    number_id = await _child_owned_id(child, e164)
+    if not number_id:
+        # The carrier accepted the request but the sub-account does not show the
+        # number yet: never record it as assigned on a guess.
+        raise VoiceKycError("voice_number_confirmation_pending")
+    try:
+        # Route inbound calls on the transferred DID to the tenant's application.
+        await child._request("POST", f"/Account/{child.auth_id}/Number/{e164.lstrip('+')}/", json={"app_id": app_id})
+    except Exception as exc:  # noqa: BLE001 -- ownership moved; routing can be re-linked
+        logger.warning("[VOBIZ] transferred number app link failed error_type=%s", type(exc).__name__)
+    return number_id
+
+
 async def close_customer_subaccount(tenant_id: UUID) -> str:
     """Delete the tenant's Vobiz child account and wipe its stored credentials.
 

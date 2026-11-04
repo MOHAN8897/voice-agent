@@ -137,6 +137,14 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
     const id = window.setTimeout(() => setAreaQuery(searchAreaCode.trim()), 400);
     return () => window.clearTimeout(id);
   }, [searchAreaCode]);
+  // Digits the number must contain anywhere (e.g. 9999). Also sent to the server,
+  // which searches the whole inventory, not just the rows already loaded.
+  const [searchDigits, setSearchDigits] = useState('');
+  const [digitsQuery, setDigitsQuery] = useState('');
+  useEffect(() => {
+    const id = window.setTimeout(() => setDigitsQuery(searchDigits.replace(/\D/g, '')), 400);
+    return () => window.clearTimeout(id);
+  }, [searchDigits]);
   const [targetAgentId, setTargetAgentId] = useState(buyNumberPreselectedAgent || '');
   const [purchasedSuccess, setPurchasedSuccess] = useState(null);
   const [buyError, setBuyError] = useState(null);
@@ -223,10 +231,10 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
     setBuyError(null);
     setCatalogLoading(true);
     setCatalogError(null);
-    reloadCatalog?.(selectedCountry, { category: numberCategory, area: areaQuery })
+    reloadCatalog?.(selectedCountry, { category: numberCategory, area: areaQuery, contains: digitsQuery })
       .catch((e) => setCatalogError(e.message || 'Could not load numbers for this country'))
       .finally(() => setCatalogLoading(false));
-  }, [isBuyModalOpen, selectedCountry, numberCategory, areaQuery, reloadCatalog, workspaceLocked]);
+  }, [isBuyModalOpen, selectedCountry, numberCategory, areaQuery, digitsQuery, reloadCatalog, workspaceLocked]);
 
   // The active carrier owns its gate. Didit remains a separate optional identity flow.
   useEffect(() => {
@@ -353,6 +361,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
 
   const areaNeedle = searchAreaCode.trim().toLowerCase();
   const areaDigits = areaNeedle.replace(/\D/g, '').replace(/^0+/, '');
+  const digitsNeedle = searchDigits.replace(/\D/g, '');
   const filteredCatalog = availableCatalog.filter((item) => {
     const cc = String(item.country || '').toUpperCase();
     const matchesCountry = cc === String(selectedCountry || '').toUpperCase();
@@ -365,7 +374,8 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
       !areaNeedle ||
       text.includes(areaNeedle) ||
       (areaDigits && (String(item.stdCode || '').replace(/^0+/, '') === areaDigits || national.startsWith(areaDigits)));
-    return matchesCountry && matchesType && matchesArea;
+    const matchesDigits = !digitsNeedle || String(item.number || item.e164 || '').replace(/\D/g, '').includes(digitsNeedle);
+    return matchesCountry && matchesType && matchesArea && matchesDigits;
   });
   const activeCategory = NUMBER_CATEGORIES.find((c) => c.id === numberCategory) || NUMBER_CATEGORIES[0];
 
@@ -413,7 +423,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
         );
         if (bought.failureReason !== 'pending') await refreshWallet?.();
         if (bought.status === 'failed') {
-          Promise.resolve(reloadCatalog?.(selectedCountry, { category: numberCategory, area: areaQuery })).catch(() => {});
+          Promise.resolve(reloadCatalog?.(selectedCountry, { category: numberCategory, area: areaQuery, contains: digitsQuery })).catch(() => {});
         }
         return;
       }
@@ -460,7 +470,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
         setBuyError(buyRefusalMessage(e));
         if (NUMBER_GONE_CODES.has(e.code)) {
           // The chosen number is not for sale any more; drop it from the list.
-          Promise.resolve(reloadCatalog?.(selectedCountry, { category: numberCategory, area: areaQuery })).catch(() => {});
+          Promise.resolve(reloadCatalog?.(selectedCountry, { category: numberCategory, area: areaQuery, contains: digitsQuery })).catch(() => {});
         }
       }
     } finally {
@@ -921,6 +931,23 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                   </div>
                 </div>
 
+                {/* Search by digits anywhere in the number */}
+                <div>
+                  <label htmlFor="buy-number-digits" className="block text-meta font-medium text-fg-body mb-1">Search by number</label>
+                  <input
+                    id="buy-number-digits"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    maxLength={12}
+                    value={searchDigits}
+                    onChange={(e) => setSearchDigits(e.target.value.replace(/[^\d\s+-]/g, ''))}
+                    placeholder="Digits the number should contain, for example 9999"
+                    className="w-full bg-surface border border-line rounded-control px-3 py-2 min-h-[44px] sm:min-h-[36px] text-base sm:text-ui font-mono text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors"
+                    data-testid="buy-number-digits"
+                  />
+                </div>
+
                 {/* Number type */}
                 <div data-testid="buy-number-type">
                   <span id="buy-number-type-label" className="block text-meta font-medium text-fg-body mb-1">Number type</span>
@@ -970,13 +997,14 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                   </div>
                 ) : filteredCatalog.length === 0 ? (
                   <div className="p-8 text-center text-ui text-fg-muted" data-testid="buy-number-empty">
-                    {numberCategory === 'all' && !areaNeedle ? (
+                    {numberCategory === 'all' && !areaNeedle && !digitsNeedle ? (
                       <>No phone numbers are available for <strong>{selectedCountry}</strong> right now. Try another country or check back later.</>
                     ) : (
                       <>
                         No {numberCategory === 'all' ? '' : `${activeCategory.label.toLowerCase()} `}numbers
-                        {areaNeedle ? <> match <strong>{searchAreaCode.trim()}</strong></> : null} in <strong>{selectedCountry}</strong> right now.
-                        {' '}Try All types or clear the city filter.
+                        {areaNeedle ? <> match <strong>{searchAreaCode.trim()}</strong></> : null}
+                        {digitsNeedle ? <> containing <strong>{digitsNeedle}</strong></> : null} in <strong>{selectedCountry}</strong> right now.
+                        {' '}Try fewer digits, All types or clear the city filter.
                       </>
                     )}
                   </div>

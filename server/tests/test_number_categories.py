@@ -175,3 +175,22 @@ async def test_catalog_rejects_unknown_category(monkeypatch):
     with pytest.raises(HTTPException) as caught:
         await app_telephony.search_numbers(country="IN", category="premium", principal=_principal())
     assert caught.value.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_catalog_digit_search_matches_anywhere_and_is_sent_to_the_carrier(monkeypatch):
+    calls = []
+
+    async def provider_search(_client, *, country, limit, search=None):
+        calls.append(search)
+        return [dict(BENGALURU), dict(AHMEDABAD), dict(SERIES_92), dict(TOLL_FREE)]
+
+    _configure_catalog_route(monkeypatch, search=provider_search)
+    _rent_covers_inventory(monkeypatch)
+    needle = BENGALURU["e164"][-4:]
+    result = await app_telephony.search_numbers(country="IN", contains=f" {needle} ", principal=_principal())
+    assert [r["e164"] for r in result["numbers"]] == [
+        r["e164"] for r in (BENGALURU, AHMEDABAD, SERIES_92, TOLL_FREE) if needle in r["e164"]
+    ]
+    # Non-digits are stripped; the digits narrow the carrier search itself.
+    assert calls == [needle]

@@ -59,7 +59,11 @@ export function BuyNumberPanel({
   const [results, setResults] = useState<Candidate[] | null>(null);
   const [balance, setBalance] = useState<Balance>(null);
   const [picked, setPicked] = useState<Candidate | null>(null);
-  const [destination, setDestination] = useState<"inventory" | "workspace">(presetTenantId ? "workspace" : "inventory");
+  // On Vobiz a number must sit on the workspace's own verified account to take
+  // calls, so buying straight into a workspace is the default there.
+  const [destination, setDestination] = useState<"inventory" | "workspace">(
+    presetTenantId || provider === "vobiz" ? "workspace" : "inventory"
+  );
   const [tenantId, setTenantId] = useState(presetTenantId ?? "");
   const [reason, setReason] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -71,7 +75,9 @@ export function BuyNumberPanel({
   useEffect(() => {
     if (lockTenant) {
       setTenantId(presetTenantId ?? "");
-      setDestination(presetTenantId ? "workspace" : "inventory");
+      // The "add to a workspace" dialog never buys into inventory, even before a
+      // workspace is chosen: the buy button waits for one instead.
+      setDestination("workspace");
     }
   }, [lockTenant, presetTenantId]);
 
@@ -241,7 +247,11 @@ export function BuyNumberPanel({
                 <input type="radio" name="buy-dest" checked={destination === "inventory"} onChange={() => setDestination("inventory")} className="mt-0.5" />
                 <span>
                   <span className="font-medium text-text">Platform inventory</span>
-                  <span className="block text-text-subtle">Listed for workspaces to buy. Takes no calls until a workspace owns it.</span>
+                  <span className="block text-text-subtle">
+                    {provider === "vobiz"
+                      ? "Kept on the platform account as stock. Workspaces cannot buy it themselves; give it to one with Assign number, which moves it to that workspace's verified Vobiz account. Takes no calls until then."
+                      : "Listed for workspaces to buy. Takes no calls until a workspace owns it."}
+                  </span>
                 </span>
               </label>
               <label className="flex items-start gap-2">

@@ -1224,10 +1224,12 @@ export const api = {
     async saveAgentProfile(agentId, profile) {
       return await api.agents.saveTelephonyProfile(agentId, profile);
     },
-    async getCatalog(country = 'US', { category = '', area = '' } = {}) {
+    async getCatalog(country = 'US', { category = '', area = '', contains = '' } = {}) {
       const qs = new URLSearchParams({ country });
       if (category && category !== 'all') qs.set('category', category);
       if (area && String(area).trim()) qs.set('area', String(area).trim());
+      const digits = String(contains || '').replace(/\D/g, '');
+      if (digits) qs.set('contains', digits);
       const data = await api.request('GET', `/api/telephony/numbers/search?${qs.toString()}`);
       const rows = data.numbers || [];
       return rows.map((item) =>

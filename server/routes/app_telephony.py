@@ -637,9 +637,13 @@ async def search_numbers(
     country: str | None = None,
     category: str | None = None,
     area: str | None = None,
+    contains: str | None = None,
     principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
 ):
     """Numbers a tenant can buy now.
+
+    ``contains`` keeps numbers whose digits include that sequence anywhere
+    (for example 9999 or 1234).
 
     ``category`` filters by mobile | landline | toll_free | other (or all), and
     ``area`` by city, state or STD/area code. Every row carries its category,
@@ -662,7 +666,11 @@ async def search_numbers(
             detail={"error": {"code": "invalid_category", "message": "Number type must be all, mobile, landline, toll_free or other."}},
         ) from None
     area = (area or "").strip()[:64] or None
-    filtering = bool(wanted_category or area)
+    contains_digits = "".join(ch for ch in str(contains or "") if ch.isdigit())[:12] or None
+    filtering = bool(wanted_category or area or contains_digits)
+
+    def matches_digits(e164_value: str) -> bool:
+        return not contains_digits or contains_digits in "".join(ch for ch in e164_value if ch.isdigit())
     from server.services.telnyx_client import TelnyxClient
     from server.services.saas.telephony_countries import normalize_buy_country
     from server.services.saas.billing_rates import load_current_rates
@@ -736,7 +744,7 @@ async def search_numbers(
             classified = classify_number(e164, country=country, region=item.get("region"))
             if wanted_category and classified["category"] != wanted_category:
                 continue
-            if not matches_area(item, classified, area):
+            if not matches_area(item, classified, area) or not matches_digits(e164):
                 continue
             seen.add(e164)
             priced.append(
@@ -758,7 +766,8 @@ async def search_numbers(
             from server.services.vobiz_client import VobizClient
             # Fetch a wider page so assigned numbers/reservations filtered below
             # do not make the tenant catalog look empty prematurely.
-            search_hint = provider_search_hint(wanted_category, area, country)
+            # The digit search is the most specific hint Vobiz can match on.
+            search_hint = contains_digits or provider_search_hint(wanted_category, area, country)
             if filtering:
                 # A type or area filter is applied to the rows we get back, so read
                 # further into the inventory; the documented substring search narrows
@@ -809,7 +818,7 @@ async def search_numbers(
         classified = classify_number(e164, country=country, region=item.get("region"))
         if wanted_category and classified["category"] != wanted_category:
             continue
-        if not matches_area(item, classified, area):
+        if not matches_area(item, classified, area) or not matches_digits(e164):
             continue
         if active_prov == "vobiz" and carrier_charge_exceeds_retail(item, rates):
             # The purchase path refuses a number whose carrier price is above the
