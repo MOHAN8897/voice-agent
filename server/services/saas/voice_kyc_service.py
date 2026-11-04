@@ -328,6 +328,20 @@ async def ensure_customer_subaccount(
         return row
 
 
+def _transient_carrier_error(exc: Exception) -> bool:
+    """Timeouts, connection errors and 5xx answers are worth one retry; 4xx are not."""
+    import httpx
+
+    if isinstance(exc, (httpx.TimeoutException, httpx.TransportError)):
+        return True
+    status = getattr(exc, "status", None)
+    if isinstance(status, int):
+        return status >= 500 or status == 429
+    # VobizClient wraps timeouts in VobizApiError without a status.
+    text = str(exc).lower()
+    return "timeout" in text or "timed out" in text or "transport error" in text
+
+
 async def start_kyc_session(
     *, tenant_id: UUID, email: str, legal_name: str, business_type: str, return_url: str | None
 ) -> dict:
@@ -359,9 +373,19 @@ async def start_kyc_session(
                 and row.kyc_session_status not in {"failed", "expired", "revoked", "completed"}):
             return {**status, "sessionUrl": decrypt_subaccount_token(tenant_id, row.encrypted_kyc_url)}
         try:
-            response = await parent.create_customer_kyc_session(
-                sub_auth_id=str(account.auth_id), redirect_url=trusted_return_url, webhook_url=webhook_url,
-            )
+            try:
+                response = await parent.create_customer_kyc_session(
+                    sub_auth_id=str(account.auth_id), redirect_url=trusted_return_url, webhook_url=webhook_url,
+                )
+            except Exception as first:
+                # A slow or briefly failing carrier: one more try. A session costs
+                # nothing, and an unused one simply expires.
+                if not _transient_carrier_error(first):
+                    raise
+                logger.info("Tenant voice KYC session retry tenant=%s error_type=%s", tenant_id, type(first).__name__)
+                response = await parent.create_customer_kyc_session(
+                    sub_auth_id=str(account.auth_id), redirect_url=trusted_return_url, webhook_url=webhook_url,
+                )
             session_url = str(response.get("widget_url") or "").strip()
             parsed = urlsplit(session_url)
             session_id = str(UUID(str(response.get("session_id") or "")))

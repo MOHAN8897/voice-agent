@@ -218,7 +218,10 @@ class VobizClient:
                 **({"webhook_url": webhook_url} if webhook_url else {}),
             },
             retry=False,
-            timeout=httpx.Timeout(connect=3.0, read=8.0, write=5.0, pool=3.0),
+            # Vobiz can take well over 8 s to create a hosted session (it reaches
+            # our webhook first). Creating a session is free, so wait longer
+            # rather than fail the tenant's "Verify" click.
+            timeout=httpx.Timeout(connect=5.0, read=30.0, write=5.0, pool=5.0),
         )
 
     async def get_customer_kyc_status(self, sub_auth_id: str) -> dict[str, Any]:

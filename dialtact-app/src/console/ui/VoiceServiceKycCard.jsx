@@ -119,7 +119,19 @@ export function VoiceServiceKycCard({ onApproved }) {
     try {
       newTab = window.open('about:blank', '_blank');
       // The vendor page must not be able to steer this console tab (reverse tabnabbing).
-      if (newTab) newTab.opener = null;
+      if (newTab) {
+        newTab.opener = null;
+        // Creating the verification link can take several seconds; without this
+        // the new tab is an empty white page and looks broken.
+        try {
+          newTab.document.title = 'Opening secure verification…';
+          newTab.document.body.style.cssText =
+            'margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;font:16px system-ui,sans-serif;color:#334155;background:#f8fafc';
+          newTab.document.body.textContent = 'Opening secure verification… This can take up to 30 seconds. Keep this tab open.';
+        } catch {
+          /* the tab is still usable without the message */
+        }
+      }
     } catch {
       newTab = null;
     }

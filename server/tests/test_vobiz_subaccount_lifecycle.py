@@ -565,3 +565,23 @@ async def test_worker_hands_a_stock_number_to_the_buyer_instead_of_duplicating_i
         rows = (await session.execute(select(PhoneNumber).where(PhoneNumber.e164 == PHONE))).scalars().all()
         assert len(rows) == 1
         assert rows[0].tenant_id == TID and rows[0].inbound_enabled and rows[0].vobiz_account_scope is None
+
+
+async def test_slow_carrier_session_is_retried_once_and_then_opens(db, carrier):
+    """A Vobiz timeout on the hosted-session request no longer leaves the tenant on a blank page."""
+    parent, _ = carrier
+    good = dict(parent.create_customer_kyc_session.return_value)
+    parent.create_customer_kyc_session.side_effect = [VobizApiError("Vobiz API timeout (ReadTimeout)"), good]
+    result = await svc.start_kyc_session(tenant_id=TID, email="owner@example.test", legal_name="Example LLP",
+                                         business_type="llp", return_url=None)
+    assert result["sessionUrl"].startswith("https://kyc.vobiz.ai/")
+    assert parent.create_customer_kyc_session.await_count == 2
+
+
+async def test_carrier_refusal_is_not_retried(db, carrier):
+    parent, _ = carrier
+    parent.create_customer_kyc_session.side_effect = VobizApiError("bad request", status=400)
+    with pytest.raises(svc.VoiceKycError, match="voice_kyc_session_failed"):
+        await svc.start_kyc_session(tenant_id=TID, email="owner@example.test", legal_name="Example LLP",
+                                    business_type="llp", return_url=None)
+    parent.create_customer_kyc_session.assert_awaited_once()
