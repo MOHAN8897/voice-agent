@@ -97,6 +97,48 @@ export function TelephonyPlatformBadge({ provider, size = 'sm' }) {
   );
 }
 
+// Vobiz returns from verification by adding ?session_id=…&status=…&auth_id=… to
+// the end of the return address. The console keeps its page in the hash
+// (/#dashboard/numbers), so those values usually land inside the hash, not in
+// location.search. Read and clean both places.
+const KYC_RETURN_KEYS = ['session_id', 'status', 'auth_id'];
+
+function splitHash(hash) {
+  const raw = String(hash || '');
+  const at = raw.indexOf('?');
+  return at === -1 ? [raw, ''] : [raw.slice(0, at), raw.slice(at + 1)];
+}
+
+export function hasKycReturnParams(loc = typeof window !== 'undefined' ? window.location : null) {
+  if (!loc) return false;
+  try {
+    const search = new URLSearchParams(loc.search);
+    const inHash = new URLSearchParams(splitHash(loc.hash)[1]);
+    return ['session_id', 'auth_id'].some((key) => search.has(key) || inHash.has(key));
+  } catch {
+    return false;
+  }
+}
+
+function clearKycReturnParams() {
+  try {
+    const search = new URLSearchParams(window.location.search);
+    const [hashPath, hashQuery] = splitHash(window.location.hash);
+    const inHash = new URLSearchParams(hashQuery);
+    KYC_RETURN_KEYS.forEach((key) => {
+      search.delete(key);
+      inHash.delete(key);
+    });
+    const q = search.toString();
+    const hq = inHash.toString();
+    window.history.replaceState(
+      window.history.state,
+      '',
+      `${window.location.pathname}${q ? `?${q}` : ''}${hashPath}${hq ? `?${hq}` : ''}`,
+    );
+  } catch { /* the page still works with the values left in the address */ }
+}
+
 export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyModal, onNavigate }) {
   const { user } = useAuth();
   // A workspace scheduled for deletion may only restore or export; every other API
@@ -172,6 +214,15 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
       try { sessionStorage.setItem(purchaseIntentKey, JSON.stringify(intent)); } catch { /* Selection remains in this open dialog. */ }
     }
   };
+  // Called just before the tab goes to the verification page: the chosen number
+  // is bought automatically when the user comes back verified.
+  const markBuyAfterKyc = () => {
+    if (!purchaseIntentKey) return;
+    try {
+      const intent = JSON.parse(sessionStorage.getItem(purchaseIntentKey) || 'null');
+      if (intent) sessionStorage.setItem(purchaseIntentKey, JSON.stringify({ ...intent, buyAfterKyc: true, savedAt: Date.now() }));
+    } catch { /* the user can still confirm by hand */ }
+  };
   const forgetNumber = () => {
     setPendingNumber(null);
     if (purchaseIntentKey) {
@@ -187,6 +238,9 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
       if (!intent || !/^\+[1-9]\d{7,14}$/.test(intent.number) || !/^[A-Z]{2}$/.test(intent.country) || !Number.isFinite(intent.savedAt) || Date.now() - intent.savedAt > 86400000) return;
       restoredCountry.current = true;
       setPendingNumber(intent); setSelectedCountry(intent.country); setTargetAgentId(intent.agentId || '');
+      autoBuyArmed.current = Boolean(intent.buyAfterKyc && backFromKyc.current);
+      // Look the chosen number up directly: a plain list may not include it.
+      if (autoBuyArmed.current) setSearchDigits(intent.number.replace(/\D/g, '').slice(-10));
       onOpenBuyModal?.();
     } catch { /* Invalid saved data cannot start a purchase. */ }
   }, [purchaseIntentKey, onOpenBuyModal]);
@@ -226,14 +280,22 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
     };
   }, [workspaceLocked]);
 
+  // Which digit search the list on screen was loaded for (latest request only).
+  const [loadedDigits, setLoadedDigits] = useState(null);
+  const catalogRequest = useRef(0);
   useEffect(() => {
     if (!isBuyModalOpen || workspaceLocked) return;
+    const request = ++catalogRequest.current;
     setBuyError(null);
     setCatalogLoading(true);
     setCatalogError(null);
+    setLoadedDigits(null);
     reloadCatalog?.(selectedCountry, { category: numberCategory, area: areaQuery, contains: digitsQuery })
       .catch((e) => setCatalogError(e.message || 'Could not load numbers for this country'))
-      .finally(() => setCatalogLoading(false));
+      .finally(() => {
+        setCatalogLoading(false);
+        if (request === catalogRequest.current) setLoadedDigits(digitsQuery);
+      });
   }, [isBuyModalOpen, selectedCountry, numberCategory, areaQuery, digitsQuery, reloadCatalog, workspaceLocked]);
 
   // The active carrier owns its gate. Didit remains a separate optional identity flow.
@@ -286,6 +348,37 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
       cancelled = true;
     };
   }, [workspaceLocked]);
+
+  // Back from the hosted phone-service verification page. Vobiz adds its own
+  // session and account IDs to the address; read once, drop them from the URL,
+  // and show what the server (not the URL) says about the verification.
+  const [kycReturn, setKycReturn] = useState(null);
+  // Set when this page load is the return from the verification page; together
+  // with a saved selection marked for it, the purchase finishes by itself.
+  const backFromKyc = useRef(hasKycReturnParams() || (() => {
+    // Backup signal: set by the verification card just before it left for Vobiz.
+    try { return window.localStorage.getItem('dialtact_voice_kyc_pending') === '1'; } catch { return false; }
+  })());
+  const autoBuyArmed = useRef(false);
+  useEffect(() => {
+    if (!hasKycReturnParams()) return undefined;
+    clearKycReturnParams();
+    let cancelled = false;
+    setKycReturn('checking');
+    api.kyc
+      .getVoiceStatus({ refresh: true })
+      .then((st) => {
+        if (cancelled) return;
+        setKycReturn(st?.approved ? 'verified' : 'pending');
+        if (st?.approved) setKycApproved(true);
+      })
+      .catch(() => {
+        if (!cancelled) setKycReturn('pending');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Inline alerts should not sit forever — toast pattern: 5s, dismissible.
   useEffect(() => {
@@ -429,7 +522,8 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
       }
       setPurchasedSuccess(catalogItem.formatted || catalogItem.number);
       forgetNumber();
-      showToast('Number purchased — provisioning to your workspace', 'success', 5000);
+      // Reached only once the server confirms the number is active.
+      showToast('Number purchased. It is active in your workspace and ready for calls.', 'success', 6000);
       await refreshWallet?.();
       setTimeout(() => {
         setPurchasedSuccess(null);
@@ -493,6 +587,31 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
     try { await completeNumberPurchase(catalogItem); }
     finally { purchaseLock.current = false; setBuying(false); }
   };
+
+  // Back from verification with the number the user already chose: finish the
+  // purchase once the server says verification is approved and the catalog has
+  // loaded. Runs once; every refusal (number taken, wallet short) is shown by
+  // the normal purchase path, and nothing is charged unless the buy succeeds.
+  useEffect(() => {
+    if (!autoBuyArmed.current || !isBuyModalOpen || !kycApproved || !pendingNumber) return;
+    if (catalogLoading || buying || !priceKnown) return;
+    // Wait for the list searched for this exact number (see the resume step).
+    if (loadedDigits !== String(pendingNumber.number || '').replace(/\D/g, '').slice(-10)) return;
+    const item = availableCatalog.find((row) => row.number === pendingNumber.number);
+    autoBuyArmed.current = false;
+    setKycReturn(null);
+    if (catalogError) {
+      // The list failed to load; that is not "taken". Keep the selection for a manual confirm.
+      setBuyError('Your verification is complete. We could not load the numbers just now. Reload this window and confirm your number. You were not charged.');
+      return;
+    }
+    if (!item) {
+      setBuyError('Your verification is complete, but the number you chose is no longer available. Choose another number below. You were not charged.');
+      return;
+    }
+    handleBuyNumber(item, { fromRow: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isBuyModalOpen, kycApproved, pendingNumber, catalogLoading, buying, priceKnown, availableCatalog, catalogError, loadedDigits]);
 
   const buyErrorOnRow = Boolean(
     buyError && buyErrorRow && filteredCatalog.some((item) => catalogRowKey(item) === buyErrorRow)
@@ -562,6 +681,32 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
           )}
         </div>
       ) : null}
+
+      {kycReturn && (
+        <div
+          role="status"
+          data-testid="voice-kyc-return"
+          className={`rounded-control border p-4 flex flex-wrap items-center justify-between gap-3 ${kycReturn === 'verified' ? 'border-success-line bg-success-soft' : 'border-line bg-canvas'}`}
+        >
+          <p className={`text-ui ${kycReturn === 'verified' ? 'text-success-fg' : 'text-fg-body'}`}>
+            {kycReturn === 'checking'
+              ? 'Checking your phone service verification…'
+              : kycReturn === 'verified'
+                ? 'Phone service verified. You can now buy a phone number and make live calls.'
+                : 'Thanks, your verification was submitted. We will confirm it shortly; this page updates by itself.'}
+          </p>
+          <div className="flex items-center gap-2">
+            {kycReturn === 'verified' && (
+              <TactileButton variant="primary" onClick={() => { setKycReturn(null); onOpenBuyModal?.(); }}>
+                Buy a number
+              </TactileButton>
+            )}
+            <button type="button" aria-label="Dismiss" className="min-w-[32px] min-h-[32px] flex items-center justify-center rounded-control text-fg-muted" onClick={() => setKycReturn(null)}>
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <SolidCard padding="p-3 sm:p-4">
@@ -847,7 +992,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                 Checking verification status…
               </div>
             ) : kycMode === 'voice' ? (
-              <VoiceServiceKycCard onApproved={() => setKycApproved(true)} />
+              <VoiceServiceKycCard onApproved={() => setKycApproved(true)} onBeforeLeave={markBuyAfterKyc} />
             ) : kycMode === 'platform' ? (
               <VerifyIdentityCard variant="gate" onApproved={() => setKycApproved(true)} />
             ) : kycMode === 'error' ? (

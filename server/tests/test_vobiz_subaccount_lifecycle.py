@@ -585,3 +585,80 @@ async def test_carrier_refusal_is_not_retried(db, carrier):
         await svc.start_kyc_session(tenant_id=TID, email="owner@example.test", legal_name="Example LLP",
                                     business_type="llp", return_url=None)
     parent.create_customer_kyc_session.assert_awaited_once()
+
+
+async def test_saved_link_is_not_reused_for_a_different_return_page(db, carrier):
+    """A link made from one page must not send the user back to another (e.g. a local test address)."""
+    parent, _ = carrier
+    base = dict(tenant_id=TID, email="owner@example.test", legal_name="Example LLP", business_type="llp")
+    await svc.start_kyc_session(**base, return_url="https://console.example.test/#numbers")
+    await svc.start_kyc_session(**base, return_url="https://console.example.test/#numbers")
+    assert parent.create_customer_kyc_session.await_count == 1  # same page: reused
+    await svc.start_kyc_session(**base, return_url="https://console.example.test/#billing")
+    assert parent.create_customer_kyc_session.await_count == 2  # other page: fresh link
+    assert parent.create_customer_kyc_session.await_args.kwargs["redirect_url"] == "https://console.example.test/#billing"
+
+
+async def test_legacy_saved_link_without_a_return_page_is_replaced(db, carrier):
+    parent, _ = carrier
+    base = dict(tenant_id=TID, email="owner@example.test", legal_name="Example LLP", business_type="llp")
+    await svc.start_kyc_session(**base, return_url=None)
+    async with db() as session:
+        row = await session.get(VobizSubaccount, TID)
+        row.encrypted_kyc_url = svc.encrypt_subaccount_token(TID, "https://kyc.vobiz.ai/verify?token=old")
+        await session.commit()
+    await svc.start_kyc_session(**base, return_url=None)
+    assert parent.create_customer_kyc_session.await_count == 2
+
+
+async def test_subaccount_deleted_at_carrier_resets_verification_so_tenant_can_verify_again(db, carrier, monkeypatch):
+    """Vobiz no longer has the child: tell the tenant to verify again instead of 'temporarily unavailable'."""
+    from server.services.saas import activity_log
+    monkeypatch.setattr(activity_log, "record_event", AsyncMock())
+    parent, _ = carrier
+    await onboard()
+    assert (await approve(parent))["approved"]
+    parent._request = AsyncMock(return_value={"auth_id": "MA_test"})  # main account still answers
+    parent.get_customer_subaccount.side_effect = VobizApiError("Sub-account SA_test not found", status=404)
+
+    status = await svc.refresh_kyc_status(TID, force=True)
+    assert status["approved"] is False and status["status"] == "not_started" and status["verifyAgain"] is True
+    assert status["identityLocked"] is False
+    activity_log.record_event.assert_awaited()
+    async with db() as session:
+        row = await session.get(VobizSubaccount, TID)
+        assert row.auth_id is None and row.kyc_calls_blocked and row.last_error_code == "carrier_account_missing"
+
+    # Start verification creates a fresh sub-account.
+    parent.get_customer_subaccount.side_effect = None
+    parent.get_customer_kyc_status.return_value.update(overall_status="pending", kyc_calls_blocked=True)
+    parent.create_customer_subaccount.reset_mock()
+    await svc.start_kyc_session(tenant_id=TID, email="owner@example.test", legal_name="Example LLP",
+                                business_type="llp", return_url=None)
+    parent.create_customer_subaccount.assert_awaited_once()
+
+
+@pytest.mark.parametrize("failure", [VobizApiError("Vobiz API timeout (ReadTimeout)"), VobizApiError("boom", status=503)])
+async def test_carrier_outage_never_resets_verification(db, carrier, failure):
+    parent, _ = carrier
+    await onboard()
+    await approve(parent)
+    parent._request = AsyncMock(return_value={"auth_id": "MA_test"})
+    parent.get_customer_subaccount.side_effect = failure
+    with pytest.raises(svc.VoiceKycError, match="voice_kyc_status_unavailable"):
+        await svc.refresh_kyc_status(TID, force=True)
+    async with db() as session:
+        row = await session.get(VobizSubaccount, TID)
+        assert row.auth_id == "SA_test" and row.kyc_status == "verified"
+
+
+async def test_404_while_main_account_is_unreachable_never_resets(db, carrier):
+    parent, _ = carrier
+    await onboard()
+    await approve(parent)
+    parent._request = AsyncMock(side_effect=VobizApiError("down", status=503))
+    parent.get_customer_subaccount.side_effect = VobizApiError("not found", status=404)
+    with pytest.raises(svc.VoiceKycError):
+        await svc.refresh_kyc_status(TID, force=True)
+    async with db() as session:
+        assert (await session.get(VobizSubaccount, TID)).auth_id == "SA_test"

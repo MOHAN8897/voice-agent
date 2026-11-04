@@ -47,8 +47,9 @@ function writePendingKyc(pending) {
   }
 }
 
-export function VoiceServiceKycCard({ onApproved }) {
+export function VoiceServiceKycCard({ onApproved, onBeforeLeave }) {
   const onApprovedRef = useRef(onApproved);
+  const onBeforeLeaveRef = useRef(onBeforeLeave);
   const requestId = useRef(0);
   const [status, setStatus] = useState(null);
   const [businessType, setBusinessType] = useState('');
@@ -59,7 +60,8 @@ export function VoiceServiceKycCard({ onApproved }) {
 
   useEffect(() => {
     onApprovedRef.current = onApproved;
-  }, [onApproved]);
+    onBeforeLeaveRef.current = onBeforeLeave;
+  }, [onApproved, onBeforeLeave]);
 
   // Approved is terminal: once seen, background refreshes stop.
   const approvedRef = useRef(false);
@@ -114,60 +116,29 @@ export function VoiceServiceKycCard({ onApproved }) {
   const start = async () => {
     setStarting(true);
     setError('');
-    // Open a blank tab synchronously on click to prevent popup blockers from intercepting it
-    let newTab = null;
-    try {
-      newTab = window.open('about:blank', '_blank');
-      // The vendor page must not be able to steer this console tab (reverse tabnabbing).
-      if (newTab) {
-        newTab.opener = null;
-        // Creating the verification link can take several seconds; without this
-        // the new tab is an empty white page and looks broken.
-        try {
-          newTab.document.title = 'Opening secure verification…';
-          newTab.document.body.style.cssText =
-            'margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;font:16px system-ui,sans-serif;color:#334155;background:#f8fafc';
-          newTab.document.body.textContent = 'Opening secure verification… This can take up to 30 seconds. Keep this tab open.';
-        } catch {
-          /* the tab is still usable without the message */
-        }
-      }
-    } catch {
-      newTab = null;
-    }
-
     try {
       const result = await api.kyc.startVoiceSession({
         legal_name: legalName.trim(),
         business_type: businessType,
+        // Vobiz brings the user back to this exact page (and its saved selection).
         return_url: window.location.href,
       });
       setStatus(result);
       if (result?.approved) {
-        if (newTab && !newTab.closed) newTab.close();
         onApprovedRef.current?.(result);
         return;
       }
-      if (!result?.sessionUrl) {
-        if (newTab && !newTab.closed) newTab.close();
-        throw new Error('Verification could not start. Please try again.');
-      }
-      if (!isSafeNavigationUrl(result.sessionUrl)) {
-        if (newTab && !newTab.closed) newTab.close();
-        throw new Error('The verification link was not a web address.');
-      }
+      if (!result?.sessionUrl) throw new Error('Verification could not start. Please try again.');
+      if (!isSafeNavigationUrl(result.sessionUrl)) throw new Error('The verification link was not a web address.');
       setOpenedUrl(result.sessionUrl);
       awaitingReturnRef.current = true;
       writePendingKyc(true);
-      if (newTab && !newTab.closed) {
-        newTab.location.href = result.sessionUrl;
-      } else {
-        window.open(result.sessionUrl, '_blank', 'noopener,noreferrer');
-      }
+      // Let the page save anything it needs (the chosen number) before leaving.
+      onBeforeLeaveRef.current?.();
+      // Same tab: no pop-up, no blank page, and the return lands where the user started.
+      window.location.assign(result.sessionUrl);
     } catch (e) {
-      if (newTab && !newTab.closed) newTab.close();
       setError(e.message || 'Could not start phone service verification.');
-    } finally {
       setStarting(false);
     }
   };
@@ -246,7 +217,7 @@ export function VoiceServiceKycCard({ onApproved }) {
         </label>
       </div>
 
-      <p className="rounded-control bg-surface-subtle p-3 text-ui text-fg-body">{documents} A separate phone service account is created for your workspace. Complete verification on the secure hosted page, then return here to confirm your number purchase.</p>
+      <p className="rounded-control bg-surface-subtle p-3 text-ui text-fg-body">{documents} A separate phone service account is created for your workspace. You complete verification on a secure page in this tab and come back here automatically when it is done.</p>
 
       {status?.verifications && Object.keys(status.verifications).length > 0 && (
         <div className="flex flex-wrap gap-2" aria-label="Verification document status">
@@ -271,27 +242,25 @@ export function VoiceServiceKycCard({ onApproved }) {
       {status?.configured === false && (
         <p className="text-ui text-warning-fg" role="status">Phone service verification is not available yet. Contact support to continue.</p>
       )}
+      {status?.verifyAgain && (
+        <p className="rounded-control border border-warning-line bg-warning-soft p-3 text-ui text-warning-fg" role="status" data-testid="voice-service-kyc-verify-again">
+          Your earlier phone service verification is no longer on file with our phone partner. Please verify again to buy numbers and make calls. It only takes a few minutes.
+        </p>
+      )}
       {error && <p className="text-ui text-danger-fg" role="alert" data-testid="voice-service-kyc-error">{error}</p>}
       {openedUrl && (
-        <div className="rounded-control border border-info-line bg-info-soft p-3.5 space-y-1.5 text-ui" data-testid="voice-service-kyc-tab-banner">
-          <p className="font-semibold text-info-fg">
-            Verification opened in a new tab
-          </p>
+        <div className="rounded-control border border-info-line bg-info-soft p-3.5 space-y-1.5 text-ui" data-testid="voice-service-kyc-tab-banner" role="status">
+          <p className="font-semibold text-info-fg">Taking you to the secure verification page…</p>
           <p className="text-info-fg text-ui">
-            Complete your verification in the opened tab, then return here and select &ldquo;I have finished. Refresh status&rdquo;.
+            When you finish, you come back here automatically and your chosen number is added.
           </p>
-          <div className="pt-1">
-            <a
-              href={openedUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-meta font-semibold text-accent-fg hover:underline"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              Reopen verification page in new tab
-            </a>
-          </div>
+          <a href={openedUrl} className="inline-flex items-center gap-1 text-meta font-semibold text-accent-fg hover:underline">
+            Not moving? Open the verification page
+          </a>
         </div>
+      )}
+      {starting && !openedUrl && (
+        <p className="text-ui text-fg-body" role="status">Preparing your secure verification page. This can take up to 30 seconds.</p>
       )}
 
       <div className="space-y-2">
@@ -305,7 +274,7 @@ export function VoiceServiceKycCard({ onApproved }) {
           className="w-full justify-center"
           data-testid="voice-service-kyc-start"
         >
-          {starting ? 'Preparing…' : status?.status === 'pending' ? 'Continue verification' : 'Start verification'}
+          {starting ? 'Opening verification…' : status?.status === 'pending' ? 'Continue verification' : 'Start verification'}
         </TactileButton>
         <button
           type="button"

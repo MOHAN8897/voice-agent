@@ -6,6 +6,7 @@ keeps provisioning idempotent across retries, and never exposes credentials.
 from __future__ import annotations
 
 import hashlib
+import json
 import hmac
 import logging
 from datetime import datetime, timezone
@@ -328,6 +329,27 @@ async def ensure_customer_subaccount(
         return row
 
 
+def _read_saved_session(tenant_id: UUID, encrypted: str | None) -> tuple[str | None, str | None]:
+    """The saved hosted link and the page it returns to.
+
+    Older rows stored only the link; their return page is unknown, so they are
+    never reused (a fresh link is free).
+    """
+    if not encrypted:
+        return None, None
+    try:
+        raw = decrypt_subaccount_token(tenant_id, encrypted)
+    except Exception:  # noqa: BLE001 -- an unreadable link is simply replaced
+        return None, None
+    if raw.startswith("{"):
+        try:
+            data = json.loads(raw)
+        except ValueError:
+            return None, None
+        return data.get("url") or None, data.get("returnUrl") or None
+    return raw, None
+
+
 def _transient_carrier_error(exc: Exception) -> bool:
     """Timeouts, connection errors and 5xx answers are worth one retry; 4xx are not."""
     import httpx
@@ -369,9 +391,14 @@ async def start_kyc_session(
     async with factory() as session:
         row = await session.get(VobizSubaccount, tenant_id, with_for_update=True)
         expires = _aware(row.kyc_session_expires_at)
-        if (status["status"] != "failed" and row.encrypted_kyc_url and expires and expires > _utcnow()
+        saved_url, saved_return = _read_saved_session(tenant_id, row.encrypted_kyc_url)
+        # Reuse a saved link only if it sends the user back to the same page. A
+        # link made from another address (another console host, a local test)
+        # would return the user somewhere they cannot open.
+        if (status["status"] != "failed" and saved_url and saved_return == trusted_return_url
+                and expires and expires > _utcnow()
                 and row.kyc_session_status not in {"failed", "expired", "revoked", "completed"}):
-            return {**status, "sessionUrl": decrypt_subaccount_token(tenant_id, row.encrypted_kyc_url)}
+            return {**status, "sessionUrl": saved_url}
         try:
             try:
                 response = await parent.create_customer_kyc_session(
@@ -407,7 +434,9 @@ async def start_kyc_session(
             await session.commit()
             raise VoiceKycError("voice_kyc_session_failed") from exc
         row.kyc_session_id = session_id
-        row.encrypted_kyc_url = encrypt_subaccount_token(tenant_id, session_url)
+        row.encrypted_kyc_url = encrypt_subaccount_token(
+            tenant_id, json.dumps({"url": session_url, "returnUrl": trusted_return_url})
+        )
         row.kyc_session_expires_at = expires
         row.kyc_session_status = "link_ready"
         row.last_error_code = None
@@ -417,6 +446,70 @@ async def start_kyc_session(
 
 def _aware(value: datetime | None) -> datetime | None:
     return value.replace(tzinfo=timezone.utc) if value and value.tzinfo is None else value
+
+
+async def _confirm_subaccount_missing(parent, sub_auth_id: str, exc: Exception) -> bool:
+    """True only when Vobiz definitely says the sub-account does not exist.
+
+    Two 404s for the sub-account while the main account itself still answers;
+    a timeout, a 5xx or a main-account failure is never read as "deleted".
+    """
+    if getattr(exc, "status", None) != 404:
+        return False
+    try:
+        await parent._request("GET", f"/Account/{parent.auth_id}")
+    except Exception:  # noqa: BLE001 -- main account unreadable: not proof of anything
+        return False
+    try:
+        await parent.get_customer_subaccount(sub_auth_id)
+    except Exception as again:  # noqa: BLE001
+        return getattr(again, "status", None) == 404
+    return False
+
+
+async def _reset_missing_subaccount(tenant_id: UUID, sub_auth_id: str) -> dict:
+    """Forget a sub-account Vobiz no longer has, so "Start verification" makes a new one.
+
+    Numbers live on the main account, so nothing else depends on the old child.
+    """
+    factory = get_session_factory()
+    async with factory() as session:
+        row = await session.get(VobizSubaccount, tenant_id, with_for_update=True)
+        if row is not None and row.auth_id == sub_auth_id:
+            row.provisioning_status = "carrier_missing"
+            row.auth_id = None
+            row.encrypted_auth_token = None
+            row.application_id = None
+            row.account_enabled = False
+            row.kyc_status = "not_started"
+            row.kyc_calls_blocked = True
+            row.verifications = {}
+            row.kyc_session_id = None
+            row.encrypted_kyc_url = None
+            row.kyc_session_expires_at = None
+            row.kyc_session_status = None
+            row.last_error_code = "carrier_account_missing"
+            row.updated_at = _utcnow()
+            await session.commit()
+    logger.warning("Tenant voice sub-account missing at carrier tenant=%s; verification reset", tenant_id)
+    try:
+        from server.services.saas.activity_log import record_event
+
+        await record_event(
+            action="voice_kyc.carrier_account_missing",
+            resource_type="voice_kyc",
+            resource_id=str(tenant_id),
+            actor="system",
+            tenant_id=tenant_id,
+            payload={"subAccount": sub_auth_id,
+                     "hint": "Vobiz no longer has this sub-account (deleted there). The workspace must verify again."},
+            source="system",
+            outcome="error",
+            severity="error",
+        )
+    except Exception:  # noqa: BLE001 -- the reset itself must stand
+        logger.warning("could not record carrier_account_missing event")
+    return await refresh_kyc_status(tenant_id)
 
 
 async def refresh_kyc_status(
@@ -463,6 +556,8 @@ async def refresh_kyc_status(
             "businessType": account.business_type,
             "legalName": account.account_name,
             "identityLocked": is_sub_active,
+            # Set when the carrier lost the earlier verification account.
+            "verifyAgain": account.provisioning_status == "carrier_missing",
         }
 
     now = _utcnow()
@@ -478,7 +573,14 @@ async def refresh_kyc_status(
         parent = VobizClient()
         if account.parent_auth_id != parent.auth_id:
             raise VoiceKycError("voice_parent_account_changed")
-        identity = await parent.get_customer_subaccount(str(account.auth_id))
+        try:
+            identity = await parent.get_customer_subaccount(str(account.auth_id))
+        except Exception as exc:
+            if await _confirm_subaccount_missing(parent, str(account.auth_id), exc):
+                # Gone at the carrier (deleted there): verification has to be
+                # done again. Say so plainly instead of "temporarily unavailable".
+                return await _reset_missing_subaccount(tenant_id, str(account.auth_id))
+            raise
         if (identity.get("auth_id") != account.auth_id or identity.get("parent_auth_id") != parent.auth_id):
             raise VoiceKycError("voice_account_ownership_mismatch")
         # Vobiz's Update Sub-account API deprecates ``enabled`` ("accepted but has
