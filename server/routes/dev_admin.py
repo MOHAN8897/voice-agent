@@ -168,8 +168,15 @@ class DirectCarrierPurchaseBody(BaseModel):
     e164: str = Field(..., min_length=8, max_length=20)
     provider: str = Field("vobiz", pattern="^(vobiz|telnyx)$")
     country: str = Field("US", max_length=8)
-    tenantId: str
+    # Empty = buy into the platform inventory (for sale to workspaces later).
+    tenantId: Optional[str] = None
     reason: str = Field(..., min_length=8, max_length=500)
+    # When sent, must repeat e164 exactly: a typed confirmation guards a paid order.
+    confirmE164: Optional[str] = Field(None, max_length=20)
+
+
+class InventoryReconcileBody(BaseModel):
+    apply: bool = False
 
 
 class AllocateNumberBody(BaseModel):
@@ -4057,6 +4064,8 @@ async def update_platform_support_inquiry(
 async def search_platform_carrier_numbers(
     provider: str = Query("vobiz", pattern="^(vobiz|telnyx)$"),
     country: str = Query("US", max_length=8),
+    contains: str = Query("", max_length=15),
+    limit: int = Query(15, ge=1, le=50),
     session: SessionData = Depends(require_dev_session),
 ):
     require_permission(session, "dev.admin.numbers")
@@ -4074,15 +4083,18 @@ async def search_platform_carrier_numbers(
 
     default_country = "IN" if provider_id == "vobiz" else "US"
     country_code = normalize_buy_country(country, default=default_country)
+    digits = "".join(ch for ch in str(contains or "") if ch.isdigit())
     try:
         if provider_id == "vobiz":
             from server.services.vobiz_client import VobizClient
 
-            available = await VobizClient().search_available_numbers(country=country_code, limit=15)
+            available = await VobizClient().search_available_numbers(
+                country=country_code, limit=limit, search=digits or None
+            )
         else:
             from server.services.telnyx_client import TelnyxClient
 
-            available = await TelnyxClient().search_available_numbers(country=country_code, limit=15)
+            available = await TelnyxClient().search_available_numbers(country=country_code, limit=limit)
     except Exception as exc:
         logger.warning("Platform carrier inventory search failed (%s)", provider_id)
         raise HTTPException(status_code=502, detail="Carrier inventory is temporarily unavailable") from exc
@@ -4100,16 +4112,58 @@ async def search_platform_carrier_numbers(
         e164 = str(row.get("e164") or row.get("phone_number") or "").strip()
         if not e164 or e164 in unavailable or e164 in seen:
             continue
+        if digits and digits not in e164:
+            continue
         seen.add(e164)
         cleaned.append({
-            **row,
             "e164": e164,
             "provider": provider_id,
             "country": country_code,
+            "region": row.get("region") or None,
+            # What the carrier charges us (from its inventory listing), when it says.
+            "carrierSetupFee": _num_or_none(row.get("setup_fee")),
+            "carrierMonthlyFee": _num_or_none(row.get("monthly_fee")),
+            "carrierCurrency": row.get("currency") or None,
+            "minimumCommitmentMonths": _num_or_none(row.get("minimum_commitment_months")),
+            # What a workspace pays us per month for a number.
             "monthlyUsd": round(rates["did_monthly_usd_cents"] / 100.0, 2),
             "monthlyInr": round(rates["did_monthly_inr_paise"] / 100.0, 2),
         })
-    return {"numbers": cleaned, "provider": provider_id, "country": country_code}
+    balance = None
+    if provider_id == "vobiz":
+        from server.services.saas.vobiz_concurrency import fetch_balance
+
+        balance = await fetch_balance()
+    return {"numbers": cleaned, "provider": provider_id, "country": country_code, "balance": balance}
+
+
+def _num_or_none(value: Any) -> float | None:
+    try:
+        return float(value) if value not in (None, "") else None
+    except (TypeError, ValueError):
+        return None
+
+
+@router.post("/api/dev/admin/numbers/inventory/reconcile")
+async def reconcile_number_inventory(
+    body: InventoryReconcileBody,
+    session: SessionData = Depends(require_dev_session),
+):
+    """Pool numbers the carrier account does not own. apply=false previews; apply=true retires them."""
+    require_permission(session, "dev.admin.numbers")
+    _require_db()
+    from server.services.saas.number_inventory import reconcile_inventory_with_carriers
+
+    result = await reconcile_inventory_with_carriers(apply=body.apply)
+    if body.apply and result["stale"]:
+        await record_admin_action(
+            actor=session.subject,
+            action="number.inventory_reconcile",
+            resource_type="phone_number",
+            resource_id="platform_inventory",
+            payload={"removed": [r["e164"] for r in result["stale"]], "skippedProviders": result["skippedProviders"]},
+        )
+    return result
 
 
 @router.post("/api/dev/admin/numbers/carrier-purchase")
@@ -4132,10 +4186,21 @@ async def purchase_platform_carrier_number(
         e164 = normalize_e164(body.e164)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="invalid_e164") from exc
-    try:
-        tenant_uuid = uuid.UUID(body.tenantId)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail="invalid_tenant_id") from exc
+    if body.confirmE164 is not None and body.confirmE164.strip() != e164:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"code": "confirmation_mismatch", "message": "The typed number does not match the number being bought."}},
+        )
+    to_inventory = not (body.tenantId or "").strip()
+    if to_inventory:
+        from server.services.saas.number_inventory import ensure_platform_inventory_tenant
+
+        tenant_uuid = await ensure_platform_inventory_tenant()
+    else:
+        try:
+            tenant_uuid = uuid.UUID(str(body.tenantId))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="invalid_tenant_id") from exc
 
     factory = get_session_factory()
     from sqlalchemy.exc import IntegrityError
@@ -4166,9 +4231,9 @@ async def purchase_platform_carrier_number(
             tenant_id=tenant_uuid,
             e164=e164,
             status="provisioning",
-            billing_source="admin",
-            inbound_enabled=True,
-            outbound_enabled=True,
+            billing_source="inventory" if to_inventory else "admin",
+            inbound_enabled=not to_inventory,
+            outbound_enabled=not to_inventory,
             vobiz_account_scope="tenant" if customer_account else None,
             vobiz_account_tenant_id=tenant_uuid if customer_account else None,
         )
@@ -4215,6 +4280,9 @@ async def purchase_platform_carrier_number(
         else None
     )
     number_status = "active" if carrier_phone_id else "pending"
+    if to_inventory and carrier_phone_id:
+        # Stock for sale: listed to workspaces, routes nothing until assigned.
+        number_status = "available"
     async with factory() as db:
         number = await db.get(PhoneNumber, number_id, with_for_update=True)
         if number is None:
@@ -4233,13 +4301,16 @@ async def purchase_platform_carrier_number(
         resource_type="phone_number",
         resource_id=number_id,
         tenant_id=tenant_uuid,
-        payload={"provider": body.provider, "reason": body.reason, "status": number_status},
+        payload={"provider": body.provider, "reason": body.reason, "status": number_status,
+                 "e164": e164, "destination": "inventory" if to_inventory else "workspace"},
     )
     return {
         "ok": True,
         "id": number_id,
+        "e164": e164,
         "provider": body.provider,
         "tenantId": str(tenant_uuid),
+        "destination": "inventory" if to_inventory else "workspace",
         "status": number_status,
         "provisioning": number_status == "pending",
     }

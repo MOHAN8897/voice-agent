@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { SkeuoButton } from "@/components/ui/skeuo";
-import { adjustmentKey, adminAction, clearAdjustmentKey, devFetch, useAdminResource } from "@/lib/useAdminResource";
+import { adjustmentKey, adminAction, clearAdjustmentKey, useAdminResource } from "@/lib/useAdminResource";
 import { cn } from "@/lib/cn";
 import { PLANS, ROLE_LABEL, USER_ROLES, money, runBulk, type ListPage, type Workspace } from "./model";
 import { ActionDialog, Field, Modal, Notice, TextInput, selectClass, useDebounced } from "./ui";
+import { BuyNumberPanel } from "./BuyNumbers";
 
 /* ------------------------------------------------------------------ pickers */
 
@@ -385,8 +386,6 @@ type PoolNumber = {
   inInventory?: boolean;
 };
 
-type CarrierCandidate = { e164: string; provider: string; country: string; monthlyUsd: number; monthlyInr: number };
-
 /**
  * Put a number into a workspace: from the platform pool (existing allocate flow,
  * with its KYC and carrier-ownership checks) or by ordering one from the active
@@ -406,9 +405,6 @@ export function AddNumberDialog({
   const [agentId, setAgentId] = useState("");
   const [e164, setE164] = useState("");
   const [poolQ, setPoolQ] = useState("");
-  const [country, setCountry] = useState("IN");
-  const [reason, setReason] = useState("");
-  const [candidates, setCandidates] = useState<CarrierCandidate[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -424,14 +420,11 @@ export function AddNumberDialog({
       setAgentId("");
       setE164("");
       setPoolQ("");
-      setReason("");
-      setCandidates([]);
       setError(null);
       setNotice(null);
       setChanged(false);
     }
   }, [open, presetTenant]);
-  useEffect(() => setCountry(active === "vobiz" ? "IN" : "US"), [active]);
 
   const available = useMemo(
     () =>
@@ -469,52 +462,13 @@ export function AddNumberDialog({
     }
   }
 
-  async function searchCarrier() {
-    setBusy(true);
-    setError(null);
-    try {
-      const q = new URLSearchParams({ provider: active, country: country.trim().toUpperCase() });
-      const res = (await devFetch(`/api/dev/admin/numbers/carrier-search?${q}`)) as { numbers: CarrierCandidate[] };
-      setCandidates(res.numbers ?? []);
-      if (!(res.numbers ?? []).length) setNotice("No unassigned carrier inventory in that country right now.");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Carrier search failed");
-      setCandidates([]);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function order(c: CarrierCandidate) {
-    setBusy(true);
-    setError(null);
-    setNotice(null);
-    try {
-      const res = await adminAction<{ provisioning?: boolean }>("/api/dev/admin/numbers/carrier-purchase", {
-        method: "POST",
-        body: { e164: c.e164, provider: c.provider, country: c.country, tenantId, reason: reason.trim() },
-      });
-      setChanged(true);
-      setCandidates((cur) => cur.filter((x) => x.e164 !== c.e164));
-      setNotice(
-        res.provisioning
-          ? `${c.e164}: the carrier accepted the order and it is pending until the carrier confirms the line. Do not order it again.`
-          : `${c.e164} is active and assigned. Pin it to an agent from the number's details.`
-      );
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Carrier order failed");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   return (
     <Modal open={open} title="Add a phone number to a workspace" onClose={() => onClose(changed)} wide>
       <div className="flex gap-1 rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-inset p-1 text-xs" role="tablist">
         {(
           [
             ["pool", "From platform pool"],
-            ["carrier", `Order from ${active.toUpperCase()}`],
+            ["carrier", `Buy new from ${active.toUpperCase()}`],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -549,34 +503,7 @@ export function AddNumberDialog({
           <p className="-mt-1 text-[11px] text-text-subtle">3. Agent is optional — you can pin it later.</p>
         </>
       ) : (
-        <>
-          <div className="grid grid-cols-[1fr_2fr] gap-2">
-            <Field label="Country (ISO)">
-              <TextInput value={country} maxLength={2} onChange={(e) => setCountry(e.target.value.toUpperCase())} className="font-mono" />
-            </Field>
-            <Field label="Order reason (8+ characters)" hint="Recorded in the admin activity log. Carrier charges apply.">
-              <TextInput value={reason} onChange={(e) => setReason(e.target.value)} maxLength={500} placeholder="e.g. Dedicated sales DID" />
-            </Field>
-          </div>
-          <SkeuoButton variant="secondary" disabled={busy || !country.trim()} onClick={() => void searchCarrier()}>
-            Search {active.toUpperCase()} inventory
-          </SkeuoButton>
-          {candidates.length > 0 && (
-            <ul className="max-h-56 divide-y divide-surface-border-subtle overflow-y-auto rounded-skeuo-sm border border-surface-border-subtle">
-              {candidates.map((c) => (
-                <li key={c.e164} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
-                  <span className="font-mono">{c.e164}</span>
-                  <span className="text-xs text-text-muted">
-                    ${c.monthlyUsd.toFixed(2)} / ₹{c.monthlyInr.toFixed(2)} per month
-                  </span>
-                  <SkeuoButton size="sm" variant="primary" disabled={busy || !tenantId || reason.trim().length < 8} onClick={() => void order(c)}>
-                    Order
-                  </SkeuoButton>
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
+        <BuyNumberPanel provider={active} presetTenantId={tenantId || null} lockTenant onBought={() => setChanged(true)} />
       )}
 
       {notice && <Notice tone="success">{notice}</Notice>}

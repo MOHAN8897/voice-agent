@@ -218,6 +218,10 @@ async def list_inventory_for_sale(*, country: str | None = None) -> list[dict]:
     out: list[dict] = []
     country_u = (country or "").upper()
     for pn in rows:
+        # Never sell a pool row the carrier never gave us an ID for: it is a
+        # leftover from a test or a failed order, not a number we own.
+        if not has_carrier_id(pn):
+            continue
         # Rough country filter from E.164 prefix; US/CA share +1.
         if country_u and country_u not in {"US", "CA"}:
             dial = {"GB": "+44", "AU": "+61", "IE": "+353", "NZ": "+64", "SG": "+65", "IN": "+91", "ZA": "+27", "PH": "+63"}.get(
@@ -258,3 +262,85 @@ async def get_inventory_number(e164: str) -> PhoneNumber | None:
                 )
             )
         ).scalar_one_or_none()
+
+
+def _inventory_provider(pn: PhoneNumber) -> str:
+    """Carrier a pool row belongs to (same attribution as the admin number views)."""
+    telnyx_id = getattr(pn, "telnyx_number_id", None)
+    prov = "telnyx" if telnyx_id and telnyx_id != "carrier_platform" else "vobiz"
+    if getattr(pn, "carrier_number_id", None) or str(getattr(pn, "e164", "") or "").startswith("+91"):
+        prov = "vobiz"
+    return prov
+
+
+def has_carrier_id(pn: PhoneNumber) -> bool:
+    """A pool number is real only if the carrier gave us an ID for it."""
+    if _inventory_provider(pn) == "telnyx":
+        return True  # _inventory_provider only says telnyx when a real Telnyx ID is present
+    return bool(getattr(pn, "carrier_number_id", None))
+
+
+async def _carrier_owned() -> dict[str, set[str] | None]:
+    """E.164s each carrier account really owns. None = could not ask, so touch nothing."""
+    owned: dict[str, set[str] | None] = {"vobiz": None, "telnyx": None}
+    try:
+        from server.services.vobiz_client import VobizClient
+
+        owned["vobiz"] = {str(r.get("e164") or "").strip() for r in await VobizClient().list_account_numbers(limit=1000)}
+    except Exception as exc:  # noqa: BLE001
+        import logging
+
+        logging.getLogger(__name__).info("inventory reconcile: vobiz list unavailable (%s)", type(exc).__name__)
+    try:
+        from server.services.telnyx_client import TelnyxClient
+
+        rows = await TelnyxClient().list_phone_numbers()
+        owned["telnyx"] = {
+            str(r.get("phone_number") or (r.get("attributes") or {}).get("phone_number") or "").strip() for r in rows
+        }
+    except Exception as exc:  # noqa: BLE001
+        import logging
+
+        logging.getLogger(__name__).info("inventory reconcile: telnyx list unavailable (%s)", type(exc).__name__)
+    return owned
+
+
+async def reconcile_inventory_with_carriers(*, apply: bool) -> dict:
+    """Find platform-pool numbers the carrier account does not own and (optionally) retire them.
+
+    Only unassigned inventory rows are considered: a customer's number is never
+    touched here. A carrier whose list cannot be fetched is skipped entirely, so a
+    carrier outage can never wipe the pool. Retired rows are soft-released
+    (``released_at`` set), which keeps their purchase history.
+    """
+    inventory_tid = await ensure_platform_inventory_tenant()
+    factory = get_session_factory()
+    if factory is None:
+        raise RuntimeError("database_required")
+    owned = await _carrier_owned()
+    stale: list[dict] = []
+    skipped = [p for p, nums in owned.items() if nums is None]
+    async with factory() as session:
+        rows = (await session.execute(select(PhoneNumber).where(
+            PhoneNumber.tenant_id == inventory_tid,
+            PhoneNumber.released_at.is_(None),
+            PhoneNumber.status == "available",
+        ).with_for_update())).scalars().all()
+        now = _utcnow()
+        for pn in rows:
+            prov = _inventory_provider(pn)
+            nums = owned.get(prov)
+            if nums is None or pn.e164 in nums:
+                continue
+            stale.append({"numberId": str(pn.id), "e164": pn.e164, "provider": prov,
+                          "hasCarrierId": has_carrier_id(pn),
+                          "createdAt": pn.created_at.isoformat() if pn.created_at else None})
+            if apply:
+                pn.status = "released"
+                pn.released_at = now
+                pn.agent_id = None
+                pn.inbound_enabled = pn.outbound_enabled = False
+        if apply:
+            await session.commit()
+    return {"stale": stale, "applied": apply, "skippedProviders": skipped,
+            "checked": {p: (len(n) if n is not None else None) for p, n in owned.items()}}

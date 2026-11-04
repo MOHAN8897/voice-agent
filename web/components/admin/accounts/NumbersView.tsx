@@ -29,6 +29,7 @@ import {
 } from "./ui";
 import { resolveSelection, useAccountList } from "./useAccountList";
 import { AddNumberDialog, AgentPicker, CarrierSwitchDialog, WorkspacePicker } from "./dialogs";
+import { BuyNumbersDialog, InventoryCheckDialog } from "./BuyNumbers";
 import type { ViewProps } from "./AccountsWorkspace";
 
 type NumberAction = "assign_workspace" | "assign_agent" | "unassign_agent" | "release";
@@ -64,6 +65,8 @@ export function NumbersView({ scopeTenantId, scopeName, initialFilters, onOpen, 
   const [customerOwned, setCustomerOwned] = useState<number | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [carrierOpen, setCarrierOpen] = useState(false);
+  const [buyOpen, setBuyOpen] = useState(false);
+  const [checkOpen, setCheckOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const active = list.data?.activeProvider ?? null;
@@ -272,9 +275,19 @@ export function NumbersView({ scopeTenantId, scopeName, initialFilters, onOpen, 
           <SkeuoButton size="sm" variant="secondary" loading={exporting} onClick={() => void exportCsv(false)}>
             Export CSV
           </SkeuoButton>
-          <SkeuoButton size="sm" variant="primary" onClick={() => setAddOpen(true)}>
-            + Add number
+          {!scopeTenantId && (
+            <SkeuoButton size="sm" variant="secondary" onClick={() => setCheckOpen(true)}>
+              Check against carrier
+            </SkeuoButton>
+          )}
+          <SkeuoButton size="sm" variant="secondary" onClick={() => setAddOpen(true)}>
+            Assign number
           </SkeuoButton>
+          {!scopeTenantId && (
+            <SkeuoButton size="sm" variant="primary" onClick={() => setBuyOpen(true)}>
+              + Buy numbers
+            </SkeuoButton>
+          )}
         </div>
       </div>
       {exportError && <Notice tone="error">{exportError}</Notice>}
@@ -384,6 +397,27 @@ export function NumbersView({ scopeTenantId, scopeName, initialFilters, onOpen, 
         tenantId={scopeTenantId}
         onClose={(changed) => {
           setAddOpen(false);
+          if (changed) {
+            void list.reload();
+            onChanged();
+          }
+        }}
+      />
+      <BuyNumbersDialog
+        open={buyOpen}
+        provider={active ?? "vobiz"}
+        onClose={(changed) => {
+          setBuyOpen(false);
+          if (changed) {
+            void list.reload();
+            onChanged();
+          }
+        }}
+      />
+      <InventoryCheckDialog
+        open={checkOpen}
+        onClose={(changed) => {
+          setCheckOpen(false);
           if (changed) {
             void list.reload();
             onChanged();

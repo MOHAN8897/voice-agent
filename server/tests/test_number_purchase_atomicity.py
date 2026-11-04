@@ -122,6 +122,8 @@ def _session(
         inbound_enabled=False,
         outbound_enabled=False,
         telnyx_number_id=None,
+        # A real pool number: the carrier gave it an ID.
+        carrier_number_id="vobiz-number-1",
     )
     return _PurchaseSession(
         tenant_id=tenant_id,
@@ -142,7 +144,7 @@ async def test_inventory_purchase_checks_email_verification(monkeypatch):
     inventory_tid = uuid.uuid4()
 
     async def inventory_number(_e164):
-        return SimpleNamespace(id=session.phone.id)
+        return SimpleNamespace(id=session.phone.id, carrier_number_id="vobiz-number-1")
 
     async def inventory_tenant():
         return inventory_tid
@@ -180,7 +182,7 @@ async def test_inventory_purchase_respects_zero_number_limit_and_locks_tenant(mo
     inventory_tid = uuid.uuid4()
 
     async def inventory_number(_e164):
-        return SimpleNamespace(id=session.phone.id)
+        return SimpleNamespace(id=session.phone.id, carrier_number_id="vobiz-number-1")
 
     async def inventory_tenant():
         return inventory_tid
@@ -261,7 +263,7 @@ async def test_inventory_transfer_and_wallet_debit_commit_together(monkeypatch):
     debit_calls = []
 
     async def inventory_number(_e164):
-        return SimpleNamespace(id=session.phone.id)
+        return SimpleNamespace(id=session.phone.id, carrier_number_id="vobiz-number-1")
 
     async def inventory_tenant():
         return inventory_tid
@@ -319,7 +321,7 @@ async def test_insufficient_wallet_does_not_commit_inventory_transfer(monkeypatc
     session.phone_snapshot["tenant_id"] = inventory_tid
 
     async def inventory_number(_e164):
-        return SimpleNamespace(id=session.phone.id)
+        return SimpleNamespace(id=session.phone.id, carrier_number_id="vobiz-number-1")
 
     async def inventory_tenant():
         return inventory_tid

@@ -512,10 +512,12 @@ async def _purchase_from_inventory(
     from server.services.saas.number_inventory import (
         ensure_platform_inventory_tenant,
         get_inventory_number,
+        has_carrier_id,
     )
 
     inv = await get_inventory_number(e164)
-    if inv is None:
+    # A pool row with no carrier ID is not a number we own; never hand it over.
+    if inv is None or not has_carrier_id(inv):
         return None
     factory = get_session_factory()
     if factory is None:
