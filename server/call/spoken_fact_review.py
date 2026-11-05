@@ -247,13 +247,21 @@ async def review_spoken_turn(ctx: Any, *, caller: str, draft: str, language: str
         business = business_from_unified_brain(brain)
     except ValueError:
         business = brain
+    from server.services.integration_safety import bounded_tool_data
+    from server.services.tool_schema_registry import VOICE_RESPONSE_KEYS, tool_definition
+
+    base_keys = ("status", "message", "summary", "id", "contact_id", "event_id", "start", "end", "confirmed")
     results = []
     for row in getattr(ctx, "turn_action_results", []):
         result = row.get("result") or {}
-        results.append({"action": row.get("action"), "result": {
-            k: result[k] for k in ("status", "message", "summary", "id", "contact_id", "event_id", "start", "end", "confirmed")
-            if k in result
-        }})
+        definition = tool_definition(str(row.get("action") or ""))
+        # The same fields the speaking model was given (a sheet's rows, a calendar's
+        # free slots). With only status/summary the review saw "found 1 row", called
+        # the caller's real name and order unsupported, and deleted them.
+        keys = dict.fromkeys((*base_keys, *VOICE_RESPONSE_KEYS.get(definition[0], ()))) if definition else dict.fromkeys(base_keys)
+        results.append({"action": row.get("action"), "result": bounded_tool_data({
+            k: result[k] for k in keys if k in result
+        })})
     payload = {"language": language, "caller": caller, "draft": draft,
                "business_source": business, "receipts": getattr(ctx, "action_receipts", []),
                "current_action_results": results, "caller_control": getattr(ctx, "turn_control", None),

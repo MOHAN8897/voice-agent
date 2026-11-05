@@ -82,6 +82,21 @@ APP_SETTINGS: dict[str, list[dict[str, Any]]] = {
                  "help": "Needed only for creating deals.", "fills": {"HUBSPOT_CREATE_DEAL": "pipeline"}},
                 {"key": "dealstage", "label": "New deal stage", "required": False, "resource": "hubspot_stages",
                  "fills": {"HUBSPOT_CREATE_DEAL": "dealstage"}}],
+    # How the business's emails look and whether a person reviews them first. All
+    # optional: without them the agent writes and sends the email itself.
+    "GMAIL": [{"key": "send_mode", "label": "Before an email goes out", "required": False,
+               "choices": [{"value": "send", "label": "Send it right away"},
+                           {"value": "draft", "label": "Save it as a draft for me to review"}],
+               "help": "For emails the agent sends during a call. With drafts, the email waits in your Gmail Drafts and "
+                       "nothing reaches the customer until you press Send; the agent tells the caller your team will email "
+                       "them. After-call follow-ups are always saved as drafts for you to review.",
+               "fills": {}},
+              {"key": "subject_prefix", "label": "Subject starts with", "required": False, "max_length": 60,
+               "help": "For example your business name. Put before the subject the agent writes.",
+               "fills": {}},
+              {"key": "signature", "label": "Signature", "required": False, "multiline": True, "max_length": 600,
+               "help": "Added to the end of every email, for example your name, business and phone number.",
+               "fills": {}}],
     "GOOGLECALENDAR": [{"key": "day_start", "label": "Bookable from", "required": False,
                         "help": "Earliest appointment time, HH:MM in the calendar's time zone (default 09:00).",
                         "fills": {"GOOGLECALENDAR_FIND_FREE_SLOTS": "day_start"}},
@@ -132,8 +147,15 @@ def clean_settings(app: str, raw: Any) -> dict[str, str]:
         value = str(raw.get(field["key"]) or "").strip()
         if not value:
             continue
-        if len(value) > 255 or any(ord(c) < 32 for c in value):
+        multiline = bool(field.get("multiline"))
+        if multiline:
+            value = "\n".join(line.rstrip() for line in value.replace("\r\n", "\n").split("\n"))
+        allowed_control = {"\n"} if multiline else set()
+        if len(value) > int(field.get("max_length") or 255) or any(ord(c) < 32 and c not in allowed_control for c in value):
             raise ValueError(f"{field['label']} is not valid.")
+        choices = field.get("choices")
+        if choices and value not in {c["value"] for c in choices}:
+            raise ValueError(f"Choose an option for {field['label']}.")
         key = field["key"]
         if key in {"day_start", "day_end"} and not _TIME.match(value):
             raise ValueError(f"{field['label']} must look like 09:30.")
@@ -300,3 +322,48 @@ async def list_resources(resource: str, client: Any, base: str, headers: dict, s
         return [{"value": s["id"], "label": f"{p.get('label')}: {s.get('label')}"}
                 for p in data.get("results", []) if not pipeline or p.get("id") == pipeline for s in p.get("stages", [])]
     raise ValueError("Unknown resource")
+
+
+def apply_email_format(tool_name: str, arguments: dict[str, Any], saved: dict[str, Any] | None) -> tuple[str, dict[str, Any], bool]:
+    """The business's own email format, applied by the server (never left to the model).
+
+    Returns the action to run, its arguments, and whether the email was held as a
+    draft for review instead of being sent.
+    """
+    name = str(tool_name or "").upper()
+    if name not in {"GMAIL_SEND_EMAIL", "GMAIL_CREATE_DRAFT"}:
+        return tool_name, arguments, False
+    settings = saved or {}
+    args = dict(arguments)
+    prefix = str(settings.get("subject_prefix") or "").strip()
+    subject = str(args.get("subject") or "").strip()
+    if prefix and not subject.casefold().startswith(prefix.casefold()):
+        args["subject"] = f"{prefix} — {subject}" if subject else prefix
+    signature = str(settings.get("signature") or "").strip()
+    body = str(args.get("body") or "").rstrip()
+    if signature and signature not in body:
+        args["body"] = f"{body}\n\n{signature}" if body else signature
+    held = name == "GMAIL_SEND_EMAIL" and str(settings.get("send_mode") or "send") == "draft"
+    return ("GMAIL_CREATE_DRAFT" if held else tool_name), args, held
+
+
+def open_link(app: str, settings: dict[str, Any] | None) -> dict[str, str] | None:
+    """Where the business can see what its agents wrote, in the app itself.
+
+    Built only from the workspace's own saved setup (never from caller data), and
+    only for addresses the provider documents as stable.
+    """
+    name, values = _norm(app), settings or {}
+    if name == "GOOGLESHEETS":
+        sheet = spreadsheet_id(str(values.get("spreadsheet_id") or ""))
+        if not sheet:
+            return None
+        return {"url": f"https://docs.google.com/spreadsheets/d/{sheet}/edit", "label": "Open sheet"}
+    if name == "GMAIL":
+        if str(values.get("send_mode") or "send") == "draft":
+            return {"url": "https://mail.google.com/mail/#drafts", "label": "Open Gmail drafts"}
+        return {"url": "https://mail.google.com/mail/#sent", "label": "Open sent emails"}
+    if name == "GOOGLECALENDAR":
+        return {"url": "https://calendar.google.com/calendar/r", "label": "Open calendar"}
+    return None
+

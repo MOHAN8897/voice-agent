@@ -2200,8 +2200,9 @@ class NangoService:
                     return {
                         "status": "sent",
                         "message_id": str(mid),
-                        "summary": f"WhatsApp message delivered to {to_num}.",
-                        "message": "WhatsApp confirmation sent.",
+                        # Accepted by WhatsApp, not yet delivered: never claim delivery.
+                        "summary": f"WhatsApp message sent to {to_num} (accepted by WhatsApp for delivery).",
+                        "message": "WhatsApp message sent.",
                     }
                 return {"status": "error", "message": f"Failed to send WhatsApp message (HTTP {resp.status_code})."}
 

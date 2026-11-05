@@ -119,6 +119,11 @@ class DialtactToolRouter:
             saved = (await tenant_settings(tenant_id, get_session_factory())).get(definition[0])
             arguments = {**{k: v for k, v in arguments.items() if k not in owned},
                          **filled_params(definition[0], tool_name, saved)}
+        app_settings: dict[str, Any] | None = None
+        if definition is not None and definition[0] == "GMAIL":
+            from server.services.integration_settings import tenant_settings as _tenant_settings
+
+            app_settings = (await _tenant_settings(tenant_id, get_session_factory())).get("GMAIL")
         converted = False
         if timing == "in_call" and definition is not None and isinstance(arguments, dict):
             from server.services.recipient_guard import written_address
@@ -144,6 +149,18 @@ class DialtactToolRouter:
             unconfirmed = recipient_guard.check(call_id, tool_name, arguments, converted=converted)
             if unconfirmed is not None:
                 return unconfirmed
+            from server.services import phone_recipient_guard
+
+            # WhatsApp/SMS only to the caller's own number, or one they said and confirmed.
+            unconfirmed = phone_recipient_guard.check(call_id, tool_name, arguments, caller_phone=call_party_phone(call_id))
+            if unconfirmed is not None:
+                return unconfirmed
+            from server.services import cancellation_guard
+
+            # A cancellation is never the way to change a time: confirm it first.
+            unconfirmed = cancellation_guard.check(call_id, tool_name, arguments)
+            if unconfirmed is not None:
+                return unconfirmed
             from server.services import message_grounding
 
             invented = message_grounding.check(call_id, tool_name, arguments)
@@ -161,6 +178,13 @@ class DialtactToolRouter:
             except Exception as exc:  # noqa: BLE001 - tool failures must return an unconfirmed result to the call.
                 logger.warning("[TOOL_ROUTER] Platform action unconfirmed: %s", type(exc).__name__)
                 return {"status": "unknown", "message": "Saving could not be confirmed. Check the existing request before retrying."}
+        held_for_review = False
+        if definition is not None and definition[0] == "GMAIL":
+            from server.services.integration_settings import apply_email_format
+
+            # The business's subject/signature, and its "review before sending"
+            # choice, are applied here, after the recipient and content checks.
+            tool_name, arguments, held_for_review = apply_email_format(tool_name, arguments, app_settings)
         action_type = self._get_action_metadata(tool_name)["type"]
         execution_id = None
         if action_type == "write":
@@ -196,6 +220,15 @@ class DialtactToolRouter:
                     "timed_out_pending" if status in {"unknown", "timeout"} else "failed"
                 )
                 await self._record_execution_complete(tenant_id, execution_id, audit_status, result=result)
+            if tool_name == "GOOGLECALENDAR_LIST_EVENTS" and timing == "in_call" and call_id:
+                # A booking made earlier on this call must never be "not found" because
+                # the model searched another day: add it, with its id, from our own record.
+                result = await self._with_bookings_from_this_call(tenant_id, call_id, result)
+            if held_for_review and result.get("status") == "draft_created":
+                # Never let the agent say "sent": a person reviews it first.
+                result = {**result, "sent": False, "held_for_review": True,
+                          "summary": "Saved as a draft for the team to review. Nothing has been sent to the customer yet.",
+                          "message": "Tell the caller our team will check it and email them shortly. Do not say it was sent."}
             return result
         except (asyncio.TimeoutError, asyncio.CancelledError) as exc:
             result = ({"status": "unknown", "message": "The result could not be confirmed. Check the existing action before trying again."}
@@ -214,6 +247,37 @@ class DialtactToolRouter:
             if execution_id:
                 await self._record_execution_complete(tenant_id, execution_id, "timed_out_pending", result=result)
             return result
+
+    async def _with_bookings_from_this_call(self, tenant_id: str, call_id: str, result: dict[str, Any]) -> dict[str, Any]:
+        factory = get_session_factory()
+        if factory is None:
+            return result
+        try:
+            from server.db.models.integration_models import ToolExecution
+
+            async with factory() as session:
+                rows = (await session.execute(select(ToolExecution).where(
+                    ToolExecution.tenant_id == uuid.UUID(tenant_id), ToolExecution.call_id == call_id,
+                    ToolExecution.action.in_(("GOOGLECALENDAR_CREATE_EVENT", "GOOGLECALENDAR_RESCHEDULE_EVENT")),
+                    ToolExecution.status == "succeeded",
+                ).order_by(ToolExecution.started_at))).scalars().all()
+        except Exception as exc:  # noqa: BLE001 - the plain lookup result still stands
+            logger.warning("[TOOL_ROUTER] Call bookings unavailable: %s", type(exc).__name__)
+            return result
+        latest: dict[str, dict[str, Any]] = {}
+        for row in rows:
+            event_id = str((row.result or {}).get("event_id") or (row.parameters or {}).get("event_id") or "")
+            if event_id:
+                latest[event_id] = {"id": event_id, "summary": (row.parameters or {}).get("summary") or "Appointment",
+                                    "start": {"dateTime": (row.parameters or {}).get("start")},
+                                    "end": {"dateTime": (row.parameters or {}).get("end")}, "booked_on_this_call": True}
+        if not latest:
+            return result
+        events = [e for e in (result.get("events") or []) if isinstance(e, dict)]
+        known = {str(e.get("id")) for e in events}
+        events += [e for eid, e in latest.items() if eid not in known]
+        return {**result, "status": "success", "events": events,
+                "summary": f"Found {len(events)} appointment(s) for this caller, including the one(s) booked on this call."}
 
     def _get_action_metadata(self, action_name: str) -> dict[str, str]:
         return {"type": "write" if is_write_action(action_name) else "read"}

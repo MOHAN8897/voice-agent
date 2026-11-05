@@ -73,7 +73,7 @@ _SCHEMAS: dict[str, list[dict]] = {
         {
             "type": "function",
             "name": "GOOGLECALENDAR_CANCEL_EVENT",
-            "description": "Cancel or delete an existing calendar appointment",
+            "description": "Cancel an existing appointment only when the caller no longer wants it at all. To change its date or time use GOOGLECALENDAR_RESCHEDULE_EVENT instead; never cancel and rebook",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -86,7 +86,7 @@ _SCHEMAS: dict[str, list[dict]] = {
         {
             "type": "function",
             "name": "GOOGLECALENDAR_RESCHEDULE_EVENT",
-            "description": "Reschedule an existing calendar appointment to a new date and time",
+            "description": "Move an existing appointment to a new date and time, keeping the booking and its guest. Use this whenever the caller wants a different time",
             "parameters": {
                 "type": "object",
                 "properties": {

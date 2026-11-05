@@ -80,9 +80,13 @@ action_request is write when the caller asks to save/update/book/send/confirm an
 actual record or action now, in any language: "confirm the order", "place it",
 "note/save/register my enquiry or details", or yes/agreement answering the
 representative's own offer to confirm, book, save or place something (read
-agent_previous). read is for checking live availability/status needing a
-connected tool. Ordinary price/eligibility/terms questions are none. A phone
-callback or opt-out is handled by the platform, so it needs no integration action.
+agent_previous). connected_actions lists the tools this call really has. read is
+for any question whose true answer needs one of them, in any language: free
+slots/availability/"is X free", existing bookings, an order/ticket/record/customer
+status or lookup. If connected_actions has no matching tool, it is none.
+Ordinary price/eligibility/terms questions answered from the business script are
+none. A phone callback or opt-out is handled by the platform, so it needs no
+integration action.
 """
 
 MEMORY_RULES = """

@@ -636,8 +636,15 @@ class LiveTurnOrchestrator:
             receipts = getattr(ctx, "action_receipts", None) or []
             control = ctx.turn_control if isinstance(getattr(ctx, "turn_control", None), dict) else None
             answers = ctx.business_answers if isinstance(getattr(ctx, "business_answers", None), list) else []
+            # Weekday names are where models miscount ("Wednesday" became the 6th, a
+            # Friday). Give the dates instead of asking for date arithmetic.
+            week_ahead = ", ".join(
+                f"{(local_now + timedelta(days=offset)).strftime('%A')} = {(local_now + timedelta(days=offset)).date().isoformat()}"
+                for offset in range(1, 8)
+            )
             dynamic = (
                 f"Current local time: {now_str} ({tz_name}). Today's date is {today_iso}. Tomorrow is {tomorrow_str} ({tomorrow_iso}). "
+                f"The next 7 days: {week_ahead}. A weekday the caller names means its date from this list. "
                 f"Current server time (UTC): {datetime.now(timezone.utc).isoformat()}. "
                 + clock_rule +
                 "Never invent a year or resolve a future request to a past date. Historical calendar reads remain allowed. "
@@ -724,6 +731,11 @@ class LiveTurnOrchestrator:
                 ledger_task = asyncio.create_task(
                     self._safe_append_user(call_id, transcript, stt_latency_ms)
                 )
+            if ctx is not None:
+                # The transcript row above is written in the background, so an action
+                # in this same turn could not see what the caller just said (an email
+                # they spelled, the "yes" to a read-back). Safety checks read this.
+                ctx.pending_caller_turn = transcript
 
             # A language request is server-owned: English (or back to the call's own
             # language) switches the live call; any other language is a callback.
@@ -784,6 +796,15 @@ class LiveTurnOrchestrator:
                     # A joined turn already carries its own unclassified fragments.
                     pending = [p for p in pending if norm_speech(p) not in norm_speech(transcript)]
                 control_transcript = "\n".join([*pending, transcript]) if pending else transcript
+                # The step must know what this call can look up (calendar, sheet...).
+                # The tool list is cached on the call and needed for the reply anyway.
+                connected_actions = getattr(ctx, "available_tools", None)
+                if connected_actions is None and getattr(ctx, "tenant_id", None) and getattr(ctx, "agent_id", None):
+                    try:
+                        await asyncio.wait_for(self._load_composed_tenant_tools(ctx), timeout=1.5)
+                    except Exception as exc:  # noqa: BLE001 -- the reply path loads them again
+                        log_pstn("control.tools_unavailable", call_id=call_id, error_type=type(exc).__name__)
+                    connected_actions = getattr(ctx, "available_tools", None)
                 close_task = start_close_classification(
                     transcript=control_transcript,
                     agent_previous=previous_agent_line(session_id),
@@ -795,6 +816,7 @@ class LiveTurnOrchestrator:
                     unfinished_request=bool(getattr(ctx, "interrupted_caller_request", "")) or (
                         order_workflow_active(getattr(ctx, "compiled_brain_text", "")) and not has_order_proof(call_id)
                     ),
+                    connected_actions=list(connected_actions or []),
                 )
             # Speech-to-text writes in the call's script, so only a model reading the words can tell
             # Hindi from Telugu there. Asked alongside the classifier; the reply is not yet started.
@@ -2594,6 +2616,13 @@ class LiveTurnOrchestrator:
                     ctx.pending_tool_result = pending_before
             if not isinstance(result, dict):
                 result = {"status": "unknown", "message": "The action result could not be confirmed."}
+            # Operators must be able to see what the agent looked up or did and
+            # what came back, without the caller's personal data in the log.
+            log_pstn("composed.tool_result", call_id=getattr(ctx, "call_id", None), tool=name.upper(),
+                     status=str(result.get("status") or ""),
+                     matches=result.get("matches") if isinstance(result.get("matches"), int) else None,
+                     argument_keys=sorted(arguments)[:12] if isinstance(arguments, dict) else None,
+                     message=str(result.get("message") or result.get("summary") or "")[:160])
             from server.call.action_proof import proof_for_tool_result
 
             proof = proof_for_tool_result(name, result)

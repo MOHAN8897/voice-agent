@@ -172,6 +172,7 @@ async def classify_close_turn(
     extract_memory: bool = False,
     current_facts: dict[str, str] | None = None,
     unfinished_request: bool = False,
+    connected_actions: list[str] | None = None,
 ) -> dict[str, Any] | None:
     """Run the tiny decision step; any failure returns None (call continues)."""
     if len(transcript or "") > 8000:
@@ -206,6 +207,10 @@ async def classify_close_turn(
             "agent_previous": (agent_previous or "")[:400],
             "caller_last_turn": transcript or "",
             "unfinished_request": unfinished_request,
+            # What this call can really look up or do. Without it the step could not
+            # tell "is 3 PM free?" (needs the calendar) from a plain question, and the
+            # model answered availability questions without ever checking.
+            "connected_actions": sorted({str(a).upper() for a in (connected_actions or []) if a})[:40],
             **({"current_facts": facts} if extract_memory else {}),
         },
         ensure_ascii=False,
@@ -591,6 +596,7 @@ def start_close_classification(
     extract_memory: bool = False,
     current_facts: dict[str, str] | None = None,
     unfinished_request: bool = False,
+    connected_actions: list[str] | None = None,
 ) -> asyncio.Task | None:
     """Begin the decision concurrently with the reply; None when not applicable."""
     if not transcript.strip() or (not extract_memory and not close_turn_plausible(transcript)) or not classifier_available(llm):
@@ -605,6 +611,7 @@ def start_close_classification(
             extract_memory=extract_memory,
             current_facts=current_facts,
             unfinished_request=unfinished_request,
+            connected_actions=connected_actions,
         ),
         name=f"close-classifier-{call_id or 'unknown'}",
     )

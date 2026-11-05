@@ -89,7 +89,8 @@ export function IntegrationSetupDialog({ app, onClose, onSaved }) {
         {loaded && (
           <form onSubmit={save} className="space-y-4">
             {fields.map((f) => {
-              const choices = options[f.key];
+              // Fixed choices from the app's setup, or the account's own (loaded on demand).
+              const choices = f.choices && f.choices.length ? f.choices : options[f.key];
               const id = `setup-${app.id}-${f.key}`;
               const current = values[f.key] || '';
               return (
@@ -104,8 +105,13 @@ export function IntegrationSetupDialog({ app, onClose, onSaved }) {
                       {current && !choices.some((c) => c.value === current) && <option value={current}>{current}</option>}
                       {choices.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                     </select>
+                  ) : f.multiline ? (
+                    <textarea id={id} rows={4} value={current} maxLength={f.max_length || undefined}
+                      onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
+                      className={`${inputClass} py-2.5 leading-relaxed`} data-testid={`setup-field-${f.key}`} />
                   ) : (
-                    <input id={id} type="text" value={current} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
+                    <input id={id} type="text" value={current} maxLength={f.max_length || undefined}
+                      onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
                       className={inputClass} data-testid={`setup-field-${f.key}`} autoComplete="off" />
                   )}
                   {f.help && <p className="mt-1 text-meta text-fg-muted">{f.help}</p>}

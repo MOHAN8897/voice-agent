@@ -755,6 +755,23 @@ export function IntegrationsModule() {
                       )}
                     </div>
 
+                    {/* Where the business sees what its agents wrote: its own sheet, drafts or calendar. */}
+                    {(() => {
+                      const link = isConnected && connections.find((c) => normalizeAppKey(c.app_name || '') === normalizeAppKey(app.id))?.open_link;
+                      return link?.url ? (
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          data-testid={`open-link-${app.id.toLowerCase()}`}
+                          className="mt-3 inline-flex items-center gap-1 min-h-[32px] text-ui font-medium text-accent-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-control"
+                        >
+                          {link.label}
+                          <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
+                        </a>
+                      ) : null;
+                    })()}
+
                     {/* Footer: actions list and connect / disconnect */}
                     <div className="mt-4 pt-3 border-t border-line flex items-center justify-between gap-2">
                       <button

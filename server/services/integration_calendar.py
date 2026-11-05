@@ -115,7 +115,10 @@ async def execute_calendar_action(client: httpx.AsyncClient, base: str, headers:
                     "free_ranges": [f"{a:%H:%M}-{b + timedelta(minutes=duration):%H:%M}" for a, b in ranges],
                     "date": target.isoformat(), "time_zone": str(zone),
                     "message": "Free times within the business's bookable hours "
-                               f"{_hhmm(params.get('day_start'), time(9)):%H:%M}-{_hhmm(params.get('day_end'), time(17)):%H:%M}."}
+                               f"{_hhmm(params.get('day_start'), time(9)):%H:%M}-{_hhmm(params.get('day_end'), time(17)):%H:%M}. "
+                               "free_ranges is complete: any start inside a free range is free and can be booked. "
+                               "available_slots is only a short sample of those times, so a time missing from it is "
+                               "not busy; never tell the caller a time inside free_ranges is unavailable."}
         if action in {"GOOGLECALENDAR_CANCEL_EVENT", "GOOGLECALENDAR_DELETE_EVENT",
                       "GOOGLECALENDAR_RESCHEDULE_EVENT", "GOOGLECALENDAR_UPDATE_EVENT"}:
             current = await client.get(f"{root}/events/{path_segment(params.get('event_id') or '')}", headers=headers)
@@ -127,7 +130,8 @@ async def execute_calendar_action(client: httpx.AsyncClient, base: str, headers:
         if action in {"GOOGLECALENDAR_CANCEL_EVENT", "GOOGLECALENDAR_DELETE_EVENT"}:
             event_id = path_segment(params.get('event_id') or '')
             mutation_started = True
-            response = await client.delete(f"{root}/events/{event_id}", headers=headers)
+            # Tell the guests (the caller) the visit is cancelled, as Google's UI does.
+            response = await client.delete(f"{root}/events/{event_id}", headers=headers, params={"sendUpdates": "all"})
             response.raise_for_status()
             if response.status_code not in {200, 204}:
                 return {"status": "unknown", "message": "Check the calendar to confirm cancellation."}
@@ -159,7 +163,9 @@ async def execute_calendar_action(client: httpx.AsyncClient, base: str, headers:
         if reschedule:
             encoded_id = path_segment(event_id)
             mutation_started = True
-            response = await client.patch(f"{root}/events/{encoded_id}", headers=headers, json=payload)
+            # Guests get the new time by email (Google sends nothing unless asked).
+            response = await client.patch(f"{root}/events/{encoded_id}", headers=headers, json=payload,
+                                          params={"sendUpdates": "all"})
         else:
             if not str(params.get("summary") or "").strip():
                 raise ValueError("Event title required")
@@ -169,13 +175,22 @@ async def execute_calendar_action(client: httpx.AsyncClient, base: str, headers:
             if tag:
                 payload["extendedProperties"] = {"private": {PARTY_KEY: tag}}
             mutation_started = True
-            response = await client.post(f"{root}/events", headers=headers, json=payload)
+            # Without sendUpdates Google adds the guest silently: no invitation
+            # email. The agent must only promise an invite that was really sent.
+            response = await client.post(f"{root}/events", headers=headers, json=payload,
+                                         params={"sendUpdates": "all"} if params.get("attendee_email") else None)
         response.raise_for_status()
         result = response.json()
         if not result.get("id"):
             return {"status": "unknown", "message": "The calendar returned no verifiable event. Check the calendar before trying again."}
+        guests = [str(a.get("email") or "") for a in result.get("attendees") or [] if a.get("email")]
+        invited = bool(guests)
+        note = (f" A calendar invitation was emailed to {', '.join(guests)}." if invited and not reschedule
+                else f" The new time was emailed to {', '.join(guests)}." if invited
+                else " No invitation email was sent (no guest email on the booking).")
         return {"status": "success", "confirmed": True, "event_id": result["id"], "rescheduled": reschedule,
-                "date": start.date().isoformat(), "time": start.isoformat(), "summary": "Calendar event updated." if reschedule else "Calendar event created."}
+                "date": start.date().isoformat(), "time": start.isoformat(), "invitation_sent": invited,
+                "summary": ("Calendar event updated." if reschedule else "Calendar event created.") + note}
     except httpx.HTTPStatusError as exc:
         return {"status": "error" if exc.response.status_code < 500 else "unknown", "message": "The calendar request could not be completed or verified."}
     except (ValueError, KeyError, TypeError):

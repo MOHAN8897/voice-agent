@@ -152,6 +152,7 @@ async def list_integrations(
                 logger.debug("[INTEGRATIONS] Reconciliation skipped: %s", type(e).__name__)
 
         from server.services.integration_policy import disabled_apps
+        from server.services.integration_settings import open_link
         from server.services.tool_schema_registry import _normalize
 
         off = await disabled_apps(tenant_id, session_factory)
@@ -175,6 +176,8 @@ async def list_integrations(
                         # Still connected, but agents cannot use it until the admin turns it back on.
                         "disabled_by_admin": _normalize(item.app_name) in off,
                         "updated_at": item.updated_at.isoformat() if item.updated_at else None,
+                        # A direct link to the business's own sheet/inbox/calendar.
+                        "open_link": open_link(item.app_name, (item.metadata_ or {}).get("settings")),
                     }
                     for item in integrations
                     if (item.status == "ACTIVE" and (item.metadata_ or {}).get("gateway_verified") is True)
@@ -306,7 +309,7 @@ async def get_integrations_catalog(
             # What a call or campaign may attach this app for.
             "call_modes": list(supported_modes(item.get("id", ""))),
             "call_setup_note": SETUP_REQUIRED.get(app_key) if missing else None,
-            "setup_fields": [{k: f.get(k) for k in ("key", "label", "help", "required")} | {"has_options": bool(f.get("resource"))}
+            "setup_fields": [{k: f.get(k) for k in ("key", "label", "help", "required", "choices", "multiline", "max_length")} | {"has_options": bool(f.get("resource"))}
                              for f in fields],
             "setup_missing": missing,
             "admin_disabled": app_key in off,
@@ -693,7 +696,7 @@ async def get_integration_settings(app_id: str, request: Request) -> dict[str, A
         values = dict((record.metadata_ or {}).get("settings") or {})
     return {
         "app": app,
-        "fields": [{k: f.get(k) for k in ("key", "label", "help", "required")} | {"has_options": bool(f.get("resource"))}
+        "fields": [{k: f.get(k) for k in ("key", "label", "help", "required", "choices", "multiline", "max_length")} | {"has_options": bool(f.get("resource"))}
                    for f in spec_for(app)],
         "values": values,
         "missing": missing_required(app, values),

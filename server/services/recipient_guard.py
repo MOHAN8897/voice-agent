@@ -79,9 +79,21 @@ def caller_turns(call_id: str) -> list[str]:
     from server.call.call_ledger import call_ledger
 
     try:
-        return [str(line.get("text") or "") for line in call_ledger.read_lines(call_id) if line.get("role") == "user"]
+        turns = [str(line.get("text") or "") for line in call_ledger.read_lines(call_id) if line.get("role") == "user"]
     except Exception:  # noqa: BLE001 - no transcript means nothing is confirmed
-        return []
+        turns = []
+    # The caller's current words, which may not be saved to the transcript yet
+    # when an action runs in the same turn.
+    try:
+        from server.call import call_context
+
+        ctx = call_context.get(call_id)
+        current = str(getattr(ctx, "pending_caller_turn", "") or "").strip()
+    except Exception:  # noqa: BLE001 - without a live call only the saved transcript counts
+        current = ""
+    if current and (not turns or turns[-1].strip() != current):
+        turns.append(current)
+    return turns
 
 
 def check(call_id: str, tool_name: str, arguments: dict[str, Any], *, converted: bool = False) -> dict[str, Any] | None:
@@ -104,6 +116,15 @@ def check(call_id: str, tool_name: str, arguments: dict[str, Any], *, converted:
         # the action when that answer was a yes.
         _pending.pop(key, None)
         return None
+    # Why a read-back was asked, without the address itself (support can see a loop).
+    try:
+        from server.utils.logger import log_pstn
+
+        log_pstn("recipient.readback", call_id=call_id, tool=str(tool_name).upper(), converted=bool(converted),
+                 heard=spoken_form(address) in spoken_form(" ".join(turns)), turns=len(turns),
+                 asked_at=asked if asked is not None else -1)
+    except Exception:  # noqa: BLE001 - logging must never block the call
+        pass
     _pending[key] = len(turns)
     _pending.move_to_end(key)
     while len(_pending) > _MAX_PENDING:
