@@ -26,7 +26,9 @@ from server.services.tenant_tool_cache import invalidate as invalidate_tenant_to
 from server.utils.logger import logger
 
 router = APIRouter(tags=["integrations"])
-_connect_limiter = RateLimiter(max_requests=30, window_s=3600)
+# The console prepares a session each time the Connect dialog opens (so the
+# sign-in window opens straight from the click); allow for open/cancel/retry.
+_connect_limiter = RateLimiter(max_requests=60, window_s=3600)
 
 
 def _verified(metadata: dict | None) -> dict:

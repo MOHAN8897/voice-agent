@@ -297,7 +297,8 @@ export function IntegrationsModule() {
             setConnectionError(connectFailureMessage(error));
           }
           setConnecting(null);
-          prepareSession(connectModalApp); // a fresh session for the retry
+          // A fresh session for the retry, unless we were just told to slow down.
+          if (error?.status !== 429) prepareSession(connectModalApp);
           return;
         }
         stopAuth();
