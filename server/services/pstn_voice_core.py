@@ -5,6 +5,7 @@ import asyncio
 import base64
 import inspect
 import json
+import re
 import logging
 import time
 import uuid
@@ -66,6 +67,9 @@ PSTN_THINK_CANCEL_HOLD_S = 0.25
 # a word. Caller speech in that window means they were not finished (call
 # CC1627: the agent started over the caller twice and both replies were cut).
 PSTN_UNHEARD_REPLY_GRACE_S = 0.3
+# Speaking rate before a call has a reply of its own to measure (Gnani Telugu at
+# speed 1.1 measured 11-15 characters a second on call CC1627).
+PSTN_DEFAULT_SPEECH_CHARS_PER_S = 11.0
 PSTN_DUCK_TIMEOUT_S = 0.85
 # A committed interruption that turns out to be noise, an echo or a cough (no
 # caller turn follows) resumes the cut reply, as LiveKit's agents do by default
@@ -259,6 +263,7 @@ class PstnVoiceLoop:
         self._last_tts_text = ""  # alias of heard — kept for existing callers
         self._heard_sentences: list[str] = []
         self._turn_tts_accum = ""
+        self._speech_chars_per_s = 0.0
         self._backchannel_playing = False
         self._backchannel_task: asyncio.Task | None = None
         self._backchannel_lock = asyncio.Lock()
@@ -1870,6 +1875,50 @@ class PstnVoiceLoop:
         if self._active_tts_session is session:
             self._active_tts_session = None
 
+    def _note_speech_rate(self, session: Any) -> None:
+        """Characters per second of this call's voice, from replies that played in full."""
+        chars = int(getattr(session, "_chars_sent", 0) or 0)
+        seconds = float(getattr(session, "_tts_audio_seconds", 0.0) or 0.0)
+        if chars >= 40 and seconds >= 2.0:
+            rate = chars / seconds
+            self._speech_chars_per_s = rate if not self._speech_chars_per_s else 0.7 * self._speech_chars_per_s + 0.3 * rate
+
+    def _unheard_reply_remainder(self, session: Any) -> str:
+        """The part of this turn's reply the voice never said, from the sentence it broke in.
+
+        Audio seconds played times the call's speaking rate places the break; the
+        rate is taken low so the restart is never after it (at worst one sentence repeats).
+        """
+        text = (self._turn_tts_accum or "").strip()
+        seconds = float(getattr(session, "_tts_audio_seconds", 0.0) or 0.0)
+        if not text:
+            return ""
+        rate = (self._speech_chars_per_s or PSTN_DEFAULT_SPEECH_CHARS_PER_S) * 0.85
+        said = int(seconds * rate)
+        if said >= len(text) - 4:
+            return ""
+        starts = [0] + [m.end() for m in re.finditer(r"[.?!।]\s+", text)]
+        start = max(i for i in starts if i <= said)
+        return text[start:].strip()
+
+    async def _speak_again_on_fresh_voice(self, session: Any, text: str, *, why: str) -> bool:
+        """Say ``text`` once more on a new TTS connection; True when audio went out."""
+        text = (text or "").strip()
+        if not text or self._closed or self._hangup_started or self._phase == PHASE_ENDED:
+            return False
+        if self._caller_took_turn():
+            return False
+        log_pstn("tts.retry_on_fresh_voice", call_id=self.call_id, why=why, chars=len(text))
+        await self._recover_tts_after_failure(session)
+        frames_before = self._wire_frames_out
+        try:
+            await self.speak(text, language_code=self._resolve_language())
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:  # noqa: BLE001 -- the caller falls back to the normal failure path.
+            log_pstn("tts.retry_on_fresh_voice_failed", call_id=self.call_id, why=why, error_type=type(exc).__name__)
+        return self._wire_frames_out > frames_before
+
     def _get_call_tts_session(self) -> Any:
         from server.services.pstn_turn_tts import PstnTurnTtsSession
 
@@ -1879,6 +1928,14 @@ class PstnVoiceLoop:
 
     async def _acquire_tts_session(self) -> Any:
         session = self._get_call_tts_session()
+        if getattr(session, "had_error", False):
+            # A provider error leaves the failed request's tail (audio, "complete",
+            # end-of-stream) queued on the warm socket. The next reply read that
+            # stale end as its own, produced no audio, and the call was hung up
+            # with a goodbye (call 029B33). Start the next reply on a clean socket.
+            log_pstn("tts.session.reopen_after_error", call_id=self.call_id)
+            await self._recover_tts_after_failure(session)
+            session = self._get_call_tts_session()
         await session.prepare_for_turn()
         return session
 
@@ -3239,6 +3296,7 @@ class PstnVoiceLoop:
         cancelled = False
         spoke_from_stream = False
         needs_tts_fallback = False
+        unheard = ""
         tts_session = None
         accepted_end_call = False
         hangup_reason = "agent_hangup"
@@ -3374,6 +3432,9 @@ class PstnVoiceLoop:
                                 turn_id=self.current_turn_id,
                                 chars=getattr(tts_session, "_chars_sent", 0),
                             )
+                            unheard = self._unheard_reply_remainder(tts_session)
+                        else:
+                            self._note_speech_rate(tts_session)
                     # Keep ownership through TTS cleanup. Releasing busy here lets
                     # a new turn start while this turn's finally clears its generation.
                     log_pstn(
@@ -3430,12 +3491,22 @@ class PstnVoiceLoop:
                 await self._finish_agent_hangup(reason="goodbye", spoke_farewell=False)
                 return
             if needs_tts_fallback and not turn_cancelled and not self.emission_blocked():
+                # One empty reply with no proof of an outage is a voice hiccup, not
+                # a finished call: say it again on a fresh connection first. A
+                # proven outage (credits, rejection) goes straight to the clip.
+                if self._speech_outage_evidence(tts_session) is None and await self._speak_again_on_fresh_voice(
+                        tts_session, self._turn_tts_accum, why="empty_reply"):
+                    return
                 await self._close_after_tts_failure(
                     defect="empty_tts_audio",
                     session=tts_session,
                     trigger="tts_failure",
                 )
                 return
+            if unheard and not turn_cancelled and not self.emission_blocked():
+                # The voice failed part-way: the caller heard the start and then
+                # silence until they asked "hello? faster please" (call 029B33).
+                await self._speak_again_on_fresh_voice(tts_session, unheard, why="voice_failed_mid_reply")
         except asyncio.CancelledError:
             cancelled = True
             log_pstn("turn.cancelled", call_id=self.call_id, turn_id=self.current_turn_id)

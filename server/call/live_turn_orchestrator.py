@@ -847,6 +847,15 @@ class LiveTurnOrchestrator:
             slow_down_hint = self._maybe_slow_down_hint(
                 transcript, language_code=language_code, call_id=call_id, ctx=ctx,
             )
+            from server.services.user_turn_hints import asks_to_hurry, build_hurry_turn_hint
+
+            hurry_now = asks_to_hurry(transcript)
+            hurry_hint = None
+            if hurry_now or getattr(ctx, "caller_wants_brief", False):
+                if ctx is not None and hurry_now:
+                    ctx.caller_wants_brief = True
+                hurry_hint = build_hurry_turn_hint(just_asked=hurry_now)
+                log_pstn("turn.hurry_hint", call_id=call_id, just_asked=hurry_now)
             turn_hints = [
                 h
                 for h in (
@@ -854,6 +863,7 @@ class LiveTurnOrchestrator:
                     # again only duplicated it in every request.
                     None if getattr(ctx, "pipeline", None) == "composed_voice" else self._maybe_anti_repeat_hint(session_id),
                     slow_down_hint,
+                    hurry_hint,
                     self._maybe_callback_close_hint(transcript, ctx=ctx, call_id=call_id) if not getattr(ctx, "semantic_control_enabled", False) else None,
                 )
                 if h
