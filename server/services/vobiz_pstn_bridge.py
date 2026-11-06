@@ -42,6 +42,11 @@ _vobiz_admission_lock = asyncio.Lock()
 
 # 4 × 20 ms frames: a short fade at an interruption, long enough to avoid a click.
 VOBIZ_BARGE_FADE_FRAMES = 4
+# How far ahead of real-time playback agent audio may be sent. TTS arrives
+# faster than real time one 20 ms frame per call; unpaced, Vobiz buffered up to
+# 13 s of it (call CC1627), so a volume duck reached the caller seconds late and
+# only clearAudio could stop the voice. A short lead absorbs network jitter.
+VOBIZ_SEND_LEAD_S = 0.2
 
 # Vobiz sends `start` within a second of opening the socket. A socket that stays
 # silent past this is dead (seen 2 Nov 2026: answered call, no start, no media,
@@ -89,6 +94,8 @@ class VobizPstnBridge:
         self._prewarm_bundle = None
         self._early_greeting_task: asyncio.Task | None = None
         self._upcoming_wire: tuple[list[bytes], str, int] = ([], "", 0)
+        # When the last audio sent to Vobiz finishes playing (monotonic clock).
+        self._play_clock = 0.0
         self._stream_started_at: float | None = None
         self._inbound_greeting: str | None = None
 
@@ -586,8 +593,26 @@ class VobizPstnBridge:
                 playback.note_sent_frames(len(frames))
 
             first_out = self._media_frames_out == 0
+            full_frame = len(frames[0]) if frames else 1
+            # The Realtime loop sends from its model receive loop; holding that loop
+            # to playback speed would also hold its events, so it keeps per-chunk pacing.
+            paced = getattr(self._voice, "paced_carrier_send", True) is not False
             next_frame_time = time.monotonic()
             for i, frame in enumerate(frames):
+                if paced:
+                    # Real-time pacing across calls, not just within one: the voice
+                    # loop hands over one frame at a time.
+                    now = time.monotonic()
+                    if self._play_clock < now:
+                        self._play_clock = now
+                    ahead = self._play_clock - now
+                    if ahead > VOBIZ_SEND_LEAD_S:
+                        await asyncio.sleep(ahead - VOBIZ_SEND_LEAD_S)
+                elif i:
+                    next_frame_time += 0.02
+                    delay = next_frame_time - time.monotonic()
+                    if delay > 0:
+                        await asyncio.sleep(delay)
                 if self._closed:
                     return
                 if playback is not None and not playback.is_generation_valid(generation_id):
@@ -609,12 +634,7 @@ class VobizPstnBridge:
                 async with self._ws_send_lock:
                     if not self._closed:
                         await self.ws.send_text(json.dumps(msg))
-
-                if i + 1 < len(frames):
-                    next_frame_time += 0.02
-                    delay = next_frame_time - time.monotonic()
-                    if delay > 0:
-                        await asyncio.sleep(delay)
+                self._play_clock += 0.02 * len(frame) / max(1, full_frame)
 
             self._media_frames_out += len(frames)
             if first_out:
@@ -673,6 +693,8 @@ class VobizPstnBridge:
         msg: dict[str, Any] = {"event": "clearAudio"}
         if self.stream_id:
             msg["streamId"] = self.stream_id
+        # Vobiz drops what it buffered; the next reply starts from now.
+        self._play_clock = 0.0
         try:
             async with self._ws_send_lock:
                 if not self._closed:

@@ -45,11 +45,14 @@ def sanitize_tts_tags(text: str, *, provider: str | None = None, model: str | No
     return re.sub(r"\s+([,.!?।])", r"\1", re.sub(r"\s{2,}", " ", cleaned)).strip()
 
 
-# Gnani's guide: raw numbers, IDs, dates or currency are mispronounced; it does not normalize them.
+# Gnani's input-formatting guide (docs.gnani.ai/api/TTS/tts-input-formating): its text
+# normalisation runs on every request and reads digits, ₹ amounts and Indian grouping in
+# the selected language. A live probe (6 Nov 2026) confirmed it; what it misread were
+# "₹85 Lakhs" and "Sq.ft.", which the final speech pass now rewrites.
 GNANI_NUMBER_WORDS = (
-    "This voice does not read digits reliably, so this overrides any digit guidance above: write prices, "
-    "counts, dates and times as spoken words in the call language, for example the local words for "
-    "five hundred ninety-nine rupees, never `₹599` or `10:30 AM`.\n"
+    "This voice reads digits itself: write amounts as `₹` with digits (`₹599`, `₹85 lakh`), "
+    "units in full words (`square feet`, never `Sq.ft.`), and clock times with the part of day "
+    "in the call language, never `10:30 AM` inside a local-language sentence.\n"
 )
 
 

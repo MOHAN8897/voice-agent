@@ -296,6 +296,16 @@ class AudioArchive:
             return
         async with _lock(call_id):
             buf = _agent_buffers.setdefault(call_id, bytearray())
+            user = _user_buffers.get(call_id)
+            rate = _agent_rates.get(call_id, _AGENT_PCM_RATE)
+            if user and not _is_mpeg(chunk) and not (buf and _is_mpeg(bytes(buf[:4]))):
+                # The caller track records continuously; the agent track only gets
+                # audio while the agent speaks. Fill the silence in between so both
+                # share one timeline (call CC1627: 92 s of agent audio packed into
+                # a 146 s call, which hid every overlap and pause in mix.wav).
+                behind = len(user) / (SAMPLE_RATE * 2) - len(buf) / (rate * 2)
+                if behind > 0.04:
+                    buf.extend(bytes(int(behind * rate) * 2))
             buf.extend(chunk)
 
     async def flush(self, call_id: str) -> dict[str, str]:

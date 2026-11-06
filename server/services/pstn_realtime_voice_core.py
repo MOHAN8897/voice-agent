@@ -569,6 +569,10 @@ async def record_realtime_voice_usage(
 class PstnRealtimeVoiceLoop:
     """Drop-in voice-loop surface for Telnyx/Vobiz without Sarvam STT/TTS."""
 
+    # Audio is sent from the model's receive loop: the carrier bridge must not
+    # hold each send to playback speed (vobiz_pstn_bridge.VOBIZ_SEND_LEAD_S).
+    paced_carrier_send = False
+
     def __init__(
         self,
         *,

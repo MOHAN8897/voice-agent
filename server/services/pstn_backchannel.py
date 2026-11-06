@@ -49,18 +49,20 @@ def pick_backchannel_phrase(language: str | None) -> str:
 HOLD_AFTER_S = 1.5
 # The caller is still talking (or resumed) if a partial arrived this recently.
 HOLD_CALLER_QUIET_S = 0.6
+# "One second", never "one minute": the reply follows within a second or two, and
+# "ఒక్క నిమిషం" promised the caller a wait that never came (call CC1627).
 HOLDING_PHRASES: dict[str, str] = {
     "en-IN": "One moment.",
     "en-US": "One moment.",
-    "te-IN": "ఒక్క నిమిషం.",
+    "te-IN": "ఒక్క క్షణం.",
     "hi-IN": "एक सेकंड।",
-    "ta-IN": "ஒரு நிமிஷம்.",
-    "kn-IN": "ಒಂದು ನಿಮಿಷ.",
+    "ta-IN": "ஒரு நொடி.",
+    "kn-IN": "ಒಂದು ಕ್ಷಣ.",
     "ml-IN": "ഒരു നിമിഷം.",
-    "mr-IN": "एक मिनिट.",
-    "bn-IN": "এক মিনিট।",
-    "gu-IN": "એક મિનિટ.",
-    "pa-IN": "ਇੱਕ ਮਿੰਟ।",
+    "mr-IN": "एक क्षण.",
+    "bn-IN": "এক সেকেন্ড।",
+    "gu-IN": "એક સેકન્ડ.",
+    "pa-IN": "ਇੱਕ ਸਕਿੰਟ।",
 }
 
 
@@ -81,6 +83,13 @@ class PstnBackchannelController:
         self._hold_prewarm: asyncio.Task | None = None
         self._hold_task: asyncio.Task | None = None
         self._held_last_turn = False
+        # Listening sounds are synthesized once per call and played from memory:
+        # made on demand they took ~0.5 s, and the STT refining the caller's
+        # sentence meanwhile cancelled every one before it played (call CC1627).
+        self._bc_frames: dict[str, list[bytes]] = {}
+        self._bc_prewarm: asyncio.Task | None = None
+        self._fired_words = 0
+        self._last_words = 0
 
     def reset(self) -> None:
         self._cancel_watch()
@@ -97,11 +106,13 @@ class PstnBackchannelController:
         words = effective_word_count(text or "")
         if words < MIN_WORDS:
             return
+        self._last_words = words
         now = time.monotonic()
         if self._speech_started_at <= 0:
             self._speech_started_at = now
         self._last_partial_at = now
-        if self._voice._backchannel_playing:
+        if self._voice._backchannel_playing and words > self._fired_words:
+            # New words, not a refinement of the sentence already heard: the caller resumed.
             self._voice._cancel_backchannel()
         self._schedule_watch()
 
@@ -145,14 +156,51 @@ class PstnBackchannelController:
                 return
             if random.random() > FIRE_PROBABILITY:
                 return
-            phrase = pick_backchannel_phrase(voice._resolve_language())
+            ready = [p for p in BACKCHANNEL_PHRASES.get(normalize_compile_language(voice._resolve_language()), [])
+                     if self._bc_frames.get(p)]
+            if not ready:
+                # Synthesizing now would land the sound after the caller resumed.
+                self.prewarm_backchannels()
+                return
+            phrase = random.choice(ready)
             self._last_fire_at = now
+            self._fired_words = self._last_words
             log_pstn("backchannel.fire", call_id=voice.call_id, phrase=phrase[:40])
-            await voice._play_backchannel(phrase)
+            await voice._play_backchannel(phrase, frames=self._bc_frames[phrase])
         except asyncio.CancelledError:
             return
 
     # --- Holding line for slow replies (composed calls) -------------------------
+
+    def prewarm_backchannels(self) -> None:
+        """Synthesize this call's listening sounds once, off the conversation path."""
+        voice = self._voice
+        if voice._closed or (self._bc_prewarm is not None and not self._bc_prewarm.done()):
+            return
+        language = normalize_compile_language(voice._resolve_language())
+        if all(self._bc_frames.get(p) for p in BACKCHANNEL_PHRASES.get(language, [])):
+            return
+        self._bc_prewarm = asyncio.create_task(self._synthesize_backchannels(language))
+
+    async def _synthesize_backchannels(self, language: str) -> None:
+        from server.services.pstn_turn_tts import PstnTurnTtsSession
+        from server.services.spoken_numbers import prepare_spoken_reply
+
+        voice = self._voice
+        for phrase in BACKCHANNEL_PHRASES.get(language, []):
+            if voice._closed or self._bc_frames.get(phrase):
+                continue
+            session = PstnTurnTtsSession(voice)
+            try:
+                frames = await session.synthesize_detached(prepare_spoken_reply(phrase, ensure_terminal=True))
+                if frames and language == normalize_compile_language(voice._resolve_language()):
+                    self._bc_frames[phrase] = frames
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                log_pstn("backchannel.prewarm_failed", call_id=voice.call_id, error=str(exc)[:160])
+            finally:
+                await session.close()
 
     def prewarm_hold(self) -> None:
         """Synthesize the holding line once per call, off the reply path."""
@@ -191,6 +239,10 @@ class PstnBackchannelController:
         self._hold_prewarm = None
         if had_clip:
             self.prewarm_hold()
+        self._bc_frames = {}
+        if self._bc_prewarm is not None and not self._bc_prewarm.done():
+            self._bc_prewarm.cancel()
+        self._bc_prewarm = None
 
     def start_hold(self, turn_id: str | None) -> None:
         """Arm the holding line for this turn; never on two turns in a row."""

@@ -6,6 +6,7 @@ import base64
 import dataclasses
 import json
 import logging
+import time
 from contextlib import aclosing
 from typing import TYPE_CHECKING, Any
 
@@ -169,6 +170,8 @@ class PstnTurnTtsSession:
         self._had_error = False
         self._failure: dict[str, Any] | None = None
         self.partial_timeout = False
+        self._last_audio_rx_at = 0.0
+        self._flush_sent_at = 0.0
         self._bound_generation: str | None = None
         self._awaiting_audio = False
         self._collecting_frames = False
@@ -726,6 +729,8 @@ class PstnTurnTtsSession:
         self._had_error = False
         self._failure = None
         self.partial_timeout = False
+        self._last_audio_rx_at = 0.0
+        self._flush_sent_at = 0.0
         self._awaiting_audio = False
         self._collecting_frames = False
         self._collected_frames = []
@@ -777,8 +782,17 @@ class PstnTurnTtsSession:
             return
         self._awaiting_audio = True
         await self._tts.send(json.dumps({"type": "flush"}))
+        self._flush_sent_at = time.monotonic()
         try:
-            await asyncio.wait_for(self._done.wait(), timeout=12.0)
+            # Audio is played out in real time, so a long reply legitimately
+            # takes longer than 12 s to drain; only 12 s with no audio is a stall.
+            while True:
+                try:
+                    await asyncio.wait_for(self._done.wait(), timeout=1.0)
+                    break
+                except asyncio.TimeoutError:
+                    if time.monotonic() - max(self._last_audio_rx_at, self._flush_sent_at) > 12.0:
+                        raise
         except asyncio.TimeoutError:
             if self._tts_audio_bytes <= 0:
                 log_pstn("tts.finish.timeout", call_id=self._voice.call_id)
@@ -1008,6 +1022,7 @@ class PstnTurnTtsSession:
 
     async def _emit_audio_chunk(self, audio: bytes) -> None:
         voice = self._voice
+        self._last_audio_rx_at = time.monotonic()
         if self._stale_generation():
             return
         use_mulaw_wire = self._use_mulaw_wire

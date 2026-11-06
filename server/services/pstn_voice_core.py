@@ -61,6 +61,11 @@ PSTN_BARGE_FINAL_DEBOUNCE_S = 0.3
 PSTN_ECHO_TAIL_S = 0.35
 PSTN_THINK_CANCEL_MIN_WORDS = 2
 PSTN_THINK_CANCEL_HOLD_S = 0.25
+# A reply nobody has heard yet: the carrier delivers audio ~300 ms after we send
+# it, so for this long after the first reply frame the caller cannot have heard
+# a word. Caller speech in that window means they were not finished (call
+# CC1627: the agent started over the caller twice and both replies were cut).
+PSTN_UNHEARD_REPLY_GRACE_S = 0.3
 PSTN_DUCK_TIMEOUT_S = 0.85
 # A committed interruption that turns out to be noise, an echo or a cough (no
 # caller turn follows) resumes the cut reply, as LiveKit's agents do by default
@@ -1367,6 +1372,71 @@ class PstnVoiceLoop:
             return False
         return self._should_think_cancel(cleaned)
 
+    def _reply_unheard(self, now: float) -> bool:
+        """The in-flight reply has not reached the caller's ear yet."""
+        first = self._turn_first_audio_at
+        return first <= 0 or now - first < PSTN_UNHEARD_REPLY_GRACE_S
+
+    def _should_cancel_unheard_reply(self, text: str) -> bool:
+        """The caller kept talking after their turn was taken, before hearing any reply.
+
+        THINKING ends as soon as text reaches the TTS, long before audio is
+        audible, so think-cancel alone never covered this window. No echo of this
+        reply is possible yet, so one real word with voice evidence is enough.
+        """
+        from server.services.transcript_gate import effective_word_count, is_substantive_transcript
+
+        if not self._turn_busy or self._intro_phase or self._backchannel_playing:
+            return False
+        if self._phase not in (PHASE_THINKING, PHASE_SPEAKING) or self._closed:
+            return False
+        now = time.monotonic()
+        if not self._reply_unheard(now):
+            return False
+        cleaned = (text or "").strip()
+        if not cleaned or is_backchannel(cleaned) or self._is_partial_self_echo(cleaned):
+            return False
+        prior = (self._current_turn_transcript or "").casefold().rstrip(" .!?।")
+        current = cleaned.casefold().rstrip(" .!?।")
+        if prior and current in prior:
+            # STT refining the utterance this reply answers, not new speech.
+            return False
+        if not self._has_barge_voice(now):
+            return False
+        strong = bool(_STRONG_HALT_RE.fullmatch(cleaned) or _WEAK_NEGATION_RE.fullmatch(cleaned))
+        return strong or is_single_word_claim(cleaned) or (
+            effective_word_count(cleaned) >= 1 and is_substantive_transcript(cleaned, after_barge=True)
+        )
+
+    async def _cancel_unheard_reply(self, text: str) -> None:
+        log_pstn(
+            "UNHEARD_REPLY_CANCEL",
+            call_id=self.call_id,
+            turn_id=self.current_turn_id,
+            generation_id=self.current_generation_id,
+            fsm=self._phase,
+            audio_sent=self._turn_first_audio_at > 0,
+        )
+        stop_audio = self._turn_first_audio_at > 0 or self._tts_active
+        generation = self.current_generation_id
+        # Queue the caller's words for the relaunch before the turn task unwinds:
+        # its cleanup re-arms the listener only with what is pending by then.
+        await self._think_cancel(text)
+        if stop_audio:
+            # Frames already sent are still in flight to the carrier: drop them there too.
+            if self.playback is not None and hasattr(self.playback, "invalidate_generation"):
+                self.playback.invalidate_generation(generation)
+            if self._on_barge:
+                async def clear_carrier() -> None:
+                    try:
+                        await asyncio.wait_for(self._on_barge(), timeout=1.0)
+                    except Exception as exc:  # noqa: BLE001 -- local audio is already stopped.
+                        log_pstn("playback.remote_clear.failed", call_id=self.call_id, error=str(exc)[:160])
+
+                self._remote_clear_task = asyncio.create_task(clear_carrier())
+            await self.interrupt_tts()
+            self._tts_queued_text = ""
+
     def _merge_pending_transcript(self, *parts: str) -> str:
         """Merge STT fragments without dropping corrections (5.4).
 
@@ -1560,9 +1630,15 @@ class PstnVoiceLoop:
                 pass
         self._backchannel_playing = False
 
-    async def _play_backchannel(self, phrase: str) -> None:
-        """Short listening sound — no LLM turn, no phase change, no history."""
+    async def _play_backchannel(self, phrase: str, *, frames: list[bytes] | None = None) -> None:
+        """Short listening sound — no LLM turn, no phase change, no history.
+
+        With pre-synthesized ``frames`` it plays at once; otherwise it is synthesized now.
+        """
         if not phrase or self._closed or self._turn_busy:
+            return
+        if frames:
+            await self._play_backchannel_frames(frames)
             return
         from server.services.pstn_turn_tts import PstnTurnTtsSession
         from server.services.spoken_numbers import prepare_spoken_reply
@@ -1594,6 +1670,33 @@ class PstnVoiceLoop:
                 if self.playback is not None and hasattr(self.playback, "set_current_generation"):
                     self.playback.set_current_generation(saved_gen)
                 await session.close()
+                self._backchannel_task = None
+
+    async def _play_backchannel_frames(self, frames: list[bytes]) -> None:
+        async with self._backchannel_lock:
+            if self._backchannel_task and not self._backchannel_task.done():
+                return
+            if self._turn_busy or self._agent_audio_playing():
+                return
+            self._backchannel_task = asyncio.current_task()
+            bc_gen = f"bc-{uuid.uuid4().hex[:12]}"
+            saved_gen = self.current_generation_id
+            self._backchannel_playing = True
+            self.current_generation_id = bc_gen
+            if self.playback is not None and hasattr(self.playback, "set_current_generation"):
+                self.playback.set_current_generation(bc_gen)
+            try:
+                for frame in frames:
+                    # Cancelled (caller resumed) or a reply started: stop at once.
+                    if self._closed or self._turn_busy or self.current_generation_id != bc_gen or self.emission_blocked():
+                        break
+                    await self._emit_agent_wire(frame)
+            finally:
+                self._backchannel_playing = False
+                if self.current_generation_id == bc_gen:
+                    self.current_generation_id = saved_gen
+                    if self.playback is not None and hasattr(self.playback, "set_current_generation"):
+                        self.playback.set_current_generation(saved_gen)
                 self._backchannel_task = None
 
     def _is_composed_call(self) -> bool:
@@ -1936,6 +2039,7 @@ class PstnVoiceLoop:
         self._schedule_outage_clip_prewarm()
         if self._is_composed_call():
             self._backchannel.prewarm_hold()
+            self._backchannel.prewarm_backchannels()
         stt_err = results[0] if isinstance(results[0], BaseException) else None
         if greeting:
             greet_err = results[2] if len(results) > 2 and isinstance(results[2], BaseException) else None
@@ -2427,7 +2531,9 @@ class PstnVoiceLoop:
                         if effective_word_count(text) >= 2 or is_substantive_transcript(text):
                             self._arm_listen_coalesce(text)
                     self._schedule_interrupt_confirmation(text)
-                    if self._should_commit_barge(text):
+                    if self._should_cancel_unheard_reply(text):
+                        await self._cancel_unheard_reply(text)
+                    elif self._should_commit_barge(text):
                         await self._commit_barge(text)
                     elif self._should_think_cancel(text):
                         await self._think_cancel(text)

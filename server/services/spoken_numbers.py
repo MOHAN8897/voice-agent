@@ -252,6 +252,127 @@ def provider_normalizes_numbers(provider: str | None, model: str | None) -> bool
     return provider in {"gemini", "cartesia"}
 
 
+# --- Entities a digit-reading engine still misreads ------------------------------------
+# Measured on Gnani Timbre v3.0 (te-IN, call CC1627 and a direct probe on 6 Nov 2026):
+#   "₹85 Lakhs"    -> "85 rupees lakhs"         "₹85,00,000"    -> "85 lakh rupees"
+#   "₹1.10 Crore"  -> "1 rupee 10 paise crore"  "₹1,10,00,000"  -> "1 crore 10 lakh rupees"
+#   "1,850 Sq.ft." -> unintelligible            "1,850 square feet" -> read correctly
+#   "10:30 AM"     -> "10 hours 30 minutes A M" "ఉదయం 10:30"    -> read correctly
+# Gnani's and Sarvam's guides both document Indian digit grouping (₹2,40,000), so a
+# lakh/crore amount is sent to them as the full grouped number.
+_INDIAN_GROUPING_ENGINES = frozenset({"gnani", "sarvam"})
+_SCALE_AMOUNT = re.compile(
+    r"(?<![\w.])(₹\s*)?(\d[\d,]*(?:\.\d+)?)\s*(lakhs?|lacs?|crores?|cr)(?![A-Za-z])"
+    # "1 crore 10 lakh", "2 lakh 50 thousand": one amount, not two.
+    r"(?:\s+(\d[\d,]*)\s*(lakhs?|lacs?|thousand)(?![A-Za-z]))?",
+    re.I,
+)
+_SCALE = {"lakh": 100_000, "lac": 100_000, "crore": 10_000_000, "cr": 10_000_000, "thousand": 1_000}
+_UNIT_WORDS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"(?<![A-Za-z])sq\.?\s?(?:ft|feet)(?![A-Za-z])(\.)?", re.I), "square feet"),
+    (re.compile(r"(?<=\d)\s?s(?:q)?ft(?![A-Za-z])(\.)?", re.I), " square feet"),
+    (re.compile(r"(?<![A-Za-z])sq\.?\s?(?:yds?|yards?)(?![A-Za-z])(\.)?", re.I), "square yards"),
+    (re.compile(r"(?<![A-Za-z])sq\.?\s?(?:mtrs?|metres?|meters?|m)(?![A-Za-z])(\.)?", re.I), "square metres"),
+)
+_AMPM_TIME = re.compile(r"(?<![\d:])(1[0-2]|0?[1-9])(?::([0-5]\d))?\s?([ap])\.?\s?m\.?(?![A-Za-z])", re.I)
+#: Morning / afternoon / evening / night as said before a clock time.
+_DAY_PART_WORDS: dict[str, tuple[str, str, str, str]] = {
+    "te": ("ఉదయం", "మధ్యాహ్నం", "సాయంత్రం", "రాత్రి"),
+    "hi": ("सुबह", "दोपहर", "शाम", "रात"),
+    "ta": ("காலை", "மதியம்", "மாலை", "இரவு"),
+    "kn": ("ಬೆಳಿಗ್ಗೆ", "ಮಧ್ಯಾಹ್ನ", "ಸಂಜೆ", "ರಾತ್ರಿ"),
+    "ml": ("രാവിലെ", "ഉച്ചയ്ക്ക്", "വൈകുന്നേരം", "രാത്രി"),
+    "mr": ("सकाळी", "दुपारी", "संध्याकाळी", "रात्री"),
+    "bn": ("সকাল", "দুপুর", "সন্ধ্যা", "রাত"),
+    "gu": ("સવારે", "બપોરે", "સાંજે", "રાત્રે"),
+    "pa": ("ਸਵੇਰੇ", "ਦੁਪਹਿਰ", "ਸ਼ਾਮ", "ਰਾਤ"),
+}
+#: Stems that already name the part of day, so none is added (సాయంత్రానికి, रात को ...).
+_DAY_PART_STEMS: dict[str, tuple[str, ...]] = {
+    "te": ("ఉదయ", "పొద్దున", "మధ్యాహ్న", "సాయంత్ర", "రాత్రి"),
+    "hi": ("सुबह", "सवेरे", "दोपहर", "शाम", "रात"),
+    "ta": ("காலை", "மதிய", "மாலை", "இரவு", "ராத்திரி"),
+    "kn": ("ಬೆಳಿಗ್ಗೆ", "ಬೆಳಗ್ಗೆ", "ಮಧ್ಯಾಹ್ನ", "ಸಂಜೆ", "ರಾತ್ರಿ"),
+    "ml": ("രാവിലെ", "ഉച്ച", "വൈകുന്നേര", "രാത്രി"),
+    "mr": ("सकाळ", "दुपार", "संध्याकाळ", "रात्र"),
+    "bn": ("সকাল", "দুপুর", "সন্ধ্যা", "বিকেল", "রাত"),
+    "gu": ("સવાર", "બપોર", "સાંજ", "રાત"),
+    "pa": ("ਸਵੇਰ", "ਦੁਪਹਿਰ", "ਸ਼ਾਮ", "ਰਾਤ"),
+}
+
+
+def indian_grouping(value: int) -> str:
+    """12345678 -> "1,23,45,678"."""
+    digits = str(abs(int(value)))
+    if len(digits) <= 3:
+        grouped = digits
+    else:
+        head, tail = digits[:-3], digits[-3:]
+        parts = []
+        while len(head) > 2:
+            parts.insert(0, head[-2:])
+            head = head[:-2]
+        grouped = ",".join(([head] if head else []) + parts + [tail])
+    return f"-{grouped}" if value < 0 else grouped
+
+
+def _expand_scale_amounts(text: str) -> str:
+    """"₹1.10 Crore" -> "₹1,10,00,000"; a fraction of a rupee keeps the scale word, lower-cased."""
+    from decimal import Decimal, InvalidOperation
+
+    def repl(m: re.Match[str]) -> str:
+        rupee = "₹" if m.group(1) else ""
+        word = m.group(3).lower().rstrip("s")
+        try:
+            value = Decimal(m.group(2).replace(",", "")) * _SCALE[word]
+            if m.group(4):
+                second = m.group(5).lower().rstrip("s")
+                if _SCALE[second] >= _SCALE[word]:
+                    return m.group(0)
+                value += Decimal(m.group(4).replace(",", "")) * _SCALE[second]
+        except (InvalidOperation, KeyError):
+            return m.group(0)
+        if value != value.to_integral_value() or m.group(4) and "." in m.group(2):
+            return m.group(0) if m.group(4) else f"{rupee}{m.group(2)} {'crore' if word in ('crore', 'cr') else 'lakh'}"
+        return f"{rupee}{indian_grouping(int(value))}"
+
+    return _SCALE_AMOUNT.sub(repl, text)
+
+
+def expand_unit_abbreviations(text: str) -> str:
+    """Dotted area units are not read by Indic voices; their English words are."""
+    out = text
+    for pattern, words in _UNIT_WORDS:
+        def repl(m: re.Match[str], words: str = words) -> str:
+            # A consumed dot that ends the sentence must still end it.
+            tail = "." if m.group(1) and (m.end() >= len(m.string) or m.string[m.end()].isspace()) else ""
+            return words + tail
+        out = pattern.sub(repl, out)
+    return out
+
+
+def localize_clock_times(text: str, language: str | None) -> str:
+    """"10:30 AM" inside an Indic sentence -> "ఉదయం 10:30" (or just "10:30" after సాయంత్రం)."""
+    lang = str(language or "").split("-")[0].lower()
+    words = _DAY_PART_WORDS.get(lang)
+    if not words:
+        return text
+
+    def repl(m: re.Match[str]) -> str:
+        hour = int(m.group(1))
+        clock = f"{hour}:{m.group(2)}" if m.group(2) else str(hour)
+        if m.group(3).lower() == "a":
+            part = words[0] if 5 <= hour <= 11 else words[3]
+        else:
+            part = words[1] if hour == 12 or hour <= 3 else words[2] if hour <= 6 else words[3]
+        before = m.string[max(0, m.start() - 24):m.start()]
+        if any(stem in before for stem in _DAY_PART_STEMS[lang]):
+            return clock
+        return f"{part} {clock}"
+
+    return _AMPM_TIME.sub(repl, text)
+
+
 def _space_id_digits(text: str) -> str:
     """OTPs and long reference ids are read digit by digit, never as one big amount."""
     out = _OTP_NEAR.sub(lambda m: f"{m.group(1)} {' '.join(m.group(2))}", text)
@@ -276,7 +397,9 @@ def prepare_spoken_reply(
     from server.prompts.tts_delivery_rules import sanitize_tts_tags
 
     cleaned = sanitize_tts_tags(strip_spoken_phone_numbers(text or ""), provider=provider, model=model)
+    cleaned = expand_unit_abbreviations(cleaned)
     indic_call = bool(language) and not str(language).lower().startswith("en")
+    engine = str(provider or "").strip().lower()
     if provider_normalizes_numbers(provider, model) or (provider and indic_call):
         # "Rs.599" would otherwise become "rupees599" once the abbreviation is spelled out.
         prepared = re.sub(r"\bRs\.?\s*(?=\d)", "₹", cleaned, flags=re.I)
@@ -284,6 +407,10 @@ def prepare_spoken_reply(
             # "599 rupees" makes an Indic voice say the number natively and "rupees" in English;
             # ₹599 is read entirely in the call language.
             prepared = re.sub(r"(?<![\d₹])(\d[\d,]*(?:\.\d+)?)\s*(?:rupees?|rs\b|inr\b)", r"₹\1", prepared, flags=re.I)
+        if engine in _INDIAN_GROUPING_ENGINES:
+            prepared = _expand_scale_amounts(prepared)
+        if indic_call and engine == "gnani":
+            prepared = localize_clock_times(prepared, language)
         prepared = _space_id_digits(prepared)
         return sanitize_tts_punctuation(prepared, ensure_terminal=ensure_terminal, expand_decimals=False)
     expanded = expand_spoken_numbers(cleaned)
