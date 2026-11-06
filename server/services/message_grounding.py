@@ -95,8 +95,12 @@ def unsupported(tool_name: str, arguments: dict[str, Any], ctx: Any, caller_turn
     return sorted(f for f in claimed if not supported(f))
 
 
-def check(call_id: str, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any] | None:
-    """None when the message may go out; otherwise a result naming what was made up."""
+def check(call_id: str, tool_name: str, arguments: dict[str, Any], *, business_text: str = "") -> dict[str, Any] | None:
+    """None when the message may go out; otherwise a result naming what was made up.
+
+    ``business_text`` is what the business wrote for these messages on the
+    Integrations page (a booking link, an address): it counts as given.
+    """
     if str(tool_name).upper() not in CHECKED_TEXT or not call_id:
         return None
     from server.call import call_context
@@ -105,7 +109,7 @@ def check(call_id: str, tool_name: str, arguments: dict[str, Any]) -> dict[str, 
     ctx = call_context.get(str(call_id))
     if ctx is None:
         return None  # Not a live call (a test or a replay): nothing to compare with.
-    missing = unsupported(tool_name, arguments, ctx, caller_turns(str(call_id)))
+    missing = unsupported(tool_name, arguments, ctx, [*caller_turns(str(call_id)), business_text])
     if not missing:
         return None
     shown = ", ".join(m.split(" ", 1)[1].lstrip("~") for m in missing[:4])

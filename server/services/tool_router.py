@@ -110,6 +110,7 @@ class DialtactToolRouter:
             return {"status": "error", "message": "Unauthorized: Missing tenant or agent context"}
         tool_name = tool_name.upper()
         definition = tool_definition(tool_name)
+        saved: dict[str, Any] | None = None
         if definition is not None and definition[0] != "PLATFORM" and isinstance(arguments, dict):
             from server.services.integration_settings import filled_params, setting_params, tenant_settings
 
@@ -163,7 +164,11 @@ class DialtactToolRouter:
                 return unconfirmed
             from server.services import message_grounding
 
-            invented = message_grounding.check(call_id, tool_name, arguments)
+            from server.services.integration_settings import writing_instructions
+
+            # The business's own wording (and the signature it appends) is given, not invented.
+            business_text = "\n".join([writing_instructions(saved), str((saved or {}).get("signature") or "")])
+            invented = message_grounding.check(call_id, tool_name, arguments, business_text=business_text)
             if invented is not None:
                 return invented
         from server.call.enquiry import PLATFORM_ACTIONS

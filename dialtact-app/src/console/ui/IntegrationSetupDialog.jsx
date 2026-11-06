@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { TactileButton } from './TactileButton';
 import { api } from '../../services/api';
@@ -7,6 +7,18 @@ const overlayClass = 'fixed inset-0 z-50 flex items-center justify-center bg-ink
 const dialogClass = 'bg-surface border border-line rounded-card w-full shadow-craft-lg animate-in zoom-in-95 duration-200';
 const closeButtonClass = 'shrink-0 -mr-2 -mt-1 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-control text-fg-muted hover:text-ink hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors';
 const inputClass = 'w-full px-3.5 py-2 min-h-[44px] sm:min-h-[38px] text-base sm:text-ui bg-surface border border-line rounded-control focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-ink placeholder:text-fg-subtle';
+const chipClass = 'min-h-[32px] px-2.5 rounded-control border border-line bg-canvas text-meta font-medium text-ink hover:border-accent hover:text-accent-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors';
+const TOKEN = /\{\s*([A-Za-z_][A-Za-z0-9_]*)\s*\}/g;
+
+/**
+ * The message as a caller would get it, filled with a sample call's details (the
+ * server fills the real ones). WhatsApp's goes out as one paragraph.
+ */
+function renderPreview(template, placeholders, oneParagraph) {
+  const known = new Map(placeholders.map((p) => [p.key, p.sample]));
+  const text = String(template || '').replace(TOKEN, (m, key) => (known.has(key) ? known.get(key) : m)).trim();
+  return oneParagraph ? text.replace(/\s+/g, ' ') : text;
+}
 
 /**
  * Choose the resource an app's actions use (a Slack channel, a Notion page, a
@@ -22,6 +34,23 @@ export function IntegrationSetupDialog({ app, onClose, onSaved }) {
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const inputs = useRef({});
+
+  // Put a caller detail such as {first_name} where the cursor is, not at the end.
+  const insertToken = (field, key) => {
+    const el = inputs.current[field.key];
+    const current = String(values[field.key] || '');
+    const token = `{${key}}`;
+    const start = el?.selectionStart ?? current.length;
+    const end = el?.selectionEnd ?? current.length;
+    const next = (current.slice(0, start) + token + current.slice(end)).slice(0, field.max_length || undefined);
+    setValues({ ...values, [field.key]: next });
+    requestAnimationFrame(() => {
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(start + token.length, start + token.length);
+    });
+  };
 
   const loadOptions = async (key, current = values) => {
     setLoadingField(key);
@@ -72,7 +101,7 @@ export function IntegrationSetupDialog({ app, onClose, onSaved }) {
 
   return (
     <div className={overlayClass}>
-      <div role="dialog" aria-modal="true" aria-labelledby="integration-setup-title" className={`${dialogClass} p-5 sm:p-6 max-w-md space-y-4`} data-testid="integration-setup-dialog">
+      <div role="dialog" aria-modal="true" aria-labelledby="integration-setup-title" className={`${dialogClass} p-5 sm:p-6 ${fields.some((f) => f.section) ? 'max-w-xl' : 'max-w-md'} max-h-[90vh] overflow-y-auto space-y-4`} data-testid="integration-setup-dialog">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h3 id="integration-setup-title" className="text-title text-ink break-words">Set up {app.name}</h3>
@@ -88,13 +117,20 @@ export function IntegrationSetupDialog({ app, onClose, onSaved }) {
 
         {loaded && (
           <form onSubmit={save} className="space-y-4">
-            {fields.map((f) => {
+            {fields.map((f, index) => {
               // Fixed choices from the app's setup, or the account's own (loaded on demand).
               const choices = f.choices && f.choices.length ? f.choices : options[f.key];
               const id = `setup-${app.id}-${f.key}`;
               const current = values[f.key] || '';
+              const opensSection = f.section && f.section !== fields[index - 1]?.section;
               return (
                 <div key={f.key}>
+                  {opensSection && (
+                    <div className="pt-3 mb-3 border-t border-line">
+                      <h4 className="text-ui font-semibold text-ink">{f.section} to your customers</h4>
+                      <p className="mt-0.5 text-meta text-fg-muted">What your agent writes during a call, and the message sent after it.</p>
+                    </div>
+                  )}
                   <label htmlFor={id} className="block text-ui font-medium text-ink mb-1.5">
                     {f.label}{f.required ? '' : ' (optional)'}
                   </label>
@@ -106,15 +142,34 @@ export function IntegrationSetupDialog({ app, onClose, onSaved }) {
                       {choices.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                     </select>
                   ) : f.multiline ? (
-                    <textarea id={id} rows={4} value={current} maxLength={f.max_length || undefined}
+                    <textarea id={id} rows={f.placeholders ? 6 : 4} value={current} maxLength={f.max_length || undefined}
+                      ref={(el) => { inputs.current[f.key] = el; }}
                       onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
                       className={`${inputClass} py-2.5 leading-relaxed`} data-testid={`setup-field-${f.key}`} />
                   ) : (
                     <input id={id} type="text" value={current} maxLength={f.max_length || undefined}
+                      ref={(el) => { inputs.current[f.key] = el; }}
                       onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
                       className={inputClass} data-testid={`setup-field-${f.key}`} autoComplete="off" />
                   )}
+                  {f.placeholders && (
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5" aria-label={`Insert a caller detail into ${f.label}`}>
+                      <span className="text-meta text-fg-muted">Insert:</span>
+                      {f.placeholders.map((p) => (
+                        <button key={p.key} type="button" onClick={() => insertToken(f, p.key)} className={chipClass}
+                          data-testid={`setup-insert-${f.key}-${p.key}`}>
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   {f.help && <p className="mt-1 text-meta text-fg-muted">{f.help}</p>}
+                  {f.placeholders && current.trim() && (
+                    <div className="mt-2 rounded-control border border-line bg-canvas px-3 py-2" data-testid={`setup-preview-${f.key}`}>
+                      <p className="text-meta font-medium text-fg-muted">Preview with a sample call</p>
+                      <p className="mt-1 text-ui text-ink whitespace-pre-wrap break-words">{renderPreview(current, f.placeholders, f.one_paragraph)}</p>
+                    </div>
+                  )}
                   {f.has_options && (
                     <button type="button" onClick={() => loadOptions(f.key)} disabled={loadingField === f.key}
                       className="mt-1 min-h-[32px] text-meta font-medium text-accent-fg hover:underline disabled:opacity-60">

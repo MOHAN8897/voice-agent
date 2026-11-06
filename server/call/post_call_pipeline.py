@@ -849,6 +849,10 @@ async def reconcile_and_dispatch_post_call(call_id: str, outcome: dict[str, Any]
     facts = outcome.get("extracted_fields") or {}
     if not isinstance(facts, dict):
         facts = {}
+    from server.services.integration_settings import tenant_settings
+
+    # The business's own after-call email and WhatsApp wording, from the Integrations page.
+    app_settings = await tenant_settings(tenant_id, factory) if actions else {}
     results = []
     for action in actions:
         definition = tool_definition(action)
@@ -859,7 +863,7 @@ async def reconcile_and_dispatch_post_call(call_id: str, outcome: dict[str, Any]
         # Built actions take their arguments from the call outcome, for picked
         # calls and agent rules alike; free-form fact names never match a schema.
         if action in call_integrations.POST_CALL_DEFAULT_ACTION.values():
-            built = call_integrations.post_call_arguments(action, outcome, meta)
+            built = call_integrations.post_call_arguments(action, outcome, meta, app_settings.get(definition[0]))
             if built is None:
                 results.append({"action": action, "result": {
                     "status": "skipped", "message": "The call did not capture the details this action needs.",

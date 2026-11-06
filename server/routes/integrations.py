@@ -275,7 +275,7 @@ async def get_integrations_catalog(
     if timing and isinstance(timing, str) and timing.lower() != "all":
         items = [item for item in items if item["timing"].lower() == timing.lower()]
 
-    from server.services.integration_settings import missing_required, spec_for, tenant_settings
+    from server.services.integration_settings import missing_required, public_fields, tenant_settings
 
     from server.services.integration_policy import disabled_apps
 
@@ -301,7 +301,6 @@ async def get_integrations_catalog(
         app_key = _catalog_app(item.get("id", ""))
         if app_key in off and app_key not in connected:
             continue  # switched off and not connected: not offered at all
-        fields = spec_for(app_key)
         missing = missing_required(app_key, saved.get(app_key))
         annotated.append({
             **item,
@@ -309,8 +308,7 @@ async def get_integrations_catalog(
             # What a call or campaign may attach this app for.
             "call_modes": list(supported_modes(item.get("id", ""))),
             "call_setup_note": SETUP_REQUIRED.get(app_key) if missing else None,
-            "setup_fields": [{k: f.get(k) for k in ("key", "label", "help", "required", "choices", "multiline", "max_length")} | {"has_options": bool(f.get("resource"))}
-                             for f in fields],
+            "setup_fields": public_fields(app_key),
             "setup_missing": missing,
             "admin_disabled": app_key in off,
         })
@@ -684,7 +682,7 @@ async def _active_record(session: Any, tenant_id: str, app: str) -> TenantIntegr
 
 @router.get("/api/integrations/{app_id}/settings")
 async def get_integration_settings(app_id: str, request: Request) -> dict[str, Any]:
-    from server.services.integration_settings import missing_required, spec_for
+    from server.services.integration_settings import missing_required, public_fields
 
     tenant_id, _ = await _resolve_tenant_and_user(request)
     app = _catalog_app(app_id)
@@ -696,8 +694,7 @@ async def get_integration_settings(app_id: str, request: Request) -> dict[str, A
         values = dict((record.metadata_ or {}).get("settings") or {})
     return {
         "app": app,
-        "fields": [{k: f.get(k) for k in ("key", "label", "help", "required", "choices", "multiline", "max_length")} | {"has_options": bool(f.get("resource"))}
-                   for f in spec_for(app)],
+        "fields": public_fields(app),
         "values": values,
         "missing": missing_required(app, values),
     }

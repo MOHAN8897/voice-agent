@@ -2179,7 +2179,9 @@ class NangoService:
 
             elif action_name == "WHATSAPP_SEND_MESSAGE":
                 to_num = str(params.get("to") or params.get("recipient") or "").strip()
-                msg_text = str(params.get("message") or params.get("text") or "").strip()
+                # A template variable may not hold line breaks, tabs or more than four
+                # spaces in a row (Meta error 132018): the message is sent as one paragraph.
+                msg_text = re.sub(r"\s+", " ", str(params.get("message") or params.get("text") or "")).strip()
                 if not (to_num and msg_text):
                     return {"status": "error", "message": "Recipient phone number and message are required."}
                 phone_number_id = str(params.get("phone_number_id") or "")

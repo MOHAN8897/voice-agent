@@ -1352,7 +1352,7 @@ async def get_tools_for_agent(active_apps: list[str], tenant_id: str, agent_id: 
             # one the agent's settings turned on replaces the default one.
             if source == "default" and (chosen_calendar or app != default_calendar):
                 continue
-        allowed.append(model_facing_schema(tool))
+        allowed.append(model_facing_schema(tool, settings.get(app)))
     platform_tools: list[dict] = []
     if include_platform:
         from server.brain.capabilities import order_confirmation_allowed_from_script

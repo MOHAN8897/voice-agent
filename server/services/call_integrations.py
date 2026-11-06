@@ -593,12 +593,16 @@ _NOTE_ACTIONS: dict[str, Any] = {
 }
 
 
-def post_call_arguments(action: str, outcome: dict[str, Any], meta: dict[str, Any] | None) -> dict[str, Any] | None:
+def post_call_arguments(action: str, outcome: dict[str, Any], meta: dict[str, Any] | None,
+                        settings: dict[str, Any] | None = None) -> dict[str, Any] | None:
     """Deterministic arguments for the built-in post-call actions.
 
     Returns None when the outcome does not hold what the action needs; the
-    action is then skipped, never guessed.
+    action is then skipped, never guessed. ``settings`` is the app's saved setup:
+    an email or WhatsApp message the business wrote replaces the standard one.
     """
+    from server.services.integration_settings import render_message
+
     facts = outcome.get("extracted_fields") if isinstance(outcome.get("extracted_fields"), dict) else {}
     contact = (meta or {}).get("contact") if isinstance((meta or {}).get("contact"), dict) else {}
     name = _first(facts, "name", "caller_name", "full_name", "customer_name") or _first(contact, "name", "first_name")
@@ -607,6 +611,7 @@ def post_call_arguments(action: str, outcome: dict[str, Any], meta: dict[str, An
     summary = str(outcome.get("summary_en") or "").strip()
     next_action = str(outcome.get("next_action") or "").strip()
     who = name or phone or "the caller"
+    details = {"first_name": name.split()[0] if name else "", "name": name, "summary": summary, "next_step": next_action}
     if action == "TODOIST_CREATE_TASK":
         detail = next_action or summary
         if not detail:
@@ -615,11 +620,19 @@ def post_call_arguments(action: str, outcome: dict[str, Any], meta: dict[str, An
     if action == "GMAIL_CREATE_DRAFT":
         if not email or not _EMAIL.match(email) or not summary:
             return None
-        greeting = f"Hi {name.split()[0]}," if name else "Hello,"
-        body = f"{greeting}\n\nThank you for speaking with us today. Here is a short recap of our call:\n\n{summary}"
-        if next_action:
-            body += f"\n\nNext step: {next_action}"
-        return {"to": email, "subject": "Following up on our call", "body": body[:7000]}
+        saved = settings or {}
+        body_template = str(saved.get("follow_up_body") or "").strip()
+        if body_template:
+            body = render_message(body_template, details)
+        else:
+            greeting = f"Hi {name.split()[0]}," if name else "Hello,"
+            body = f"{greeting}\n\nThank you for speaking with us today. Here is a short recap of our call:\n\n{summary}"
+            if next_action:
+                body += f"\n\nNext step: {next_action}"
+        subject = render_message(str(saved.get("follow_up_subject") or ""), details) or "Following up on our call"
+        if not body:
+            return None
+        return {"to": email, "subject": " ".join(subject.split())[:200], "body": body[:7000]}
     note = _team_note(who, phone if name else "", summary, next_action)
     if action in _NOTE_ACTIONS:
         if not note:
@@ -636,8 +649,12 @@ def post_call_arguments(action: str, outcome: dict[str, Any], meta: dict[str, An
         to = re.sub(r"[^\d+]", "", str(line or ""))
         if len(re.sub(r"\D", "", to)) < 8 or not summary:
             return None
-        recap = summary if not next_action else f"{summary} Next step: {next_action}"
-        return {"to": to, "message": recap[:900]}
+        message_template = str((settings or {}).get("follow_up_message") or "").strip()
+        if message_template:
+            recap = render_message(message_template, details)
+        else:
+            recap = summary if not next_action else f"{summary} Next step: {next_action}"
+        return {"to": to, "message": recap[:900]} if recap else None
     if action == "GOOGLESHEETS_ADD_ROW":
         from datetime import date
 

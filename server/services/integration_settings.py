@@ -19,6 +19,18 @@ from typing import Any
 
 from server.utils.logger import logger
 
+# Caller details a tenant's after-call message may use, filled from the call's outcome.
+MESSAGE_PLACEHOLDERS: list[dict[str, str]] = [
+    {"key": "first_name", "label": "First name", "sample": "Priya"},
+    {"key": "name", "label": "Full name", "sample": "Priya Sharma"},
+    {"key": "summary", "label": "Call summary",
+     "sample": "Priya asked about teeth whitening and booked a consultation for Saturday at 11 AM."},
+    {"key": "next_step", "label": "Next step", "sample": "Bring your previous dental X-rays to the visit."},
+]
+_PLACEHOLDER_KEYS = {p["key"] for p in MESSAGE_PLACEHOLDERS}
+# A name nobody gave reads as a greeting ("Hi there,"), not a gap.
+_NAME_FALLBACK = "there"
+
 # field -> label, help, required, and which action parameter it fills.
 # ``resource`` names a lister in :func:`list_resources` that offers choices.
 APP_SETTINGS: dict[str, list[dict[str, Any]]] = {
@@ -75,7 +87,17 @@ APP_SETTINGS: dict[str, list[dict[str, Any]]] = {
                   "fills": {"WHATSAPP_SEND_MESSAGE": "template_name"}},
                  {"key": "template_language", "label": "Template language code", "required": True,
                   "help": "For example en or en_US, exactly as approved.",
-                  "fills": {"WHATSAPP_SEND_MESSAGE": "template_language"}}],
+                  "fills": {"WHATSAPP_SEND_MESSAGE": "template_language"}},
+                 {"key": "writing_instructions", "label": "What messages during a call should say", "required": False,
+                  "multiline": True, "max_length": 800, "section": "Messages",
+                  "help": "The agent follows this when a caller asks for something on WhatsApp. For example: keep it under "
+                          "60 words, end with our booking link https://example.com/book. Details written here may be sent as stated.",
+                  "fills": {}},
+                 {"key": "follow_up_message", "label": "After-call message", "required": False,
+                  "multiline": True, "max_length": 900, "placeholders": True, "one_paragraph": True, "section": "Messages",
+                  "help": "Sent after a call when WhatsApp is chosen for after the call. It goes into your approved "
+                          "template's {{1}}, so line breaks become spaces. Leave empty to send the call summary.",
+                  "fills": {}}],
     "CALCOM": [{"key": "event_type_id", "label": "Event type", "required": True, "resource": "calcom_event_types",
                 "fills": {"CALCOM_CREATE_BOOKING": "event_type_id", "CALCOM_GET_AVAILABLE_SLOTS": "event_type_id"}}],
     "HUBSPOT": [{"key": "pipeline", "label": "Deal pipeline", "required": False, "resource": "hubspot_pipelines",
@@ -96,6 +118,20 @@ APP_SETTINGS: dict[str, list[dict[str, Any]]] = {
                "fills": {}},
               {"key": "signature", "label": "Signature", "required": False, "multiline": True, "max_length": 600,
                "help": "Added to the end of every email, for example your name, business and phone number.",
+               "fills": {}},
+              {"key": "writing_instructions", "label": "What emails during a call should say", "required": False,
+               "multiline": True, "max_length": 1000, "section": "Emails",
+               "help": "The agent follows this when a caller asks for an email. For example: thank them for calling, "
+                       "include our address and the booking link https://example.com/book, keep it under 120 words. "
+                       "Details written here may be sent as stated.",
+               "fills": {}},
+              {"key": "follow_up_subject", "label": "After-call email subject", "required": False, "max_length": 150,
+               "placeholders": True, "section": "Emails",
+               "help": "Leave empty for \"Following up on our call\".", "fills": {}},
+              {"key": "follow_up_body", "label": "After-call email", "required": False, "multiline": True,
+               "max_length": 3000, "placeholders": True, "section": "Emails",
+               "help": "Saved as a Gmail draft after a call that captured the caller's email, when Gmail is chosen for "
+                       "after the call. Leave empty for a short thank-you with the call summary.",
                "fills": {}}],
     "GOOGLECALENDAR": [{"key": "day_start", "label": "Bookable from", "required": False,
                         "help": "Earliest appointment time, HH:MM in the calendar's time zone (default 09:00).",
@@ -110,6 +146,7 @@ _SPLIT_FILLS = {"GITHUB": {"repository": {"GITHUB_CREATE_ISSUE": ("owner", "repo
 
 _TIME = re.compile(r"^(?:[01]\d|2[0-3]):[0-5]\d$")
 _EMAIL = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,190}\.[A-Za-z]{2,24}$")
+_PLACEHOLDER = re.compile(r"\{\s*([A-Za-z_][A-Za-z0-9_]*)\s*\}")
 
 
 def _norm(app: str) -> str:
@@ -120,6 +157,43 @@ def _norm(app: str) -> str:
 
 def spec_for(app: str) -> list[dict[str, Any]]:
     return APP_SETTINGS.get(_norm(app), [])
+
+
+def public_fields(app: str) -> list[dict[str, Any]]:
+    """The setup form as the console renders it."""
+    out = []
+    for f in spec_for(app):
+        field = {k: f.get(k) for k in ("key", "label", "help", "required", "choices", "multiline", "max_length",
+                                       "section", "one_paragraph")}
+        field["has_options"] = bool(f.get("resource"))
+        if f.get("placeholders"):
+            field["placeholders"] = MESSAGE_PLACEHOLDERS
+        out.append(field)
+    return out
+
+
+def render_message(template: str, values: dict[str, str]) -> str:
+    """A tenant's after-call message with the caller's details filled in.
+
+    A line whose detail this call did not capture is left out rather than sent
+    with a gap ("Next step: " with nothing after it); a missing name reads "there".
+    """
+    lines = []
+    for line in str(template or "").replace("\r\n", "\n").split("\n"):
+        keys = [k for k in _PLACEHOLDER.findall(line) if k in _PLACEHOLDER_KEYS]
+        filled = {k: str(values.get(k) or "").strip() for k in keys}
+        for k in ("first_name", "name"):
+            if k in filled and not filled[k]:
+                filled[k] = _NAME_FALLBACK
+        if any(not v for v in filled.values()):
+            continue
+        lines.append(_PLACEHOLDER.sub(lambda m: filled.get(m.group(1), m.group(0)), line))
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(lines)).strip()
+
+
+def writing_instructions(settings: dict[str, Any] | None) -> str:
+    """How the business wants the messages its agents write to read."""
+    return str((settings or {}).get("writing_instructions") or "").strip()
 
 
 def missing_required(app: str, settings: dict[str, Any] | None) -> list[str]:
@@ -171,6 +245,11 @@ def clean_settings(app: str, raw: Any) -> dict[str, str]:
             value = spreadsheet_id(value)
             if not value:
                 raise ValueError("Paste the Google Sheet's link (docs.google.com/spreadsheets/d/...).")
+        if field.get("placeholders"):
+            unknown = sorted(set(_PLACEHOLDER.findall(value)) - _PLACEHOLDER_KEYS)
+            if unknown:
+                allowed = ", ".join(f"{{{k}}}" for k in sorted(_PLACEHOLDER_KEYS))
+                raise ValueError(f"{field['label']} uses {{{unknown[0]}}}, which is not a caller detail. Use {allowed}.")
         out[key] = value
     if out.get("day_start") and out.get("day_end") and out["day_start"] >= out["day_end"]:
         raise ValueError("Bookable until must be later than bookable from.")
@@ -207,17 +286,27 @@ def setting_params(action: str) -> set[str]:
     return names
 
 
-def model_facing_schema(tool: dict) -> dict:
-    """The tool as the model sees it: setup-owned parameters removed."""
-    hidden = setting_params(str(tool.get("name") or ""))
-    if not hidden:
+# Actions whose text the model writes to the caller; the tenant's writing
+# instructions travel with the action so they reach the model only when it is offered.
+_WRITTEN_TO_CALLER = {"GMAIL_SEND_EMAIL", "GMAIL_CREATE_DRAFT", "WHATSAPP_SEND_MESSAGE"}
+
+
+def model_facing_schema(tool: dict, settings: dict[str, Any] | None = None) -> dict:
+    """The tool as the model sees it: setup-owned parameters removed, and the
+    business's own instructions for messages it writes to the caller added."""
+    name = str(tool.get("name") or "")
+    hidden = setting_params(name)
+    guide = writing_instructions(settings) if name.upper() in _WRITTEN_TO_CALLER else ""
+    if not hidden and not guide:
         return tool
     out = copy.deepcopy(tool)
     params = out.get("parameters") or {}
-    for name in hidden:
-        (params.get("properties") or {}).pop(name, None)
+    for param in hidden:
+        (params.get("properties") or {}).pop(param, None)
     if "required" in params:
         params["required"] = [r for r in params["required"] if r not in hidden]
+    if guide:
+        out["description"] = f"{out.get('description') or ''}. Write it as the business asks: {guide}".lstrip(". ")
     return out
 
 
