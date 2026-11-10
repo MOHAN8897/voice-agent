@@ -84,6 +84,11 @@ class Settings(BaseSettings):
     max_history_assistant_chars: int = Field(1600, alias="MAX_HISTORY_ASSISTANT_CHARS")
     max_history_user_chars: int = Field(1600, alias="MAX_HISTORY_USER_CHARS")
     request_timeout_ms: int = Field(15000, alias="REQUEST_TIMEOUT_MS")
+    # Optional faster model for the per-turn decision steps (end-of-call, contact,
+    # business lookup). The spoken reply always uses the tenant's own model. Empty
+    # keeps those steps on that model too. Both must be set and enabled to apply.
+    control_check_llm_provider: str = Field("", alias="CONTROL_CHECK_LLM_PROVIDER")
+    control_check_llm_model: str = Field("", alias="CONTROL_CHECK_LLM_MODEL")
     max_retries: int = Field(2, alias="MAX_RETRIES")
     # A structured turn carries the close decision plus up to three memory ops;
     # 640 tokens truncated most composed turns before the reply finished.

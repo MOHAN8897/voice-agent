@@ -192,6 +192,10 @@ async def execute_calendar_action(client: httpx.AsyncClient, base: str, headers:
                 "date": start.date().isoformat(), "time": start.isoformat(), "invitation_sent": invited,
                 "summary": ("Calendar event updated." if reschedule else "Calendar event created.") + note}
     except httpx.HTTPStatusError as exc:
+        if exc.response.status_code in (401, 424) and not mutation_started:
+            # An expired or revoked Google connection: let the gateway layer flag it
+            # for re-authorisation instead of hiding it behind a generic error.
+            raise
         return {"status": "error" if exc.response.status_code < 500 else "unknown", "message": "The calendar request could not be completed or verified."}
     except (ValueError, KeyError, TypeError):
         if mutation_started:

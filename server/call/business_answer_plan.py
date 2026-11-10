@@ -161,7 +161,9 @@ def with_combined_total(answers: list[dict]) -> list[dict]:
 
 async def resolve_business_answers(ctx: Any, caller: str) -> list[dict]:
     from server.providers import get_provider_registry
-    llm = ctx.resolved_stack.llm
+    from server.call.close_classifier import control_llm
+
+    llm = control_llm(ctx.resolved_stack.llm)
     adapter = get_provider_registry().get_llm(llm.provider)
     brain = str(getattr(ctx, "compiled_brain_text", "") or "")
     if not brain:

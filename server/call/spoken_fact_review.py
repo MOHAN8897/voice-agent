@@ -230,7 +230,10 @@ async def review_spoken_turn(ctx: Any, *, caller: str, draft: str, language: str
 
     proofs = [str(r.get("outcome") or "") for r in getattr(ctx, "action_receipts", []) or []]
     recent = conversation_manager.get_context_for_brain(ctx.session_id, max_turns=4)
-    source = "\n".join((brain, caller or "", json.dumps(recent, ensure_ascii=False, default=str)))
+    # This turn's tool results are facts the agent was given: without them a plain
+    # "3 PM is free" from the calendar triggered a second model pass before first audio.
+    tool_facts = json.dumps(getattr(ctx, "turn_action_results", None) or [], ensure_ascii=False, default=str)
+    source = "\n".join((brain, caller or "", json.dumps(recent, ensure_ascii=False, default=str), tool_facts))
     # Totals are checked against the business facts only: a caller who says "1497, right?"
     # must not make the wrong sum look like a catalog number.
     corrected = correct_total_from_plan(correct_stated_total(draft, brain),

@@ -38,6 +38,8 @@ BUSINESS_TYPES = frozenset(
     }
 )
 _STATUS_CACHE_SECONDS = 30
+#: Keeps answer-time background refresh tasks alive until they finish.
+_BACKGROUND_REFRESHES: set = set()
 _VERIFICATION_VALUES = frozenset({"not_started", "pending", "verified", "failed"})
 _TRUSTED_PRODUCTION_CONSOLE_ORIGINS = frozenset({
     "https://www.dialtact.com",
@@ -679,14 +681,58 @@ def _encryption_configured() -> bool:
     return True
 
 
-async def assert_voice_kyc_approved(tenant_id: UUID, *, action: str) -> None:
+def _stored_approval_age(account: VobizSubaccount | None) -> float | None:
+    """Seconds since the carrier last confirmed this account approved; None when it is not."""
+    if (account is None or account.provisioning_status != "active" or not account.auth_id
+            or not account.encrypted_auth_token or not account.last_status_sync_at):
+        return None
+    if not _public_status(account)["approved"]:
+        return None
+    last_sync = account.last_status_sync_at
+    if last_sync.tzinfo is None:
+        last_sync = last_sync.replace(tzinfo=timezone.utc)
+    return max(0.0, (_utcnow() - last_sync).total_seconds())
+
+
+async def _refresh_kyc_quietly(tenant_id: UUID) -> None:
+    try:
+        await refresh_kyc_status(tenant_id, force=True)
+    except Exception as exc:  # noqa: BLE001 -- the next gate reads whatever is stored.
+        logger.warning("Tenant voice KYC background refresh failed tenant=%s error_type=%s", tenant_id, type(exc).__name__)
+
+
+async def assert_voice_kyc_approved(tenant_id: UUID, *, action: str, max_age_seconds: float | None = None) -> None:
+    """Raise unless the workspace may use phone service.
+
+    By default the carrier is asked every time. ``max_age_seconds`` is for the
+    answer webhook, where a caller is waiting on the line: an approval the carrier
+    confirmed that recently is accepted from storage (and refreshed in the
+    background), and if the carrier API cannot be reached a stored approval still
+    lets the call through. Without it every inbound call paid two carrier requests
+    before pickup, and any carrier API error hung up on the caller.
+    """
     from server.services.telephony import active_telephony_provider
 
     if active_telephony_provider() != "vobiz":
         return
+    stored_age: float | None = None
+    if max_age_seconds is not None:
+        stored_age = _stored_approval_age(await _get_account(tenant_id))
+        if stored_age is not None and stored_age <= max_age_seconds:
+            if stored_age > _STATUS_CACHE_SECONDS:
+                import asyncio
+
+                task = asyncio.create_task(_refresh_kyc_quietly(tenant_id))
+                _BACKGROUND_REFRESHES.add(task)
+                task.add_done_callback(_BACKGROUND_REFRESHES.discard)
+            return
     try:
         status = await refresh_kyc_status(tenant_id, force=True)
     except VoiceKycError as exc:
+        if stored_age is not None:
+            logger.warning("Tenant voice KYC check unavailable; using stored approval tenant=%s age_s=%d",
+                           tenant_id, int(stored_age))
+            return
         raise HTTPException(status_code=503, detail={"error": {
             "code": "voice_verification_unavailable", "message": "Phone service verification is temporarily unavailable. Please retry.",
         }}) from exc

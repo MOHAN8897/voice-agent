@@ -2611,14 +2611,19 @@ class LiveTurnOrchestrator:
                 pending_before = bool(getattr(ctx, "pending_tool_result", False))
                 ctx.pending_tool_result = True
                 try:
-                    result = await tool_router.route_and_execute(
+                    # Shielded: if this turn is cancelled (a hangup, a watchdog) the
+                    # action still runs to its end and records what really happened,
+                    # instead of an "unknown" write that blocks every later attempt.
+                    execution = asyncio.ensure_future(tool_router.route_and_execute(
                         tenant_id=str(ctx.tenant_id),
                         agent_id=str(ctx.agent_id),
                         call_id=str(ctx.call_id),
                         tool_name=name.upper(),
                         arguments=arguments,
                         timing="in_call",
-                    )
+                    ))
+                    execution.add_done_callback(lambda task: task.cancelled() or task.exception())
+                    result = await asyncio.shield(execution)
                 except Exception as exc:
                     logger.warning("[COMPOSED_TOOL] execution failed: %s", type(exc).__name__)
                     result = {"status": "unknown", "message": "The action result could not be confirmed."}
@@ -2639,6 +2644,10 @@ class LiveTurnOrchestrator:
             if ctx is not None:
                 ctx.turn_action_results = [*getattr(ctx, "turn_action_results", []),
                                            {"action": name, "result": result}][-8:]
+                # Kept for the call: a confirmation message sent one turn after a
+                # booking cites that booking's date and time.
+                ctx.call_action_results = [*getattr(ctx, "call_action_results", []),
+                                           {"action": name, "result": result}][-16:]
             res_status = str(result.get("status") or "").lower()
             action_parts = set(name.upper().split("_"))
             if ctx is not None and "SEND" in action_parts and action_parts.intersection({"EMAIL", "MESSAGE", "SMS"}) and res_status in {"success", "sent", "succeeded", "accepted"}:

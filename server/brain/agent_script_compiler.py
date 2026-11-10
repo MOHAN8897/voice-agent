@@ -454,7 +454,14 @@ def _opening_line_is_language_compatible(opening: str, language: str) -> bool:
         "ml-IN": (0x0D00, 0x0D7F),
     }
     start, end = blocks[lang]
-    return all(not 0x0900 <= ord(char) <= 0x0DFF or start <= ord(char) <= end for char in text)
+    # The danda and double danda (U+0964, U+0965) sit in the Devanagari block but are
+    # the ordinary full stop of Bengali, Punjabi and other Indic scripts. Counted as
+    # "another script" they rejected every Bengali and Punjabi opening, the platform's
+    # own templates included.
+    return all(
+        not 0x0900 <= ord(char) <= 0x0DFF or start <= ord(char) <= end or ord(char) in (0x0964, 0x0965)
+        for char in text
+    )
 
 
 def _clip_sentence(text: str, limit: int) -> str:

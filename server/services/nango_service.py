@@ -240,6 +240,20 @@ def _safe_urlopen(req_or_url: Any, timeout: float = 5.0) -> _SafeHttpResponse:
         return _SafeHttpResponse(resp)
 
 
+def whatsapp_recipient(to: str, party_phone: Any = None) -> str:
+    """Digits Meta accepts: no "+", spaces or dashes, and the country code present.
+
+    "98765 43210" or a bare ten-digit number went to Meta as typed and came back
+    HTTP 400. When the number is the call's own party, the country code comes from
+    the call; otherwise the digits are sent as given.
+    """
+    digits = re.sub(r"\D", "", str(to or ""))
+    party = re.sub(r"\D", "", str(party_phone or ""))
+    if digits and party and len(party) > len(digits) >= 10 and party.endswith(digits):
+        return party
+    return digits.lstrip("0") if len(digits) > 10 else digits
+
+
 class NangoService:
     """Enterprise Nango Gateway providing multi-tenant isolation, OAuth vaulting, and SLA-guaranteed tool routing."""
 
@@ -749,6 +763,8 @@ class NangoService:
                 if code in (401, 403, 424):
                     # Nango answers 424 / provider 401 when it cannot refresh the
                     # tenant's token. Nothing was changed at the provider.
+                    if code in (401, 424):
+                        await self._flag_needs_reauth(tenant_id, raw_app)
                     return {"status": "error", "message": f"The {_display_name(raw_app)} connection needs to be re-authorized by the business. Nothing was changed."}
                 if code == 429:
                     return {"status": "error", "message": f"{_display_name(raw_app)} is busy right now. Nothing was changed; offer to follow up instead."}
@@ -2192,7 +2208,8 @@ class NangoService:
                 resp = await client.post(
                     f"{self.base_url}/proxy/{WHATSAPP_GRAPH_VERSION}/{path_segment(phone_number_id)}/messages",
                     headers=headers,
-                    json={"messaging_product": "whatsapp", "to": to_num.lstrip("+"), "type": "template", "template": {
+                    json={"messaging_product": "whatsapp", "to": whatsapp_recipient(to_num, (context or {}).get("party_phone")),
+                          "type": "template", "template": {
                         "name": str(params["template_name"]), "language": {"code": str(params["template_language"])},
                         "components": [{"type": "body", "parameters": [{"type": "text", "text": msg_text[:1000]}]}],
                     }},
@@ -2284,6 +2301,44 @@ class NangoService:
             except Exception:
                 available.append(slot)
         return available, busy_list
+
+    async def _flag_needs_reauth(self, tenant_id: str, raw_app: str) -> None:
+        """Mark an expired connection so it stops being offered and the tenant is told.
+
+        Only the console used to set this. A token that expired between visits kept
+        the app on every call: the agent offered a booking and failed each time.
+        """
+        try:
+            import uuid as _uuid
+
+            from sqlalchemy import func, or_, select
+
+            from server.db.connection import get_session_factory
+            from server.db.models.integration_models import TenantIntegration
+            from server.services import tenant_tool_cache
+
+            factory = get_session_factory()
+            if factory is None:
+                return
+            canonical = str(raw_app).upper().replace("-", "_")
+            stripped = canonical.replace("_", "")
+            async with factory() as session:
+                rows = (await session.execute(select(TenantIntegration).where(
+                    TenantIntegration.tenant_id == _uuid.UUID(str(tenant_id)),
+                    TenantIntegration.status == "ACTIVE",
+                    or_(func.upper(TenantIntegration.app_name) == canonical,
+                        func.replace(func.replace(func.upper(TenantIntegration.app_name), "-", ""), "_", "") == stripped),
+                ))).scalars().all()
+                for row in rows:
+                    row.status = "ERROR"
+                    row.metadata_ = {**(row.metadata_ or {}), "gateway_verified": False, "needs_reauth": True}
+                if rows:
+                    await session.commit()
+            if rows:
+                tenant_tool_cache.invalidate(str(tenant_id))
+                logger.warning("[NANGO] connection flagged for re-authorisation tenant=%s app=%s", tenant_id, canonical)
+        except Exception as exc:  # noqa: BLE001 - flagging must never break the call.
+            logger.warning("[NANGO] could not flag re-authorisation: %s", type(exc).__name__)
 
     async def _get_nango_connection_id(
         self, tenant_id: str, action_name: str

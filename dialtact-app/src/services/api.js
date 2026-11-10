@@ -1088,11 +1088,12 @@ export const api = {
       return data;
     },
     async analyzeEmployee(payload) {
+      // Reading the brief is one or two model calls; the default 60 s gave up early.
       return api.request('POST', '/api/app/agents/analyze-brief', {
         ...payload,
         agentRole: payload.agentRole || payload.role || '',
         callDirection: payload.callDirection || payload.direction || '',
-      });
+      }, {}, { timeoutMs: 180_000 });
     },
     async buildEmployee(payload) {
       const data = await api.request('POST', '/api/app/agents/build-employee', {
@@ -1107,7 +1108,9 @@ export const api = {
         requestId: payload.requestId,
         retryFailed: Boolean(payload.retryFailed),
         clarificationAnswers: payload.clarificationAnswers || [],
-      });
+        // A build is several model stages and can take minutes. At 60 s the wizard
+        // showed "network error" while the server went on to finish the agent.
+      }, {}, { timeoutMs: 300_000 });
       const agent = data.agent || {};
       return {
         ...data,

@@ -429,6 +429,15 @@ async def _answer_inbound(call_control_id: str) -> None:
         logger.exception("[TELNYX] inbound answer failed control=%s", call_control_id)
 
 
+async def _reject_inbound(call_control_id: str) -> None:
+    """End an unanswered inbound call the policy declined."""
+    try:
+        await TelnyxClient().hangup(call_control_id)
+        log_pstn("inbound.rejected", control=call_control_id)
+    except Exception as exc:  # noqa: BLE001 -- the carrier times the call out as before.
+        log_pstn("inbound.reject_failed", control=call_control_id, error=str(exc)[:200])
+
+
 async def _record_inbound_attempt(
     call_control_id: str,
     payload: dict,
@@ -781,6 +790,13 @@ async def telnyx_webhook(request: Request):
                     asyncio.create_task(
                         _answer_inbound(str(call_control_id)),
                         name=f"telnyx-answer-{str(call_control_id)[:24]}",
+                    )
+                else:
+                    # A declined call must be rejected, or the caller hears
+                    # ringing until they give up.
+                    asyncio.create_task(
+                        _reject_inbound(str(call_control_id)),
+                        name=f"telnyx-reject-{str(call_control_id)[:24]}",
                     )
     elif event_type == "call.answered":
         if _call_ended(telnyx_call_registry.get(str(call_control_id)) or {}):

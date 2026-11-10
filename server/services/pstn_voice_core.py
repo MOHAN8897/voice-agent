@@ -1323,6 +1323,12 @@ class PstnVoiceLoop:
         if self._phase != PHASE_THINKING or self._agent_audio_playing():
             self._think_partial_started_at = 0.0
             return False
+        if self._turn_tool_wait:
+            # A booking or message is being written. Cancelling the turn here left
+            # its outcome unknown and locked the action for the rest of the call;
+            # the caller's words are queued and answered once the result is in.
+            self._think_partial_started_at = 0.0
+            return False
         cleaned = (text or "").strip()
         if not cleaned:
             self._think_partial_started_at = 0.0
@@ -1395,6 +1401,8 @@ class PstnVoiceLoop:
             return False
         if self._phase not in (PHASE_THINKING, PHASE_SPEAKING) or self._closed:
             return False
+        if self._turn_tool_wait:
+            return False  # never cancel a turn whose action is in flight
         now = time.monotonic()
         if not self._reply_unheard(now):
             return False
@@ -2045,6 +2053,9 @@ class PstnVoiceLoop:
             greeting = extract_opening_greeting(
                 ctx.compiled_brain_text if ctx else None,
                 self._resolve_language(),
+                # Without it an inbound caller was greeted with the outbound
+                # "this is a courtesy call, do you have a moment?" default.
+                direction=getattr(ctx, "direction", None),
             )
 
         jobs: list[asyncio.Task] = [
@@ -3343,6 +3354,9 @@ class PstnVoiceLoop:
                         if chunk.get("status") == "tool_wait":
                             # An action is in flight; a re-ask could repeat its side effect.
                             self._turn_tool_wait = True
+                            if self._is_composed_call():
+                                # Say "one second" now and "still checking" while it runs.
+                                self._backchannel.note_tool_wait(self.current_turn_id)
                             continue
                         if chunk.get("status") == "watchdog_retry":
                             # Nothing from the first attempt reached TTS or the wire.

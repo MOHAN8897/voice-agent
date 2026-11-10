@@ -302,7 +302,7 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <p className="text-ui font-medium text-ink mb-2">
               Spoken language
@@ -338,6 +338,24 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
             </select>
           </div>
           <div>
+            <label htmlFor="employee-direction" className="block text-ui font-medium text-ink mb-2">
+              Who starts the call
+            </label>
+            {/* An inbound agent greets and helps; an outbound one introduces itself and asks for a moment. */}
+            <select
+              id="employee-direction"
+              value={draft.direction}
+              onChange={(e) => set({ direction: e.target.value })}
+              data-testid="employee-direction-select"
+              className="w-full bg-canvas border border-line rounded-control px-3 py-2 text-base sm:text-ui min-h-[42px] sm:min-h-[36px]"
+            >
+              <option value="outbound">The employee calls customers</option>
+              <option value="inbound">Customers call the employee</option>
+            </select>
+          </div>
+          {/* Lead and bulk calling are ways of dialling out; an inbound employee only answers. */}
+          {draft.direction !== 'inbound' && (
+          <div>
             <p className="text-ui font-medium text-ink mb-2">
               Kind of calls
             </p>
@@ -345,6 +363,7 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
               {modeCards}
             </div>
           </div>
+          )}
         </div>
 
         {!draft.language.startsWith('en') && (

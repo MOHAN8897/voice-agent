@@ -1348,6 +1348,54 @@ def public_catalog_profile(tier: str, record: dict[str, Any] | None, rates: dict
     }
 
 
+async def default_agent_voice_selection(environment: str, tier: str, language: str) -> dict[str, Any] | None:
+    """The first offered voice of ``tier`` that speaks ``language``, as a saveable selection.
+
+    A new agent used to be created "active" with no voice selection, and its first
+    call or test failed with "your saved voice setup has changed" for a voice the
+    tenant never chose. Creation now saves this default; the tenant can change it.
+    Voices that list the language as preferred win over ones that merely support it.
+    Returns None when the tier has no ready profile or no voice for the language.
+    """
+    tier_norm = canonical_voice_tier(tier)
+    record = (await load_profile_records(environment, (tier_norm,))).get(tier_norm)
+    rates = await _load_rates_without_fallback()
+    readiness = readiness_for_profile(tier_norm, record, rates)
+    if not record or not readiness["ready"] or not readiness["enabled"]:
+        return None
+    profile = record.get("profile") or {}
+    if language not in (profile.get("supportedLanguages") or []):
+        return None
+    aliases = record.get("publicAliases") or {}
+    best: tuple[int, dict[str, Any]] | None = None
+    for engine in profile.get("engines") or []:
+        engine_alias = (aliases.get("engines") or {}).get(str(engine.get("id")))
+        if not engine_alias:
+            continue
+        for model in engine.get("models") or []:
+            model_alias = (
+                (aliases.get("models") or {}).get(f"{engine.get('id')}::{model.get('id')}")
+                or (aliases.get("models") or {}).get(f"{engine.get('id')}\u0000{model.get('id')}")
+            )
+            if not model_alias:
+                continue
+            for voice in model.get("voices") or []:
+                voice_alias = (
+                    (aliases.get("voices") or {}).get(f"{engine.get('id')}::{model.get('id')}::{voice.get('id')}")
+                    or (aliases.get("voices") or {}).get(f"{engine.get('id')}\u0000{model.get('id')}\u0000{voice.get('id')}")
+                )
+                if not voice_alias or language not in (voice.get("languages") or []):
+                    continue
+                rank = 0 if language in (voice.get("preferredLanguages") or []) else 1
+                if best is None or rank < best[0]:
+                    best = (rank, {
+                        "stackSelectionVersion": 1,
+                        "profileRevision": int(record.get("revision") or 0),
+                        "engineId": engine_alias, "modelId": model_alias, "voiceId": voice_alias,
+                    })
+    return best[1] if best else None
+
+
 async def resolve_agent_selection(
     *,
     environment: str,

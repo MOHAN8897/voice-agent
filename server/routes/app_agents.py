@@ -170,6 +170,32 @@ async def compose_onboarding(
     return {"ok": True, **result}
 
 
+async def _save_default_voice(agent: dict, agent_id: str, *, tenant_id: str, language: str) -> dict:
+    """Give a new agent a voice it can be called with; never fail the creation over it."""
+    current = agent.get("voice_settings") if isinstance(agent.get("voice_settings"), dict) else {}
+    if current.get("stackSelectionVersion") == 1:
+        return agent
+    try:
+        from server.services.dev_runtime import effective_app_environment
+        from server.services.saas.voice_stack_profiles import default_agent_voice_selection
+
+        selection = await default_agent_voice_selection(effective_app_environment(), CREATED_AGENT_TIER, language)
+        if selection is None:
+            logger.warning("agent.default_voice_unavailable agent_id=%s language=%s", agent_id, language)
+            return agent
+        try:
+            revision = max(0, int(current.get("_voice_revision") or 0))
+        except (TypeError, ValueError):
+            revision = 0
+        return await agent_service.patch_agent(
+            agent_id, {"voice_settings": selection, "default_tier": CREATED_AGENT_TIER},
+            tenant_id=tenant_id, expected_voice_revision=revision,
+        )
+    except Exception as exc:  # noqa: BLE001 - the agent exists; the tenant can still pick a voice.
+        logger.warning("agent.default_voice_not_saved agent_id=%s error_type=%s", agent_id, type(exc).__name__)
+        return agent
+
+
 @router.post("/api/app/agents/build-employee")
 async def build_employee(
     body: BuildEmployeeBody,
@@ -283,7 +309,8 @@ async def build_employee(
             headers={"Retry-After": "10"} if exc.transient else None,
         ) from exc
     except Exception as exc:
-        error = {"code": "script_compile_failed", "message": "Script generation failed. Please try again."}
+        error = {"code": "script_compile_failed", "message": "Script generation failed. Please try again.",
+                 "retryable": True}
         await record_failed_request(error, 502)
         raise HTTPException(
             status_code=502,
@@ -349,6 +376,8 @@ async def build_employee(
             status_code=publication_status,
             detail={"error": error},
         ) from exc
+
+    agent = await _save_default_voice(agent, agent_id, tenant_id=tenant_id, language=lang)
 
     response = {
         "ok": True,

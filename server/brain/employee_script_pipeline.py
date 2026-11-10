@@ -81,6 +81,17 @@ class GenerationStageError(RuntimeError):
                     "Your draft is kept; retry this creation to continue."
                 ),
             }
+        if self.reason == "invalid_output":
+            return {
+                "code": "generation_failed",
+                "stage": self.stage,
+                # Model output varies run to run, so "try again" has to regenerate. Stored
+                # as non-retryable, this error was replayed to every retry of the same
+                # brief and the tenant could only edit the brief into a second draft.
+                "retryable": True,
+                "correlationId": self.correlation_id,
+                "message": f"We could not finish {label}. Your draft is kept; retry this creation, or adjust the brief.",
+            }
         return {
             "code": "generation_failed",
             "stage": self.stage,
@@ -256,8 +267,11 @@ async def _completion(name: str, rules: str, data: dict[str, Any], model: type[M
                       *, temperature: float, tokens: int, correlation_id: str) -> ModelT:
     from server.brain.generation_runtime import generation_target
 
+    from server.providers.base import StructuredOutputTruncated
+
     stage = _STAGES.get(name, "extract")
     adapter, config = generation_target()
+    budget = tokens
     async with _generation_limiter():
         for attempt in range(1, _STAGE_ATTEMPTS + 1):
             try:
@@ -266,12 +280,18 @@ async def _completion(name: str, rules: str, data: dict[str, Any], model: type[M
                         {"role": "developer", "content": [{"type": "input_text", "text": rules}]},
                         {"role": "user", "content": [{"type": "input_text", "text": json.dumps(data, ensure_ascii=False)}]},
                     ], schema=model.model_json_schema(), config=replace(config, temperature=temperature),
-                    schema_name=name, max_output_tokens=tokens,
+                    schema_name=name, max_output_tokens=budget,
                 ), timeout=45)
             except Exception as exc:
                 transient = _transient_provider_error(exc)
-                if transient and attempt < _STAGE_ATTEMPTS:
-                    delay = 2.0 * attempt
+                # Output cut at the token limit is not the brief's fault: ask again
+                # with more room instead of failing the creation for good.
+                truncated = isinstance(exc, StructuredOutputTruncated)
+                if (transient or truncated) and attempt < _STAGE_ATTEMPTS:
+                    # A rate limit (429) is per minute: two seconds later it is still there.
+                    delay = 0.0 if truncated else (8.0 if _provider_status(exc) == 429 else 2.0 * attempt)
+                    if truncated:
+                        budget = min(int(budget * 1.6), max(budget, 16000))
                     logger.warning(
                         "agent_generation_retry stage=%s correlation_id=%s attempt=%s delay_s=%.1f error=%s status=%s",
                         stage, correlation_id, attempt, delay, type(exc).__name__, _provider_status(exc),
@@ -285,17 +305,19 @@ async def _completion(name: str, rules: str, data: dict[str, Any], model: type[M
                 raise GenerationStageError(
                     stage, transient=transient, correlation_id=correlation_id,
                 ) from exc
-            break
-    try:
-        return model.model_validate(payload)
-    except ValidationError as exc:
-        logger.warning(
-            "agent_generation_invalid_output stage=%s correlation_id=%s errors=%s",
-            stage, correlation_id, len(exc.errors()),
-        )
-        raise GenerationStageError(
-            stage, transient=False, correlation_id=correlation_id,
-        ) from exc
+            try:
+                return model.model_validate(payload)
+            except ValidationError as exc:
+                logger.warning(
+                    "agent_generation_invalid_output stage=%s correlation_id=%s attempt=%s errors=%s",
+                    stage, correlation_id, attempt, len(exc.errors()),
+                )
+                # Not repeated automatically (it would double the cost of a brief the
+                # model cannot handle), but the tenant's own retry regenerates.
+                raise GenerationStageError(
+                    stage, transient=False, correlation_id=correlation_id, reason="invalid_output",
+                ) from exc
+    raise GenerationStageError(stage, transient=False, correlation_id=correlation_id)
 
 
 def _numbers(text: str) -> set[str]:

@@ -468,6 +468,25 @@ _REPEAT_REQUEST = _terms(
 )
 
 
+# "మళ్ళీ చేస్తామండి" / "call me again later" promise another call; they do not ask for a repeat.
+# Read as a repeat request, they let the same question through a third and fourth time.
+_CALL_AGAIN = _terms(
+    ["call again", "call back", "call me", "call you", "ring again", "try again later", "again later", "again tomorrow"],
+    ["మళ్ళీ చేస్త", "మళ్లీ చేస్త", "మళ్ళీ చేయండి", "మళ్లీ చేయండి", "మళ్ళీ కాల్", "మళ్లీ కాల్", "మళ్ళీ ఫోన్", "మళ్లీ ఫోన్"],
+    ["फिर से कॉल", "फिर कॉल", "दोबारा कॉल", "दुबारा कॉल", "फिर फोन", "दोबारा फोन", "बाद में"],
+    ["மறுபடியும் கால்", "திரும்ப கால்", "திரும்ப கூப்பிட", "மறுபடியும் கூப்பிட"],
+    ["ಮತ್ತೆ ಕಾಲ್", "ಮತ್ತೆ ಮಾಡ", "ಮತ್ತೆ ಫೋನ್"], ["വീണ്ടും വിളി", "പിന്നെ വിളി"],
+    ["पुन्हा कॉल", "परत कॉल", "परत फोन", "पुन्हा फोन", "नंतर"], ["আবার কল", "আবার ফোন", "পরে"],
+    ["ફરી કોલ", "ફરીથી કોલ", "ફરી ફોન", "પછી"], ["ਦੁਬਾਰਾ ਕਾਲ", "ਫਿਰ ਤੋਂ ਕਾਲ", "ਬਾਅਦ ਵਿੱਚ"],
+)
+
+
+def asks_to_repeat(caller: str | None) -> bool:
+    """The caller wants the last thing said once more (not another call later)."""
+    text = caller or ""
+    return bool(_REPEAT_REQUEST.search(text)) and not _CALL_AGAIN.search(text)
+
+
 # A tag question confirms a value the agent already has ("మీ పేరు Saikiran గారు కదా").
 _TAGS = {"right", "correct", "isn't", "కదా", "ना", "தானே", "இல்லையா", "ಅಲ್ವಾ", "ಅಲ್ಲವೇ", "അല്ലേ", "তো", "ને", "ਨਾ"}
 
@@ -570,29 +589,64 @@ def guard_repeated_asks(
     return _join(kept) or ack_line(language), reasons
 
 
-def drop_near_repeats(reply: str, *, caller: str, previous: list[str], language: str, keep: tuple[str, ...] = ()) -> str:
-    """Drop sentences nearly identical to the agent's last two replies.
+def drop_near_repeats(reply: str, *, caller: str, previous: list[str], language: str, keep: tuple[str, ...] = (),
+                      earlier: list[str] | None = None) -> str:
+    """Drop sentences the agent has already said.
+
+    * Not a question from the caller: a sentence nearly identical to one in the
+      last two replies goes, and so does one already said twice in ``earlier``
+      (the last six replies) — the same ask a third time is nagging.
+    * A question from the caller: the same answer is the right answer, so
+      statements stay; a question of the agent's own that it already asked is
+      not an answer and goes ("... ₹25. Order place చేద్దామా?" on every turn).
+    * The caller asked for a repeat: nothing is dropped.
 
     ``keep`` lines (the missing-fact line) stay when the caller raised something
     new: the same "I don't know" can be the honest answer to a different question.
     """
     from server.call.end_call_validate import looks_like_question
 
-    if not previous or _REPEAT_REQUEST.search(caller or "") or looks_like_question(caller or "") or "?" in (caller or ""):
-        # The caller asked again or asked for a repeat: the same answer is the right answer.
+    if not previous or asks_to_repeat(caller):
         return reply
-    said = [s for p in previous for s in sentences(p.replace("[interrupted]", ""))]
+    caller_asks = looks_like_question(caller or "") or "?" in (caller or "")
+    strip = lambda p: p.replace("[interrupted]", "")  # noqa: E731
+    said = [s for p in previous for s in sentences(strip(p))]
+    older = [s for p in (earlier or previous) for s in sentences(strip(p))]
     own = _guard_lines(language)
     if not is_acknowledgement(caller):
         own |= {_norm(line) for line in keep if _norm(line)}
     parts = sentences(reply)
-    kept = [
-        s for s in parts
-        if len(_norm(s)) < 8 or _norm(s) in own or not any(_similar(s, old) >= 0.85 for old in said)
-    ]
+    kept: list[str] = []
+    dropped_ask = False
+    for sentence in parts:
+        norm = _norm(sentence)
+        if len(norm) < 8 or norm in own:
+            kept.append(sentence)
+            continue
+        question = sentence.rstrip().endswith(("?", "？"))
+        times = sum(1 for old in older if _similar(sentence, old) >= 0.8)
+        if caller_asks:
+            drop = (question and times >= 1) or times >= 3
+        else:
+            drop = any(_similar(sentence, old) >= 0.85 for old in said) or times >= 2
+        if drop:
+            dropped_ask = dropped_ask or question
+        else:
+            kept.append(sentence)
     if len(kept) == len(parts):
         return reply
-    return _join(kept) or ack_line(language)
+    if caller_asks and not any(len(_norm(s)) >= 8 for s in kept):
+        # Nothing but the repeat answers their question: say it rather than nothing.
+        return reply
+    if kept and not all(is_acknowledgement(s) for s in kept):
+        return _join(kept)
+    if kept:
+        return _join(kept)
+    # Everything was a repeat. An acknowledgement gets one back; anything else
+    # ("hello?", "I'll tell you later") gets the floor instead of a bare "okay".
+    if dropped_ask or not is_acknowledgement(caller):
+        return GO_AHEAD.get(_lang(language), GO_AHEAD["en"])
+    return ack_line(language)
 
 
 # --- the caller's words since the agent's last turn ---------------------------------------
@@ -674,7 +728,8 @@ def guard_reply(
                                             state=state if state is not None else {}, known=known)
     reasons.extend(ask_reasons)
     deduped = drop_near_repeats(text, caller=caller, previous=recent_agent_replies(history or []), language=language,
-                                keep=(unknown_fact_line(brain, language),))
+                                keep=(unknown_fact_line(brain, language),),
+                                earlier=recent_agent_replies(history or [], count=6))
     if deduped != text:
         reasons.append("near_repeat")
         text = deduped

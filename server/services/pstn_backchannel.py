@@ -71,6 +71,30 @@ def holding_phrase_for(language: str | None) -> str:
     return HOLDING_PHRASES.get(lang) or HOLDING_PHRASES["en-IN"]
 
 
+# While a booking or lookup runs the caller hears the holding line at once, then
+# this every few seconds until the answer is ready. One "one moment" followed by
+# 5-8 s of silence made callers say "hello?" and talk over the result.
+TOOL_HOLD_REPEAT_S = 5.0
+STILL_CHECKING_PHRASES: dict[str, str] = {
+    "en-IN": "Still checking, one moment.",
+    "en-US": "Still checking, one moment.",
+    "te-IN": "ఇంకా చూస్తున్నాను, ఒక్క క్షణం.",
+    "hi-IN": "अभी चेक हो रहा है, एक सेकंड।",
+    "ta-IN": "இன்னும் பார்த்துட்டு இருக்கேன், ஒரு நொடி.",
+    "kn-IN": "ಇನ್ನೂ ನೋಡ್ತಿದ್ದೀನಿ, ಒಂದು ಕ್ಷಣ.",
+    "ml-IN": "ഇപ്പോഴും നോക്കുകയാണ്, ഒരു നിമിഷം.",
+    "mr-IN": "अजून तपासत आहे, एक क्षण.",
+    "bn-IN": "এখনও দেখছি, এক সেকেন্ড।",
+    "gu-IN": "હજી તપાસું છું, એક સેકન્ડ.",
+    "pa-IN": "ਹਾਲੇ ਦੇਖ ਰਹੇ ਹਾਂ, ਇੱਕ ਸਕਿੰਟ।",
+}
+
+
+def still_checking_phrase_for(language: str | None) -> str:
+    lang = normalize_compile_language(language)
+    return STILL_CHECKING_PHRASES.get(lang) or STILL_CHECKING_PHRASES["en-IN"]
+
+
 class PstnBackchannelController:
     def __init__(self, voice: PstnVoiceLoop) -> None:
         self._voice = voice
@@ -83,6 +107,9 @@ class PstnBackchannelController:
         self._hold_prewarm: asyncio.Task | None = None
         self._hold_task: asyncio.Task | None = None
         self._held_last_turn = False
+        self._checking_frames: list[bytes] = []
+        self._hold_fired_turn: str | None = None
+        self._tool_hold_turn: str | None = None
         # Listening sounds are synthesized once per call and played from memory:
         # made on demand they took ~0.5 s, and the STT refining the caller's
         # sentence meanwhile cancelled every one before it played (call CC1627).
@@ -229,11 +256,28 @@ class PstnBackchannelController:
             log_pstn("hold.prewarm_failed", call_id=voice.call_id, error=str(exc)[:160])
         finally:
             await session.close()
+        if not self._hold_frames or voice._closed:
+            return
+        # The "still checking" line for long tool waits; the holding line stands in if it fails.
+        session = PstnTurnTtsSession(voice)
+        try:
+            language = voice._resolve_language()
+            frames = await session.synthesize_detached(
+                prepare_spoken_reply(still_checking_phrase_for(language), ensure_terminal=True))
+            if frames and language == voice._resolve_language():
+                self._checking_frames = frames
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            log_pstn("hold.prewarm_failed", call_id=voice.call_id, error=str(exc)[:160])
+        finally:
+            await session.close()
 
     def drop_hold_clip(self) -> None:
         """The call switched language mid-call: re-synthesize the holding line in it."""
         had_clip = bool(self._hold_frames) or self._hold_prewarm is not None
         self._hold_frames = []
+        self._checking_frames = []
         if self._hold_prewarm is not None and not self._hold_prewarm.done():
             self._hold_prewarm.cancel()
         self._hold_prewarm = None
@@ -268,13 +312,19 @@ class PstnBackchannelController:
         task = self._hold_task
         if task is None or task.done():
             return
-        if not self._voice._backchannel_playing:
-            self.cancel_hold()
+        # Wait for the clip being played, not for the task: during a tool wait
+        # the task repeats the line until the reply is ready.
+        while self._voice._backchannel_playing and not task.done():
+            await asyncio.sleep(0.02)
+        self.cancel_hold()
+
+    def note_tool_wait(self, turn_id: str | None) -> None:
+        """An action is running: say the holding line now, then keep the caller company."""
+        if not turn_id or self._tool_hold_turn == turn_id:
             return
-        try:
-            await asyncio.shield(task)
-        except (asyncio.CancelledError, Exception):
-            pass
+        self._tool_hold_turn = turn_id
+        prior = self._hold_task
+        self._hold_task = asyncio.create_task(self._tool_hold_loop(turn_id, prior))
 
     def _hold_stale(self, turn_id: str) -> bool:
         voice = self._voice
@@ -302,25 +352,54 @@ class PstnBackchannelController:
                 # Not ready on this turn; the next slow turn can use it.
                 self.prewarm_hold()
                 return
-            async with voice._backchannel_lock:
-                if voice._backchannel_task and not voice._backchannel_task.done():
-                    return
-                voice._backchannel_task = asyncio.current_task()
-                voice._backchannel_playing = True
-                # The holding line is not the reply: it must not count as a
-                # delivered answer for the watchdog or the outage fallback.
-                delivered = voice._turn_audio_delivered
-                self._held_last_turn = True
-                log_pstn("hold.fire", call_id=voice.call_id, turn_id=turn_id, frames=len(self._hold_frames))
-                try:
-                    for frame in self._hold_frames:
-                        if self._hold_stale(turn_id):
-                            break
-                        await voice._emit_agent_wire(frame)
-                finally:
-                    voice._turn_audio_delivered = delivered
-                    voice._backchannel_playing = False
-                    voice._backchannel_task = None
+            await self._play_hold_clip(turn_id, self._hold_frames, "hold.fire")
+        except asyncio.CancelledError:
+            return
+
+    async def _play_hold_clip(self, turn_id: str, frames: list[bytes], event: str) -> bool:
+        """Play one pre-synthesized line while the turn is still waiting; True when it started."""
+        voice = self._voice
+        if not frames or self._hold_stale(turn_id):
+            return False
+        if time.monotonic() - voice._last_user_partial_at < HOLD_CALLER_QUIET_S:
+            return False
+        async with voice._backchannel_lock:
+            if voice._backchannel_task and not voice._backchannel_task.done():
+                return False
+            voice._backchannel_task = asyncio.current_task()
+            voice._backchannel_playing = True
+            # The holding line is not the reply: it must not count as a
+            # delivered answer for the watchdog or the outage fallback.
+            delivered = voice._turn_audio_delivered
+            self._held_last_turn = True
+            self._hold_fired_turn = turn_id
+            log_pstn(event, call_id=voice.call_id, turn_id=turn_id, frames=len(frames))
+            try:
+                for frame in frames:
+                    if self._hold_stale(turn_id):
+                        break
+                    await voice._emit_agent_wire(frame)
+            finally:
+                voice._turn_audio_delivered = delivered
+                voice._backchannel_playing = False
+                voice._backchannel_task = None
+        return True
+
+    async def _tool_hold_loop(self, turn_id: str, prior: asyncio.Task | None) -> None:
+        """Holding line at once (unless it already played this turn), then "still checking"."""
+        try:
+            if prior is not None and not prior.done():
+                # The delayed holding line may be mid-word: let it finish, drop it otherwise.
+                while self._voice._backchannel_playing and not prior.done():
+                    await asyncio.sleep(0.02)
+                prior.cancel()
+            if self._hold_fired_turn != turn_id:
+                if not self._hold_frames:
+                    self.prewarm_hold()
+                await self._play_hold_clip(turn_id, self._hold_frames, "hold.fire")
+            while not self._hold_stale(turn_id):
+                await asyncio.sleep(TOOL_HOLD_REPEAT_S)
+                await self._play_hold_clip(turn_id, self._checking_frames or self._hold_frames, "hold.repeat")
         except asyncio.CancelledError:
             return
 

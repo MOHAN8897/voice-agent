@@ -63,7 +63,10 @@ def grounding_text(ctx: Any, caller_turns: list[str], arguments: dict[str, Any],
     """Everything the agent was given or learned on this call."""
     parts = [str(getattr(ctx, "compiled_brain_text", "") or "")]
     parts.append(json.dumps(getattr(ctx, "business_answers", None) or [], ensure_ascii=False, default=str))
-    parts.append(json.dumps(getattr(ctx, "turn_action_results", None) or [], ensure_ascii=False, default=str))
+    # Results from earlier turns too: turn_action_results is reset every turn, so a
+    # confirmation email sent the turn after a booking was refused as "invented".
+    results = getattr(ctx, "call_action_results", None) or getattr(ctx, "turn_action_results", None) or []
+    parts.append(json.dumps(results, ensure_ascii=False, default=str))
     parts.extend(caller_turns)
     # The recipient itself is not a claim about the business.
     parts.extend(str(v) for k, v in arguments.items() if k not in fields)

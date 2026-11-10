@@ -4,6 +4,7 @@ Agent CRUD service — Phase 2 workspace entity.
 from __future__ import annotations
 
 import asyncio
+import time
 import uuid
 from typing import Any
 
@@ -42,6 +43,10 @@ class AgentVoiceRevisionConflict(ValueError):
         self.details = details or {}
 
 
+#: Longest a creation build can run: up to five model stages of two 45 s attempts.
+BUILD_CLAIM_STALE_SECONDS = 8 * 60
+
+
 class AgentService:
     async def claim_build_request(
         self, *, request_id: str, fingerprint: str, tenant_id: str,
@@ -49,7 +54,8 @@ class AgentService:
     ) -> dict[str, Any]:
         """One durable agent claim per workspace request, before generation starts."""
         aid = str(uuid.uuid5(uuid.NAMESPACE_URL, f"agent-build:{tenant_id}:{uuid.UUID(request_id)}"))
-        payload = {"fingerprint": fingerprint, "state": "building", "tenant_id": tenant_id}
+        payload = {"fingerprint": fingerprint, "state": "building", "tenant_id": tenant_id,
+                   "started_at": time.time()}
 
         def existing_result(agent: dict[str, Any], saved: dict[str, Any]) -> dict[str, Any]:
             if saved.get("fingerprint") != fingerprint:
@@ -57,13 +63,24 @@ class AgentService:
             return {"agent": agent, **{key: value for key, value in saved.items() if key != "resumed"}, "created": False}
 
         def resume_payload(saved: dict[str, Any]) -> dict[str, Any] | None:
-            """Reopen only a retryable failed generation over the same owned draft."""
-            if not retry_failed or saved.get("fingerprint") != fingerprint:
+            """Reopen a retryable failed generation, or a build that died, over the same owned draft."""
+            if saved.get("fingerprint") != fingerprint:
                 return None
-            if saved.get("state") != "failed" or (saved.get("error") or {}).get("retryable") is not True:
-                return None
+            started = saved.get("started_at")
+            # A restart or crash mid-build left the claim "building" for ever, and every
+            # retry answered "already in progress". Builds run in this process and are
+            # bounded, so an old (or pre-timestamp) claim cannot still be running.
+            abandoned = saved.get("state") == "building" and (
+                not isinstance(started, (int, float)) or time.time() - started > BUILD_CLAIM_STALE_SECONDS
+            )
+            if not abandoned:
+                if not retry_failed:
+                    return None
+                if saved.get("state") != "failed" or (saved.get("error") or {}).get("retryable") is not True:
+                    return None
             resumed = {key: value for key, value in saved.items() if key not in {"error", "status_code", "resumed"}}
             resumed["state"] = "building"
+            resumed["started_at"] = time.time()
             return resumed
 
         factory = get_session_factory()

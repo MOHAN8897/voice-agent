@@ -293,4 +293,6 @@ async def test_incomplete_extraction_is_reported_not_retried(monkeypatch):
         await pipeline.analyze_employee_brief(brief=BRIEF, language="en-IN")
     provider.assert_awaited_once()
     assert failure.value.to_public_dict()["code"] == "generation_failed"
-    assert failure.value.to_public_dict()["retryable"] is False
+    # No automatic second model call, but the tenant's own retry may regenerate on
+    # the same draft: unusable output is not a property of the brief.
+    assert failure.value.to_public_dict()["retryable"] is True

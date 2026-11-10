@@ -371,7 +371,12 @@ async def vobiz_answer(request: Request):
                 if tenant is None or tenant.status != "active":
                     raise ValueError("Account inactive")
             if not is_platform_inventory_tenant(tenant):
-                await assert_voice_kyc_approved(uuid.UUID(str(kyc_tenant_id)), action="receive a phone call")
+                # A caller is waiting: an approval confirmed in the last ten minutes
+                # is taken from storage instead of two carrier requests before pickup.
+                await assert_voice_kyc_approved(
+                    uuid.UUID(str(kyc_tenant_id)), action="receive a phone call",
+                    max_age_seconds=600 if direction != "outbound" else None,
+                )
         except Exception as exc:
             logger.warning("Phone call denied at verification gate error_type=%s", type(exc).__name__)
             return Response(content='<Response><Hangup /></Response>', media_type="application/xml")
@@ -410,7 +415,7 @@ async def vobiz_answer(request: Request):
                 log_pstn("vobiz.declined", call_uuid=call_uuid, reason="insufficient_balance")
                 xml = """<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Speak>The service account has an insufficient wallet balance. Please top up your account.</Speak>
+    <Speak>Sorry, we cannot take your call right now. Please try again later.</Speak>
     <Hangup />
 </Response>"""
                 return Response(content=xml, media_type="application/xml")
@@ -429,11 +434,29 @@ async def vobiz_answer(request: Request):
             return Response(content='<Response><Hangup reason="busy" /></Response>', media_type="application/xml")
 
     # 4. Inbound policy check (business hours, voicemail, transfer, decline)
+    inbound_greeting: str | None = None
+    voicemail_mode = False
     if direction == "inbound" and profile:
         try:
             from server.services.saas.telephony_profile import evaluate_inbound_policy
 
             decision = evaluate_inbound_policy(profile)
+            inbound_greeting = str(decision.greeting_phrase or "").strip() or None
+            voicemail_mode = str(decision.route or "").lower() == "voicemail"
+            if decision.should_answer and str(decision.route or "").lower() == "transfer" and decision.transfer_number:
+                # After hours with a transfer number: the policy says "answer" so the
+                # call is not dropped, but it must go to that number, not the agent.
+                import html
+                log_pstn("vobiz.inbound.transferred", call_uuid=call_uuid, reason=decision.reason)
+                await _note_inbound_decline(call_uuid, str(decision.reason or "after_hours_transfer"))
+                xfer = html.escape(str(decision.transfer_number).strip(), quote=True)
+                xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Dial>
+        <Number>{xfer}</Number>
+    </Dial>
+</Response>"""
+                return Response(content=xml, media_type="application/xml")
             if not decision.should_answer:
                 log_pstn("vobiz.inbound.declined", call_uuid=call_uuid, reason=decision.reason)
                 await _note_inbound_decline(call_uuid, str(decision.reason or "policy_declined"))
@@ -462,7 +485,7 @@ async def vobiz_answer(request: Request):
             log_pstn("vobiz.inbound.unassigned", call_uuid=call_uuid, to=to_number)
             xml = """<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Speak>This number is not assigned to an active voice assistant. Please check your configuration.</Speak>
+    <Speak>Sorry, this number is not in service right now. Please try again later.</Speak>
     <Hangup />
 </Response>"""
             return Response(content=xml, media_type="application/xml")
@@ -583,6 +606,9 @@ async def vobiz_answer(request: Request):
         "contact": (token_meta or {}).get("contact") or local_reg.get("contact"),
         "admission_key": admission_key,
         "admission_tenant_id": admission_tenant_id,
+        # The tenant's own inbound greeting and the after-hours voicemail route.
+        "greeting": inbound_greeting or local_reg.get("greeting"),
+        "voicemail_mode": voicemail_mode or bool(local_reg.get("voicemail_mode")),
     }
     await asyncio.to_thread(vobiz_call_registry.upsert, call_uuid, session_data)
     if request_uuid and request_uuid != call_uuid:
@@ -636,7 +662,7 @@ async def vobiz_fallback(request: Request):
 
     fallback_xml = """<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Speak>We are experiencing a temporary network delay. Please call back in a moment.</Speak>
+    <Speak>Sorry, we could not connect your call right now. Please call back in a little while.</Speak>
     <Hangup />
 </Response>"""
     return Response(content=fallback_xml, media_type="application/xml")

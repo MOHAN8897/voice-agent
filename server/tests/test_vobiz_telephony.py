@@ -160,7 +160,9 @@ async def test_vobiz_answer_webhook_unassigned_number_safely_declined():
         assert "application/xml" in res.headers["content-type"]
         xml_text = res.text
         assert "<Response>" in xml_text
-        assert "This number is not assigned to an active voice assistant" in xml_text
+        # Callers hear a neutral line; setup advice is for the tenant, not their customer.
+        assert "this number is not in service right now" in xml_text
+        assert "configuration" not in xml_text
         assert "<Hangup />" in xml_text
         assert "<Stream" not in xml_text
 
@@ -353,6 +355,12 @@ async def test_vobiz_answer_webhook_get_method(campaign_db, monkeypatch):
     from server.tests.test_campaign_execution_safety import TID
     monkeypatch.setattr("server.db.connection.get_session_factory", lambda: campaign_db)
     """Verify GET /api/vobiz/answer returns valid VoiceXML with stream token."""
+
+    async def _kyc_approved(*_a, **_k):
+        return None
+
+    # The inbound KYC gate is covered by its own tests; this one is about the XML.
+    monkeypatch.setattr("server.services.saas.voice_kyc_service.assert_voice_kyc_approved", _kyc_approved)
     token = vobiz_stream_tokens.create(
         call_uuid="vobiz-get-test-123",
         agent_id="test-agent-get",
@@ -379,7 +387,7 @@ async def test_vobiz_answer_webhook_get_method(campaign_db, monkeypatch):
     assert [element.tag for element in xml] == ["Record", "Stream", "Hangup"]
     record = xml.find("Record")
     assert record.attrib["recordSession"] == "true"
-    assert record.attrib["fileFormat"] == "wav"
+    assert record.attrib["fileFormat"] == "mp3"
     assert "/api/vobiz/recording?token=" in record.attrib["callbackUrl"]
     assert xml.find("Stream").attrib["keepCallAlive"] == "true"
 

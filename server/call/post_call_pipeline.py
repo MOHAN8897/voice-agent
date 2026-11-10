@@ -853,8 +853,23 @@ async def reconcile_and_dispatch_post_call(call_id: str, outcome: dict[str, Any]
 
     # The business's own after-call email and WhatsApp wording, from the Integrations page.
     app_settings = await tenant_settings(tenant_id, factory) if actions else {}
+    # A regenerated outcome (retry, restart recovery, post-call transcription) words
+    # the summary differently, so the argument-based idempotency key changed and the
+    # caller got a second WhatsApp, the team a second Slack post and sheet row. An
+    # action that already succeeded for this call is reported, never sent again.
+    already_done: dict[str, dict[str, Any]] = {}
+    if actions:
+        async with factory() as session:
+            done_rows = (await session.execute(select(ToolExecution).where(
+                ToolExecution.tenant_id == uuid.UUID(tenant_id), ToolExecution.call_id == str(call_id),
+                ToolExecution.status == "succeeded", ToolExecution.action.in_([str(a).upper() for a in actions]),
+            ))).scalars().all()
+        already_done = {str(row.action).upper(): dict(row.result or {"status": "success"}) for row in done_rows}
     results = []
     for action in actions:
+        if str(action).upper() in already_done:
+            results.append({"action": action, "result": already_done[str(action).upper()], "already_done": True})
+            continue
         definition = tool_definition(action)
         properties = definition[1]["parameters"].get("properties", {})
         # Only actual extracted values are used. Missing resource IDs, recipients

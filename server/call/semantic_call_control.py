@@ -15,6 +15,29 @@ def _verified_contact(raw: dict, transcript: str) -> str:
     return contact
 
 
+def _bare_thanks_before_any_outcome(raw: dict, ctx: Any, transcript: str) -> bool:
+    """"Okay, thank you" with nothing completed on the call is not a goodbye.
+
+    Call 8208b80a: the agent said it did not know the office address, the caller
+    said "ఓకే థ్యాంక్ యూ", and the agent said goodbye; the caller had to speak again
+    to book a visit. A bare thanks may close only after a booking, a saved enquiry,
+    a sent message or a noted callback; otherwise the agent answers and the caller
+    ends the call in their own words.
+    """
+    from server.call.reply_guard import is_acknowledgement
+
+    if not is_acknowledgement(transcript):
+        return False
+    if _verified_contact(raw, transcript) in {"callback", "do_not_call", "self_callback"}:
+        return False
+    completed = (
+        getattr(ctx, "action_receipts", None) or getattr(ctx, "communication_receipts", None)
+        or getattr(ctx, "callback_request_text", "") or getattr(ctx, "callback_when", "")
+        or str(getattr(ctx, "callback_close_phase", "idle") or "idle") != "idle"
+    )
+    return not completed
+
+
 def close_rejection(proposal: Any, *, ctx: Any, transcript: str) -> str | None:
     """Why ``gate`` would refuse this close, or None when it would close. No side effects.
 
@@ -30,6 +53,8 @@ def close_rejection(proposal: Any, *, ctx: Any, transcript: str) -> str | None:
         return "missing_evidence"
     if raw.get("remaining_request"):
         return "remaining_request"
+    if _bare_thanks_before_any_outcome(raw, ctx, transcript):
+        return "thanks_without_outcome"
     reason = raw.get("reason")
     if reason == "firm_refusal" and _verified_contact(raw, transcript) != "do_not_call":
         return "contact_scope_missing"

@@ -179,8 +179,11 @@ class VobizPstnBridge:
                     self._start_handled = True
                     try:
                         await self._on_start(data)
-                    except Exception:
+                    except Exception as exc:
                         self._start_handled = False
+                        # The call is answered but no agent can start (unpublished
+                        # agent, capacity, bad profile). Say so instead of dead air.
+                        await self._speak_start_failure(type(exc).__name__)
                         raise
                 elif event == "media":
                     await self._on_media(data)
@@ -379,6 +382,7 @@ class VobizPstnBridge:
                 realtime_prewarm_key=prewarm.realtime_key if prewarm else None,
                 prepared_brain=(prewarm.compiled_brain_version, prewarm.compiled_brain_text)
                 if prewarm and prewarm.compiled_brain_text else None,
+                voicemail_mode=bool(local.get("voicemail_mode")),
             )
             self.call_id = started["call_id"]
             self.session_id = started["session_id"]
@@ -492,6 +496,26 @@ class VobizPstnBridge:
         except Exception as exc:  # noqa: BLE001 -- hangup logs its own failure; cleanup still runs.
             log_pstn("vobiz.stream.no_start_hangup_failed", call_uuid=call_uuid, error_type=type(exc).__name__)
         return "start_timeout"
+
+    async def _speak_start_failure(self, error_type: str) -> None:
+        """Move an answered call that cannot start onto the spoken apology, then it ends."""
+        call_uuid = self.call_uuid or ""
+        log_pstn("vobiz.start_failed", call_uuid=call_uuid, call_id=self.call_id, error_type=error_type)
+        if not call_uuid or call_uuid.startswith("vobiz-") or self._voice is not None and self._media_frames_out:
+            return
+        try:
+            from server.config.urls import public_api_base
+            from server.services.saas.voice_kyc_service import vobiz_client_for_call
+
+            local = await asyncio.to_thread(vobiz_call_registry.get, call_uuid) or {}
+            client = await vobiz_client_for_call({**local, **self._token_meta})
+            if client is None:
+                raise RuntimeError("Carrier client unavailable")
+            await asyncio.wait_for(
+                client.transfer_call(call_uuid, aleg_url=f"{public_api_base()}/api/vobiz/fallback"), timeout=8.0)
+            log_pstn("vobiz.start_failed.apology_played", call_uuid=call_uuid)
+        except Exception as exc:  # noqa: BLE001 -- the call still ends through normal cleanup.
+            log_pstn("vobiz.start_failed.apology_unavailable", call_uuid=call_uuid, error_type=type(exc).__name__)
 
     async def _send_prepared_opening(self, frames: list[bytes]) -> None:
         for frame in frames:

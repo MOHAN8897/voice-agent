@@ -79,6 +79,31 @@ def previous_agent_line(session_id: str) -> str:
     return ""
 
 
+def control_llm(llm: StageSelection) -> StageSelection:
+    """The model that runs the turn's decision steps.
+
+    Every reply waits for these steps, so their speed is the floor on response
+    time. An operator may point them at a faster model (CONTROL_CHECK_LLM_PROVIDER /
+    CONTROL_CHECK_LLM_MODEL); unset, disabled or disallowed, they stay on the
+    call's own model exactly as before.
+    """
+    try:
+        from server.config.env import get_settings
+        from server.providers import get_provider_registry
+
+        settings = get_settings()
+        provider = str(getattr(settings, "control_check_llm_provider", "") or "").strip().lower()
+        model = str(getattr(settings, "control_check_llm_model", "") or "").strip()
+        if not provider or not model or (provider == llm.provider and model == llm.model):
+            return llm
+        registry = get_provider_registry()
+        if not registry.is_provider_enabled(provider, "llm") or not registry.is_model_allowed(provider, "llm", model):
+            return llm
+        return StageSelection(provider=provider, model=model, config={})
+    except Exception:  # noqa: BLE001 - a bad override must never stop a call.
+        return llm
+
+
 def classifier_available(llm: StageSelection | None) -> bool:
     """Only speech-only adapters need a separate close decision channel."""
     if llm is None or not getattr(llm, "provider", None) or not getattr(llm, "model", None):
@@ -180,6 +205,7 @@ async def classify_close_turn(
         # a question, correction or withdrawal. Speech can still respond.
         log_pstn("close.classifier.oversize", call_id=call_id, characters=len(transcript))
         return None
+    llm = control_llm(llm)
     try:
         from server.providers import get_provider_registry
 
@@ -217,6 +243,9 @@ async def classify_close_turn(
     )
     output = ""
     usage: dict[str, Any] = {}
+    # Both readings take the same payload. Run in series they held every reply
+    # for two model round-trips (measured ~1 s per turn on Sarvam).
+    review_request = asyncio.create_task(_review_control_request(adapter, llm, payload, call_id))
     try:
         async with asyncio.timeout(CLASSIFIER_TIMEOUT_SEC):
             async for event in adapter.stream_live_turn(
@@ -233,7 +262,10 @@ async def classify_close_turn(
                 if event.get("done"):
                     output = str(event.get("text") or "").strip()
                     usage = event.get("usage") or {}
-    except Exception as exc:
+    except BaseException as exc:
+        review_request.cancel()
+        if not isinstance(exc, Exception):
+            raise
         log_pstn(
             "close.classifier.failed",
             call_id=call_id,
@@ -261,13 +293,19 @@ async def classify_close_turn(
             # "హలో," after the greeting was read as unfinished and the reply was held: 12 s of silence.
             and not _GREETING_ONLY.match(transcript)
         )
-    async with asyncio.TaskGroup() as checks:
-        memory_check = checks.create_task(_validate_memory(adapter, llm, payload, parsed.get("memory_operations"), transcript, call_id)) if extract_memory and isinstance(parsed, dict) and parsed.get("memory_operations") else None
-        contact_check = checks.create_task(_review_control(adapter, llm, payload, transcript, call_id, proposal)) if proposal else None
-    if contact_check is not None:
+    if not proposal:
+        review_request.cancel()
+    try:
+        async with asyncio.TaskGroup() as checks:
+            memory_check = checks.create_task(_validate_memory(adapter, llm, payload, parsed.get("memory_operations"), transcript, call_id)) if extract_memory and isinstance(parsed, dict) and parsed.get("memory_operations") else None
+            review_raw = await review_request if proposal else None
+    except BaseException:
+        review_request.cancel()
+        raise
+    if proposal:
         # A copied quote proves occurrence, not consent. A separate narrow
         # reading must agree before a call ends or future contact is changed.
-        reviewed = contact_check.result()
+        reviewed = _read_control_review(review_raw, transcript, call_id, proposal)
         # explicit_end is false for a refusal, so the parsed proposal never carries
         # it; read the control step's raw refusal label instead.
         control_refusal = (isinstance(parsed, dict) and str(parsed.get("decision") or "").lower() == "close"
@@ -524,6 +562,15 @@ When uncertain reject; retain the previous known value. Works in any language.""
 
 async def _review_control(adapter: Any, llm: StageSelection, payload: str, transcript: str,
                           call_id: str | None, initial: dict[str, Any]) -> dict[str, Any] | None:
+    raw = await _review_control_request(adapter, llm, payload, call_id)
+    return _read_control_review(raw, transcript, call_id, initial)
+
+
+async def _review_control_request(adapter: Any, llm: StageSelection, payload: str,
+                                  call_id: str | None) -> dict[str, Any] | None:
+    """The review's model request. It reads only the turn payload, so it runs
+    alongside the first decision instead of after it (one model round-trip less
+    before every reply)."""
     from server.call.turn_control_prompt import CONTACT_REVIEW_RULES
 
     output, usage = "", {}
@@ -545,6 +592,11 @@ async def _review_control(adapter: Any, llm: StageSelection, payload: str, trans
             from server.services.saas.composed_costing import composed_llm_usage, record_composed_stage_usage
             record_composed_stage_usage(call_id, "llm", composed_llm_usage(usage))
     raw = _json_object(output)
+    return raw if isinstance(raw, dict) else None
+
+
+def _read_control_review(raw: dict[str, Any] | None, transcript: str, call_id: str | None,
+                         initial: dict[str, Any]) -> dict[str, Any] | None:
     if not isinstance(raw, dict):
         return None
     choices = {"keep": "none", "business_callback": "callback", "caller_callback": "self_callback",
